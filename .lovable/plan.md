@@ -15,23 +15,28 @@ Desktop segue como está (min-height 236px).
 
 Entra na badge todo item com data de validade faltando 30 dias ou menos (inclusive vencido). Fontes: Arsenal (CR/CRAF/GTE), Filiação, documentos do Hub, documentos do processo e prazos processuais (≤7 dias).
 
-**Exceção — CR:** o CR passa a alertar com 180 dias de antecedência, porque o prazo fatal para protocolar a renovação é 90 dias antes do vencimento real. De 180 a 91 dias o alerta é de preparação; a partir de 90 dias vira crítico ("PRAZO FATAL DE RENOVAÇÃO").
+**Exceção — CR (regra correta):** o pedido de renovação precisa estar PROTOCOLADO até 90 dias antes do vencimento do CR. Passado esse marco, o caso deixa de ser renovação e vira **nova concessão**, e no dia seguinte ao vencimento o CR é bloqueado no sistema da PF, suspendendo o CRAF de todas as armas. Por isso o alerta abre com 180 dias.
+
+Exemplo usado na própria copy: CR vence em dezembro → reunir documentos em junho, protocolo até o fim de setembro. Em 1º de outubro o CR já está bloqueado no sistema da PF.
 
 Hoje quase todos os documentos usam UM texto genérico: "Certidão ou regularidade próxima do vencimento". Só comprovante de residência, filiação e comprovante de terceiro têm texto próprio.
 
 Abaixo, a lista 1 a 1 — nome do documento e texto explicativo proposto — para você aprovar, corrigir ou reescrever item a item.
 
 ### Arsenal
-1. CR — Certificado de Registro (Exército) — alerta a partir de 180 dias:
-   - 180 a 91 dias: "Seu CR vence em X dias. O pedido de renovação precisa ser protocolado até 90 dias antes do vencimento — comece a reunir os documentos agora."
-   - 90 dias ou menos: "PRAZO FATAL: faltam X dias para o vencimento do CR e o pedido de renovação já deveria estar protocolado. Sem CR vigente você não compra, não transporta e não registra nenhuma arma."
-2. CRAF — Certificado de Registro de Arma de Fogo (por arma) — "O CRAF é o documento da arma. Vencido, o porte/transporte dela é irregular."
+1. CR — Certificado de Registro (Exército) — alerta a partir de 180 dias, em três estágios de copy:
+   - **180 a 121 dias — "COMECE AGORA":** "Seu CR vence em X dias. A renovação precisa estar PROTOCOLADA até 90 dias antes do vencimento — ou seja, você tem até {data-limite} para dar entrada. Comece a reunir os documentos hoje: certidões e laudos levam semanas para ficar prontos."
+   - **120 a 91 dias — "ÚLTIMA JANELA":** "Faltam X dias para o seu CR vencer e só restam {X-90} dias para protocolar a renovação. Depois de {data-limite}, seu caso deixa de ser renovação e vira uma NOVA CONCESSÃO — processo do zero, do começo ao fim."
+   - **90 dias ou menos — "JANELA PERDIDA / RISCO DE BLOQUEIO":** "A janela de renovação do seu CR fechou em {data-limite}. A partir do vencimento ({data}), o CR é bloqueado no sistema da Polícia Federal e o CRAF de TODAS as suas armas fica suspenso. Fale com a gente hoje para definir o caminho: nova concessão ou regularização."
+   - Nos três estágios, a base de raciocínio aparece em uma linha de apoio: "CR vence em dezembro? Documentos em junho, protocolo até setembro. Em 1º de outubro, o CR já está bloqueado."
+2. CRAF — Certificado de Registro de Arma de Fogo (por arma) — "O CRAF é o documento da arma. Vencido, o porte/transporte dela é irregular. Não saia para treinar neste momento e não porte sua arma, mesmo que você tenha permissão para isso."
 3. SINARM — Registro de Arma de Fogo (PF) — "Registro da arma na Polícia Federal. Sem ele vigente, a arma fica irregular."
 4. GT — Guia de Tráfego — "Sem guia válida você não pode transportar a arma."
-5. GTE — Guia de Tráfego Eventual — "Guia de trânsito eventual vencida bloqueia o transporte da arma."
-6. Autorização de compra — "A autorização de compra tem prazo. Vencida, é preciso pedir nova à PF/Exército."
+5. GTE — Guia de Tráfego Especial — "Guia de trânsito especial vencida bloqueia o transporte da arma para treino, caça ou competição."
+6. Autorização de compra — "A autorização de compra tem prazo. Vencida, é preciso pedir nova à autoridade que a emitiu e passar novamente por todo o processo."
 
-### Filiação e atividade CAC
+### Filiação e atividade CAC — PENDENTE DE REVISÃO (não implantar ainda)
+Os textos abaixo entram como pendência: alguns estão tecnicamente errados e serão reescritos por você antes de virar código. Ficam registrados como estão hoje, para servir de base à correção.
 7. Filiação — clube/entidade — "Filiação vigente é exigida para manter o CAC ativo."
 8. Declaração de filiação — "A declaração de filiação vale 90 dias e só serve para uso em processo."
 9. Comprovante de habitualidade — "A habitualidade precisa estar atualizada para manter seu CR."
@@ -46,7 +51,7 @@ Abaixo, a lista 1 a 1 — nome do documento e texto explicativo proposto — par
 ### Renda / ocupação
 15. Contracheque (holerite) — "A PF aceita contracheque do mês corrente. O seu está saindo da validade."
 16. Contracheque de servidor público — mesmo texto do item 15.
-17. Nota fiscal recente — "Nota fiscal antiga não comprova atividade atual. Envie a mais recente."
+17. Nota fiscal recente — **sai da badge de alerta**: não tem prazo de validade, então não gera contagem nem aviso. Continua normalmente no Hub Documental e nos slots do checklist.
 18. Comprovante de benefício — "O comprovante de benefício precisa ser do mês corrente."
 19. Extrato INSS — "Extrato do INSS fora do mês corrente não é aceito como comprovação."
 
