@@ -54,16 +54,16 @@ type SortKey =
 type ColDef = { key: SortKey; label: string; largura: number; titulo?: string };
 
 const COLS: ColDef[] = [
-  { key: "cliente_nome", label: "CLIENTE", largura: 240 },
-  { key: "online", label: "ONLINE", largura: 108, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
-  { key: "fase", label: "ETAPA ATUAL", largura: 190 },
-  { key: "progresso", label: "PROGRESSO", largura: 230 },
+  { key: "cliente_nome", label: "CLIENTE", largura: 250 },
+  { key: "online", label: "ONLINE", largura: 116, titulo: "Acesso do cliente ao portal nos últimos 15 minutos" },
+  { key: "fase", label: "ETAPA ATUAL", largura: 200 },
+  { key: "progresso", label: "PROGRESSO", largura: 236 },
   { key: "proximo_doc", label: "PRÓXIMO PASSO", largura: 210 },
-  { key: "efetiva", label: "EF. NECESSIDADE", largura: 140, titulo: "Situação da narrativa de efetiva necessidade" },
-  { key: "protocolo", label: "PROTOCOLO", largura: 140, titulo: "Número do protocolo emitido para este serviço" },
-  { key: "criado_em", label: "ABERTO EM", largura: 100 },
-  { key: "cobrancas", label: "COBRANÇAS", largura: 100, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
-  { key: "dias_parado", label: "PARADO", largura: 88 },
+  { key: "efetiva", label: "EF. NECESSIDADE", largura: 150, titulo: "Situação da narrativa de efetiva necessidade" },
+  { key: "protocolo", label: "PROTOCOLO", largura: 168, titulo: "Número do protocolo emitido para este serviço" },
+  { key: "criado_em", label: "ABERTO EM", largura: 104 },
+  { key: "cobrancas", label: "COBRANÇAS", largura: 104, titulo: "Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)" },
+  { key: "dias_parado", label: "PARADO", largura: 96 },
 ];
 
 const LS_LARGURAS = "qa_painel_progresso_larguras";
@@ -109,8 +109,8 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-[3px] text-[9.5px] font-bold uppercase tracking-[0.1em] ${
-        quebra ? "break-words text-left leading-[1.25]" : "whitespace-nowrap"
+      className={`inline-flex max-w-full items-start gap-1 rounded-full px-2 py-[3px] text-left text-[9.5px] font-bold uppercase leading-[1.25] tracking-[0.1em] ${
+        quebra ? "[overflow-wrap:anywhere]" : "break-words"
       }`}
       style={{ background: fundo, color: cor }}
     >
