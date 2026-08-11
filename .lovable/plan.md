@@ -15,12 +15,16 @@ Desktop segue como está (min-height 236px).
 
 Entra na badge todo item com data de validade faltando 30 dias ou menos (inclusive vencido). Fontes: Arsenal (CR/CRAF/GTE), Filiação, documentos do Hub, documentos do processo e prazos processuais (≤7 dias).
 
+**Exceção — CR:** o CR passa a alertar com 180 dias de antecedência, porque o prazo fatal para protocolar a renovação é 90 dias antes do vencimento real. De 180 a 91 dias o alerta é de preparação; a partir de 90 dias vira crítico ("PRAZO FATAL DE RENOVAÇÃO").
+
 Hoje quase todos os documentos usam UM texto genérico: "Certidão ou regularidade próxima do vencimento". Só comprovante de residência, filiação e comprovante de terceiro têm texto próprio.
 
 Abaixo, a lista 1 a 1 — nome do documento e texto explicativo proposto — para você aprovar, corrigir ou reescrever item a item.
 
 ### Arsenal
-1. CR — Certificado de Registro (Exército) — "Sem o CR vigente você não compra, não transporta e não registra nenhuma arma. Renove antes do vencimento."
+1. CR — Certificado de Registro (Exército) — alerta a partir de 180 dias:
+   - 180 a 91 dias: "Seu CR vence em X dias. O pedido de renovação precisa ser protocolado até 90 dias antes do vencimento — comece a reunir os documentos agora."
+   - 90 dias ou menos: "PRAZO FATAL: faltam X dias para o vencimento do CR e o pedido de renovação já deveria estar protocolado. Sem CR vigente você não compra, não transporta e não registra nenhuma arma."
 2. CRAF — Certificado de Registro de Arma de Fogo (por arma) — "O CRAF é o documento da arma. Vencido, o porte/transporte dela é irregular."
 3. SINARM — Registro de Arma de Fogo (PF) — "Registro da arma na Polícia Federal. Sem ele vigente, a arma fica irregular."
 4. GT — Guia de Tráfego — "Sem guia válida você não pode transportar a arma."
