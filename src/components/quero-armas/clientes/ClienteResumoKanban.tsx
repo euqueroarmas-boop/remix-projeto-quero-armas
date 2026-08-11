@@ -315,13 +315,13 @@ export default function ClienteResumoKanban({
 
   const URG_SUB: Record<string, string> = {
     cr: "Certificado de Registro · sem ele toda atividade na PF trava",
-    craf: "Sem CRAF vigente o transporte da arma é ilegal",
-    gte: "Guia de Tráfego expirada bloqueia movimentações",
-    psicologico: "Exame obrigatório · sem ele, processos travam na PF",
-    tiro: "Capacidade técnica obrigatória · renove para manter o CR",
+    craf: AVISO_POR_TIPO.craf,
+    gte: AVISO_POR_TIPO.gte,
+    psicologico: AVISO_POR_TIPO.laudo_psicologico,
+    tiro: AVISO_POR_TIPO.laudo_capacidade_tecnica,
     filiacao: "Filiação vigente é exigida para CAC ativo",
-    documento: "Certidão ou regularidade próxima do vencimento",
-    processo: "Prazo processual crítico · ação imediata na PF",
+    documento: AVISO_GENERICO_DOCUMENTO,
+    processo: AVISO_PRAZO_PROCESSUAL,
   };
 
   const snapshot = useMemo(() => {
