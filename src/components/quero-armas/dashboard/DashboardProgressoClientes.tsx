@@ -382,6 +382,20 @@ export default function DashboardProgressoClientes() {
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>
+        <button
+          type="button"
+          aria-label="Atualizar agora"
+          title="Atualizar agora"
+          onClick={() => carregarRef.current()}
+          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${recarregando ? "animate-spin" : ""}`} />
+        </button>
+        {atualizadoEm && (
+          <span className="text-[9px] uppercase tracking-[0.12em] font-bold" style={{ color: TINTA_3 }}>
+            ATUALIZADO ÀS {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+          </span>
+        )}
         <span className="ml-auto self-start text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
           {filtradas.length === rows.length ? `${rows.length} ATIVOS` : `${filtradas.length} DE ${rows.length}`}
         </span>
