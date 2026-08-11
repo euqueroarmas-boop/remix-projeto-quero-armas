@@ -25,7 +25,7 @@ const TITULO = {
 };
 
 const AVISO =
-  "rounded-sm border border-[#f0d893] bg-[#fff8e1] px-3 py-2 text-[12px] leading-[1.45] text-[#5a4500]";
+  "qa-caption rounded-sm border border-[#f0d893] bg-[#fff8e1] px-3 py-2 !text-[#5a4500]";
 
 export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho = true }: AgendarExamePainelProps) {
   const [raio, setRaio] = useState(25);
@@ -89,7 +89,7 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho 
       {comCabecalho ? (
         <div>
           <div className="qa-eyebrow text-[#8A1224]">Agendar exame</div>
-          <h2 className="qa-title mt-1 text-[#0A0A0A]">
+          <h2 className="qa-h2 mt-1 text-[#0A0A0A]">
             {TITULO[tipo]}{cidadeUfLabel ? ` EM ${cidadeUfLabel}` : ""}
           </h2>
           <p className="qa-caption mt-1 text-[#6A6A6A]">
