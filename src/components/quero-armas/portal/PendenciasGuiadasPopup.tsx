@@ -1032,7 +1032,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   }`}
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" />
-                  Usar laudo particular
+                  Encontrar um psicólogo parceiro
                 </button>
               ) : (
                 <div className="hidden md:block" />
@@ -1061,16 +1061,6 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
       </div>
 
-      {exameModal ? (
-        <AgendarExameModal
-          open
-          tipo={exameModal}
-          cep={cepCliente ?? null}
-          uf={ufCliente ?? null}
-          cidade={cidadeCliente ?? null}
-          onClose={() => setExameModal(null)}
-        />
-      ) : null}
     </div>
   );
 }
