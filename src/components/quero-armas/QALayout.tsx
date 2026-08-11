@@ -59,7 +59,7 @@ function QALayoutInner() {
       <QASidebar perfil={profile.perfil} nome={profile.nome} signOut={signOut} />
       <main className="min-w-0 min-h-screen flex flex-col" style={{ background: "hsl(220 20% 97%)" }}>
         <QABreadcrumb />
-        <div className="flex-1 p-3 md:p-6 lg:p-8">
+        <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />
         </div>
         <QAFooter />
