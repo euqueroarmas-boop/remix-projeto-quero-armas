@@ -507,11 +507,10 @@ export function limiarAlertaDias(tipo?: string | null): number {
   const regra = getRegraValidade(tipo);
   if (regra && regra.alerta_dias > 0) return regra.alerta_dias;
   if (isProcuracao(tipo)) return 90;
-  // Janelas próprias: CR abre em 180 dias (prazo fatal de protocolo da
-  // renovação é 90 dias antes do vencimento) e laudos em 120 dias.
-  const t = String(tipo || "").trim().toLowerCase();
-  if (t === "cr") return 180;
-  if (t === "laudo_psicologico" || t === "laudo_capacidade_tecnica") return 120;
+  // NÃO estender aqui as janelas de CR (180d) e laudos (120d): este limiar
+  // pinta o chip "vence em breve" no Hub e deixaria quase todo laudo amarelo.
+  // Essas janelas vivem no motor de avisos (badge da home + e-mails):
+  // src/lib/quero-armas/avisosVencimento.ts.
   return 7;
 }
 
