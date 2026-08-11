@@ -34,17 +34,26 @@ function getRetryAfterSeconds(error: unknown): number {
   return 60
 }
 
-// email-js currently forwards the subject through a Fetch header. Deno headers
-// only accept ByteString characters, so typographic punctuation such as an em
-// dash (U+2014) aborts the request before it reaches the provider. Preserve
-// Portuguese Latin-1 characters and normalize only code points above U+00FF.
+// email-js currently forwards the subject through a Fetch header. Deno header
+// values reject any non-ASCII code point, so both typographic punctuation
+// (em dash U+2014) and Portuguese accents (ã, ç, é...) abort the request
+// before it reaches the provider. Transliterate to pure ASCII: the body keeps
+// full accentuation, only the subject header is normalized.
 function toHeaderSafeSubject(value: unknown): string {
   return String(value ?? '')
     .replace(/[\u2010-\u2015\u2212]/g, '-')
-    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u2018\u2019\u201B]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/\u2026/g, '...')
-    .replace(/[^\u0009\u0020-\u00FF]/g, '')
+    .replace(/[\u00A0\u2007\u202F]/g, ' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u00C6]/g, 'AE').replace(/[\u00E6]/g, 'ae')
+    .replace(/[\u00D8]/g, 'O').replace(/[\u00F8]/g, 'o')
+    .replace(/[\u00D0\u00DE]/g, 'D').replace(/[\u00F0\u00FE]/g, 'd')
+    .replace(/[\u00DF]/g, 'ss')
+    .replace(/[^\u0020-\u007E]/g, '')
+    .trim()
 }
 
 function parseJwtClaims(token: string): Record<string, unknown> | null {
