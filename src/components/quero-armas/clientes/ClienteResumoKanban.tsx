@@ -646,11 +646,9 @@ export default function ClienteResumoKanban({
         doc?.dados_json?.nome_titular ||
         doc?.dados_json?.titular_comprovante_nome ||
         null;
-      const subDoc = isLaudo
-        ? URG_SUB.psicologico
-        : titularDoc
-          ? `__TITULAR__${titularDoc}`
-          : URG_SUB.documento;
+      const subDoc = titularDoc && !isLaudo
+        ? `__TITULAR__${titularDoc}`
+        : avisoParaTipo(tipo, URG_SUB.documento);
       const validadeDoc = doc?.data_validade_efetiva || doc?.data_validade;
       const diasDoc = daysUntil(validadeDoc);
       const isComprovante = tipo === "comprovante_residencia";
@@ -667,6 +665,7 @@ export default function ClienteResumoKanban({
         isComprovante && diasDoc !== null
           ? explicaComprovanteEndereco(doc, diasDoc) ?? undefined
           : undefined,
+        tipo,
       );
     });
     // Deduplicação: o mesmo documento aparece no Hub (meusDocs, com descrição
@@ -682,11 +681,14 @@ export default function ClienteResumoKanban({
       if (tipo && tiposNoHub.has(tipo)) return;
       pushUrgent(
         shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
-        URG_SUB.documento,
+        avisoParaTipo(tipo, AVISO_DOC_PROCESSO_SEM_HUB),
         doc?.data_validade_efetiva || doc?.data_validade,
         "processos",
         "ATUALIZAR AGORA →",
         "processos",
+        undefined,
+        undefined,
+        tipo,
       );
     });
     prazosProc.forEach((p: any) => {
