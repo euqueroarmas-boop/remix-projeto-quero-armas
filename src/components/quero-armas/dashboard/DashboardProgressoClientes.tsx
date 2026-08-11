@@ -15,6 +15,7 @@ interface Row {
   processo_id: string;
   cliente_id: number;
   cliente_nome: string | null;
+  cliente_email?: string | null;
   servico_nome: string | null;
   fase: string;
   total_docs: number;
