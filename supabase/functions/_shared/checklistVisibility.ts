@@ -120,3 +120,12 @@ export function filtrarIdentidadeUnica<T>(
     return opts.cumprido(d);
   });
 }
+
+/**
+ * CIN, CNH e RG são vias da MESMA exigência de identidade civil.
+ * Espelha src/lib/quero-armas/identidadeUnica.ts.
+ */
+export function mesmaExigenciaIdentidade(a?: string | null, b?: string | null): boolean {
+  if (!a || !b) return false;
+  return ehDocumentoIdentidade(a) && ehDocumentoIdentidade(b);
+}

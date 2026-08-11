@@ -81,6 +81,7 @@ import {
 } from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
+import { mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -1725,7 +1726,10 @@ export function ClienteDocsHubModal({
     expectedTipoMeta &&
     (classificacao || conferenciaLocal) &&
     form.tipo_documento &&
-    form.tipo_documento !== expectedTipoMeta.value
+    form.tipo_documento !== expectedTipoMeta.value &&
+    // CIN, CNH e RG são vias da MESMA exigência de identidade civil:
+    // enviar a CNH num slot que pedia CIN não é documento incorreto.
+    !mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value)
   );
   // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
   const pendingSet = new Set(
@@ -4279,6 +4283,21 @@ export function ClienteDocsHubModal({
       // disparados por triggers SECURITY DEFINER no banco.
 
       docSalvoRef.current = true;
+      // IDENTIDADE ÚNICA: o slot pedia CIN e veio CNH (ou vice-versa). O
+      // documento é gravado com o tipo REAL lido; mandamos revalidar as
+      // exigências para o checklist não continuar cobrando a outra via.
+      if (
+        qaClienteId &&
+        expectedTipoMeta &&
+        form.tipo_documento !== expectedTipoMeta.value &&
+        mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value)
+      ) {
+        try {
+          await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
+        } catch (e) {
+          console.warn("[identidade-unica] falha ao revalidar exigências", e);
+        }
+      }
       setResultadoCarimbo(
         terceiroDados
           ? {
@@ -4472,7 +4491,10 @@ export function ClienteDocsHubModal({
             </div>
             {expectedTipoMeta ? (
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
-                Exigência: {expectedTipoMeta.label}
+                Exigência:{" "}
+                {ehDocumentoIdentidade(expectedTipoMeta.value, expectedTipoMeta.label)
+                  ? "Documento oficial de identidade (CIN, CNH ou RG com CPF)"
+                  : expectedTipoMeta.label}
               </div>
             ) : null}
             {notaTomadorParentesco ? (
