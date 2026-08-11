@@ -318,6 +318,20 @@ Deno.serve(async (req) => {
       return json({ ok: true, origin, fora_do_raio: false, raio_km, results, count: results.length });
     }
 
+    // CEP informado mas sem coordenada resolvida: NÃO cair em lista alfabética
+    // (isso trazia profissionais de cidades distantes como se fossem "próximos").
+    if (cep.length === 8 && (!origin || !origin.lat || !origin.lng)) {
+      return json({
+        ok: true,
+        origin: origin ? { ...origin, lat: null, lng: null } : null,
+        geocode_falhou: true,
+        fora_do_raio: false,
+        raio_km,
+        results: [],
+        count: 0,
+      });
+    }
+
     // Sem CEP: lista por UF se fornecida, ordenada por cidade/nome
     let q = supabase.from("qa_psico_credenciados").select("*").eq("tipo", tipo).eq("ativo", true).order("cidade").order("nome").limit(limit);
     if (ufFiltro) q = q.eq("uf", ufFiltro);
