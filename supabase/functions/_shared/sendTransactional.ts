@@ -12,6 +12,7 @@ export interface SendTransactionalArgs {
 export interface SendTransactionalResult {
   ok: boolean;
   queued?: boolean;
+  messageId?: string;
   error?: string;
 }
 
@@ -34,6 +35,7 @@ export async function sendTransactional(args: SendTransactionalArgs): Promise<Se
     return {
       ok,
       queued: Boolean(data?.queued),
+      messageId: data?.message_id ? String(data.message_id) : undefined,
       error: ok ? undefined : String(data?.error || data?.reason || "E-mail não enfileirado"),
     };
   } catch (e) {

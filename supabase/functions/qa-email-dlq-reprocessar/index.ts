@@ -127,8 +127,20 @@ Deno.serve(async (req) => {
       templateData: (conteudo?.template_data as Record<string, unknown>) ?? {},
     });
 
-    if (result.ok) reenviados++;
-    else erros.push({ message_id: mid, error: result.error });
+    if (result.ok) {
+      reenviados++;
+      // Marca a falha original como resolvida pelo reenvio, para que ela
+      // deixe de contar como "falha pendente" nos painéis.
+      if (result.messageId) {
+        await supabase
+          .from("email_send_log")
+          .update({ resolvido_por_message_id: result.messageId })
+          .eq("message_id", mid)
+          .is("resolvido_por_message_id", null);
+      }
+    } else {
+      erros.push({ message_id: mid, error: result.error });
+    }
   }
 
   return json({
