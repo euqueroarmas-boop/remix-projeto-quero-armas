@@ -220,6 +220,8 @@ export default function DashboardProgressoClientes() {
 
   const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
   const [recarregando, setRecarregando] = useState(false);
+  /** email -> { hoje, total } de entradas no portal. */
+  const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
   const carregarRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -235,6 +237,25 @@ export default function DashboardProgressoClientes() {
         setRows(lista);
 
         const ids = lista.map((r) => r.processo_id).filter(Boolean);
+
+        // Contagem de entradas no portal por cliente (hoje e histórico).
+        const { data: logins } = await supabase
+          .from("qa_cliente_login_eventos")
+          .select("email, created_at")
+          .not("email", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(5000);
+        const hojeStr = new Date().toDateString();
+        const mapaAcessos: Record<string, { hoje: number; total: number }> = {};
+        for (const l of ((logins as any[]) ?? [])) {
+          const email = String(l.email ?? "").trim().toLowerCase();
+          if (!email) continue;
+          const item = (mapaAcessos[email] ||= { hoje: 0, total: 0 });
+          item.total += 1;
+          if (new Date(l.created_at).toDateString() === hojeStr) item.hoje += 1;
+        }
+        if (!cancelled) setAcessos(mapaAcessos);
+
         if (ids.length > 0) {
           const [{ data: docs }, { data: procs }] = await Promise.all([
             supabase
