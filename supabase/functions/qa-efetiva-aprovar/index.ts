@@ -316,9 +316,30 @@ Deno.serve(async (req) => {
       dossie_gerado_em: agora.toISOString(),
       exames_liberados_em: agora.toISOString(),
       enviado_equipe_em: agora.toISOString(),
-      status: "aprovado",
+      // O aceite do cliente NÃO é a aprovação da equipe: entra em revisão.
+      status: "em_revisao",
       updated_at: agora.toISOString(),
     }).eq("id", registroId);
+
+    /* ── 4.0) Log de auditoria: aceite do cliente ─────────────────────── */
+    try {
+      await sb.from("qa_efetiva_necessidade_auditoria").insert({
+        efetiva_id: registroId,
+        cliente_id: reg.cliente_id,
+        acao: "aceite_cliente",
+        status_anterior: reg.status ?? null,
+        status_novo: "em_revisao",
+        autor_tipo: "cliente",
+        autor_nome: cliente?.nome_completo ?? null,
+        observacao: editado
+          ? "Cliente editou o relato antes de aceitar."
+          : "Cliente aceitou o relato sem alterações.",
+        ip,
+        user_agent: ua,
+      });
+    } catch (e) {
+      console.warn("[qa-efetiva-aprovar] auditoria nao gravada:", e);
+    }
 
     /* ── 4.1) Fecha a exigência no checklist do processo ────────────────
      * Sem isto o painel administrativo continuava mostrando o cliente parado
