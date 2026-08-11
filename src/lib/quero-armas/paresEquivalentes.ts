@@ -54,29 +54,46 @@ export function mesmaExigenciaLaudo(
 /**
  * Colapsa pares equivalentes numa lista de documentos de checklist.
  *
- * Mantém sempre UMA linha por exigência de laudo:
- *  • se existir a linha canônica, o irmão institucional é removido;
- *  • se só existir o irmão institucional (processos antigos), ele permanece,
- *    representando o par — nunca deixamos a exigência sumir.
+ * Mantém sempre UMA linha por exigência de laudo. Quando as duas linhas do par
+ * existem, sobrevive a que representa melhor o estado real da exigência:
+ * cumprida > em análise > canônica (particular) > institucional. Assim o
+ * cliente nunca vê "pendente" numa exigência que já foi entregue pela outra
+ * via, nem vê o mesmo laudo cobrado duas vezes.
  *
- * Não muta nem reordena a lista de entrada.
+ * Não muta a lista de entrada e preserva a ordem original.
  */
 export function colapsarParesLaudo<T>(
   docs: T[],
   getTipo: (doc: T) => string | null | undefined,
+  opts?: {
+    cumprido?: (doc: T) => boolean;
+    emAnalise?: (doc: T) => boolean;
+  },
 ): T[] {
-  const canonicosPresentes = new Set(
-    docs.map((d) => norm(getTipo(d))).filter((t) => t && !ehIrmaoInstitucional(t)),
-  );
-  const jaVisto = new Set<string>();
+  const peso = (d: T): number => {
+    if (opts?.cumprido?.(d)) return 3;
+    if (opts?.emAnalise?.(d)) return 2;
+    return ehIrmaoInstitucional(getTipo(d)) ? 0 : 1;
+  };
+
+  // Escolhe o representante de cada par.
+  const melhorPorPar = new Map<string, T>();
+  for (const d of docs) {
+    const t = norm(getTipo(d));
+    if (!t) continue;
+    const canonico = tipoCanonicoLaudo(t);
+    if (canonico !== t || PAR_LAUDO_IRMAO[t]) {
+      const atual = melhorPorPar.get(canonico);
+      if (!atual || peso(d) > peso(atual)) melhorPorPar.set(canonico, d);
+    }
+  }
+
   return docs.filter((d) => {
     const t = norm(getTipo(d));
     if (!t) return true;
     const canonico = tipoCanonicoLaudo(t);
-    if (canonico === t && !PAR_LAUDO_IRMAO[t]) return true; // não faz parte de par
-    if (ehIrmaoInstitucional(t) && canonicosPresentes.has(canonico)) return false;
-    if (jaVisto.has(canonico)) return false;
-    jaVisto.add(canonico);
-    return true;
+    const representante = melhorPorPar.get(canonico);
+    if (!representante) return true; // não faz parte de par
+    return representante === d;
   });
 }
