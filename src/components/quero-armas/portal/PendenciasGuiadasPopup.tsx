@@ -1032,7 +1032,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   }`}
                 >
                   <Search className="h-3.5 w-3.5 shrink-0" />
-                  Encontrar um psicólogo parceiro
+                  {alternativaParticular === "psicologo"
+                    ? "Encontrar um psicólogo parceiro"
+                    : "Encontrar um instrutor parceiro"}
                 </button>
               ) : (
                 <div className="hidden md:block" />
