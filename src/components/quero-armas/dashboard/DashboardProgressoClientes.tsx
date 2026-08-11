@@ -227,6 +227,8 @@ export default function DashboardProgressoClientes() {
   const [recarregando, setRecarregando] = useState(false);
   /** email -> { hoje, total } de entradas no portal. */
   const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
+  /** Totais globais de acessos ao portal (hoje e desde o início). */
+  const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   const carregarRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -260,6 +262,18 @@ export default function DashboardProgressoClientes() {
           if (new Date(l.created_at).toDateString() === hojeStr) item.hoje += 1;
         }
         if (!cancelled) setAcessos(mapaAcessos);
+
+        // Totais globais exatos (não limitados pelo select acima).
+        const inicioHoje = new Date();
+        inicioHoje.setHours(0, 0, 0, 0);
+        const [{ count: totalGeral }, { count: totalHoje }] = await Promise.all([
+          supabase.from("qa_cliente_login_eventos").select("id", { count: "exact", head: true }),
+          supabase
+            .from("qa_cliente_login_eventos")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", inicioHoje.toISOString()),
+        ]);
+        if (!cancelled) setAcessosGlobais({ hoje: totalHoje ?? 0, total: totalGeral ?? 0 });
 
         if (ids.length > 0) {
           const [{ data: docs }, { data: procs }] = await Promise.all([
