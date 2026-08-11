@@ -3235,6 +3235,7 @@ export default function QAClientesPage() {
                 ...(ehAdministrador
                   ? [{ value: "auditoria_leitura", icon: ScanText, label: "Auditoria de leitura" }]
                   : []),
+                { value: "carimbos", icon: ShieldCheck, label: "Carimbos de conexão" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
@@ -4010,6 +4011,10 @@ export default function QAClientesPage() {
               )}
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
+              </TabsContent>
+              {/* CARIMBOS DE CONEXÃO — IP/dispositivo de tudo que o cliente entregou */}
+              <TabsContent value="carimbos" className="mt-3">
+                <ClienteCarimbosConexao cliente={c} />
               </TabsContent>
               {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
               <TabsContent value="hub" className="mt-3">

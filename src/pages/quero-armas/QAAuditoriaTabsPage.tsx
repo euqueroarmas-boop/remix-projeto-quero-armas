@@ -6,19 +6,21 @@
  * /auditoria/central-documentos) permanecem ativas em QARoutes.
  */
 import { useState } from "react";
-import { ShieldCheck, History, Gavel, FileSearch } from "lucide-react";
+import { ShieldCheck, History, Gavel, FileSearch, Mail } from "lucide-react";
 import QAAuditoriaPage from "./QAAuditoriaPage";
 import QAHistoricoPage from "./QAHistoricoPage";
 import QARecursosAuditoriaPage from "./QARecursosAuditoriaPage";
 import QAProcessosAuditoriaPage from "./QAProcessosAuditoriaPage";
+import QAEmailsPainelPage from "./QAEmailsPainelPage";
 
-type TabKey = "geral" | "historico" | "recursos" | "documentos";
+type TabKey = "geral" | "historico" | "recursos" | "documentos" | "emails";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "geral", label: "Auditoria Geral", icon: ShieldCheck },
   { key: "historico", label: "Histórico", icon: History },
   { key: "recursos", label: "Recursos Administrativos", icon: Gavel },
   { key: "documentos", label: "Central de Documentos", icon: FileSearch },
+  { key: "emails", label: "E-mails", icon: Mail },
 ];
 
 export default function QAAuditoriaTabsPage() {
@@ -64,6 +66,7 @@ export default function QAAuditoriaTabsPage() {
         {tab === "historico" && <QAHistoricoPage />}
         {tab === "recursos" && <QARecursosAuditoriaPage />}
         {tab === "documentos" && <QAProcessosAuditoriaPage />}
+        {tab === "emails" && <QAEmailsPainelPage />}
       </div>
     </div>
   );
