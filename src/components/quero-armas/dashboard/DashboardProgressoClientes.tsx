@@ -311,7 +311,32 @@ export default function DashboardProgressoClientes() {
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   /** Resumo de e-mails disparados (deduplicado por message_id). */
   const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number }>({ total: 0, hoje: 0, falhas: 0 });
+  /** Painel expansível de e-mails por cliente. */
+  const [emailsAberto, setEmailsAberto] = useState(false);
+  const [emailsPorCliente, setEmailsPorCliente] = useState<any[]>([]);
+  const [emailsCarregando, setEmailsCarregando] = useState(false);
+  const [emailExpandido, setEmailExpandido] = useState<string | null>(null);
+  const [emailDetalhe, setEmailDetalhe] = useState<Record<string, any[]>>({});
+  const [somenteFalhas, setSomenteFalhas] = useState(false);
   const carregarRef = useRef<() => void>(() => {});
+
+  useEffect(() => {
+    if (!emailsAberto || emailsPorCliente.length > 0) return;
+    (async () => {
+      setEmailsCarregando(true);
+      const { data } = await supabase.rpc("qa_email_por_cliente" as any, { _limite: 200 });
+      setEmailsPorCliente(((data as any[]) ?? []));
+      setEmailsCarregando(false);
+    })();
+  }, [emailsAberto, emailsPorCliente.length]);
+
+  const abrirDetalhe = async (email: string) => {
+    if (emailExpandido === email) { setEmailExpandido(null); return; }
+    setEmailExpandido(email);
+    if (emailDetalhe[email]) return;
+    const { data } = await supabase.rpc("qa_email_por_cliente_detalhe" as any, { _email: email, _limite: 100 });
+    setEmailDetalhe((m) => ({ ...m, [email]: ((data as any[]) ?? []) }));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -630,10 +655,14 @@ export default function DashboardProgressoClientes() {
         ))}
 
         {/* E-mails disparados para clientes (deduplicado por envio). */}
-        <div
-          title="Total de e-mails disparados para clientes"
-          className="rounded-sm border border-[#E4E4E4] px-3 py-2 text-left"
-          style={{ background: "#FFFFFF" }}
+        <button
+          type="button"
+          title="Clique para ver os e-mails por cliente e as falhas"
+          onClick={() => setEmailsAberto((v) => !v)}
+          className={`rounded-sm border px-3 py-2 text-left transition-colors ${
+            emailsAberto ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+          }`}
+          style={{ background: emailsAberto ? "#F4F4F4" : "#FFFFFF" }}
         >
           <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: TINTA }}>
             {emails.total}
@@ -645,8 +674,99 @@ export default function DashboardProgressoClientes() {
             <div>{emails.hoje} ENVIADOS HOJE</div>
             <div style={{ color: emails.falhas > 0 ? VERMELHO : TINTA_3 }}>{emails.falhas} FALHARAM</div>
           </div>
-        </div>
+        </button>
       </div>
+
+      {emailsAberto && (
+        <div className="border-b border-[#E4E4E4] bg-white px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: TINTA_3 }}>
+              E-MAILS POR CLIENTE
+            </span>
+            <button
+              type="button"
+              onClick={() => setSomenteFalhas((v) => !v)}
+              className={`rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] transition-colors ${
+                somenteFalhas ? "border-[#7A1F2B] text-[#7A1F2B]" : "border-[#DADADA] text-[#3A3A3A]"
+              }`}
+            >
+              SOMENTE FALHAS
+            </button>
+          </div>
+
+          {emailsCarregando ? (
+            <div className="py-6 text-center text-[10.5px] uppercase tracking-wider" style={{ color: TINTA_3 }}>CARREGANDO</div>
+          ) : (
+            <div className="mt-2 max-h-[380px] overflow-y-auto">
+              {emailsPorCliente
+                .filter((e) => (somenteFalhas ? Number(e.falhas) > 0 : true))
+                .map((e) => {
+                  const aberto = emailExpandido === e.recipient_email;
+                  const det = emailDetalhe[e.recipient_email] ?? [];
+                  return (
+                    <div key={e.recipient_email} className="border-b border-[#EFEFEF] py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => abrirDetalhe(e.recipient_email)}
+                        className="w-full flex flex-wrap items-center gap-x-3 gap-y-0.5 text-left"
+                      >
+                        <span className="text-[11px] font-bold uppercase" style={{ color: TINTA }}>
+                          {e.cliente_nome || e.recipient_email}
+                        </span>
+                        {e.cliente_nome && (
+                          <span className="text-[10.5px] font-medium" style={{ color: TINTA_3 }}>{e.recipient_email}</span>
+                        )}
+                        <span className="text-[10.5px] font-medium uppercase tabular-nums" style={{ color: TINTA_3 }}>
+                          {e.total} ENVIO(S) · {e.enviados} OK
+                        </span>
+                        {Number(e.falhas) > 0 && (
+                          <span className="text-[10.5px] font-bold uppercase tabular-nums" style={{ color: VERMELHO }}>
+                            {e.falhas} FALHA(S)
+                          </span>
+                        )}
+                      </button>
+                      {aberto && (
+                        <div className="mt-1.5 pl-3 border-l-2 border-[#E4E4E4]">
+                          {det.length === 0 ? (
+                            <div className="py-1 text-[10px] uppercase" style={{ color: TINTA_3 }}>CARREGANDO</div>
+                          ) : det.map((d) => {
+                            const falhou = ["dlq", "failed", "bounced", "complained"].includes(String(d.status ?? "").toLowerCase());
+                            return (
+                              <div key={d.message_id} className="py-1">
+                                <div className="flex flex-wrap items-center gap-x-2 text-[10.5px] font-medium" style={{ color: TINTA_3 }}>
+                                  <span className="tabular-nums">
+                                    {new Date(d.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                                  </span>
+                                  <span className="uppercase">{d.template_name ?? "—"}</span>
+                                  <span className="font-bold uppercase" style={{ color: falhou ? VERMELHO : "#166534" }}>
+                                    {d.status ?? "—"}
+                                  </span>
+                                </div>
+                                {d.assunto && (
+                                  <div className="text-[10.5px] font-medium" style={{ color: TINTA }}>{d.assunto}</div>
+                                )}
+                                {falhou && d.error_message && (
+                                  <div className="text-[10.5px] font-medium" style={{ color: VERMELHO }}>
+                                    MOTIVO: {d.error_message}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              {emailsPorCliente.length === 0 && (
+                <div className="py-6 text-center text-[10.5px] uppercase tracking-wider" style={{ color: TINTA_3 }}>
+                  NENHUM E-MAIL REGISTRADO
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {trilhasDisponiveis.length > 0 && (
         <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
