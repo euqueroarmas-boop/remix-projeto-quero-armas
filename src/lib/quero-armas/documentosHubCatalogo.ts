@@ -133,15 +133,15 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "antecedentes_criminais", label: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)", short: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_criminais", label: "Certidão de Antecedentes Criminais — Polícia Civil", short: "Antecedentes Criminais — Polícia Civil", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_federal", label: "Certidão de Distribuição Criminal — Justiça Federal", short: "Certidão de Distribuição Criminal — Justiça Federal", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_estadual", label: "Certidão Estadual Criminal — TJSP", short: "Certidão Estadual Criminal — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_trf3_regional", label: "Certidão Federal — TRF 3ª Região", short: "Certidão Federal — TRF 3ª Região", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_sjsp_jef", label: "Certidão Federal — Seção Judiciária SP e JEF/SP", short: "Certidão Federal — Seção Judiciária SP e JEF/SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_distribuicao", label: "Certidão Estadual TJSP — Distribuição de Ações Criminais", short: "Certidão Estadual TJSP — Distribuição de Ações Criminais", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_execucoes", label: "Certidão Estadual TJSP — Execuções Criminais", short: "Certidão Estadual TJSP — Execuções Criminais", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar", label: "Certidão Criminal Militar — Justiça Militar da União (STM)", short: "Certidão Criminal Militar — STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar_estadual", label: "Certidão Criminal Militar — Justiça Militar Estadual (TJM)", short: "Certidão Criminal Militar — TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_trf3_regional", label: "Certidão do Tribunal Regional Federal da 3ª Região", short: "Certidão Federal — TRF 3ª Região", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_sjsp_jef", label: "Certidão da Seção Judiciária/JEF do Estado de São Paulo", short: "Certidão Federal — Seção Judiciária/JEF-SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_distribuicao", label: "Certidão de Distribuição de Ações Criminais — TJSP", short: "Distribuição de Ações Criminais — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_execucoes", label: "Certidão de Execuções Criminais — TJSP", short: "Execuções Criminais — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: "Certidão da Justiça Militar da União — STM", short: "Certidão Criminal Militar — STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar_estadual", label: "Certidão da Justiça Militar Estadual — TJM", short: "Certidão Criminal Militar — TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_eleitoral", label: "Certidão de Crimes Eleitorais — TSE", short: "Certidão de Crimes Eleitorais — TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
@@ -200,6 +200,8 @@ const META_BY_TIPO = new Map(HUB_TIPOS_DOCUMENTO.map((item) => [item.value, item
  */
 const TIPOS_LEGADOS_OCULTOS = new Set<string>([
   "antecedentes_estadual",
+  // Substituída pelos subtipos TRF3 Regional e Seção Judiciária/JEF-SP.
+  "antecedentes_federal",
 ]);
 
 /**
