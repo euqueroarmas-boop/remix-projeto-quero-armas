@@ -659,13 +659,13 @@ export default function DashboardProgressoClientes() {
                     : <span className="text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
-                    : <span className="text-[11px] font-semibold uppercase" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                    : <span className="block text-left text-[11px] font-semibold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
-                    <span className="text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
+                    <span className="block text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
                   ),
                   cobrancas: (
                     <span
-                      className="text-[11.5px] font-semibold tabular-nums"
+                      className="block text-left text-[11.5px] font-semibold tabular-nums"
                       style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}
                       title="Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)"
                     >
@@ -685,7 +685,7 @@ export default function DashboardProgressoClientes() {
                     style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
                   >
                     {colunas.map((c) => (
-                      <td key={c.key} className="px-3 py-3 align-top overflow-hidden border-r border-[#F3F3F3] last:border-r-0">
+                      <td key={c.key} className="border-r border-[#F3F3F3] px-3 py-3 text-left align-top last:border-r-0 [overflow-wrap:anywhere]">
                         {celulas[c.key]}
                       </td>
                     ))}
