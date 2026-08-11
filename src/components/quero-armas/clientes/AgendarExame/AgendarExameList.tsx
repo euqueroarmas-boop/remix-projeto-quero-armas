@@ -21,36 +21,33 @@ function mapsLink(c: CredenciadoPsico) {
 }
 
 export function AgendarExameList({ results, loading, empty }: { results: CredenciadoPsico[]; loading: boolean; empty: string }) {
-  if (loading) return <div style={{ padding: 28, textAlign: "center", color: "#6A6A6A", fontSize: 13 }}>Buscando profissionais credenciados na Polícia Federal…</div>;
-  if (results.length === 0) return <div style={{ padding: 28, textAlign: "center", color: "#6A6A6A", fontSize: 13 }}>{empty}</div>;
+  if (loading) return <div className="qa-caption py-7 text-center">Buscando profissionais credenciados na Polícia Federal…</div>;
+  if (results.length === 0) return <div className="qa-caption py-7 text-center">{empty}</div>;
   return (
-    <div style={{ display: "grid", gap: 10 }}>
+    <div className="grid gap-2.5">
       {results.map((c) => {
         const validade = fmtValidade(c.validade_label, c.validade);
         const vencido = c.validade ? new Date(c.validade) < new Date() : false;
         return (
-          <article key={c.id} style={{
-            border: "1px solid #e3e3e1", background: "#fff", borderRadius: 4, padding: "14px 16px",
-            display: "grid", gap: 6,
-          }}>
-            <header style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
-              <div>
-                <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, fontWeight: 700, color: "#0A0A0A", letterSpacing: ".04em", textTransform: "uppercase" }}>{c.nome}</div>
-                {c.registro && <div style={{ fontSize: 11, color: "#6A6A6A", marginTop: 2 }}>{c.registro}</div>}
+          <article key={c.id} className="grid gap-1.5 rounded-sm border border-[#e3e3e1] bg-white px-4 py-3.5">
+            <header className="flex items-baseline justify-between gap-3">
+              <div className="min-w-0">
+                <div className="qa-h3">{c.nome}</div>
+                {c.registro && <div className="qa-caption mt-0.5">{c.registro}</div>}
               </div>
               {c.distancia_km != null && (
-                <span style={{ fontFamily: "Oswald, sans-serif", fontSize: 12, fontWeight: 700, color: "#7A1F2B", letterSpacing: ".06em" }}>{fmtKm(c.distancia_km)}</span>
+                <span className="qa-h3 shrink-0 !text-[#7A1F2B]">{fmtKm(c.distancia_km)}</span>
               )}
             </header>
             {c.endereco && (
-              <div style={{ fontSize: 12, color: "#303030" }}>
+              <div className="qa-body qa-body--soft">
                 {c.endereco}{c.bairro ? ` — ${c.bairro}` : ""}{c.cidade ? ` · ${c.cidade}/${c.uf}` : ` · ${c.uf}`}
               </div>
             )}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, fontSize: 12, marginTop: 4 }}>
+            <div className="qa-body mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               {c.telefones.map((t) => (
-                <span key={t} style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
-                  <a href={`tel:${t.replace(/\D/g, "")}`} style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>📞 {t}</a>
+                <span key={t} className="inline-flex items-center gap-2">
+                  <a href={`tel:${t.replace(/\D/g, "")}`} className="border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">📞 {t}</a>
                   {/* WhatsApp: a maioria destes profissionais atende por lá, e
                       ligar do celular para um consultório raramente é atendido.
                       Só aparece em número com DDD (10 ou 11 dígitos) — fixo de
@@ -67,7 +64,7 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
                         href={`https://wa.me/55${d}?text=${msg}`}
                         target="_blank"
                         rel="noreferrer noopener"
-                        style={{ color: "#0A7C42", textDecoration: "none", borderBottom: "1px dotted #0A7C42", fontWeight: 600 }}
+                        className="border-b border-dotted border-[#0A7C42] font-semibold text-[#0A7C42] no-underline"
                       >
                         WhatsApp
                       </a>
@@ -76,12 +73,12 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
                 </span>
               ))}
               {c.emails.map((e) => (
-                <a key={e} href={`mailto:${e}`} style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>✉ {e}</a>
+                <a key={e} href={`mailto:${e}`} className="break-all border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">✉ {e}</a>
               ))}
-              <a href={mapsLink(c)} target="_blank" rel="noreferrer noopener" style={{ color: "#0A0A0A", textDecoration: "none", borderBottom: "1px dotted #7A1F2B" }}>📍 Abrir no mapa</a>
+              <a href={mapsLink(c)} target="_blank" rel="noreferrer noopener" className="border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">📍 Abrir no mapa</a>
             </div>
             {validade && (
-              <div style={{ fontSize: 11, color: vencido ? "#df2727" : "#6A6A6A", marginTop: 4 }}>
+              <div className={`qa-caption mt-1 ${vencido ? "!text-[#C32E26]" : ""}`}>
                 {vencido ? "⚠ Credenciamento vencido em " : "Credenciamento válido até "}{validade}
               </div>
             )}
