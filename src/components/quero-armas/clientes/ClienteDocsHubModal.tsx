@@ -4283,6 +4283,21 @@ export function ClienteDocsHubModal({
       // disparados por triggers SECURITY DEFINER no banco.
 
       docSalvoRef.current = true;
+      // IDENTIDADE ÚNICA: o slot pedia CIN e veio CNH (ou vice-versa). O
+      // documento é gravado com o tipo REAL lido; mandamos revalidar as
+      // exigências para o checklist não continuar cobrando a outra via.
+      if (
+        qaClienteId &&
+        expectedTipoMeta &&
+        form.tipo_documento !== expectedTipoMeta.value &&
+        mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value)
+      ) {
+        try {
+          await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
+        } catch (e) {
+          console.warn("[identidade-unica] falha ao revalidar exigências", e);
+        }
+      }
       setResultadoCarimbo(
         terceiroDados
           ? {
