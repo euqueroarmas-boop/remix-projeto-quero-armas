@@ -310,7 +310,12 @@ export default function DashboardProgressoClientes() {
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   /** Resumo de e-mails disparados (deduplicado por message_id). */
-  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number }>({ total: 0, hoje: 0, falhas: 0 });
+  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number; falhasHistoricas: number }>({
+    total: 0,
+    hoje: 0,
+    falhas: 0,
+    falhasHistoricas: 0,
+  });
   /** Painel expansível de e-mails por cliente. */
   const [emailsAberto, setEmailsAberto] = useState(false);
   const [emailsPorCliente, setEmailsPorCliente] = useState<any[]>([]);
@@ -390,6 +395,7 @@ export default function DashboardProgressoClientes() {
             total: Number(re.total ?? 0),
             hoje: Number(re.hoje ?? 0),
             falhas: Number(re.falhas ?? 0),
+            falhasHistoricas: Number(re.falhas_historicas ?? re.falhas ?? 0),
           });
         }
 
