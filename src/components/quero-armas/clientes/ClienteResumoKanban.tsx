@@ -133,7 +133,7 @@ function tituloComprovanteEndereco(doc: any, labelBase: string): string {
   return labelBase;
 }
 
-type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro"; /** Explicação pronta, já com o tipo de conta e as datas que a IA leu do documento. */ detalhe?: string };
+type Urgent = { label: string; sub: string; days: number; navTo: string; ctaLabel: string; frontKey: "arsenal" | "exames" | "filiacao" | "documentos" | "processos"; examTipo?: "psicologo" | "instrutor_tiro"; /** Explicação pronta, já com o tipo de conta e as datas que a IA leu do documento. */ detalhe?: string; /** tipo_documento canônico — define a janela de alerta (CR 180d, laudos 120d). */ tipo?: string; /** Kicker próprio (usado pelo CR, que tem três estágios de copy). */ kicker?: string };
 
 const ACTIVE_FINAL_STATUSES = ["CONCLUÍDO", "DEFERIDO", "INDEFERIDO", "DESISTIU", "RESTITUÍDO"];
 
