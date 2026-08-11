@@ -3,9 +3,11 @@ import {
   isDocEmAnalise,
   isDocPendencia,
 } from "./statusDocumento";
+import { colapsarParesLaudo } from "./paresEquivalentes";
 
 export interface ChecklistMetricDoc {
   status: string | null;
+  tipo_documento?: string | null;
 }
 
 export interface ChecklistMetrics {
@@ -81,10 +83,16 @@ export function isChecklistPendente(status: string | null | undefined): boolean 
 }
 
 export function computeChecklistMetrics<T extends ChecklistMetricDoc>(docs: T[]): ChecklistMetrics {
-  const total = docs.length;
-  const cumpridos = docs.filter((d) => isChecklistCumprido(d.status)).length;
-  const emAnalise = docs.filter((d) => isChecklistEmAnalise(d.status)).length;
-  const pendentes = docs.filter((d) => isChecklistPendente(d.status)).length;
+  // Laudos são 2 exigências, nunca 4: a via institucional e a particular são o
+  // mesmo item, então o par é contado uma única vez.
+  const base = colapsarParesLaudo(docs, (d) => d.tipo_documento, {
+    cumprido: (d) => isChecklistCumprido(d.status),
+    emAnalise: (d) => isChecklistEmAnalise(d.status),
+  });
+  const total = base.length;
+  const cumpridos = base.filter((d) => isChecklistCumprido(d.status)).length;
+  const emAnalise = base.filter((d) => isChecklistEmAnalise(d.status)).length;
+  const pendentes = base.filter((d) => isChecklistPendente(d.status)).length;
   const outros = Math.max(0, total - cumpridos - emAnalise - pendentes);
   const progresso = total > 0 ? Math.round((cumpridos / total) * 100) : 0;
 
