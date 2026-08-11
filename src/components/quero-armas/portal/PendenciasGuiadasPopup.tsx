@@ -451,6 +451,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           ? (ehInstitucional ? null : "instrutor_tiro")
           : null;
 
+  // Passo institucional: o cliente pode optar pelo laudo particular sem sair
+  // do checklist — é este caminho que libera a busca de credenciados da PF.
+  const alternativaParticular: "psicologo" | "instrutor_tiro" | null = ehInstitucional
+    ? ehPsico
+      ? "psicologo"
+      : ehTiro
+        ? "instrutor_tiro"
+        : null
+    : null;
+
   const handleResponder = async (valor: string) => {
     if (!active.onResponder) return;
     setRespondendo(valor);
