@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, MapPin, Search, Upload, X } from "lucide-react";
-import { AgendarExameModal } from "@/components/quero-armas/clientes/AgendarExame/AgendarExameModal";
+import { AgendarExamePainel } from "@/components/quero-armas/clientes/AgendarExame/AgendarExamePainel";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
