@@ -532,7 +532,7 @@ export default function DashboardProgressoClientes() {
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className="flex w-full items-end justify-start gap-1 text-[10px] uppercase tracking-[0.12em] font-bold text-[#3A3A3A] hover:text-[#0A0A0A] transition-colors text-left leading-[1.15]"
+                      className="flex w-full items-end justify-start gap-1 break-words text-left text-[10px] font-bold uppercase leading-[1.15] tracking-[0.12em] text-[#3A3A3A] transition-colors hover:text-[#0A0A0A]"
                     >
                       {c.label}
                       {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
