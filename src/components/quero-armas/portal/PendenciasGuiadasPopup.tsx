@@ -1002,6 +1002,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 >
                   {active.recusaAlternativa.label}
                 </button>
+              ) : alternativaParticular ? (
+                /* Passo institucional: o cliente pode escolher fazer o laudo
+                   com profissional credenciado da PF (particular). */
+                <button
+                  type="button"
+                  onClick={() => setExameModal(alternativaParticular)}
+                  className={`inline-flex w-full items-center justify-center gap-2 border-2 border-[#8A1224] bg-white px-3 text-center font-bold uppercase leading-[1.2] tracking-[0.12em] text-[#8A1224] transition-colors hover:bg-[#FFF7F8] ${
+                    asPage ? "h-14 rounded-xl px-4 text-[11px]" : "h-11 rounded-lg text-[10.5px]"
+                  }`}
+                >
+                  <Search className="h-3.5 w-3.5 shrink-0" />
+                  Usar laudo particular
+                </button>
               ) : (
                 <div className="hidden md:block" />
               )}
@@ -1014,7 +1027,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   } ${
                     isSignature
                       ? "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]"
-                      : active.recusaAlternativa
+                      : active.recusaAlternativa || alternativaParticular
                         ? "bg-[#8A1224] text-white hover:bg-[#6f0f1e]"
                         : "bg-[#8A1224] text-white hover:bg-[#6f0f1e] md:col-span-2"
                   }`}
