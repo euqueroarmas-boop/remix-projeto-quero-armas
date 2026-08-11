@@ -129,14 +129,14 @@ function corProgresso(pct: number, dias: number) {
 }
 
 function Chip({
-  children, cor, fundo, titulo, quebra,
-}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean }) {
+  children, cor, fundo, titulo, quebra, miudo,
+}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean; miudo?: boolean }) {
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[12.5px] font-bold uppercase leading-[1.25] tracking-[0.06em] ${
-        quebra ? "[overflow-wrap:anywhere]" : "break-words"
-      }`}
+      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left uppercase leading-[1.25] tracking-[0.06em] ${
+        miudo ? "text-[10.5px] font-medium" : "text-[12.5px] font-bold"
+      } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
     >
       {children}
@@ -693,7 +693,7 @@ export default function DashboardProgressoClientes() {
                   )}
                   <LinhaGrupos r={r} />
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                  {pendencias > 0 && <Chip cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                  {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="#F4F4F4">{r.cobrancas} COB.</Chip>}
                 </div>
@@ -836,10 +836,10 @@ export default function DashboardProgressoClientes() {
                         {r.online
                           ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
                           : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                        <div className="text-[10.5px] font-medium uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
                           {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
                         </div>
-                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                        <div className="text-[10.5px] font-medium uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
                           · {e.total} NO TOTAL
                         </div>
                       </div>
@@ -877,15 +877,15 @@ export default function DashboardProgressoClientes() {
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                         {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                        {pendencias > 0 && <Chip cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                        {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                         {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
                         {(r.reaproveitados ?? 0) > 0 && (
-                          <Chip cor={TINTA_3} fundo="#F4F4F4" titulo="Documentos aproveitados do histórico do cliente">
+                          <Chip miudo cor={TINTA_3} fundo="#F4F4F4" titulo="Documentos aproveitados do histórico do cliente">
                             {r.reaproveitados} REAPROVEITADOS
                           </Chip>
                         )}
                         {(r.dispensados ?? 0) > 0 && (
-                          <Chip cor={TINTA_3} fundo="#F4F4F4" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
+                          <Chip miudo cor={TINTA_3} fundo="#F4F4F4" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
                             {r.dispensados} NÃO SE APLICA
                           </Chip>
                         )}

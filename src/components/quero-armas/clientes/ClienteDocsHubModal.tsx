@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { valorAusente, normalizarAptidao } from "@/lib/quero-armas/valorAusente";
 import { useCredenciadosPsico, type CredenciadoPsico } from "./AgendarExame/useCredenciadosPsico";
 import { toast } from "sonner";
 import {
@@ -819,8 +820,18 @@ function calcularConformidade(
     campo: string, label: string, valorDoc: string | undefined,
     compare: (a: string, b: string) => boolean | "gray",
   ) {
-    if (!valorDoc) return;
+    // Campo que o documento NÃO declara nunca vira divergência. A IA às vezes
+    // devolve "(não consta)", "não informado", "—" no lugar de string vazia, e
+    // tratar isso como valor lido reprovava laudo por dado que o documento
+    // simplesmente não traz. Sem dado no documento, não há o que comparar.
+    if (!valorDoc || valorAusente(valorDoc)) return;
     const r = ref[campo];
+    // Sem o dado declarado no cadastro/documentos aprovados também não há
+    // exigência: exibimos "sem referência" e seguimos.
+    if (r && valorAusente(r.valor)) {
+      items.push({ campo, label, valorCertidao: valorDoc, valorReferencia: null, fonteReferencia: null, status: "sem_referencia" });
+      return;
+    }
     let status: ConformidadeStatus;
     if (!r) {
       status = "sem_referencia";
@@ -1566,6 +1577,10 @@ export function ClienteDocsHubModal({
   const [profissionalExtraido, setProfissionalExtraido] = useState<{
     nome: string | null;
     registro: string | null;
+    endereco?: string | null;
+    cidade?: string | null;
+    uf?: string | null;
+    telefone?: string | null;
   }>({ nome: null, registro: null });
 
   // Reseta todo o estado do modal quando ele é fechado, para que ao abrir
@@ -2219,17 +2234,46 @@ export function ClienteDocsHubModal({
     const tipoProf = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" : "psicologo";
     void (async () => {
       try {
-        const { data: existente } = await supabase
+        // Dedupe: nome sem acento/pontuação + registro só com dígitos. Antes a
+        // comparação era sensível a acento ("THAIS" x "THAÍS") e ao formato do
+        // CRP, então a mesma profissional entrava duas vezes na lista.
+        const chaveNome = normNome(nome);
+        const chaveReg = normReg(profissionalExtraido.registro || "");
+        const enderecoDoc = profissionalExtraido.endereco || null;
+        const cidadeDoc = profissionalExtraido.cidade || null;
+        const ufDoc = profissionalExtraido.uf || null;
+        const { data: existentes } = await supabase
           .from("qa_psico_nao_localizados" as any)
-          .select("id, ocorrencias")
+          .select("id, nome, registro, ocorrencias, endereco, cidade, uf, telefone, cliente_nome, qa_cliente_id")
           .eq("tipo", tipoProf)
-          .ilike("nome", nome)
-          .limit(1);
-        const achado = (existente as any[])?.[0];
+          .limit(500);
+        const achado = ((existentes as any[]) || []).find((p) => {
+          const regP = normReg(p.registro || "");
+          if (chaveReg && regP && chaveReg === regP) return true;
+          return !!p.nome && normNome(p.nome) === chaveNome;
+        });
+        const dadosClinica = {
+          // Endereço/cidade da CLÍNICA lidos no laudo têm prioridade; o endereço
+          // do cliente só entra como último recurso.
+          endereco: enderecoDoc,
+          cidade: cidadeDoc || clienteAutoFetch.cidade || null,
+          uf: ufDoc || clienteAutoFetch.uf || null,
+          telefone: profissionalExtraido.telefone || null,
+          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
+          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+        };
         if (achado) {
+          const patch: Record<string, any> = {
+            ocorrencias: Number(achado.ocorrencias || 1) + 1,
+          };
+          // Só completa lacunas — nunca apaga dado bom já gravado.
+          for (const [k, v] of Object.entries(dadosClinica)) {
+            if (v && !achado[k]) patch[k] = v;
+          }
+          if (!achado.registro && profissionalExtraido.registro) patch.registro = profissionalExtraido.registro;
           await supabase
             .from("qa_psico_nao_localizados" as any)
-            .update({ ocorrencias: Number(achado.ocorrencias || 1) + 1 } as any)
+            .update(patch as any)
             .eq("id", achado.id);
           return;
         }
@@ -2237,10 +2281,7 @@ export function ClienteDocsHubModal({
           tipo: tipoProf,
           nome: nome.toUpperCase(),
           registro: profissionalExtraido.registro || null,
-          cidade: clienteAutoFetch.cidade || null,
-          uf: clienteAutoFetch.uf || null,
-          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
-          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+          ...dadosClinica,
           situacao: "pendente",
           observacoes: `Documento: ${form.tipo_documento || "laudo"} — credenciamento PF não confirmado na verificação automática.`,
         } as any);
@@ -2460,7 +2501,14 @@ export function ClienteDocsHubModal({
             data_emissao: tipoLaudo === "psicologico" ? c.data_emissao : c.tiro_data_emissao,
             nome_avaliado: c.nome_titular,
             cpf_avaliado: c.cpf,
-            resultado: tipoLaudo === "psicologico" ? c.laudo_aptidao : c.tiro_conclusao,
+            // O classificador atual devolve `resultado_laudo`; versões antigas
+            // usavam `laudo_aptidao` / `tiro_conclusao`. Aceitar todos evita
+            // laudo salvo sem registrar APTO/INAPTO.
+            resultado:
+              normalizarAptidao(
+                (c as any).resultado_laudo || (c as any).laudo_aptidao ||
+                (c as any).tiro_conclusao || (c as any).resultado,
+              ) || undefined,
             credencial,
             credenciado_nome: credNome,
           },
@@ -2726,6 +2774,10 @@ export function ClienteDocsHubModal({
         setProfissionalExtraido({
           nome: String((campos as any).nome_profissional || "").trim() || null,
           registro: String((campos as any).registro_profissional || "").trim() || null,
+          endereco: String((campos as any).clinica_endereco || (campos as any).endereco_completo || "").trim() || null,
+          cidade: String((campos as any).clinica_cidade || "").trim() || null,
+          uf: String((campos as any).clinica_uf || "").trim().toUpperCase() || null,
+          telefone: String((campos as any).telefone_profissional || "").trim() || null,
         });
       } else {
         setProfissionalExtraido({ nome: null, registro: null });
