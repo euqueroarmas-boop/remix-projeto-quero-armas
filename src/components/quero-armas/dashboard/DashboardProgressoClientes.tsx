@@ -120,7 +120,12 @@ function Chip({
   );
 }
 
-type ContadorKey = "todos" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
+type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
+
+/** "3 HOJE · 12 NO TOTAL" — leitura de quantas vezes o cliente entrou no portal. */
+function fmtEntradas(a?: { hoje: number; total: number }) {
+  return { hoje: a?.hoje ?? 0, total: a?.total ?? 0 };
+}
 
 function fmtData(d: string | null) {
   if (!d) return "—";
