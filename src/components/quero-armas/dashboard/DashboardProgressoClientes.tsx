@@ -135,7 +135,7 @@ function Chip({
     <span
       title={titulo}
       className={`inline-flex min-h-[22px] max-w-full items-center gap-1 rounded-full px-2 py-0 text-left uppercase leading-[1.25] tracking-[0.06em] ${
-        miudo ? "text-[10.5px] font-medium" : "text-[12.5px] font-bold"
+        miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-medium"
       } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
     >
@@ -866,13 +866,13 @@ export default function DashboardProgressoClientes() {
                   progresso: (
                     <>
                        <div className="flex min-h-[22px] w-full min-w-0 items-center gap-2">
-                        <span className="shrink-0 text-[11.5px] font-bold tabular-nums" style={{ color: TINTA }}>
+                        <span className="shrink-0 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
                         </span>
                         <div className="min-w-0 flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
-                        <span className="shrink-0 w-10 text-[12.5px] font-bold uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
+                        <span className="shrink-0 w-10 text-[10.5px] font-medium uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -893,23 +893,23 @@ export default function DashboardProgressoClientes() {
                     </>
                   ),
                   proximo_doc: (
-                    <span className="flex min-h-[22px] min-w-0 items-center gap-1.5 text-[11.5px] font-medium uppercase" style={{ color: TINTA }}>
+                    <span className="flex min-h-[22px] min-w-0 items-center gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA }}>
                       {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3.5 w-3.5 shrink-0" style={{ color: AMBAR }} />}
                       <span className="min-w-0 flex-1 break-words leading-[1.25]">{r.proximo_doc ?? "—"}</span>
                     </span>
                   ),
                   efetiva: ef
                     ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
-                    : <span className="flex min-h-[22px] items-center text-[12.5px] font-bold uppercase" style={{ color: TINTA_3 }}>—</span>,
+                    : <span className="flex min-h-[22px] items-center text-[10.5px] font-medium uppercase" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
-                    : <span className="flex min-h-[22px] items-center text-left text-[12.5px] font-bold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                    : <span className="flex min-h-[22px] items-center text-left text-[10.5px] font-medium uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
-                    <span className="flex min-h-[22px] items-center text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
+                    <span className="flex min-h-[22px] items-center text-left text-[10.5px] font-medium tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
                   ),
                   cobrancas: (
                     <span
-                      className="flex min-h-[22px] items-center text-left text-[11.5px] font-semibold tabular-nums"
+                      className="flex min-h-[22px] items-center text-left text-[10.5px] font-medium tabular-nums"
                       style={{ color: (r.cobrancas ?? 0) > 0 ? VERMELHO : TINTA_3 }}
                       title="Cobranças automáticas por inatividade já enviadas (1ª aos 15 dias, depois semanal)"
                     >
