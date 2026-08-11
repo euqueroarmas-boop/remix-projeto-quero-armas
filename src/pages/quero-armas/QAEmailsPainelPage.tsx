@@ -20,6 +20,7 @@ interface Linha {
   error_message: string | null;
   assunto: string | null;
   created_at: string;
+  resolvido_por_message_id?: string | null;
   total_filtrado: number;
 }
 
@@ -37,6 +38,8 @@ const corStatus = (s: string | null) => {
   if (v === "suppressed") return { cor: AMBAR, fundo: "#FBF3E2" };
   return { cor: "#4A4A4A", fundo: "#F2F2F2" };
 };
+
+const FALHAS = ["dlq", "failed", "bounced", "complained"];
 
 const dataHora = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
@@ -181,6 +184,8 @@ export default function QAEmailsPainelPage() {
         <select value={status} onChange={(e) => { setStatus(e.target.value); setPagina(0); }}
           className="h-9 rounded-lg border border-slate-200 px-2 text-[11px] uppercase outline-none focus:border-slate-400">
           <option value="">TODOS OS STATUS</option>
+          <option value="falha_pendente">FALHA PENDENTE</option>
+          <option value="falha_resolvida">FALHA JÁ REENVIADA</option>
           {statuses.map((s) => <option key={s} value={s}>{s.toUpperCase()}</option>)}
         </select>
 
@@ -210,7 +215,8 @@ export default function QAEmailsPainelPage() {
             </thead>
             <tbody>
               {linhas.map((l) => {
-                const c = corStatus(l.status);
+                const reenviado = FALHAS.includes(String(l.status ?? "").toLowerCase()) && Boolean(l.resolvido_por_message_id);
+                const c = reenviado ? { cor: VERDE, fundo: "#EAF5EE" } : corStatus(l.status);
                 return (
                   <tr key={l.message_id} className="border-b border-slate-100 align-top">
                     <td className="px-3 py-2 text-[10.5px] font-medium tabular-nums text-slate-700 whitespace-nowrap">{dataHora(l.created_at)}</td>
@@ -219,9 +225,9 @@ export default function QAEmailsPainelPage() {
                     <td className="px-3 py-2 text-[10.5px] font-medium text-slate-600 max-w-[320px] truncate" title={l.assunto ?? ""}>{l.assunto || "—"}</td>
                     <td className="px-3 py-2">
                       <span className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: c.cor, background: c.fundo }}>
-                        {l.status ?? "—"}
+                        {reenviado ? "REENVIADO" : (l.status ?? "—")}
                       </span>
-                      {l.error_message && (
+                      {l.error_message && !reenviado && (
                         <div className="mt-1 max-w-[280px] truncate text-[9.5px] font-medium" style={{ color: BORDO }} title={l.error_message}>
                           {l.error_message}
                         </div>
