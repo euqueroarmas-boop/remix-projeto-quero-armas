@@ -40,6 +40,7 @@ export function ehDocumentoIdentidade(tipo?: string | null, nome?: string | null
  * Remove as exigências de identidade redundantes: se já existe uma cumprida,
  * as outras (ainda em aberto) somem do checklist.
  */
+// (helper de equivalência definido abaixo)
 export function filtrarIdentidadeUnica<T>(
   docs: T[],
   opts: {
