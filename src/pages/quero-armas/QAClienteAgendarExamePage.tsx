@@ -85,6 +85,7 @@ export default function QAClienteAgendarExamePage() {
   const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
   const pdfHref = isInstrutor && ufResolved ? INSTRUTOR_PDF_PF[ufResolved] : null;
   const foraDoRaio = isInstrutor ? Boolean(iat.data?.fora_do_raio) : psico.foraDoRaio;
+  const geocodeFalhou = isInstrutor ? false : psico.geocodeFalhou;
   const distanciaMaisProximo = isInstrutor
     ? iat.data?.distancia_mais_proximo ?? null
     : psico.distanciaMaisProximo;
@@ -182,6 +183,11 @@ export default function QAClienteAgendarExamePage() {
           acima para ver outras opções.
         </div>
         {error && <div style={{ color: "#df2727", fontSize: 12, marginBottom: 10 }}>{error}</div>}
+        {geocodeFalhou && (
+          <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
+            Não conseguimos localizar o seu CEP no mapa agora. Busque pela sua cidade ou UF acima — assim evitamos mostrar profissionais distantes como se fossem próximos.
+          </div>
+        )}
         {foraDoRaio && (
           <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
             Nenhum credenciado dentro de {raio} km{origin?.cidade ? ` de ${origin.cidade}` : ""}.
