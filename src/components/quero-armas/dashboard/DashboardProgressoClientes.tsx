@@ -667,16 +667,22 @@ export default function DashboardProgressoClientes() {
                       </div>
                     </>
                   ),
-                  online: (
-                    <div className="space-y-1">
-                      {r.online
-                        ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
-                        : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                      <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
-                        {fmtAcesso(r.ultimo_acesso)}
+                  online: (() => {
+                    const e = fmtEntradas(acessos[String(r.cliente_email ?? "").trim().toLowerCase()]);
+                    return (
+                      <div className="space-y-1">
+                        {r.online
+                          ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
+                          : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
+                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                          {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
+                        </div>
+                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                          · {e.total} NO TOTAL
+                        </div>
                       </div>
-                    </div>
-                  ),
+                    );
+                  })(),
                   servico_nome: null,
                   fase: (
                     <>
