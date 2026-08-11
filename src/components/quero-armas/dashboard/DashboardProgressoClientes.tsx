@@ -135,7 +135,7 @@ function Chip({
     <span
       title={titulo}
       className={`inline-flex min-h-[22px] max-w-full items-center gap-1 rounded-full px-2 py-0 text-left uppercase leading-[1.25] tracking-[0.06em] ${
-        miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-medium"
+        miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
       } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
       style={{ background: fundo, color: cor }}
     >
