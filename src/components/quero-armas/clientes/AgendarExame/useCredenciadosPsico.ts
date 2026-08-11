@@ -37,6 +37,7 @@ export function useCredenciadosPsico(params: BuscarParams | null) {
   const [results, setResults] = useState<CredenciadoPsico[]>([]);
   const [origin, setOrigin] = useState<{ lat: number; lng: number; uf: string; cidade: string } | null>(null);
   const [foraDoRaio, setForaDoRaio] = useState(false);
+  const [geocodeFalhou, setGeocodeFalhou] = useState(false);
   const [distanciaMaisProximo, setDistanciaMaisProximo] = useState<number | null>(null);
 
   const run = useCallback(async (p: BuscarParams) => {
@@ -47,11 +48,13 @@ export function useCredenciadosPsico(params: BuscarParams | null) {
       setResults((data as any)?.results || []);
       setOrigin((data as any)?.origin || null);
       setForaDoRaio(Boolean((data as any)?.fora_do_raio));
+      setGeocodeFalhou(Boolean((data as any)?.geocode_falhou));
       setDistanciaMaisProximo((data as any)?.distancia_mais_proximo ?? null);
     } catch (e: any) {
       setError(e?.message || "Erro ao buscar credenciados");
       setResults([]);
       setForaDoRaio(false);
+      setGeocodeFalhou(false);
       setDistanciaMaisProximo(null);
     } finally { setLoading(false); }
   }, []);
@@ -64,9 +67,10 @@ export function useCredenciadosPsico(params: BuscarParams | null) {
       setResults([]);
       setOrigin(null);
       setForaDoRaio(false);
+      setGeocodeFalhou(false);
       setDistanciaMaisProximo(null);
     }
   }, [params?.tipo, params?.cep, params?.uf, params?.cidade, params?.busca, params?.raio_km, params?.incluir_vencidos]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { loading, error, results, origin, foraDoRaio, distanciaMaisProximo, refetch: run };
+  return { loading, error, results, origin, foraDoRaio, geocodeFalhou, distanciaMaisProximo, refetch: run };
 }
