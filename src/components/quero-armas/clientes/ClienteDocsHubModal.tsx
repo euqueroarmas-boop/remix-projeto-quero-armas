@@ -2204,6 +2204,40 @@ export function ClienteDocsHubModal({
     return null;
   }, [profissionalExtraido, verifResults]);
 
+  // Log de auditoria: profissional citado no laudo que NÃO existe na base de
+  // credenciados da Polícia Federal. Vira linha no card do dashboard admin.
+  const naoLocalizadoLogado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isLaudoExameTipo || !classificacao) return;
+    if (verifLoading) return;
+    if (credenciadoVerificado) return;
+    const nome = (profissionalExtraido.nome || "").trim();
+    if (!nome) return;
+    const chave = `${nome}|${profissionalExtraido.registro || ""}`;
+    if (naoLocalizadoLogado.current === chave) return;
+    naoLocalizadoLogado.current = chave;
+    const tipoProf = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" : "psicologo";
+    void supabase
+      .from("qa_psico_nao_localizados" as any)
+      .upsert(
+        {
+          tipo: tipoProf,
+          nome: nome.toUpperCase(),
+          registro: profissionalExtraido.registro || null,
+          cidade: clienteAutoFetch.cidade || null,
+          uf: clienteAutoFetch.uf || null,
+          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
+          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+          situacao: "pendente",
+          observacoes: `Documento: ${form.tipo_documento || "laudo"} — credenciamento PF não confirmado na verificação automática.`,
+        } as any,
+        { onConflict: "tipo,nome,registro", ignoreDuplicates: true } as any,
+      )
+      .then(({ error }) => {
+        if (error) console.warn("[credenciamento] falha ao registrar não localizado:", error.message);
+      });
+  }, [isLaudoExameTipo, classificacao, verifLoading, credenciadoVerificado, profissionalExtraido, form.tipo_documento, clienteAutoFetch, qaClienteId]);
+
   function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
     const extraido = (iaExtraido[key] ?? "") || null;
     const final = (valorFinal ?? "") || null;
