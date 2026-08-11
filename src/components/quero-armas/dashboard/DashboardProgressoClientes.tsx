@@ -348,7 +348,8 @@ export default function DashboardProgressoClientes() {
     const pendencia = ativos.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0).length;
     const parado = ativos.filter((r) => r.dias_parado >= 15).length;
     const bloqueado = rows.filter((r) => !!r.bloqueado_por_prerequisito).length;
-    return { todos: ativos.length, pronto, analise, pendencia, parado, bloqueado };
+    const online = ativos.filter((r) => !!r.online).length;
+    return { todos: ativos.length, online, pronto, analise, pendencia, parado, bloqueado };
   }, [rows]);
 
   const filtradas = useMemo(() => {
@@ -357,6 +358,7 @@ export default function DashboardProgressoClientes() {
     if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
     else if (filtroTrilha) base = base.filter((r) => (trilhasEfetivas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
+      case "online": base = base.filter((r) => !!r.online); break;
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
       case "pendencia": base = base.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0); break;
@@ -458,9 +460,10 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-7 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
+          { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
           { k: "pronto", label: "PRONTOS", v: contadores.pronto, cor: VERDE, fundo: VERDE_BG },
           { k: "analise", label: "EM ANÁLISE", v: contadores.analise, cor: AMBAR, fundo: AMBAR_BG },
           { k: "pendencia", label: "COM PENDÊNCIA", v: contadores.pendencia, cor: AMBAR, fundo: AMBAR_BG },
