@@ -819,8 +819,18 @@ function calcularConformidade(
     campo: string, label: string, valorDoc: string | undefined,
     compare: (a: string, b: string) => boolean | "gray",
   ) {
-    if (!valorDoc) return;
+    // Campo que o documento NÃO declara nunca vira divergência. A IA às vezes
+    // devolve "(não consta)", "não informado", "—" no lugar de string vazia, e
+    // tratar isso como valor lido reprovava laudo por dado que o documento
+    // simplesmente não traz. Sem dado no documento, não há o que comparar.
+    if (!valorDoc || valorAusente(valorDoc)) return;
     const r = ref[campo];
+    // Sem o dado declarado no cadastro/documentos aprovados também não há
+    // exigência: exibimos "sem referência" e seguimos.
+    if (r && valorAusente(r.valor)) {
+      items.push({ campo, label, valorCertidao: valorDoc, valorReferencia: null, fonteReferencia: null, status: "sem_referencia" });
+      return;
+    }
     let status: ConformidadeStatus;
     if (!r) {
       status = "sem_referencia";
