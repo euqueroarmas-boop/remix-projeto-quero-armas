@@ -120,10 +120,6 @@ Deno.serve(async (req) => {
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "desconhecido";
     const ua = req.headers.get("user-agent") || "";
 
-    if (action === "registrar_login") {
-      // (mantido abaixo)
-    }
-
     // Ping de presença: o portal chama a cada ~60s enquanto está aberto.
     // Só grava um evento novo se o último ping tiver mais de 4 minutos,
     // mantendo o cliente "ONLINE" sem inflar o histórico de acessos.
