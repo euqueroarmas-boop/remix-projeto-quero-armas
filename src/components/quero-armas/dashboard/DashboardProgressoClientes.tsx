@@ -285,16 +285,18 @@ export default function DashboardProgressoClientes() {
   }, [rows, trilhas]);
 
   const contadores = useMemo(() => {
-    const pronto = rows.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
-    const analise = rows.filter((r) => (r.em_analise ?? 0) > 0).length;
-    const pendencia = rows.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0).length;
-    const parado = rows.filter((r) => r.dias_parado >= 15).length;
+    const ativos = rows.filter((r) => !r.bloqueado_por_prerequisito);
+    const pronto = ativos.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
+    const analise = ativos.filter((r) => (r.em_analise ?? 0) > 0).length;
+    const pendencia = ativos.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0).length;
+    const parado = ativos.filter((r) => r.dias_parado >= 15).length;
     const bloqueado = rows.filter((r) => !!r.bloqueado_por_prerequisito).length;
-    return { todos: rows.length, pronto, analise, pendencia, parado, bloqueado };
+    return { todos: ativos.length, pronto, analise, pendencia, parado, bloqueado };
   }, [rows]);
 
   const filtradas = useMemo(() => {
-    let base = rows;
+    // Processos "aguardando etapa anterior" só aparecem quando o filtro BLOQUEADOS está ativo.
+    let base = contador === "bloqueado" ? rows : rows.filter((r) => !r.bloqueado_por_prerequisito);
     if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
     else if (filtroTrilha) base = base.filter((r) => (trilhasEfetivas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
