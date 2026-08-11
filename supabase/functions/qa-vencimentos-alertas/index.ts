@@ -179,7 +179,7 @@ serve(async (req) => {
         if (tipo.includes("gte") || tipo.includes("exame") || tipo.includes("laudo")) continue;
         const ehAutorizacao = tipo.includes("autoriza") || tipo.includes("aquisi");
         const d = diasRestantes(r.data_validade);
-        const m = pickMarco(d);
+        const m = pickMarco(d, tipo);
         if (m === null) continue;
         candidatos.push({
           fonte: ehAutorizacao ? "AUTORIZACAO" : "DOCUMENTO",
