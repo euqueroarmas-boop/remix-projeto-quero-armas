@@ -81,7 +81,7 @@ import {
 } from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
-import { mesmaExigenciaIdentidade } from "@/lib/quero-armas/identidadeUnica";
+import { mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -4492,7 +4492,7 @@ export function ClienteDocsHubModal({
             {expectedTipoMeta ? (
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
                 Exigência:{" "}
-                {mesmaExigenciaIdentidade(expectedTipoMeta.value, expectedTipoMeta.value)
+                {ehDocumentoIdentidade(expectedTipoMeta.value, expectedTipoMeta.label)
                   ? "Documento oficial de identidade (CIN, CNH ou RG com CPF)"
                   : expectedTipoMeta.label}
               </div>
