@@ -284,13 +284,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
     });
   }, [docsVisiveis, filter]);
 
-  /* Foco do dia — doc mais urgente -------------------------- */
-  const focoDoc = useMemo(() => {
-    return [...docsVisiveis]
-      .filter((d) => dataValidadeHub(d))
-      .sort((a, b) => (daysUntil(dataValidadeHub(a)) ?? 99999) - (daysUntil(dataValidadeHub(b)) ?? 99999))[0];
-  }, [docsVisiveis]);
-
   /* Agrupamento por categoria ------------------------------- */
   const grupos = useMemo(() => {
     const map = new Map<string, { label: string; docs: any[] }>();
@@ -411,11 +404,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         @media (max-width:520px){.qa-docsz6 .hdr .meta{font-size:9px;letter-spacing:.12em;gap:3px}.qa-docsz6 .hdr .meta > span{gap:10px}}
         @media (max-width:380px){.qa-docsz6 .hdr .meta{font-size:8.5px;letter-spacing:.08em}}
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
-        .qa-docsz6 .focus{background:#fff;border:1px solid #E5E5E5;border-left:4px solid #D9342B;border-radius:3px;padding:16px 20px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}
-        .qa-docsz6 .focus .lbl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.22em;color:#D9342B;text-transform:uppercase}
-        .qa-docsz6 .focus .msg{font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:1.1;margin-top:6px;font-weight:700;color:#0c0c0c;text-transform:none;letter-spacing:-.015em}
-        .qa-docsz6 .focus button{background:#7A1F2B;color:#fff;border:0;padding:11px 16px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.22em;font-size:11px;font-weight:900;cursor:pointer;border-radius:2px;text-transform:uppercase}
-        .qa-docsz6 .focus button:hover{background:#5e1721}
         .qa-docsz6 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
         .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px;cursor:pointer;transition:all .12s ease;text-align:left;font:inherit;color:inherit}
         .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
@@ -458,10 +446,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
         @media (max-width: 900px){
           .qa-docsz6 .kpis{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+          .qa-docsz6 .kpis{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none}
+          .qa-docsz6 .kpis::-webkit-scrollbar{display:none;width:0;height:0}
+          .qa-docsz6 .kpi{flex:0 0 42%;scroll-snap-align:start}
           .qa-docsz6 .kpi{padding:10px 9px}
           .qa-docsz6 .kpi .l{font-size:9.5px;letter-spacing:.12em;gap:5px}
           .qa-docsz6 .kpi .s{font-size:10px}
-          .qa-docsz6 .focus .msg{font-size:16px;line-height:1.2}
           .qa-docsz6 .grp-h .gt{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .listhead .ttl{letter-spacing:.14em;min-width:0;overflow-wrap:anywhere}
           .qa-docsz6 .listhead .ttl .cnt{overflow-wrap:normal;word-break:keep-all;white-space:nowrap}
@@ -469,7 +459,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem,.qa-docsz6 .row .acts,.qa-docsz6 .row .pill{grid-column:2}
           .qa-docsz6 .row .dt,.qa-docsz6 .row .rem{text-align:left;min-width:0}
           .qa-docsz6 .row .acts{justify-content:flex-start;margin-top:4px}
-          .qa-docsz6 .focus{flex-direction:column;align-items:flex-start}
         }
       `}</style>
 
@@ -490,29 +479,6 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
           <span><b>{kpis.total}</b> DOCUMENTOS ATIVOS</span>
         </div>
       </div>
-
-      {/* FOCO DO DIA */}
-      {focoDoc && (() => {
-        const dias = daysUntil(focoDoc.data_validade);
-        if (dias === null || dias > 30) return null;
-        const nome = getNomeDocumentoDisplay(focoDoc, "Documento");
-        const msg = dias < 0
-          ? `${nome} venceu há ${Math.abs(dias)} dias`
-          : dias === 0
-          ? `${nome} vence hoje`
-          : `${nome} vence em ${dias} dias`;
-        return (
-          <div className="focus">
-            <div>
-              <div className="lbl">FOCO DO DIA · AÇÃO BLOQUEANTE</div>
-              <div className="msg">{msg}</div>
-            </div>
-            <button type="button" onClick={() => handleRenovar(focoDoc)}>
-              ATUALIZAR AGORA →
-            </button>
-          </div>
-        );
-      })()}
 
       {/* KPIs */}
       <div className="kpis">
