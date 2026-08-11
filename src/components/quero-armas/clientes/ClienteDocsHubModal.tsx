@@ -2217,10 +2217,23 @@ export function ClienteDocsHubModal({
     if (naoLocalizadoLogado.current === chave) return;
     naoLocalizadoLogado.current = chave;
     const tipoProf = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" : "psicologo";
-    void supabase
-      .from("qa_psico_nao_localizados" as any)
-      .upsert(
-        {
+    void (async () => {
+      try {
+        const { data: existente } = await supabase
+          .from("qa_psico_nao_localizados" as any)
+          .select("id, ocorrencias")
+          .eq("tipo", tipoProf)
+          .ilike("nome", nome)
+          .limit(1);
+        const achado = (existente as any[])?.[0];
+        if (achado) {
+          await supabase
+            .from("qa_psico_nao_localizados" as any)
+            .update({ ocorrencias: Number(achado.ocorrencias || 1) + 1 } as any)
+            .eq("id", achado.id);
+          return;
+        }
+        await supabase.from("qa_psico_nao_localizados" as any).insert({
           tipo: tipoProf,
           nome: nome.toUpperCase(),
           registro: profissionalExtraido.registro || null,
@@ -2230,12 +2243,11 @@ export function ClienteDocsHubModal({
           cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
           situacao: "pendente",
           observacoes: `Documento: ${form.tipo_documento || "laudo"} — credenciamento PF não confirmado na verificação automática.`,
-        } as any,
-        { onConflict: "tipo,nome,registro", ignoreDuplicates: true } as any,
-      )
-      .then(({ error }) => {
-        if (error) console.warn("[credenciamento] falha ao registrar não localizado:", error.message);
-      });
+        } as any);
+      } catch (e) {
+        console.warn("[credenciamento] falha ao registrar não localizado:", e);
+      }
+    })();
   }, [isLaudoExameTipo, classificacao, verifLoading, credenciadoVerificado, profissionalExtraido, form.tipo_documento, clienteAutoFetch, qaClienteId]);
 
   function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
