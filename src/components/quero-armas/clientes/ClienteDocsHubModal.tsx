@@ -2234,17 +2234,46 @@ export function ClienteDocsHubModal({
     const tipoProf = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" : "psicologo";
     void (async () => {
       try {
-        const { data: existente } = await supabase
+        // Dedupe: nome sem acento/pontuação + registro só com dígitos. Antes a
+        // comparação era sensível a acento ("THAIS" x "THAÍS") e ao formato do
+        // CRP, então a mesma profissional entrava duas vezes na lista.
+        const chaveNome = normNome(nome);
+        const chaveReg = normReg(profissionalExtraido.registro || "");
+        const enderecoDoc = profissionalExtraido.endereco || null;
+        const cidadeDoc = profissionalExtraido.cidade || null;
+        const ufDoc = profissionalExtraido.uf || null;
+        const { data: existentes } = await supabase
           .from("qa_psico_nao_localizados" as any)
-          .select("id, ocorrencias")
+          .select("id, nome, registro, ocorrencias, endereco, cidade, uf, telefone, cliente_nome, qa_cliente_id")
           .eq("tipo", tipoProf)
-          .ilike("nome", nome)
-          .limit(1);
-        const achado = (existente as any[])?.[0];
+          .limit(500);
+        const achado = ((existentes as any[]) || []).find((p) => {
+          const regP = normReg(p.registro || "");
+          if (chaveReg && regP && chaveReg === regP) return true;
+          return !!p.nome && normNome(p.nome) === chaveNome;
+        });
+        const dadosClinica = {
+          // Endereço/cidade da CLÍNICA lidos no laudo têm prioridade; o endereço
+          // do cliente só entra como último recurso.
+          endereco: enderecoDoc,
+          cidade: cidadeDoc || clienteAutoFetch.cidade || null,
+          uf: ufDoc || clienteAutoFetch.uf || null,
+          telefone: profissionalExtraido.telefone || null,
+          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
+          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+        };
         if (achado) {
+          const patch: Record<string, any> = {
+            ocorrencias: Number(achado.ocorrencias || 1) + 1,
+          };
+          // Só completa lacunas — nunca apaga dado bom já gravado.
+          for (const [k, v] of Object.entries(dadosClinica)) {
+            if (v && !achado[k]) patch[k] = v;
+          }
+          if (!achado.registro && profissionalExtraido.registro) patch.registro = profissionalExtraido.registro;
           await supabase
             .from("qa_psico_nao_localizados" as any)
-            .update({ ocorrencias: Number(achado.ocorrencias || 1) + 1 } as any)
+            .update(patch as any)
             .eq("id", achado.id);
           return;
         }
@@ -2252,10 +2281,7 @@ export function ClienteDocsHubModal({
           tipo: tipoProf,
           nome: nome.toUpperCase(),
           registro: profissionalExtraido.registro || null,
-          cidade: clienteAutoFetch.cidade || null,
-          uf: clienteAutoFetch.uf || null,
-          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
-          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+          ...dadosClinica,
           situacao: "pendente",
           observacoes: `Documento: ${form.tipo_documento || "laudo"} — credenciamento PF não confirmado na verificação automática.`,
         } as any);
