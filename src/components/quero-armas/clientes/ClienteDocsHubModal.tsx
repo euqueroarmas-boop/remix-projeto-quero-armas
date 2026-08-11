@@ -81,6 +81,7 @@ import {
 } from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
+import { mesmaExigenciaIdentidade } from "@/lib/quero-armas/identidadeUnica";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
