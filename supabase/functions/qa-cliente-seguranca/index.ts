@@ -120,6 +120,34 @@ Deno.serve(async (req) => {
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "desconhecido";
     const ua = req.headers.get("user-agent") || "";
 
+    // Ping de presença: o portal chama a cada ~60s enquanto está aberto.
+    // Só grava um evento novo se o último ping tiver mais de 4 minutos,
+    // mantendo o cliente "ONLINE" sem inflar o histórico de acessos.
+    if (action === "presenca") {
+      const corte = new Date(Date.now() - 4 * 60 * 1000).toISOString();
+      const { data: recentePing } = await admin
+        .from("qa_cliente_login_eventos")
+        .select("id")
+        .eq("user_id", uid)
+        .gte("created_at", corte)
+        .limit(1);
+      if (((recentePing as any[]) ?? []).length === 0) {
+        const { sistema, navegador, dispositivo } = parseUA(String(body?.userAgent || ua));
+        await admin.from("qa_cliente_login_eventos").insert({
+          user_id: uid,
+          email,
+          ip,
+          user_agent: String(body?.userAgent || ua).slice(0, 500),
+          dispositivo,
+          navegador,
+          sistema,
+          origem: "presenca",
+          alerta_enviado: true,
+        });
+      }
+      return json({ ok: true });
+    }
+
     if (action === "registrar_login") {
       const cfg = await carregarConfig();
       const { sistema, navegador, dispositivo } = parseUA(String(body?.userAgent || ua));

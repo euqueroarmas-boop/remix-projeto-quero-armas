@@ -70,6 +70,30 @@ const COLS: ColDef[] = [
 const LS_LARGURAS = "qa_painel_progresso_larguras";
 const LS_VISIVEIS = "qa_painel_progresso_visiveis";
 
+/** Colunas do modo "credenciados não localizados" (substituem daqui pra frente). */
+type CredKey = "cred_nome" | "cred_endereco" | "cred_cidade" | "cred_telefone" | "cred_situacao";
+const COLS_CRED: { key: CredKey; label: string; largura: number }[] = [
+  { key: "cred_nome", label: "NOME / REGISTRO", largura: 240 },
+  { key: "cred_endereco", label: "ENDEREÇO", largura: 300 },
+  { key: "cred_cidade", label: "CIDADE / ESTADO", largura: 150 },
+  { key: "cred_telefone", label: "TELEFONE", largura: 140 },
+  { key: "cred_situacao", label: "SITUAÇÃO", largura: 120 },
+];
+
+type CredRow = {
+  id: string;
+  tipo: string;
+  nome: string;
+  registro: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  uf: string | null;
+  telefone: string | null;
+  cliente_nome: string | null;
+  qa_cliente_id: number | null;
+  situacao: string;
+};
+
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
 const VERDE_BG = "#F1FAF4";
@@ -110,7 +134,7 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[9.5px] font-bold uppercase leading-[1.25] tracking-[0.1em] ${
+      className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[12.5px] font-bold uppercase leading-[1.25] tracking-[0.06em] ${
         quebra ? "[overflow-wrap:anywhere]" : "break-words"
       }`}
       style={{ background: fundo, color: cor }}
@@ -172,7 +196,7 @@ function LinhaGrupos({ r }: { r: Row }) {
   const indice = r.grupo_indice ?? 0;
   const restantes = r.grupos_restantes ?? 0;
   return (
-    <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+    <div className="text-[10.5px] font-medium uppercase tracking-[0.08em]" style={{ color: TINTA_3 }}>
       {indice > 0 ? `GRUPO ${indice} DE ${total}` : `${total} GRUPOS`}
       {" · "}
       {restantes > 0 ? `FALTAM ${restantes}` : "TODOS CONCLUÍDOS"}
@@ -188,6 +212,10 @@ export default function DashboardProgressoClientes() {
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
   const [contador, setContador] = useState<ContadorKey>("todos");
+  /** Modo credenciados: troca as colunas a partir de PRÓXIMO PASSO. */
+  const [modoCred, setModoCred] = useState<"psicologo" | "instrutor_tiro" | null>(null);
+  const [credRows, setCredRows] = useState<CredRow[]>([]);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const [configAberta, setConfigAberta] = useState(false);
   const [larguras, setLarguras] = useState<Record<string, number>>(() => {
     try { return JSON.parse(localStorage.getItem(LS_LARGURAS) ?? "{}"); } catch { return {}; }
@@ -202,11 +230,54 @@ export default function DashboardProgressoClientes() {
   useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
   useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
 
+  /** Credenciados (psicólogos e IAT) não localizados na base da PF. */
+  useEffect(() => {
+    let cancelado = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_psico_nao_localizados" as any)
+        .select("id, tipo, nome, registro, endereco, cidade, uf, telefone, cliente_nome, qa_cliente_id, situacao")
+        .order("created_at", { ascending: false })
+        .limit(500);
+      if (!cancelado) setCredRows(((data as any[]) ?? []) as CredRow[]);
+    })();
+    return () => { cancelado = true; };
+  }, []);
+
+  /** Clicar fora do painel devolve as colunas normais do cliente. */
+  useEffect(() => {
+    if (!modoCred) return;
+    const onDown = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setModoCred(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [modoCred]);
+
+  const credPorCliente = useMemo(() => {
+    const mapa: Record<number, CredRow[]> = {};
+    for (const c of credRows) {
+      if (modoCred && c.tipo !== modoCred) continue;
+      if (c.qa_cliente_id == null) continue;
+      (mapa[c.qa_cliente_id] ||= []).push(c);
+    }
+    return mapa;
+  }, [credRows, modoCred]);
+
+  const credContadores = useMemo(() => ({
+    psicologo: credRows.filter((c) => c.tipo !== "instrutor_tiro").length,
+    instrutor_tiro: credRows.filter((c) => c.tipo === "instrutor_tiro").length,
+  }), [credRows]);
+
   /** CLIENTE nunca some; as demais respeitam a engrenagem. */
-  const colunas = useMemo(
-    () => COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false),
-    [visiveis],
-  );
+  const colunas = useMemo(() => {
+    const base = COLS.filter((c) => c.key === "cliente_nome" || visiveis[c.key] !== false);
+    if (!modoCred) return base;
+    // No modo credenciados, tudo a partir de PRÓXIMO PASSO vira a ficha do profissional.
+    const corte = base.findIndex((c) => c.key === "proximo_doc");
+    const mantidas = corte >= 0 ? base.slice(0, corte) : base;
+    return [...mantidas, ...(COLS_CRED as unknown as ColDef[])];
+  }, [visiveis, modoCred]);
   const larguraDe = (c: ColDef) => larguras[c.key] ?? c.largura;
 
   useEffect(() => {
@@ -369,6 +440,7 @@ export default function DashboardProgressoClientes() {
   const filtradas = useMemo(() => {
     // Processos "aguardando etapa anterior" só aparecem quando o filtro BLOQUEADOS está ativo.
     let base = contador === "bloqueado" ? rows : rows.filter((r) => !r.bloqueado_por_prerequisito);
+    if (modoCred) base = base.filter((r) => (credPorCliente[r.cliente_id] ?? []).length > 0);
     if (filtroTrilha === "ONLINE") base = base.filter((r) => !!r.online);
     else if (filtroTrilha) base = base.filter((r) => (trilhasEfetivas[r.processo_id] ?? []).includes(filtroTrilha));
     switch (contador) {
@@ -381,7 +453,7 @@ export default function DashboardProgressoClientes() {
       default: break;
     }
     return base;
-  }, [rows, trilhasEfetivas, filtroTrilha, contador]);
+  }, [rows, trilhasEfetivas, filtroTrilha, contador, modoCred, credPorCliente]);
 
   const ordenadas = useMemo(() => {
     const val = (r: Row) => {
@@ -404,6 +476,7 @@ export default function DashboardProgressoClientes() {
   }, [filtradas, sortKey, asc]);
 
   const toggle = (k: SortKey) => {
+    if (String(k).startsWith("cred_")) return;
     if (k === sortKey) setAsc(v => !v);
     else { setSortKey(k); setAsc(k === "cliente_nome" || k === "servico_nome" || k === "proximo_doc"); }
   };
@@ -411,7 +484,7 @@ export default function DashboardProgressoClientes() {
   if (loading) return null;
 
   return (
-    <div className="qa-card overflow-hidden">
+    <div ref={wrapperRef} className="qa-card overflow-hidden">
       <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
         <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
@@ -474,7 +547,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-7 gap-2">
+      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-9 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
@@ -508,6 +581,29 @@ export default function DashboardProgressoClientes() {
                 <div>{acessosGlobais.total} DESDE O INÍCIO</div>
               </div>
             )}
+          </button>
+        ))}
+
+        {/* Credenciados não localizados na base da PF — clique troca as colunas. */}
+        {([
+          { t: "psicologo" as const, label: "PSICÓLOGO S/ PF", v: credContadores.psicologo },
+          { t: "instrutor_tiro" as const, label: "IAT S/ PF", v: credContadores.instrutor_tiro },
+        ]).map((c) => (
+          <button
+            key={c.t}
+            type="button"
+            title="Profissionais citados em laudos que não foram localizados na base de credenciados da Polícia Federal"
+            onClick={() => setModoCred((v) => (v === c.t ? null : c.t))}
+            className={`rounded-sm border px-3 py-2 text-left transition-colors ${
+              modoCred === c.t ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+            }`}
+            style={{ background: modoCred === c.t ? VERMELHO_BG : "#FFFFFF" }}
+          >
+            <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: VERMELHO }}>{c.v}</div>
+            <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>{c.label}</div>
+            <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }}>
+              NÃO LOCALIZADO NA PF
+            </div>
           </button>
         ))}
       </div>
@@ -584,7 +680,7 @@ export default function DashboardProgressoClientes() {
                   <div className="flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                   </div>
-                  <span className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>{pct}%</span>
+                  <span className="text-[12.5px] font-bold uppercase tabular-nums" style={{ color: TINTA_2 }}>{pct}%</span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {r.bloqueado_por_prerequisito ? (
@@ -658,7 +754,49 @@ export default function DashboardProgressoClientes() {
                 const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
                 const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
                 const ef = efetivaVisual(r.efetiva_status);
-                const celulas: Record<SortKey, React.ReactNode> = {
+                const creds = credPorCliente[r.cliente_id] ?? [];
+                const celulas: Record<string, React.ReactNode> = {
+                  cred_nome: (
+                    <div className="space-y-1.5">
+                      {creds.map((c) => (
+                        <div key={c.id}>
+                          <div className="text-[12.5px] font-bold uppercase leading-[1.2]" style={{ color: TINTA }}>{c.nome}</div>
+                          <div className="text-[10.5px] font-medium uppercase" style={{ color: TINTA_3 }}>
+                            {c.registro || "SEM REGISTRO"} · {c.tipo === "instrutor_tiro" ? "INSTRUTOR DE TIRO" : "PSICÓLOGO"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ),
+                  cred_endereco: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium uppercase leading-[1.3]" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.endereco || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_cidade: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.cidade ? `${c.cidade}${c.uf ? ` / ${c.uf}` : ""}` : c.uf || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_telefone: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.telefone || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_situacao: (
+                    <div className="flex flex-wrap gap-1">
+                      {creds.map((c) => (
+                        <Chip
+                          key={c.id}
+                          cor={c.situacao === "pendente" ? VERMELHO : VERDE}
+                          fundo={c.situacao === "pendente" ? VERMELHO_BG : VERDE_BG}
+                          quebra
+                        >
+                          {c.situacao}
+                        </Chip>
+                      ))}
+                    </div>
+                  ),
                   cliente_nome: (
                     <>
                       <div className="flex items-start gap-2">
@@ -698,10 +836,10 @@ export default function DashboardProgressoClientes() {
                         {r.online
                           ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
                           : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
                           {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
                         </div>
-                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
                           · {e.total} NO TOTAL
                         </div>
                       </div>
@@ -717,7 +855,7 @@ export default function DashboardProgressoClientes() {
                           <Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip>
                           <LinhaGrupos r={r} />
                           {(r.grupo_total ?? 0) > 0 && (
-                            <div className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>
+                            <div className="text-[10.5px] font-medium uppercase tabular-nums" style={{ color: TINTA_2 }}>
                               PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
                             </div>
                           )}
@@ -734,7 +872,7 @@ export default function DashboardProgressoClientes() {
                         <div className="min-w-0 flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
-                        <span className="shrink-0 w-8 text-[10px] font-bold tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
+                        <span className="shrink-0 w-10 text-[12.5px] font-bold uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -762,10 +900,10 @@ export default function DashboardProgressoClientes() {
                   ),
                   efetiva: ef
                     ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
+                    : <span className="flex min-h-[20px] items-center text-[12.5px] font-bold uppercase" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-left text-[11px] font-semibold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                    : <span className="flex min-h-[20px] items-center text-left text-[12.5px] font-bold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
                     <span className="flex min-h-[20px] items-center text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
                   ),
