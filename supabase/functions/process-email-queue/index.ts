@@ -187,10 +187,11 @@ Deno.serve(async (req) => {
       )
     )
     const failedAttemptsByMessageId = new Map<string, number>()
+    const lastErrorByMessageId = new Map<string, string>()
     if (messageIds.length > 0) {
       const { data: failedRows, error: failedRowsError } = await supabase
         .from('email_send_log')
-        .select('message_id')
+        .select('message_id, error_message, created_at')
         .in('message_id', messageIds)
         .eq('status', 'failed')
 
@@ -207,6 +208,9 @@ Deno.serve(async (req) => {
             messageId,
             (failedAttemptsByMessageId.get(messageId) ?? 0) + 1
           )
+          if (row?.error_message) {
+            lastErrorByMessageId.set(messageId, String(row.error_message))
+          }
         }
       }
     }
@@ -240,7 +244,17 @@ Deno.serve(async (req) => {
 
       // Move to DLQ if max failed send attempts reached.
       if (failedAttempts >= MAX_RETRIES) {
-        await moveToDlq(supabase, queue, msg, `Max retries (${MAX_RETRIES}) exceeded (attempted ${failedAttempts} times)`)
+        const lastError =
+          typeof payload?.message_id === 'string'
+            ? lastErrorByMessageId.get(payload.message_id)
+            : undefined
+        await moveToDlq(
+          supabase,
+          queue,
+          msg,
+          `Max retries (${MAX_RETRIES}) exceeded (attempted ${failedAttempts} times)` +
+            (lastError ? ` — último erro: ${lastError.substring(0, 300)}` : '')
+        )
         continue
       }
 
