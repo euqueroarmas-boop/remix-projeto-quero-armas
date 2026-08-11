@@ -63,6 +63,26 @@ function distanciaKm(a: { lat: number; lng: number } | null, b: { latitude?: num
   return 2 * r * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+/** Centroide da cidade calculado a partir dos credenciados já geocodificados (offline, sem rede). */
+async function centroideCidade(supabase: any, cidade: string, uf: string): Promise<{ lat: number; lng: number } | null> {
+  if (!cidade || !uf) return null;
+  try {
+    const { data } = await supabase
+      .from("qa_psico_credenciados")
+      .select("latitude,longitude")
+      .eq("uf", uf.toUpperCase())
+      .ilike("cidade", cidade)
+      .not("latitude", "is", null)
+      .limit(50);
+    const pts = (data || []).filter((p: any) => p.latitude && p.longitude);
+    if (!pts.length) return null;
+    const lats = pts.map((p: any) => Number(p.latitude)).sort((a: number, b: number) => a - b);
+    const lngs = pts.map((p: any) => Number(p.longitude)).sort((a: number, b: number) => a - b);
+    const mid = Math.floor(pts.length / 2);
+    return { lat: lats[mid], lng: lngs[mid] };
+  } catch { return null; }
+}
+
 async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; lng: number; uf: string; cidade: string } | null> {
   const digits = cep.replace(/\D/g, "");
   if (digits.length !== 8) return null;
@@ -75,12 +95,29 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
     }
   } catch { /* noop */ }
 
-  // 2. Endereço via BrasilAPI
+  // 2. Endereço via BrasilAPI v2 (traz location.coordinates); v1 como fallback de endereço.
   let addr: any = null;
   try {
     const { data: cached } = await supabase.from("cep_cache").select("data").eq("cep", digits).maybeSingle();
     addr = (cached as any)?.data || null;
-    if (!addr) {
+    if (!addr?.location?.coordinates?.latitude) {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 5000);
+      const r = await fetch(`https://brasilapi.com.br/api/cep/v2/${digits}`, { signal: ctl.signal });
+      clearTimeout(t);
+      if (r.ok) {
+        const v2 = await r.json();
+        addr = { ...(addr || {}), ...v2 };
+        const c = v2?.location?.coordinates;
+        const payload = c?.latitude && c?.longitude
+          ? { ...addr, _geo: { lat: Number(c.latitude), lng: Number(c.longitude) } }
+          : addr;
+        supabase.from("cep_cache").upsert({ cep: digits, data: payload }).then();
+      }
+    }
+  } catch { /* noop */ }
+  if (!addr) {
+    try {
       const ctl = new AbortController();
       const t = setTimeout(() => ctl.abort(), 4000);
       const r = await fetch(`https://brasilapi.com.br/api/cep/v1/${digits}`, { signal: ctl.signal });
@@ -89,8 +126,8 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
         addr = await r.json();
         supabase.from("cep_cache").upsert({ cep: digits, data: addr }).then();
       }
-    }
-  } catch { /* noop */ }
+    } catch { /* noop */ }
+  }
   if (!addr) return null;
   const uf = String(addr.state || "").toUpperCase();
   const cidade = String(addr.city || "");
@@ -113,6 +150,13 @@ async function geocodeCEP(supabase: any, cep: string): Promise<{ lat: number; ln
     supabase.from("cep_cache").upsert({ cep: digits, data: { ...addr, _geo: { lat: geo.lat, lng: geo.lng } } }).then();
     return { ...geo, uf, cidade };
   }
+  // Último recurso offline: centroide da cidade a partir dos credenciados já geocodificados.
+  const centro = await centroideCidade(supabase, cidade, uf);
+  if (centro) {
+    supabase.from("cep_cache").upsert({ cep: digits, data: { ...addr, _geo: { lat: centro.lat, lng: centro.lng, aproximado: true } } }).then();
+    return { ...centro, uf, cidade };
+  }
+  // Sem coordenada: devolve só UF/cidade (lat/lng nulos) para a UI avisar o cliente.
   return { lat: 0, lng: 0, uf, cidade };
 }
 
