@@ -1577,6 +1577,10 @@ export function ClienteDocsHubModal({
   const [profissionalExtraido, setProfissionalExtraido] = useState<{
     nome: string | null;
     registro: string | null;
+    endereco?: string | null;
+    cidade?: string | null;
+    uf?: string | null;
+    telefone?: string | null;
   }>({ nome: null, registro: null });
 
   // Reseta todo o estado do modal quando ele é fechado, para que ao abrir
@@ -2744,6 +2748,10 @@ export function ClienteDocsHubModal({
         setProfissionalExtraido({
           nome: String((campos as any).nome_profissional || "").trim() || null,
           registro: String((campos as any).registro_profissional || "").trim() || null,
+          endereco: String((campos as any).clinica_endereco || (campos as any).endereco_completo || "").trim() || null,
+          cidade: String((campos as any).clinica_cidade || "").trim() || null,
+          uf: String((campos as any).clinica_uf || "").trim().toUpperCase() || null,
+          telefone: String((campos as any).telefone_profissional || "").trim() || null,
         });
       } else {
         setProfissionalExtraido({ nome: null, registro: null });
