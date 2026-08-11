@@ -91,6 +91,16 @@ Junto ao alerta, uma linha fixa para o cliente: "Vale até o último dia. Protoc
 Em todos os casos, quando o item já está vencido o texto vira "vencido há X dias" e o kicker muda para "DOCUMENTO VENCIDO · AÇÃO IMEDIATA" (comportamento atual, mantido).
 
 ## Detalhes técnicos
+
+### Ordem de implantação (em blocos, um de cada vez)
+- **Bloco 1 — Badge:** altura fixa no mobile + textos por tipo (Arsenal, residência, renda, jurídico), com nota fiscal fora do motor de alerta.
+- **Bloco 2 — CR:** janela de 180 dias, cálculo da data-limite de protocolo (vencimento − 90 dias) e as três faixas de copy.
+- **Bloco 3 — Certidões:** renomeação canônica das 8 certidões no catálogo e no banco, remoção das duas obsoletas e propagação dos nomes ao Hub, Documentos e slots do checklist.
+- **Bloco 4 — Laudos:** janela de 120 dias, textos novos e correção da trava (válido até o último dia; só bloqueia depois de vencido).
+- **Bloco 5 — E-mails:** marcos de aviso das certidões (15/10 + regressiva diária) e dos laudos (120/90/60/45/30/20/10 + regressiva diária).
+- **Bloco 6 — Documento sem correspondente no Hub:** aviso interno no admin para corrigir o tipo.
+- Fora dos blocos: "Filiação e atividade CAC" segue pendente da sua revisão de texto.
+
 Arquivo único: `src/components/quero-armas/clientes/ClienteResumoKanban.tsx`.
 - CSS mobile (`max-width:900px`): `.qa-urgbanner{height:410px;min-height:410px}` + grid em linhas fixas; `.qa-urgbanner__title{-webkit-line-clamp:2}`; `.qa-urgbanner__sub{height:96px;-webkit-line-clamp:5}`.
 - Substituir o mapa `URG_SUB` por um mapa por `tipo_documento` (`URG_SUB_TIPO`), com fallback para o texto genérico atual quando o tipo não estiver mapeado.
