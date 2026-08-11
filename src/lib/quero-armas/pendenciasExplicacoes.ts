@@ -878,19 +878,24 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
 
   // Laudos
   laudo_psicologico: {
-    titulo: "Laudo psicológico — profissional credenciado PF",
+    titulo: "Laudo de aptidão psicológica",
     passos: [
-      "Agende o exame com um psicólogo credenciado pela Polícia Federal.",
-      "O laudo deve conter QR Code ou assinatura digital do credenciado.",
+      "Esta exigência tem duas vias, e vale entregar QUALQUER UMA delas — não são dois documentos.",
+      "Via particular: agende com um psicólogo credenciado pela Polícia Federal. O laudo deve conter QR Code ou assinatura digital do credenciado.",
+      "Via institucional: se você é da segurança pública ou das Forças, peça o atestado de aptidão psicológica ao setor responsável (RH, saúde ocupacional ou corregedoria), em papel timbrado, assinado e identificando o psicólogo.",
+      "Envie o PDF original — prints e fotos de tela são reprovados.",
     ],
-    observacao: "Se ainda não escolheu um credenciado, use o botão de busca para ver profissionais próximos.",
+    observacao: "Aceitamos os dois formatos no mesmo item. Se ainda não escolheu um credenciado, use o botão de busca para ver profissionais próximos ao seu endereço.",
   },
   laudo_capacidade_tecnica: {
-    titulo: "Laudo de capacidade técnica — instrutor credenciado PF",
+    titulo: "Laudo de capacidade técnica (tiro)",
     passos: [
-      "Agende o teste com um instrutor de tiro credenciado pela Polícia Federal.",
-      "O laudo deve estar assinado digitalmente pelo instrutor.",
+      "Esta exigência tem duas vias, e vale entregar QUALQUER UMA delas — não são dois documentos.",
+      "Via particular: agende o teste com um instrutor de tiro credenciado pela Polícia Federal. O laudo deve estar assinado digitalmente pelo instrutor.",
+      "Via institucional: se você é da segurança pública ou das Forças, peça o atestado de capacidade técnica/tiro ao setor de instrução da sua instituição, em papel timbrado, assinado e identificando o instrutor.",
+      "Envie o PDF original — prints e fotos de tela são reprovados.",
     ],
+    observacao: "Aceitamos os dois formatos no mesmo item. Use o botão de busca para encontrar um instrutor credenciado perto de você.",
   },
   // Variantes institucionais: precisam de explicação própria. Sem elas, o
   // fallback pelo tipo do hub caía na explicação do laudo particular — e o
