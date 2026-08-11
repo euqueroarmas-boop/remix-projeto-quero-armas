@@ -596,13 +596,17 @@ export default function DashboardProgressoClientes() {
         </div>
 
         {/* DESKTOP: tabela */}
-        <div ref={tabelaScroll.ref} className="hidden md:block overflow-x-auto">
+        <div
+          ref={tabelaScroll.ref}
+          className="hidden md:block overflow-auto"
+          style={{ maxHeight: "calc(100vh - 300px)", minHeight: 320 }}
+        >
           <table className="border-collapse" style={{ width: colunas.reduce((s, c) => s + larguraDe(c), 0), minWidth: "100%", tableLayout: "fixed" }}>
             <colgroup>
               {colunas.map((c) => (<col key={c.key} style={{ width: larguraDe(c) }} />))}
             </colgroup>
-            <thead>
-              <tr className="border-b border-[#DADADA] bg-[#FAFAFA]">
+            <thead className="sticky top-0 z-20">
+              <tr className="border-b border-[#DADADA] bg-[#FAFAFA] [&>th]:bg-[#FAFAFA]">
                 {colunas.map((c) => (
                   <th key={c.key} className="relative px-3 py-2 text-left align-bottom border-r border-[#EFEFEF] last:border-r-0" title={c.titulo}>
                     <button
