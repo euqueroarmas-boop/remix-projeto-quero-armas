@@ -148,8 +148,8 @@ function efetivaVisual(status?: string | null): { label: string; cor: string; fu
   if (["revisao", "em_revisao", "revisao_humana", "aguardando_revisao", "pendente_revisao", "aguardando_equipe"].includes(s)) {
     return { label: "EM REVISÃO", cor: AMBAR, fundo: AMBAR_BG };
   }
-  if (["reprovado", "reprovada", "recusado"].includes(s)) {
-    return { label: "REPROVADA", cor: VERMELHO, fundo: VERMELHO_BG };
+  if (["reprovado", "reprovada", "recusado", "devolvido", "devolvida"].includes(s)) {
+    return { label: s.startsWith("devolvid") ? "DEVOLVIDA" : "REPROVADA", cor: VERMELHO, fundo: VERMELHO_BG };
   }
   return { label: s.replace(/_/g, " ").toUpperCase(), cor: AMBAR, fundo: AMBAR_BG };
 }

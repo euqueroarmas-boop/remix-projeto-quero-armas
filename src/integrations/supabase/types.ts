@@ -6907,10 +6907,14 @@ export type Database = {
           aprovacao_user_agent: string | null
           aprovado_cliente: boolean
           aprovado_cliente_em: string | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          aprovado_por_nome: string | null
           bo_pendente_registro: boolean
           cliente_id: number
           contexto_risco: string | null
           created_at: string
+          devolucao_motivo: string | null
           dossie_gerado_em: string | null
           dossie_storage_path: string | null
           enviado_equipe_em: string | null
@@ -6940,10 +6944,14 @@ export type Database = {
           aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string | null
           bo_pendente_registro?: boolean
           cliente_id: number
           contexto_risco?: string | null
           created_at?: string
+          devolucao_motivo?: string | null
           dossie_gerado_em?: string | null
           dossie_storage_path?: string | null
           enviado_equipe_em?: string | null
@@ -6973,10 +6981,14 @@ export type Database = {
           aprovacao_user_agent?: string | null
           aprovado_cliente?: boolean
           aprovado_cliente_em?: string | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string | null
           bo_pendente_registro?: boolean
           cliente_id?: number
           contexto_risco?: string | null
           created_at?: string
+          devolucao_motivo?: string | null
           dossie_gerado_em?: string | null
           dossie_storage_path?: string | null
           enviado_equipe_em?: string | null
@@ -7041,6 +7053,62 @@ export type Database = {
           {
             foreignKeyName: "qa_efetiva_necessidade_acrescimos_efetiva_necessidade_id_fkey"
             columns: ["efetiva_necessidade_id"]
+            isOneToOne: false
+            referencedRelation: "qa_efetiva_necessidade"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_efetiva_necessidade_auditoria: {
+        Row: {
+          acao: string
+          autor_id: string | null
+          autor_nome: string | null
+          autor_tipo: string
+          cliente_id: number | null
+          created_at: string
+          efetiva_id: string
+          id: string
+          ip: string | null
+          observacao: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          acao: string
+          autor_id?: string | null
+          autor_nome?: string | null
+          autor_tipo?: string
+          cliente_id?: number | null
+          created_at?: string
+          efetiva_id: string
+          id?: string
+          ip?: string | null
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          acao?: string
+          autor_id?: string | null
+          autor_nome?: string | null
+          autor_tipo?: string
+          cliente_id?: number | null
+          created_at?: string
+          efetiva_id?: string
+          id?: string
+          ip?: string | null
+          observacao?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_efetiva_necessidade_auditoria_efetiva_id_fkey"
+            columns: ["efetiva_id"]
             isOneToOne: false
             referencedRelation: "qa_efetiva_necessidade"
             referencedColumns: ["id"]
