@@ -817,7 +817,7 @@ export default function DashboardProgressoClientes() {
                           />
                         </LinhaTopo>
                       <Link to={rotaCadastroCliente(r.cliente_id)} className="block min-w-0">
-                        <LinhaTopo className="text-[12.5px] font-bold uppercase break-words" style={undefined}>
+                        <LinhaTopo className="text-[12.5px] font-bold uppercase break-words">
                           <span style={{ color: TINTA }}>{r.cliente_nome ?? "—"}</span>
                         </LinhaTopo>
                         <div className="mt-1 text-[10.5px] font-medium uppercase tracking-wider break-words leading-[1.25]" style={{ color: TINTA_2 }}>
@@ -913,7 +913,7 @@ export default function DashboardProgressoClientes() {
                   ),
                   efetiva: ef
                     ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
-                    : <LinhaTopo className="text-[10.5px] font-medium uppercase" style={undefined}><span style={{ color: TINTA_3 }}>—</span></LinhaTopo>,
+                    : <LinhaTopo className="text-[10.5px] font-medium uppercase"><span style={{ color: TINTA_3 }}>—</span></LinhaTopo>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
                     : <LinhaTopo className="text-left text-[10.5px] font-medium uppercase"><span style={{ color: TINTA_3 }}>SEM PROTOCOLO</span></LinhaTopo>,
