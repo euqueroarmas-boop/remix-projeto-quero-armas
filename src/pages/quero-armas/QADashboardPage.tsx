@@ -8,7 +8,6 @@ import { lazyRetry } from "@/lib/lazyRetry";
  */
 
 const DashboardPrazosRecursais   = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
-const DashboardClientesOnline    = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardClientesOnline"), "DashboardClientesOnline");
 const DashboardProgressoClientes = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProgressoClientes"), "DashboardProgressoClientes");
 function Spinner() {
   return (
@@ -29,11 +28,6 @@ export default function QADashboardPage() {
       {/* Prazos processuais 10 dias */}
       <Suspense fallback={<Spinner />}>
         <DashboardPrazosRecursais />
-      </Suspense>
-
-      {/* Clientes logados agora na área do cliente */}
-      <Suspense fallback={<Spinner />}>
-        <DashboardClientesOnline />
       </Suspense>
 
       <p className="text-[11px] text-center" style={{ color: "hsl(220 10% 62%)" }}>
