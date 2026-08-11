@@ -1092,8 +1092,8 @@ export function getExplicacaoPendencia(
   // cadastrados na biblioteca.
   const hit =
     EXPLICACOES_BIBLIOTECA.get(primary) ||
-    (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
     EXPLICACOES_REGISTRO[primary] ||
+    (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
     // Não cai no genérico "outro" se há fallbackNome — assim documentos sem
     // entrada estática mostram o nome real em vez de "Documento adicional".
     (secondary && secondary !== "outro" ? EXPLICACOES_REGISTRO[secondary] : undefined);
