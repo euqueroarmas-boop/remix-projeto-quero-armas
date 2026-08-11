@@ -28,6 +28,15 @@ As duas linhas existem no banco: `THAÍS DA SILVA MARQUES` (com acento, CRP `06/
 
 ## Detalhes técnicos
 
+## Ajuste de tipografia no painel de progresso (admin)
+
+No painel "Progresso dos clientes", passar para **10,5 px, peso medium**:
+
+- as linhas de acesso: "SEM ACESSO · 0 HOJE" e "· 0 NO TOTAL";
+- os chips de contagem de documentos: "10 PENDENTE(S)", "12 REAPROVEITADOS", "6 NÃO SE APLICA".
+
+Os demais chips de status (ONLINE/OFFLINE, etapa, protocolo, parado, percentual) permanecem como estão.
+
 - `src/components/quero-armas/clientes/ClienteDocsHubModal.tsx`
   - novo `valorAusente()` (não consta / não informado / não declarado / n/a / nd / — / ilegível / ***) aplicado antes de qualquer `pushItem` e reforçado dentro dele;
   - `pushItem` permanece "sem referência" quando o cadastro não declara o dado, agora explícito e coberto por teste;
