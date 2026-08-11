@@ -52,6 +52,7 @@ import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/Con
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteCienciasAuditoria from "@/components/quero-armas/clientes/ClienteCienciasAuditoria";
+import ClienteCarimbosConexao from "@/components/quero-armas/clientes/ClienteCarimbosConexao";
 import ClienteAuditoriaLeitura from "@/components/quero-armas/clientes/ClienteAuditoriaLeitura";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
@@ -3235,6 +3236,7 @@ export default function QAClientesPage() {
                 ...(ehAdministrador
                   ? [{ value: "auditoria_leitura", icon: ScanText, label: "Auditoria de leitura" }]
                   : []),
+                { value: "carimbos", icon: ShieldCheck, label: "Carimbos de conexão" },
                 { value: "pecas", icon: PenTool, label: "Peças" },
                 { value: "hub", icon: ShieldCheck, label: "Hub Cliente" },
                 { value: "portal", icon: KeyRound, label: "Portal" },
@@ -4010,6 +4012,10 @@ export default function QAClientesPage() {
               )}
               <TabsContent value="pecas" className="mt-3">
                 <ClientePecas cliente={c} />
+              </TabsContent>
+              {/* CARIMBOS DE CONEXÃO — IP/dispositivo de tudo que o cliente entregou */}
+              <TabsContent value="carimbos" className="mt-3">
+                <ClienteCarimbosConexao cliente={c} />
               </TabsContent>
               {/* HUB DO CLIENTE — documentos enviados pelo próprio cliente */}
               <TabsContent value="hub" className="mt-3">

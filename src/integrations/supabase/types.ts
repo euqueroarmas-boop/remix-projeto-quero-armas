@@ -13184,6 +13184,18 @@ export type Database = {
         Args: { _data_emissao: string; _tipo_documento: string }
         Returns: string
       }
+      qa_carimbos_conexao_cliente: {
+        Args: { _cliente_id: number }
+        Returns: {
+          detalhe: string
+          evento: string
+          ip: string
+          ocorrido_em: string
+          origem: string
+          referencia: string
+          user_agent: string
+        }[]
+      }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
       qa_chat_sessao_por_assunto: {
         Args: { _cliente_id: number; _emb: string }
@@ -13320,6 +13332,34 @@ export type Database = {
         }[]
       }
       qa_email_existe_em_auth: { Args: { p_email: string }; Returns: boolean }
+      qa_email_painel: {
+        Args: {
+          _ate?: string
+          _busca?: string
+          _desde?: string
+          _limite?: number
+          _offset?: number
+          _status?: string
+          _template?: string
+        }
+        Returns: {
+          assunto: string
+          created_at: string
+          error_message: string
+          message_id: string
+          recipient_email: string
+          status: string
+          template_name: string
+          total_filtrado: number
+        }[]
+      }
+      qa_email_painel_facetas: {
+        Args: never
+        Returns: {
+          statuses: string[]
+          templates: string[]
+        }[]
+      }
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
