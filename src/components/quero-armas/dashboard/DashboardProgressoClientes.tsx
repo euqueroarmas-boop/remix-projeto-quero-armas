@@ -70,6 +70,30 @@ const COLS: ColDef[] = [
 const LS_LARGURAS = "qa_painel_progresso_larguras";
 const LS_VISIVEIS = "qa_painel_progresso_visiveis";
 
+/** Colunas do modo "credenciados não localizados" (substituem daqui pra frente). */
+type CredKey = "cred_nome" | "cred_endereco" | "cred_cidade" | "cred_telefone" | "cred_situacao";
+const COLS_CRED: { key: CredKey; label: string; largura: number }[] = [
+  { key: "cred_nome", label: "NOME / REGISTRO", largura: 240 },
+  { key: "cred_endereco", label: "ENDEREÇO", largura: 300 },
+  { key: "cred_cidade", label: "CIDADE / ESTADO", largura: 150 },
+  { key: "cred_telefone", label: "TELEFONE", largura: 140 },
+  { key: "cred_situacao", label: "SITUAÇÃO", largura: 120 },
+];
+
+type CredRow = {
+  id: string;
+  tipo: string;
+  nome: string;
+  registro: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  uf: string | null;
+  telefone: string | null;
+  cliente_nome: string | null;
+  qa_cliente_id: number | null;
+  situacao: string;
+};
+
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
 const VERDE_BG = "#F1FAF4";
@@ -111,6 +135,8 @@ function Chip({
     <span
       title={titulo}
       className={`inline-flex min-h-[20px] max-w-full items-center gap-1 rounded-full px-2 py-[3px] text-left text-[9.5px] font-bold uppercase leading-[1.25] tracking-[0.1em] ${
+        ""
+      }${
         quebra ? "[overflow-wrap:anywhere]" : "break-words"
       }`}
       style={{ background: fundo, color: cor }}
