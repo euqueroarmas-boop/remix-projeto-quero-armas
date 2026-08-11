@@ -892,6 +892,28 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
       "O laudo deve estar assinado digitalmente pelo instrutor.",
     ],
   },
+  // Variantes institucionais: precisam de explicação própria. Sem elas, o
+  // fallback pelo tipo do hub caía na explicação do laudo particular — e o
+  // botão de busca de credenciados era escondido (o texto trazia a palavra
+  // "instituição"), justamente na etapa em que o cliente precisa dele.
+  atestado_aptidao_psicologica_instituicao: {
+    titulo: "Atestado de aptidão psicológica da instituição",
+    passos: [
+      "Solicite o atestado ao setor responsável da sua instituição (RH, saúde ocupacional ou corregedoria).",
+      "O atestado deve estar em papel timbrado, assinado e identificar o psicólogo responsável.",
+      "Envie o PDF original emitido pela instituição — prints e fotos de tela não são aceitos.",
+    ],
+    observacao: "Se a sua instituição não emitir o atestado, faça o laudo com um psicólogo credenciado pela Polícia Federal na etapa do laudo psicológico.",
+  },
+  atestado_capacidade_tecnica_instituicao: {
+    titulo: "Atestado de capacidade técnica da instituição",
+    passos: [
+      "Solicite o atestado de capacidade técnica/tiro ao setor de instrução da sua instituição.",
+      "O atestado deve estar em papel timbrado, assinado e identificar o instrutor responsável.",
+      "Envie o PDF original emitido pela instituição — prints e fotos de tela não são aceitos.",
+    ],
+    observacao: "Se a sua instituição não emitir o atestado, faça o teste com um instrutor de tiro credenciado pela Polícia Federal na etapa do laudo de capacidade técnica.",
+  },
 
   // Clube / habitualidade
   comprovante_clube_tiro: {
@@ -1070,8 +1092,8 @@ export function getExplicacaoPendencia(
   // cadastrados na biblioteca.
   const hit =
     EXPLICACOES_BIBLIOTECA.get(primary) ||
-    (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
     EXPLICACOES_REGISTRO[primary] ||
+    (secondary ? EXPLICACOES_BIBLIOTECA.get(secondary) : undefined) ||
     // Não cai no genérico "outro" se há fallbackNome — assim documentos sem
     // entrada estática mostram o nome real em vez de "Documento adicional".
     (secondary && secondary !== "outro" ? EXPLICACOES_REGISTRO[secondary] : undefined);
