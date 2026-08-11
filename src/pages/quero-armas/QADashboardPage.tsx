@@ -10,6 +10,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 const DashboardPrazosRecursais   = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardPrazosRecursais"), "DashboardPrazosRecursais");
 const DashboardClientesOnline    = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardClientesOnline"), "DashboardClientesOnline");
 const DashboardProgressoClientes = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardProgressoClientes"), "DashboardProgressoClientes");
+const DashboardCredenciadosNaoLocalizados = lazyRetry(() => import("@/components/quero-armas/dashboard/DashboardCredenciadosNaoLocalizados"), "DashboardCredenciadosNaoLocalizados");
 
 function Spinner() {
   return (
@@ -30,6 +31,11 @@ export default function QADashboardPage() {
       {/* Prazos processuais 10 dias */}
       <Suspense fallback={<Spinner />}>
         <DashboardPrazosRecursais />
+      </Suspense>
+
+      {/* Profissionais citados em laudos sem credenciamento PF confirmado */}
+      <Suspense fallback={<Spinner />}>
+        <DashboardCredenciadosNaoLocalizados />
       </Suspense>
 
       {/* Clientes logados agora na área do cliente */}

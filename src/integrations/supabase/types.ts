@@ -10477,6 +10477,63 @@ export type Database = {
         }
         Relationships: []
       }
+      qa_psico_nao_localizados: {
+        Row: {
+          cidade: string | null
+          cliente_nome: string | null
+          created_at: string
+          documento_id: string | null
+          endereco: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          ocorrencias: number
+          qa_cliente_id: number | null
+          registro: string | null
+          situacao: string
+          telefone: string | null
+          tipo: string
+          uf: string | null
+          updated_at: string
+        }
+        Insert: {
+          cidade?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          documento_id?: string | null
+          endereco?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          ocorrencias?: number
+          qa_cliente_id?: number | null
+          registro?: string | null
+          situacao?: string
+          telefone?: string | null
+          tipo?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string | null
+          cliente_nome?: string | null
+          created_at?: string
+          documento_id?: string | null
+          endereco?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          ocorrencias?: number
+          qa_cliente_id?: number | null
+          registro?: string | null
+          situacao?: string
+          telefone?: string | null
+          tipo?: string
+          uf?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qa_referencias_preferenciais: {
         Row: {
           ativo: boolean | null

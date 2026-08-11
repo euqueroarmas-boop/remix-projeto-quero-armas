@@ -2204,6 +2204,52 @@ export function ClienteDocsHubModal({
     return null;
   }, [profissionalExtraido, verifResults]);
 
+  // Log de auditoria: profissional citado no laudo que NÃO existe na base de
+  // credenciados da Polícia Federal. Vira linha no card do dashboard admin.
+  const naoLocalizadoLogado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isLaudoExameTipo || !classificacao) return;
+    if (verifLoading) return;
+    if (credenciadoVerificado) return;
+    const nome = (profissionalExtraido.nome || "").trim();
+    if (!nome) return;
+    const chave = `${nome}|${profissionalExtraido.registro || ""}`;
+    if (naoLocalizadoLogado.current === chave) return;
+    naoLocalizadoLogado.current = chave;
+    const tipoProf = /capacidade_tecnica/i.test(form.tipo_documento) ? "instrutor_tiro" : "psicologo";
+    void (async () => {
+      try {
+        const { data: existente } = await supabase
+          .from("qa_psico_nao_localizados" as any)
+          .select("id, ocorrencias")
+          .eq("tipo", tipoProf)
+          .ilike("nome", nome)
+          .limit(1);
+        const achado = (existente as any[])?.[0];
+        if (achado) {
+          await supabase
+            .from("qa_psico_nao_localizados" as any)
+            .update({ ocorrencias: Number(achado.ocorrencias || 1) + 1 } as any)
+            .eq("id", achado.id);
+          return;
+        }
+        await supabase.from("qa_psico_nao_localizados" as any).insert({
+          tipo: tipoProf,
+          nome: nome.toUpperCase(),
+          registro: profissionalExtraido.registro || null,
+          cidade: clienteAutoFetch.cidade || null,
+          uf: clienteAutoFetch.uf || null,
+          qa_cliente_id: qaClienteId ? Number(qaClienteId) : null,
+          cliente_nome: (clienteAutoFetch as any)?.nome_completo || null,
+          situacao: "pendente",
+          observacoes: `Documento: ${form.tipo_documento || "laudo"} — credenciamento PF não confirmado na verificação automática.`,
+        } as any);
+      } catch (e) {
+        console.warn("[credenciamento] falha ao registrar não localizado:", e);
+      }
+    })();
+  }, [isLaudoExameTipo, classificacao, verifLoading, credenciadoVerificado, profissionalExtraido, form.tipo_documento, clienteAutoFetch, qaClienteId]);
+
   function buildFieldAudit(key: SensitiveKey, valorFinal: string | null): FieldAudit {
     const extraido = (iaExtraido[key] ?? "") || null;
     const final = (valorFinal ?? "") || null;
