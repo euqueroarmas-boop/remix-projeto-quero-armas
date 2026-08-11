@@ -961,9 +961,11 @@ export default function ClienteResumoKanban({
           // Mobile: sem documento crítico, não renderiza o banner vazio.
           if (isMobile && !activeUrgent) return null;
           const isVencido = !!activeUrgent && activeUrgent.days < 0;
-          const kicker = isVencido
-            ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
-            : "PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA";
+          const kicker = activeUrgent?.kicker
+            ? activeUrgent.kicker
+            : isVencido
+              ? "DOCUMENTO VENCIDO · AÇÃO IMEDIATA"
+              : "PRÓXIMO VENCIMENTO · AÇÃO IMEDIATA";
           const buildSub = () => {
             if (!activeUrgent) return "Tudo em dia · nenhum item em status vermelho nesta semana.";
             // Explicação detalhada tem precedência: ela já sabe QUAL conta é,
