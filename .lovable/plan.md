@@ -90,5 +90,7 @@ Arquivo único: `src/components/quero-armas/clientes/ClienteResumoKanban.tsx`.
 - CSS mobile (`max-width:900px`): `.qa-urgbanner{height:410px;min-height:410px}` + grid em linhas fixas; `.qa-urgbanner__title{-webkit-line-clamp:2}`; `.qa-urgbanner__sub{height:96px;-webkit-line-clamp:5}`.
 - Substituir o mapa `URG_SUB` por um mapa por `tipo_documento` (`URG_SUB_TIPO`), com fallback para o texto genérico atual quando o tipo não estiver mapeado.
 - `pushUrgent` dos documentos passa a resolver o texto por tipo; a lógica de comprovante de residência, terceiro e filiação continua com precedência.
-- Janela de alerta passa a ser por tipo: padrão 30 dias (crítico em 10); CR com janela de 180 dias e crítico em 90 (marco do prazo fatal de renovação), mantendo a ordenação da badge pelo item mais urgente.
-- Nenhuma mudança de dados ou banco.
+- Janela de alerta passa a ser por tipo: padrão 30 dias (crítico em 10); CR com janela de 180 dias e crítico em 90 (marco do prazo fatal de renovação); laudos com janela de 120 dias; mantendo a ordenação da badge pelo item mais urgente.
+- Renomeação das certidões em `documentosHubCatalogo.ts` (label e short) + remoção de `antecedentes_federal` e `antecedentes_estadual`, registrando os dois como apelidos em `qa_tipo_documento_aliases`. Rótulos equivalentes também atualizados em `qa_tipos_documento_catalogo`.
+- Laudos: a trava de bloqueio passa a comparar com o fim do dia do vencimento (entrega no último dia é válida); só bloqueia com data de protocolo posterior ao vencimento.
+- E-mails: marcos de aviso por família de documento (certidões 15/10 + regressiva diária; laudos 120/90/60/45/30/20/10 + regressiva diária), com deduplicação por documento + marco na tabela de alertas enviados já existente.
