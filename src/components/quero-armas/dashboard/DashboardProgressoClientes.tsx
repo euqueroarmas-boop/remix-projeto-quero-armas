@@ -309,6 +309,8 @@ export default function DashboardProgressoClientes() {
   const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
+  /** Resumo de e-mails disparados (deduplicado por message_id). */
+  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number }>({ total: 0, hoje: 0, falhas: 0 });
   const carregarRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -354,6 +356,17 @@ export default function DashboardProgressoClientes() {
             .gte("created_at", inicioHoje.toISOString()),
         ]);
         if (!cancelled) setAcessosGlobais({ hoje: totalHoje ?? 0, total: totalGeral ?? 0 });
+
+        // Resumo de e-mails disparados.
+        const { data: resumoEmail } = await supabase.rpc("qa_email_disparos_resumo" as any);
+        const re = (Array.isArray(resumoEmail) ? resumoEmail[0] : resumoEmail) as any;
+        if (!cancelled && re) {
+          setEmails({
+            total: Number(re.total ?? 0),
+            hoje: Number(re.hoje ?? 0),
+            falhas: Number(re.falhas ?? 0),
+          });
+        }
 
         if (ids.length > 0) {
           const [{ data: docs }, { data: procs }] = await Promise.all([
@@ -556,7 +569,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-9 gap-2">
+      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-10 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
@@ -615,6 +628,24 @@ export default function DashboardProgressoClientes() {
             </div>
           </button>
         ))}
+
+        {/* E-mails disparados para clientes (deduplicado por envio). */}
+        <div
+          title="Total de e-mails disparados para clientes"
+          className="rounded-sm border border-[#E4E4E4] px-3 py-2 text-left"
+          style={{ background: "#FFFFFF" }}
+        >
+          <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: TINTA }}>
+            {emails.total}
+          </div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>
+            E-MAILS DISPARADOS
+          </div>
+          <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
+            <div>{emails.hoje} ENVIADOS HOJE</div>
+            <div style={{ color: emails.falhas > 0 ? VERMELHO : TINTA_3 }}>{emails.falhas} FALHARAM</div>
+          </div>
+        </div>
       </div>
 
       {trilhasDisponiveis.length > 0 && (
