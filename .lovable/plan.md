@@ -50,26 +50,38 @@ Abaixo, a lista 1 a 1 — nome do documento e texto explicativo proposto — par
 18. Comprovante de benefício — "O comprovante de benefício precisa ser do mês corrente."
 19. Extrato INSS — "Extrato do INSS fora do mês corrente não é aceito como comprovação."
 
-### Certidões (idoneidade)
-20. Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD) — "Certidão de antecedentes fora da validade. Emita a nova no site da Polícia Civil."
-21. Certidão de Distribuição Criminal — Justiça Federal — "Certidão federal fora da validade. Emita a nova no portal da Justiça Federal."
-22. Certidão Estadual Criminal — TJSP — "Certidão estadual fora da validade. Emita a nova no portal do TJSP."
-23. Certidão Federal — TRF 3ª Região — "Certidão do TRF3 fora da validade. Emita a nova no portal do TRF3."
-24. Certidão Federal — Seção Judiciária SP e JEF/SP — "Certidão da Seção Judiciária/JEF fora da validade. Emita a nova no portal da Justiça Federal em SP."
-25. Certidão Estadual TJSP — Distribuição de Ações Criminais — "Certidão de distribuição criminal fora da validade. Emita a nova no portal do TJSP."
-26. Certidão Estadual TJSP — Execuções Criminais — "Certidão de execuções criminais fora da validade. Emita a nova no portal do TJSP."
-27. Certidão Criminal Militar — STM — "Certidão da Justiça Militar da União fora da validade. Emita a nova no portal do STM."
-28. Certidão Criminal Militar — TJM — "Certidão da Justiça Militar Estadual fora da validade. Emita a nova no portal do TJM."
-29. Certidão de Crimes Eleitorais — TSE — "Certidão de crimes eleitorais fora da validade. Emita a nova no portal do TSE."
+### Certidões — renomeação canônica (8 certidões, nem uma a mais)
+
+Os nomes abaixo passam a ser os ÚNICOS rótulos usados no Hub Documental, na aba Documentos, em qualquer slot do checklist e nos e-mails. O texto explicativo aparece só na badge de aviso da home.
+
+20. Crimes Estaduais — Polícia Civil/SP (IIRGD) — "Certidão de antecedentes criminais fora da validade. Emita a nova no site da Polícia Civil."
+21. Crimes Estaduais — TJSP — Distribuição de Ações Criminais — "Certidão de distribuição de ações criminais fora da validade. Emita a nova no portal do TJSP."
+22. Crimes Estaduais — TJSP — Execuções Criminais — "Certidão de execuções criminais fora da validade. Emita a nova no portal do TJSP."
+23. Crimes Estaduais — TJM — "Certidão da Justiça Militar Estadual fora da validade. Emita a nova no portal do TJM."
+24. Crimes Federais — TRF 3ª Região — "Certidão do Tribunal Regional Federal da 3ª Região fora da validade. Emita a nova no portal do TRF3."
+25. Crimes Federais — Seção Judiciária e JEF/SP — "Certidão da Seção Judiciária/JEF do Estado de São Paulo fora da validade. Emita a nova no portal do TRF3."
+26. Crimes contra a União — STM — "Certidão da Justiça Militar da União fora da validade. Emita a nova no portal do STM."
+27. Crimes contra a União — TSE — "Certidão de crimes eleitorais fora da validade. Emita a nova no portal do TSE."
+
+**Certidões removidas do catálogo:** "Certidão de Distribuição Criminal — Justiça Federal" (`antecedentes_federal`) e "Certidão Estadual Criminal — TJSP" (`antecedentes_estadual`). Verificado no banco: nenhum cliente tem documento ou exigência nesses dois tipos, então a remoção não afeta ninguém. Ficam apenas como apelido histórico, apontando para a Seção Judiciária/JEF e para a Distribuição de Ações Criminais, para o caso de algum lançamento antigo reaparecer.
+
+**Alertas por e-mail das certidões:** 15 dias, 10 dias e depois contagem regressiva diária (9, 8, 7... 1) até o último dia de validade. Um e-mail por certidão por marco, sem repetir.
 
 ### Laudos (sempre 2 itens, nunca 4)
-30. Laudo de aptidão psicológica (particular ou da instituição) — "Laudo psicológico com prazo curto: sem ele vigente, o processo trava na PF." CTA "AGENDAR AGORA".
-31. Atestado de capacidade técnica / tiro (particular ou da instituição) — "Capacidade técnica é obrigatória. Renove para não travar o processo e o CR." CTA "AGENDAR AGORA".
+
+Regra de prazo corrigida: o laudo pode ser protocolado ATÉ o último dia de validade — o processo não trava se a entrega acontecer no último dia. Só trava se for protocolado depois de vencido. O monitoramento começa 120 dias antes do vencimento.
+
+28. Laudo de aptidão psicológica (particular ou instituição) — "Laudo psicológico com prazo curto. Acelere a entrega de seus documentos ou, decida-se agora se irá comprar outro armamento ou não pois irá vencer e você terá que refazê-lo." CTA "AGENDAR AGORA".
+29. Laudo de capacidade técnica / tiro (particular ou instituição) — "Laudo de capacidade técnica / tiro com prazo curto. Acelere a entrega de seus documentos ou, decida-se agora se irá comprar outro armamento ou não pois irá vencer e você terá que refazê-lo." CTA "AGENDAR AGORA".
+
+Junto ao alerta, uma linha fixa para o cliente: "Vale até o último dia. Protocolado dentro da validade, o processo segue normalmente — depois de vencido, trava."
+
+**Alertas por e-mail dos laudos:** 120, 90, 60, 45, 30, 20 e 10 dias, e depois contagem regressiva diária (9, 8, 7... 1) até o último dia.
 
 ### Jurídico e processo
 32. Procuração / Procuração assinada (Gov.br) — "Procuração com prazo perto do fim. Sem ela válida não podemos atuar no seu processo."
-33. Documento do processo sem correspondente no Hub — "Documento entregue no processo com prazo perto do fim."
-34. Prazo processual (exigência, recurso, notificação) — "Prazo processual crítico · ação imediata na PF."
+30. Prazo processual (exigência, recurso, notificação) — "Prazo processual crítico · ação imediata na PF."
+31. Documento do processo sem correspondente no Hub — é o caso em que um documento foi anexado direto na exigência do processo, com um tipo que não existe no catálogo do Hub Documental (lançamento manual da equipe, tipo antigo ou grafado fora do padrão). Ele tem validade, entra na conta de vencimento, mas o sistema não sabe qual é o nome oficial dele — por isso o texto genérico. Com a limpeza das certidões acima, esse caso deve praticamente desaparecer; quando ocorrer, além do alerta ao cliente vai gerar um aviso interno no admin para corrigir o tipo.
 
 Em todos os casos, quando o item já está vencido o texto vira "vencido há X dias" e o kicker muda para "DOCUMENTO VENCIDO · AÇÃO IMEDIATA" (comportamento atual, mantido).
 
@@ -78,5 +90,7 @@ Arquivo único: `src/components/quero-armas/clientes/ClienteResumoKanban.tsx`.
 - CSS mobile (`max-width:900px`): `.qa-urgbanner{height:410px;min-height:410px}` + grid em linhas fixas; `.qa-urgbanner__title{-webkit-line-clamp:2}`; `.qa-urgbanner__sub{height:96px;-webkit-line-clamp:5}`.
 - Substituir o mapa `URG_SUB` por um mapa por `tipo_documento` (`URG_SUB_TIPO`), com fallback para o texto genérico atual quando o tipo não estiver mapeado.
 - `pushUrgent` dos documentos passa a resolver o texto por tipo; a lógica de comprovante de residência, terceiro e filiação continua com precedência.
-- Janela de alerta passa a ser por tipo: padrão 30 dias (crítico em 10); CR com janela de 180 dias e crítico em 90 (marco do prazo fatal de renovação), mantendo a ordenação da badge pelo item mais urgente.
-- Nenhuma mudança de dados ou banco.
+- Janela de alerta passa a ser por tipo: padrão 30 dias (crítico em 10); CR com janela de 180 dias e crítico em 90 (marco do prazo fatal de renovação); laudos com janela de 120 dias; mantendo a ordenação da badge pelo item mais urgente.
+- Renomeação das certidões em `documentosHubCatalogo.ts` (label e short) + remoção de `antecedentes_federal` e `antecedentes_estadual`, registrando os dois como apelidos em `qa_tipo_documento_aliases`. Rótulos equivalentes também atualizados em `qa_tipos_documento_catalogo`.
+- Laudos: a trava de bloqueio passa a comparar com o fim do dia do vencimento (entrega no último dia é válida); só bloqueia com data de protocolo posterior ao vencimento.
+- E-mails: marcos de aviso por família de documento (certidões 15/10 + regressiva diária; laudos 120/90/60/45/30/20/10 + regressiva diária), com deduplicação por documento + marco na tabela de alertas enviados já existente.
