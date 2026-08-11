@@ -4491,7 +4491,10 @@ export function ClienteDocsHubModal({
             </div>
             {expectedTipoMeta ? (
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
-                Exigência: {expectedTipoMeta.label}
+                Exigência:{" "}
+                {mesmaExigenciaIdentidade(expectedTipoMeta.value, expectedTipoMeta.value)
+                  ? "Documento oficial de identidade (CIN, CNH ou RG com CPF)"
+                  : expectedTipoMeta.label}
               </div>
             ) : null}
             {notaTomadorParentesco ? (
