@@ -48,6 +48,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
   const iatMode = iat.data?.mode || null;
   const iatTemEnderecos = iat.data?.tem_enderecos ?? false;
   const foraDoRaio = isInstrutor ? Boolean(iat.data?.fora_do_raio) : psico.foraDoRaio;
+  const geocodeFalhou = isInstrutor ? false : psico.geocodeFalhou;
   const distanciaMaisProximo = isInstrutor
     ? iat.data?.distancia_mais_proximo ?? null
     : psico.distanciaMaisProximo;
@@ -119,6 +120,11 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
           {!cepLimpo && !uf && (
             <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
               Cadastre seu CEP para vermos os profissionais mais próximos de você.
+            </div>
+          )}
+          {geocodeFalhou && (
+            <div style={{ background: "#fff8e1", border: "1px solid #f0d893", padding: 10, borderRadius: 4, fontSize: 12, color: "#5a4500", marginBottom: 10 }}>
+              Não conseguimos localizar o seu CEP no mapa agora. Busque pela sua cidade ou UF abaixo — assim evitamos mostrar profissionais distantes como se fossem próximos.
             </div>
           )}
           {foraDoRaio && (
