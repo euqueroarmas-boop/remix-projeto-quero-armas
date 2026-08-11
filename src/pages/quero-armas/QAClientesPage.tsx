@@ -52,6 +52,7 @@ import { ConfirmarPagamentoButton } from "@/components/quero-armas/processos/Con
 import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteCienciasAuditoria from "@/components/quero-armas/clientes/ClienteCienciasAuditoria";
+import ClienteCarimbosConexao from "@/components/quero-armas/clientes/ClienteCarimbosConexao";
 import ClienteAuditoriaLeitura from "@/components/quero-armas/clientes/ClienteAuditoriaLeitura";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
