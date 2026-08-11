@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendTransactional } from "../_shared/sendTransactional.ts";
+import { escolherMarco, MARCOS_LAUDO } from "../_shared/marcosVencimento.ts";
 
 /**
  * qa-exames-alertas
@@ -16,7 +17,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MARCOS = [45, 30, 15, 7];
+/**
+ * Laudos (psicológico e capacidade técnica): monitoramento inicia em 120 dias
+ * e, a partir de 10 dias, vira contagem regressiva DIÁRIA até o último dia.
+ * O laudo VALE até o último dia — o processo não trava se o protocolo for
+ * feito dentro da validade; só trava se for protocolado depois de vencido.
+ */
+const MARCOS = MARCOS_LAUDO;
 const FINISHED_STATUSES = ["DEFERIDO", "CONCLUÍDO", "DESISTIU", "RESTITUÍDO", "INDEFERIDO"];
 
 interface ExameRow {
@@ -75,12 +82,11 @@ serve(async (req) => {
         ? e.dias_restantes
         : Math.floor((new Date(`${e.data_vencimento}T00:00:00`).getTime() - today.getTime()) / 86400000);
 
-      for (const marco of MARCOS) {
-        if (dias <= marco && dias >= 0) {
-          candidates.push({ exame: e, marco, diasRestantes: dias });
-          break;
-        }
-      }
+      if (dias < 0) continue;
+      // Menor marco ainda >= dias: cada faixa dispara uma única vez e nenhuma
+      // é pulada se o cron deixar de rodar um dia.
+      const marco = escolherMarco(dias, MARCOS);
+      if (marco !== null) candidates.push({ exame: e, marco, diasRestantes: dias });
     }
 
     if (candidates.length === 0) {
