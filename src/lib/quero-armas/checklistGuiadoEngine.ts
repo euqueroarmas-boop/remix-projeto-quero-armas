@@ -30,6 +30,7 @@ import {
 import { wizardPendentePara } from "./checklistWizardGate";
 import { ordemGrupoChecklist } from "./simuladorChecklist";
 import { filtrarIdentidadeUnica } from "./identidadeUnica";
+import { colapsarParesLaudo } from "./paresEquivalentes";
 import { mesclarRespostasCadastro } from "./respostasCadastro";
 
 export interface GuiaProcesso {
@@ -741,10 +742,17 @@ export function itensObrigatoriosGuia(carga: CargaProcesso): GuiaDoc[] {
   });
   // REGRA: identificação é UM documento só. Com uma identidade já cumprida
   // (ex.: CNH aprovada), não cobramos CIN/RG com CPF no mesmo checklist.
-  return filtrarIdentidadeUnica(visiveis, {
+  const unicos = filtrarIdentidadeUnica(visiveis, {
     tipo: (d) => d.tipo_documento,
     nome: (d) => d.nome_documento,
     cumprido: (d) => itemCumpridoGuia(d, respostas),
+  });
+  // REGRA: laudos são 2 exigências (psicológico e tiro), nunca 4. A via
+  // institucional e a via particular são caminhos do MESMO item — a escolha
+  // acontece dentro do passo, nunca como item novo no checklist.
+  return colapsarParesLaudo(unicos, (d) => d.tipo_documento, {
+    cumprido: (d) => itemCumpridoGuia(d, respostas),
+    emAnalise: (d) => isChecklistEmAnalise(d.status),
   });
 }
 
