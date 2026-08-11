@@ -40,7 +40,20 @@ export function ehDocumentoIdentidade(tipo?: string | null, nome?: string | null
  * Remove as exigências de identidade redundantes: se já existe uma cumprida,
  * as outras (ainda em aberto) somem do checklist.
  */
-// (helper de equivalência definido abaixo)
+/**
+ * CIN, CNH e RG (com CPF) são VIAS da MESMA exigência de identidade civil.
+ * Se o slot do checklist pede CIN e o cliente anexa a CNH, isso NÃO é
+ * "documento incorreto" — é a mesma exigência cumprida por outra via.
+ *
+ * `identidade_funcional` continua de fora (prova vínculo, não identidade civil).
+ */
+export function mesmaExigenciaIdentidade(
+  a?: string | null,
+  b?: string | null,
+): boolean {
+  if (!a || !b) return false;
+  return ehDocumentoIdentidade(a) && ehDocumentoIdentidade(b);
+}
 export function filtrarIdentidadeUnica<T>(
   docs: T[],
   opts: {
