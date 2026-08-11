@@ -754,7 +754,49 @@ export default function DashboardProgressoClientes() {
                 const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
                 const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
                 const ef = efetivaVisual(r.efetiva_status);
-                const celulas: Record<SortKey, React.ReactNode> = {
+                const creds = credPorCliente[r.cliente_id] ?? [];
+                const celulas: Record<string, React.ReactNode> = {
+                  cred_nome: (
+                    <div className="space-y-1.5">
+                      {creds.map((c) => (
+                        <div key={c.id}>
+                          <div className="text-[12.5px] font-bold uppercase leading-[1.2]" style={{ color: TINTA }}>{c.nome}</div>
+                          <div className="text-[10.5px] font-medium uppercase" style={{ color: TINTA_3 }}>
+                            {c.registro || "SEM REGISTRO"} · {c.tipo === "instrutor_tiro" ? "INSTRUTOR DE TIRO" : "PSICÓLOGO"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ),
+                  cred_endereco: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium uppercase leading-[1.3]" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.endereco || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_cidade: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.cidade ? `${c.cidade}${c.uf ? ` / ${c.uf}` : ""}` : c.uf || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_telefone: (
+                    <div className="space-y-1.5 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA_2 }}>
+                      {creds.map((c) => (<div key={c.id}>{c.telefone || "—"}</div>))}
+                    </div>
+                  ),
+                  cred_situacao: (
+                    <div className="flex flex-wrap gap-1">
+                      {creds.map((c) => (
+                        <Chip
+                          key={c.id}
+                          cor={c.situacao === "pendente" ? VERMELHO : VERDE}
+                          fundo={c.situacao === "pendente" ? VERMELHO_BG : VERDE_BG}
+                          quebra
+                        >
+                          {c.situacao}
+                        </Chip>
+                      ))}
+                    </div>
+                  ),
                   cliente_nome: (
                     <>
                       <div className="flex items-start gap-2">
@@ -794,10 +836,10 @@ export default function DashboardProgressoClientes() {
                         {r.online
                           ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Acesso nos últimos 15 minutos">ONLINE</Chip>
                           : <Chip cor={VERMELHO} fundo={VERMELHO_BG} titulo="Sem acesso nos últimos 15 minutos">OFFLINE</Chip>}
-                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
+                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Último acesso · entradas hoje">
                           {fmtAcesso(r.ultimo_acesso)} · {e.hoje} HOJE
                         </div>
-                        <div className="text-[9.5px] font-bold uppercase tracking-[0.1em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
+                        <div className="text-[12.5px] font-bold uppercase tracking-[0.06em]" style={{ color: TINTA_3 }} title="Total de entradas no portal">
                           · {e.total} NO TOTAL
                         </div>
                       </div>
@@ -813,7 +855,7 @@ export default function DashboardProgressoClientes() {
                           <Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip>
                           <LinhaGrupos r={r} />
                           {(r.grupo_total ?? 0) > 0 && (
-                            <div className="text-[10px] font-bold tabular-nums" style={{ color: TINTA_2 }}>
+                            <div className="text-[10.5px] font-medium uppercase tabular-nums" style={{ color: TINTA_2 }}>
                               PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
                             </div>
                           )}
@@ -830,7 +872,7 @@ export default function DashboardProgressoClientes() {
                         <div className="min-w-0 flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
-                        <span className="shrink-0 w-8 text-[10px] font-bold tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
+                        <span className="shrink-0 w-10 text-[12.5px] font-bold uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -858,10 +900,10 @@ export default function DashboardProgressoClientes() {
                   ),
                   efetiva: ef
                     ? <Chip cor={ef.cor} fundo={ef.fundo} titulo="Efetiva necessidade" quebra>{ef.label}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-[11px] font-semibold" style={{ color: TINTA_3 }}>—</span>,
+                    : <span className="flex min-h-[20px] items-center text-[12.5px] font-bold uppercase" style={{ color: TINTA_3 }}>—</span>,
                   protocolo: r.protocolo_numero
                     ? <Chip cor={VERDE} fundo={VERDE_BG} titulo="Protocolo emitido" quebra>{r.protocolo_numero}</Chip>
-                    : <span className="flex min-h-[20px] items-center text-left text-[11px] font-semibold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
+                    : <span className="flex min-h-[20px] items-center text-left text-[12.5px] font-bold uppercase leading-[1.25]" style={{ color: TINTA_3 }}>SEM PROTOCOLO</span>,
                   criado_em: (
                     <span className="flex min-h-[20px] items-center text-left text-[11.5px] tabular-nums" style={{ color: TINTA_2 }}>{fmtData(r.criado_em)}</span>
                   ),
