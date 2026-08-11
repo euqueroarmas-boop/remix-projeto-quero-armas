@@ -309,6 +309,8 @@ export default function DashboardProgressoClientes() {
   const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
+  /** Resumo de e-mails disparados (deduplicado por message_id). */
+  const [emails, setEmails] = useState<{ total: number; hoje: number; falhas: number }>({ total: 0, hoje: 0, falhas: 0 });
   const carregarRef = useRef<() => void>(() => {});
 
   useEffect(() => {
@@ -354,6 +356,17 @@ export default function DashboardProgressoClientes() {
             .gte("created_at", inicioHoje.toISOString()),
         ]);
         if (!cancelled) setAcessosGlobais({ hoje: totalHoje ?? 0, total: totalGeral ?? 0 });
+
+        // Resumo de e-mails disparados.
+        const { data: resumoEmail } = await supabase.rpc("qa_email_disparos_resumo" as any);
+        const re = (Array.isArray(resumoEmail) ? resumoEmail[0] : resumoEmail) as any;
+        if (!cancelled && re) {
+          setEmails({
+            total: Number(re.total ?? 0),
+            hoje: Number(re.hoje ?? 0),
+            falhas: Number(re.falhas ?? 0),
+          });
+        }
 
         if (ids.length > 0) {
           const [{ data: docs }, { data: procs }] = await Promise.all([
