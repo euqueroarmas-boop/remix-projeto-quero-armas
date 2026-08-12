@@ -357,6 +357,15 @@ export default function DashboardProgressoClientes() {
 
         const ids = lista.map((r) => r.processo_id).filter(Boolean);
 
+        // Exigências criadas DEPOIS da última entrega do cliente: explicam por que
+        // um processo parece "voltar" de etapa no painel.
+        const { data: retro } = await supabase.rpc("qa_exigencias_retroativas" as any);
+        if (!cancelled) {
+          const mapa: Record<string, boolean> = {};
+          for (const x of ((retro as any[]) ?? [])) if (x?.processo_id) mapa[String(x.processo_id)] = true;
+          setRetroativas(mapa);
+        }
+
         // Contagem de entradas no portal por cliente (hoje e histórico).
         const { data: logins } = await supabase
           .from("qa_cliente_login_eventos")
