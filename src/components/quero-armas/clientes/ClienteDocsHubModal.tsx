@@ -2540,7 +2540,6 @@ export function ClienteDocsHubModal({
             ...iaBruta,
             tipoDetectado: "CCMEI",
             confianca: Math.max(Number(iaBruta.confianca || 0), 0.99),
-            divergenciaComSelecaoManual: false,
             recomendacao: "aceitar" as const,
             justificativa: "Classificação determinística: certificado oficial CCMEI; o Cartão CNPJ anexo não altera o tipo principal.",
           }
