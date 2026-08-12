@@ -112,6 +112,8 @@ const BORDA_POR_FUNDO: Record<string, string> = {
   [AMBAR_BG]: "#D9BE79",
   [VERMELHO_BG]: "#D2A2AA",
   [NEUTRO_BG]: "#CFCCC5",
+  "#F4F4F4": "#CFCCC5",
+  "#FFFFFF": "#CFCCC5",
 };
 
 function bordaDe(fundo: string, cor: string) {
