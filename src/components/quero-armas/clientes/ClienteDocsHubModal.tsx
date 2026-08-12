@@ -2535,13 +2535,13 @@ export function ClienteDocsHubModal({
       const ccmeiContextual =
         expectedTipoMeta?.value === "renda_ccmei" &&
         ehCcmei(String(textoLocalRef.current || ""));
-      const ia = ccmeiContextual
+      const ia: IAClass = ccmeiContextual
         ? {
             ...iaBruta,
             tipoDetectado: "CCMEI",
             confianca: Math.max(Number(iaBruta.confianca || 0), 0.99),
             divergenciaComSelecaoManual: false,
-            recomendacao: "aceitar",
+            recomendacao: "aceitar" as const,
             justificativa: "Classificação determinística: certificado oficial CCMEI; o Cartão CNPJ anexo não altera o tipo principal.",
           }
         : iaBruta;
