@@ -5627,7 +5627,7 @@ export function ClienteDocsHubModal({
                 </Field>
               )}
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className={semDatasOcupacao ? "grid grid-cols-1 gap-2.5" : "grid grid-cols-2 gap-2.5"}>
                 <Field label="Órgão emissor">
                   <Input
                     value={form.orgao_emissor}
@@ -5637,6 +5637,7 @@ export function ClienteDocsHubModal({
                   />
                 </Field>
 
+                {!semDatasOcupacao && (
                 <Field
                   label={
                     /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento)
@@ -5651,8 +5652,15 @@ export function ClienteDocsHubModal({
                     className={inputClassName}
                   />
                 </Field>
+                )}
               </div>
 
+              {semDatasOcupacao ? (
+                <div className="rounded-xl border border-[#7A1F2B]/20 bg-[#7A1F2B]/5 px-3 py-2 text-[11px] leading-snug text-[#7A1F2B]">
+                  Documento constitutivo da empresa — <strong>sem data de emissão e sem vencimento</strong>.
+                  A atualidade da ocupação lícita é conferida pelo Cartão CNPJ e pelo QSA (30 dias).
+                </div>
+              ) : (
               <Field
                 label="Validade"
                 icon={Calendar}
@@ -5670,6 +5678,7 @@ export function ClienteDocsHubModal({
                   className={inputClassName}
                 />
               </Field>
+              )}
             </div>
 
             {form.tipo_documento === "comprovante_clube_tiro" && (
