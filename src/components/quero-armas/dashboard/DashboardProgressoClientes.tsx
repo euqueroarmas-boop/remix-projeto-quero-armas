@@ -603,6 +603,16 @@ export default function DashboardProgressoClientes() {
         >
           <RefreshCw className={`h-3.5 w-3.5 ${recarregando ? "animate-spin" : ""}`} />
         </button>
+        <button
+          type="button"
+          aria-label={noturno ? "Voltar ao modo claro" : "Ativar modo noturno"}
+          title={noturno ? "Voltar ao modo claro" : "Ativar modo noturno"}
+          aria-pressed={noturno}
+          onClick={alternarTema}
+          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+        >
+          {noturno ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+        </button>
         {atualizadoEm && (
           <span className="text-[9px] uppercase tracking-[0.12em] font-bold" style={{ color: TINTA_3 }}>
             ATUALIZADO ÀS {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
