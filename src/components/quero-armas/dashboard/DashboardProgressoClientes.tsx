@@ -832,8 +832,8 @@ export default function DashboardProgressoClientes() {
               onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
               className={`shrink-0 text-[9.5px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border transition-colors ${
                 filtroTrilha === t
-                  ? "border-[#0A0A0A] text-[#0A0A0A] font-bold bg-[#F4F4F4]"
-                  : "border-[#DADADA] text-[#3A3A3A] hover:border-[#0A0A0A]"
+                  ? "border-[#7A1F2B] bg-[#F7E4E7] text-[#7A1F2B] font-bold"
+                  : "border-[#CFCCC5] bg-[#FBFBFA] text-[#3A3A3A] hover:border-[#0A0A0A]"
               }`}
             >
               {t}
