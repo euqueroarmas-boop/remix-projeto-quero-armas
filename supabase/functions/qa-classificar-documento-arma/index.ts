@@ -24,6 +24,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 // @ts-ignore esm.sh fornece tipos mínimos para Deno Edge
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
+import { detectarEscopoCertidao } from "../_shared/escopoCertidao.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
