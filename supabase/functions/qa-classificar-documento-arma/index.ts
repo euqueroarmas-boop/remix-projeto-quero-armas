@@ -130,6 +130,10 @@ const tool = {
             salario_liquido: { type: "string", description: "Salário líquido conforme holerite" },
             cnpj: { type: "string", description: "CNPJ da empresa (cartão CNPJ ou contrato social)" },
             razao_social: { type: "string", description: "Razão social da empresa" },
+            nome_empresarial: { type: "string", description: "Nome empresarial impresso no CCMEI" },
+            cnae_principal: { type: "string", description: "Código e descrição completos da atividade principal (CNAE)" },
+            atividade_principal: { type: "string", description: "Código e descrição completos da atividade principal" },
+            ocupacao_principal: { type: "string", description: "Ocupação principal declarada no CCMEI" },
             prestador_endereco: { type: "string", description: "NFS-e: endereço completo do EMITENTE/PRESTADOR do serviço, exatamente como impresso." },
             prestador_cep: { type: "string", description: "NFS-e: CEP do prestador (somente dígitos)." },
             prestador_municipio: { type: "string", description: "NFS-e: município do prestador." },
@@ -698,8 +702,14 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
     campos.cnpj = campos.cnpj || textoPdf.match(/\b(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})\b/)?.[1] || "";
     campos.razao_social = campos.razao_social ||
       textoPdf.match(/NOME EMPRESARIAL\s*\n\s*([^\n]{3,160})/i)?.[1]?.trim() || "";
+    campos.nome_empresarial = campos.nome_empresarial || campos.razao_social || "";
     campos.situacao_cadastral = campos.situacao_cadastral ||
       norm.match(/SITUACAO CADASTRAL(?: VIGENTE)?[\s\S]{0,100}\b(ATIVA|ATIVO|BAIXADA|SUSPENSA|INAPTA|NULA)\b/)?.[1] || "";
+    campos.ocupacao_principal = campos.ocupacao_principal ||
+      textoPdf.match(/OCUPA[CÇ][ÃA]O PRINCIPAL\s*\n\s*([^\n]{3,200})/i)?.[1]?.trim() || "";
+    campos.cnae_principal = campos.cnae_principal ||
+      textoPdf.match(/ATIVIDADE PRINCIPAL \(CNAE\)\s*\n\s*([^\n]{3,300})/i)?.[1]?.trim() || "";
+    campos.atividade_principal = campos.atividade_principal || campos.cnae_principal || "";
     delete campos.data_emissao;
     delete campos.data_validade;
     parsed.justificativa =
@@ -978,14 +988,17 @@ Deno.serve(async (req) => {
         cobertura: modeloBiblioteca.cobertura,
       };
 
+      const tipoFinalParser = (TIPOS as readonly string[]).includes(parsedParser.tipoDetectado)
+        ? (parsedParser.tipoDetectado as Tipo)
+        : modeloBiblioteca.tipo;
+      const confiancaFinalParser = Number(parsedParser.confianca || 0.99);
       const tipoNormParser = normalizeTipoSelecionado(tipoSelecionado);
       return json({
-        tipoDetectado: modeloBiblioteca.tipo,
-        confianca: 0.99,
+        tipoDetectado: tipoFinalParser,
+        confianca: confiancaFinalParser,
         camposExtraidos: parsedParser.camposExtraidos || {},
         justificativa: String(parsedParser.justificativa || "").slice(0, 500),
-        // Documento parseado por modelo aprovado nunca gera divergência/revisão.
-        divergenciaComSelecaoManual: false,
+        divergenciaComSelecaoManual: !!tipoNormParser && tipoNormParser !== tipoFinalParser,
         tipoSelecionadoNormalizado: tipoNormParser,
         recomendacao: "aceitar",
         revisao_obrigatoria: false,
