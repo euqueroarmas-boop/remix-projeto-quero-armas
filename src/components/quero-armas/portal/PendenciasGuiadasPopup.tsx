@@ -232,8 +232,20 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     }
     if (pinnedId) {
       const i = pendencias.findIndex((p) => p.id === pinnedId);
-      if (i >= 0) {
+      // TRAVA DE ORDEM POR GRUPO: um card de grupo bloqueado não pode puxar a
+      // fila para frente. O pin só vale dentro do grupo corrente.
+      const trava = calcularTravaGrupos(pendencias as any);
+      const pinLiberado =
+        i >= 0 &&
+        trava.liberado(
+          pendencias[i].grupoId || grupoDaPendencia(pendencias[i].rawTipo, pendencias[i].tipo).id,
+        );
+      if (pinLiberado) {
         setIndice(i);
+        return;
+      }
+      if (i >= 0) {
+        setIndice(0);
         return;
       }
     }
