@@ -81,6 +81,7 @@ import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
