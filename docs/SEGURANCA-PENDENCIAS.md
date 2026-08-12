@@ -24,18 +24,37 @@ para `PUBLIC` e `anon` herda isso — `GRANT TO authenticated` adiciona, não re
 Corrigido com REVOKE nas 7 funções. Verificado: as 7 retornam `42501 permission denied`
 para a chave anon. Sem regressão (leituras públicas e cadastro intactos).
 
+**Guard de staff em `qa_painel_progresso_clientes()`.**
+O REVOKE fecha `anon`, mas `authenticated` inclui quem se cadastra sozinho
+(`qa-cliente-criar-conta-publica` é público) — bastava criar conta para voltar a ler a
+base. Aplicado guard no corpo:
+
+```sql
+WHERE (b.total_docs>0 OR b.bloqueado)
+  AND (public.qa_is_active_staff(auth.uid())
+       OR coalesce(current_setting('request.jwt.claims', true)::json ->> 'role', '') = 'service_role');
+```
+
+A condição `service_role` é obrigatória: a edge function `qa-inatividade-cobranca` chama
+esta RPC com `SUPABASE_SERVICE_ROLE_KEY`, e nessas chamadas `auth.uid()` é `NULL`. Sem o
+`OR`, o motor de cobrança receberia zero linhas **em silêncio**, sem erro.
+
+Aplicado com o padrão ler → `replace` → `EXECUTE` sobre `pg_get_functiondef()`, nunca a
+partir de arquivo (ver "Armadilhas").
+
 ---
 
 ## 🔴 Pendente — CRÍTICO
 
-### 1. RPCs de painel ainda legíveis por cliente comum logado
-O REVOKE fechou `anon`, mas `authenticated` inclui **quem se cadastra sozinho**
-(`qa-cliente-criar-conta-publica` é público). Atacante cria conta, loga e volta a ler a
-base inteira.
+### 1. Guard de staff nas demais RPCs de painel
+Falta o mesmo tratamento em `qa_email_disparos_resumo`, `qa_email_painel_facetas`,
+`qa_email_painel`, `qa_email_por_cliente`, `qa_email_por_cliente_detalhe` e
+`qa_cliente_dependencias`. Hoje só têm o REVOKE de `anon` — cliente comum logado ainda
+alcança.
 
-Trava definitiva: `qa_is_active_staff(auth.uid())` dentro do corpo — ver
-`docs/sql/` ou o script wrapper. **Não** fazer `CREATE OR REPLACE` a partir de migration
-(ver seção "Armadilhas").
+**Antes de aplicar em cada uma: mapear quem a consome no backend.** Foi esse mapeamento
+que evitou quebrar o motor de cobrança em `qa_painel_progresso_clientes`. Buscar em
+`supabase/functions/*/index.ts` por chamadas com service role.
 
 ### 2. 71 funções `SECURITY DEFINER` nunca auditadas
 São 89 chamáveis por `anon`; apenas 18 foram inspecionadas, e ~8 dessas eram
