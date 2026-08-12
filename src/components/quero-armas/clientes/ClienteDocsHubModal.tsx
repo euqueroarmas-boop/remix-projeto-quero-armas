@@ -57,6 +57,15 @@ import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
 import { conferirCertidao, naturalidadeConfere } from "@/lib/quero-armas/conferenciaCertidao";
+import {
+  isCartaoCnpj,
+  isConstitutivoEmpresa,
+  isQsa,
+  exigeDatasOcupacao,
+  situacaoCadastralAprovada,
+  qsaContemCliente,
+  qsaMesmaEmissaoDoCartao,
+} from "@/lib/quero-armas/ocupacaoLicitaConferencia";
 import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 import {
   conferirLaudo,
@@ -720,6 +729,7 @@ function calcularConformidade(
   dataAvaliacaoDoc?: string | null,
   tipoDocumentoAtual?: string | null,
   clienteNaturalidade?: string | null,
+  empresaCadastro?: { cnpj?: string | null; razao_social?: string | null } | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -884,12 +894,72 @@ function calcularConformidade(
       cnpj?: { valor: string; fonte: string };
       razao?: { valor: string; fonte: string };
     } = {};
+    // Cadastro do cliente é a referência-base da empresa (Central de Adesão).
+    if (empresaCadastro?.cnpj) empresaRefs.cnpj = { valor: empresaCadastro.cnpj, fonte: "Cadastro do cliente" };
+    if (empresaCadastro?.razao_social) empresaRefs.razao = { valor: empresaCadastro.razao_social, fonte: "Cadastro do cliente" };
+    let emissaoCartaoCnpj: string | null = null;
     for (const doc of sorted) {
       if (!TIPOS_EMPRESARIAIS.has(String(doc.tipo_documento || ""))) continue;
       const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
       const nomeDoc = getNomeDocumentoDisplay(doc, doc.tipo_documento);
       if (c.cnpj && !empresaRefs.cnpj) empresaRefs.cnpj = { valor: c.cnpj, fonte: nomeDoc };
       if (c.razao_social && !empresaRefs.razao) empresaRefs.razao = { valor: c.razao_social, fonte: nomeDoc };
+      if (isCartaoCnpj(doc.tipo_documento) && !emissaoCartaoCnpj) {
+        emissaoCartaoCnpj = String(doc.data_emissao || c.data_emissao || "").slice(0, 10) || null;
+      }
+    }
+
+    const tipoAtual = String(tipoDocumentoAtual || "");
+
+    // ── SITUAÇÃO CADASTRAL: qualquer coisa diferente de ATIVA reprova ──────
+    if (campos.situacao_cadastral) {
+      const ok = situacaoCadastralAprovada(campos.situacao_cadastral);
+      items.push({
+        campo: "situacao_cadastral",
+        label: "Situação cadastral",
+        valorCertidao: campos.situacao_cadastral,
+        valorReferencia: "ATIVA",
+        fonteReferencia: "Receita Federal — exigência da PF",
+        status: ok === true ? "conforme" : ok === false ? "divergente" : "sem_referencia",
+      });
+    }
+
+    // ── CONSTITUTIVOS (CCMEI, contrato social, requerimento): nome + CPF ───
+    if (isConstitutivoEmpresa(tipoAtual)) {
+      const nomeDoc = campos.nome_completo || campos.nome_titular || campos.nome_civil;
+      if (nomeDoc) pushItem("nome_completo", "Nome do titular", nomeDoc, fuzzyName);
+      if (campos.cpf) {
+        pushItem("cpf", "CPF do titular", campos.cpf, (a, b) =>
+          normCpf(a) === normCpf(b) || cpfComDigitosVerificadores(a) === cpfComDigitosVerificadores(b));
+      }
+    }
+
+    // ── QSA: precisa conter, no mínimo, o nome do cliente ─────────────────
+    if (isQsa(tipoAtual)) {
+      const listaSocios =
+        campos.socios || campos.quadro_socios || campos.qsa || campos.nome_completo || campos.nome_titular || "";
+      const contem = qsaContemCliente(listaSocios, clienteNome);
+      if (contem !== null) {
+        items.push({
+          campo: "qsa_socio",
+          label: "Cliente no quadro de sócios",
+          valorCertidao: String(listaSocios).slice(0, 240),
+          valorReferencia: clienteNome ?? null,
+          fonteReferencia: "Cadastro do cliente",
+          status: contem ? "conforme" : "divergente",
+        });
+      }
+      const mesmaConsulta = qsaMesmaEmissaoDoCartao(dataIsoFromBr(campos.data_emissao), emissaoCartaoCnpj);
+      if (mesmaConsulta !== null) {
+        items.push({
+          campo: "qsa_emissao",
+          label: "Emissão do QSA (mesma consulta do Cartão CNPJ)",
+          valorCertidao: dataIsoFromBr(campos.data_emissao),
+          valorReferencia: emissaoCartaoCnpj,
+          fonteReferencia: "Cartão CNPJ aprovado",
+          status: mesmaConsulta ? "conforme" : "divergente",
+        });
+      }
     }
     const cnpjDoc = campos.cnpj;
     const razaoDoc = campos.razao_social;
@@ -1579,7 +1649,9 @@ export function ClienteDocsHubModal({
     cep: string | null;
     cidade: string | null;
     uf: string | null;
-  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, naturalidade_uf: null, rg: null, cep: null, cidade: null, uf: null });
+    ocupacao_licita_cnpj: string | null;
+    ocupacao_licita_razao_social: string | null;
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, naturalidade_uf: null, rg: null, cep: null, cidade: null, uf: null, ocupacao_licita_cnpj: null, ocupacao_licita_razao_social: null });
 
   // Docs aprovados carregados internamente quando o prop vier vazio
   const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
@@ -1651,7 +1723,7 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, naturalidade_uf, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, naturalidade_uf, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado, ocupacao_licita_cnpj, ocupacao_licita_razao_social")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
@@ -1685,6 +1757,9 @@ export function ClienteDocsHubModal({
           rg: row.rg || null,
           // Endereço: sempre atualiza — nunca vem como prop
           cep, cidade, uf,
+          // Dados da empresa do cadastro: referência do grupo Ocupação Lícita.
+          ocupacao_licita_cnpj: row.ocupacao_licita_cnpj || null,
+          ocupacao_licita_razao_social: row.ocupacao_licita_razao_social || null,
         }));
       } catch {
         // Silencioso — conformidade apenas degrada para "sem referência".
@@ -1698,6 +1773,9 @@ export function ClienteDocsHubModal({
   const refClienteCpf = clienteCpf ?? clienteAutoFetch.cpf;
   const refClienteDataNascimento = clienteDataNascimento ?? clienteAutoFetch.data_nascimento;
   const refClienteNomeMae = clienteNomeMae ?? clienteAutoFetch.nome_mae;
+  // Documentos constitutivos da empresa (CCMEI, contrato social, requerimento
+  // de empresário) e nota fiscal não têm emissão/validade a conferir.
+  const semDatasOcupacao = !exigeDatasOcupacao(form.tipo_documento);
 
   // Sincroniza tipo padrão a cada abertura (sem quebrar edição em andamento).
   // Reset apenas quando o modal abre.
@@ -2851,6 +2929,10 @@ export function ClienteDocsHubModal({
         (campos as any).data_avaliacao || campos.data_emissao || null,
         tipoIA,
         [clienteAutoFetch.naturalidade_municipio, clienteAutoFetch.naturalidade_uf].filter(Boolean).join(" ") || null,
+        {
+          cnpj: clienteAutoFetch.ocupacao_licita_cnpj,
+          razao_social: clienteAutoFetch.ocupacao_licita_razao_social,
+        },
       );
       setConformidade(items);
 
@@ -5548,7 +5630,7 @@ export function ClienteDocsHubModal({
                 </Field>
               )}
 
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className={semDatasOcupacao ? "grid grid-cols-1 gap-2.5" : "grid grid-cols-2 gap-2.5"}>
                 <Field label="Órgão emissor">
                   <Input
                     value={form.orgao_emissor}
@@ -5558,6 +5640,7 @@ export function ClienteDocsHubModal({
                   />
                 </Field>
 
+                {!semDatasOcupacao && (
                 <Field
                   label={
                     /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento)
@@ -5572,8 +5655,15 @@ export function ClienteDocsHubModal({
                     className={inputClassName}
                   />
                 </Field>
+                )}
               </div>
 
+              {semDatasOcupacao ? (
+                <div className="rounded-xl border border-[#7A1F2B]/20 bg-[#7A1F2B]/5 px-3 py-2 text-[11px] leading-snug text-[#7A1F2B]">
+                  Documento constitutivo da empresa — <strong>sem data de emissão e sem vencimento</strong>.
+                  A atualidade da ocupação lícita é conferida pelo Cartão CNPJ e pelo QSA (30 dias).
+                </div>
+              ) : (
               <Field
                 label="Validade"
                 icon={Calendar}
@@ -5591,6 +5681,7 @@ export function ClienteDocsHubModal({
                   className={inputClassName}
                 />
               </Field>
+              )}
             </div>
 
             {form.tipo_documento === "comprovante_clube_tiro" && (

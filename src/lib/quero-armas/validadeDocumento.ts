@@ -446,6 +446,8 @@ export function isDocumentoConstitutivoPerpetuo(tipo?: string | null): boolean {
     t.includes("ccmei") ||
     t === "renda_contrato_social" ||
     t.includes("contrato_social") ||
+    t === "renda_ficha_cadastral_jucesp" ||
+    t.includes("ficha_cadastral") ||
     t.includes("requerimento_empresario") ||
     t.includes("requerimento_de_empresario")
   );
@@ -522,6 +524,13 @@ export function calcularValidadeEfetiva(
   if (!emi) return null;
   // Comprovante de pagamento do contrato nunca vence — precede o catálogo.
   if (isComprovantePagamentoContrato(tipo)) return null;
+  // Documentos sem vencimento POR NATUREZA precedem o catálogo do banco:
+  // uma linha errada em `qa_validade_documentos` (ex.: CCMEI com 30 dias)
+  // não pode reintroduzir prazo em nota fiscal, CCMEI, contrato social,
+  // requerimento de empresário ou carteira funcional.
+  if (isNotaFiscalSemVencimento(tipo)) return null;
+  if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
+  if (isIdentidadeFuncionalPerpetua(tipo)) return null;
   // 1º) Catálogo do banco (fonte única). Só cai nas regras locais quando o
   //     tipo não está cadastrado ou o catálogo ainda não carregou.
   const regra = getRegraValidade(tipo);
@@ -532,11 +541,6 @@ export function calcularValidadeEfetiva(
     v.setUTCDate(v.getUTCDate() + regra.validade_dias);
     return toISO(v);
   }
-  // Nota fiscal: validade perpétua — nunca calcula vencimento.
-  if (isNotaFiscalSemVencimento(tipo)) return null;
-  if (isDocumentoConstitutivoPerpetuo(tipo)) return null;
-  if (isIdentidadeFuncionalPerpetua(tipo)) return null;
-  if (isComprovantePagamentoContrato(tipo)) return null;
   if (isCertidao90Dias(tipo)) {
     const v = new Date(emi.getTime());
     v.setUTCDate(v.getUTCDate() + 90);
