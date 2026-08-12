@@ -152,6 +152,7 @@ function Chip({
       className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
         miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
       } break-words [overflow-wrap:anywhere]`}
+      data-quebra={quebra ? "1" : undefined}
       style={{ background: fundo, color: cor, borderColor: bordaDe(fundo, cor) }}
     >
       {children}
