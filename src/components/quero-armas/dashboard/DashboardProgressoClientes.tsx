@@ -96,14 +96,29 @@ type CredRow = {
 
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
-const VERDE_BG = "#F1FAF4";
+const VERDE_BG = "#E4F4EA";
 const AMBAR = "#8A6A17";
-const AMBAR_BG = "#FDFAF1";
+const AMBAR_BG = "#FAF0D8";
 const VERMELHO = "#7A1F2B";
-const VERMELHO_BG = "#FDF4F5";
+const VERMELHO_BG = "#F7E4E7";
 const TINTA = "#0A0A0A";
 const TINTA_2 = "#3A3A3A";
 const TINTA_3 = "#6A6A6A";
+const NEUTRO_BG = "#F0EFEC";
+
+/** Borda 1px sempre visível para cada fundo semântico — o chip não pode sumir na tela do operador. */
+const BORDA_POR_FUNDO: Record<string, string> = {
+  [VERDE_BG]: "#9FCFB4",
+  [AMBAR_BG]: "#D9BE79",
+  [VERMELHO_BG]: "#D2A2AA",
+  [NEUTRO_BG]: "#CFCCC5",
+  "#F4F4F4": "#CFCCC5",
+  "#FFFFFF": "#CFCCC5",
+};
+
+function bordaDe(fundo: string, cor: string) {
+  return BORDA_POR_FUNDO[fundo] ?? `${cor}55`;
+}
 
 type Saude = "ok" | "atencao" | "critico";
 
@@ -134,10 +149,11 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0 align-top text-left uppercase leading-[22px] tracking-[0.06em] ${
+      className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
         miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
-      } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
-      style={{ background: fundo, color: cor }}
+      } break-words [overflow-wrap:anywhere]`}
+      data-quebra={quebra ? "1" : undefined}
+      style={{ background: fundo, color: cor, borderColor: bordaDe(fundo, cor) }}
     >
       {children}
     </span>
@@ -150,7 +166,7 @@ function Chip({
  * chips e textos assentem exatamente na mesma linha de base.
  */
 function LinhaTopo({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`h-[22px] leading-[22px] ${className}`}>{children}</div>;
+  return <div className={`min-h-[22px] leading-[22px] ${className}`}>{children}</div>;
 }
 
 type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
@@ -819,8 +835,8 @@ export default function DashboardProgressoClientes() {
               onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
               className={`shrink-0 text-[9.5px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border transition-colors ${
                 filtroTrilha === t
-                  ? "border-[#0A0A0A] text-[#0A0A0A] font-bold bg-[#F4F4F4]"
-                  : "border-[#DADADA] text-[#3A3A3A] hover:border-[#0A0A0A]"
+                  ? "border-[#7A1F2B] bg-[#F7E4E7] text-[#7A1F2B] font-bold"
+                  : "border-[#CFCCC5] bg-[#FBFBFA] text-[#3A3A3A] hover:border-[#0A0A0A]"
               }`}
             >
               {t}
@@ -863,15 +879,15 @@ export default function DashboardProgressoClientes() {
                 to={rotaCadastroCliente(r.cliente_id)}
                 className="block px-4 py-3 border-b border-[#EFEFEF] active:bg-[#FAFAFA]"
               >
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[12.5px] font-bold uppercase truncate flex-1" style={{ color: TINTA }}>
+                <div className="flex items-start gap-2">
+                  <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: TINTA }}>
                     {r.cliente_nome ?? "—"}
                   </span>
                   <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
                     {r.dias_parado}d
                   </Chip>
                 </div>
-                <div className="text-[10px] font-medium uppercase tracking-wider truncate" style={{ color: TINTA_3 }}>
+                <div className="text-[10px] font-medium uppercase tracking-wider break-words [overflow-wrap:anywhere]" style={{ color: TINTA_3 }}>
                   {r.servico_nome ?? "—"}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
@@ -903,12 +919,12 @@ export default function DashboardProgressoClientes() {
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="#F4F4F4">{r.cobrancas} COB.</Chip>}
                 </div>
-                <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
-                  {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
+                <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
+                  {r.proximo_tipo === "pergunta" && <HelpCircle className="mt-[2px] h-3 w-3 shrink-0" />}
+                  <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere]" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                 </div>
                 {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
-                  <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
+                  <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] break-words [overflow-wrap:anywhere]" style={{ color: TINTA_3 }}>
                     {trilhaCompacta(trilhasEfetivas[r.processo_id]).join(" · ")}
                   </div>
                 )}
