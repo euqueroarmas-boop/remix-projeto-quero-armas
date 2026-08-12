@@ -1420,6 +1420,13 @@ interface Props {
    *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
    *  aceita salvar nesse outro tipo. */
   pendingHubTipos?: string[];
+  /** TRAVA DE ORDEM POR GRUPO (portal do cliente, 12/08/2026).
+   *  Grupos do checklist que ainda estão bloqueados porque um grupo anterior
+   *  não foi concluído. O Hub recusa salvar documento classificado num desses
+   *  grupos — a trava não pode viver só na navegação do pop-up guiado. */
+  gruposBloqueados?: string[];
+  /** Label do grupo corrente, usado na mensagem de bloqueio. */
+  grupoCorrenteLabel?: string | null;
   /** Se preenchido, o documento salvo substitui este documento existente:
    *  grava `substitui_documento_id` no novo registro e marca o antigo como
    *  `substituido` (soft delete com trilha de auditoria). Usado pelo botão
@@ -1446,6 +1453,8 @@ export function ClienteDocsHubModal({
   clienteNomeMae,
   docsAprovados = [],
   pendingHubTipos = [],
+  gruposBloqueados = [],
+  grupoCorrenteLabel = null,
   substituirDocumentoId = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
@@ -1756,6 +1765,22 @@ export function ClienteDocsHubModal({
     form.tipo_documento &&
     !cobreOutraPendencia
   );
+  // ── TRAVA DE ORDEM POR GRUPO ────────────────────────────────────────────
+  // O documento pertence a um grupo que ainda não foi liberado (ex.: cliente
+  // manda certidões de Idoneidade com a Ocupação lícita em aberto). Só vale
+  // no portal do cliente e só depois de a leitura identificar o tipo.
+  const grupoDoDocumento =
+    form.tipo_documento && (classificacao || conferenciaLocal)
+      ? grupoDaPendencia(form.tipo_documento, form.tipo_documento).id
+      : null;
+  const grupoBloqueadoTrava = !!(
+    mode === "portal" &&
+    grupoDoDocumento &&
+    (gruposBloqueados || []).includes(grupoDoDocumento)
+  );
+  const mensagemGrupoBloqueado = grupoCorrenteLabel
+    ? `Este documento é de uma etapa mais adiante do seu checklist. Conclua ${grupoCorrenteLabel} para liberar esta entrega.`
+    : "Este documento é de uma etapa mais adiante do seu checklist. Conclua a etapa atual para liberar esta entrega.";
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
   // hora, com carimbo vermelho, e o cliente precisa excluir o anterior ou
@@ -3487,6 +3512,10 @@ export function ClienteDocsHubModal({
     }
     // Trava: certidão não é o que o slot pede E também não cobre nenhuma
     // outra pendência do processo → não deixa salvar.
+    if (grupoBloqueadoTrava) {
+      toast.error(mensagemGrupoBloqueado);
+      return;
+    }
     if (certidaoIncorreta) {
       toast.error(
         `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
