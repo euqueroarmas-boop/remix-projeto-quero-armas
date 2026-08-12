@@ -199,6 +199,21 @@ function rotaCadastroCliente(clienteId: number) {
 }
 
 /** "GRUPO 4 DE 7 · FALTAM 4" — leitura de quanto falta para terminar o processo. */
+/** Rótulo limpo do próximo passo: remove sufixos técnicos (" — SALGADEIRO") que quebram a coluna. */
+function rotuloProximoPasso(texto?: string | null) {
+  const bruto = String(texto ?? "").trim();
+  if (!bruto) return "—";
+  return bruto.split(/\s+[—–-]\s+/)[0].trim() || bruto;
+}
+
+/** Passo humano: o item em andamento é o próximo, não o último concluído. */
+function passoAtual(r: Row) {
+  const total = r.grupo_total ?? 0;
+  if (total <= 0) return null;
+  const feitos = r.grupo_concluidos ?? 0;
+  return { atual: Math.min(total, feitos + 1), total };
+}
+
 function LinhaGrupos({ r }: { r: Row }) {
   const total = r.grupos_total ?? 0;
   if (total <= 0) return null;
