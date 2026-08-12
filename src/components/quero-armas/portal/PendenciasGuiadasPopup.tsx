@@ -893,8 +893,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <div
           className={
             asPage
-              ? "mt-auto border-t border-[#E4E4E4] bg-transparent shrink-0"
-              : "mt-auto border-t border-[#E4E4E4] bg-white shrink-0"
+              ? "relative z-40 mt-auto border-t border-[#E4E4E4] bg-transparent shrink-0"
+              : "relative z-40 mt-auto border-t border-[#E4E4E4] bg-white shrink-0"
           }
         >
           {/* Números do PROCESSO, não da fila. A fila mostra o que está
