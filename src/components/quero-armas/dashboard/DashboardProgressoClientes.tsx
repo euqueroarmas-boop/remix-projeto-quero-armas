@@ -572,10 +572,14 @@ export default function DashboardProgressoClientes() {
   }, [filtradas, sortKey, asc]);
 
   const toggle = (k: SortKey) => {
+    // eslint-disable-next-line no-empty
     if (String(k).startsWith("cred_")) return;
     if (k === sortKey) setAsc(v => !v);
     else { setSortKey(k); setAsc(k === "cliente_nome" || k === "servico_nome" || k === "proximo_doc"); }
   };
+
+  /* Modo noturno do admin — botão vive no cabeçalho, ao lado do controle de colunas. */
+  const { noturno, alternar: alternarTema } = useQATema();
 
   if (loading) return null;
 
