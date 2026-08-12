@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw } from "lucide-react";
+import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun } from "lucide-react";
+import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
@@ -94,30 +95,31 @@ type CredRow = {
   situacao: string;
 };
 
-/* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
-const VERDE = "#0F7A45";
-const VERDE_BG = "#E4F4EA";
-const AMBAR = "#8A6A17";
-const AMBAR_BG = "#FAF0D8";
-const VERMELHO = "#7A1F2B";
-const VERMELHO_BG = "#F7E4E7";
-const TINTA = "#0A0A0A";
-const TINTA_2 = "#3A3A3A";
-const TINTA_3 = "#6A6A6A";
-const NEUTRO_BG = "#F0EFEC";
+/* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico.
+   Resolvidas por variável CSS para acompanhar o modo noturno do admin. */
+const VERDE = "var(--qa-verde)";
+const VERDE_BG = "var(--qa-verde-bg)";
+const AMBAR = "var(--qa-ambar)";
+const AMBAR_BG = "var(--qa-ambar-bg)";
+const VERMELHO = "var(--qa-vermelho)";
+const VERMELHO_BG = "var(--qa-vermelho-bg)";
+const TINTA = "var(--qa-tinta)";
+const TINTA_2 = "var(--qa-tinta-2)";
+const TINTA_3 = "var(--qa-tinta-3)";
+const NEUTRO_BG = "var(--qa-neutro-bg)";
 
 /** Borda 1px sempre visível para cada fundo semântico — o chip não pode sumir na tela do operador. */
 const BORDA_POR_FUNDO: Record<string, string> = {
-  [VERDE_BG]: "#9FCFB4",
-  [AMBAR_BG]: "#D9BE79",
-  [VERMELHO_BG]: "#D2A2AA",
-  [NEUTRO_BG]: "#CFCCC5",
-  "#F4F4F4": "#CFCCC5",
-  "#FFFFFF": "#CFCCC5",
+  [VERDE_BG]: "var(--qa-verde-borda)",
+  [AMBAR_BG]: "var(--qa-ambar-borda)",
+  [VERMELHO_BG]: "var(--qa-vermelho-borda)",
+  [NEUTRO_BG]: "var(--qa-neutro-borda)",
+  "#F4F4F4": "var(--qa-neutro-borda)",
+  "#FFFFFF": "var(--qa-neutro-borda)",
 };
 
 function bordaDe(fundo: string, cor: string) {
-  return BORDA_POR_FUNDO[fundo] ?? `${cor}55`;
+  return BORDA_POR_FUNDO[fundo] ?? "var(--qa-neutro-borda)";
 }
 
 type Saude = "ok" | "atencao" | "critico";
@@ -149,9 +151,9 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
-        miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
-      } break-words [overflow-wrap:anywhere]`}
+      className={`qa-chip-fit inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
+        miudo ? "font-medium" : "font-bold"
+      }`}
       data-quebra={quebra ? "1" : undefined}
       style={{ background: fundo, color: cor, borderColor: bordaDe(fundo, cor) }}
     >
