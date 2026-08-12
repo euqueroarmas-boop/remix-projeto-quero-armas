@@ -1773,6 +1773,9 @@ export function ClienteDocsHubModal({
   const refClienteCpf = clienteCpf ?? clienteAutoFetch.cpf;
   const refClienteDataNascimento = clienteDataNascimento ?? clienteAutoFetch.data_nascimento;
   const refClienteNomeMae = clienteNomeMae ?? clienteAutoFetch.nome_mae;
+  // Documentos constitutivos da empresa (CCMEI, contrato social, requerimento
+  // de empresário) e nota fiscal não têm emissão/validade a conferir.
+  const semDatasOcupacao = !exigeDatasOcupacao(form.tipo_documento);
 
   // Sincroniza tipo padrão a cada abertura (sem quebrar edição em andamento).
   // Reset apenas quando o modal abre.
