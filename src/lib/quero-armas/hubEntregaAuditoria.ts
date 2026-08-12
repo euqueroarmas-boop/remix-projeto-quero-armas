@@ -6,7 +6,7 @@
  * entrega fora da ordem configurada, segundo documento de identidade e
  * possível troca de certidão (o cliente manda um antecedente no lugar de outro).
  */
-import { ehDocumentoIdentidade } from "./identidadeUnica";
+import { ehDocumentoIdentidade, mesmaExigenciaIdentidade } from "./identidadeUnica";
 import { toHubTipoCompartilhado } from "./hubTipoMap";
 
 export interface EntregaDocLike {
@@ -25,6 +25,7 @@ export interface ExigenciaLike {
   etapa?: string | null;
   ordem?: number | null;
   obrigatorio?: boolean | null;
+  created_at?: string | null;
 }
 
 export type AnotacaoCodigo =
@@ -65,6 +66,18 @@ const CUMPRIDOS = new Set([
   "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento",
 ]);
 
+/**
+ * Itens que dependem de terceiros (agendamento com credenciado, perícia).
+ * O cliente não consegue "adiantá-los" — nunca contam como etapa atropelada.
+ */
+const DEPENDEM_DE_TERCEIRO = (t: string) =>
+  t.includes("laudo") || t.includes("exame") || t.includes("psicolog") || t.includes("capacidade_tecnica");
+
+const ts = (v?: string | null) => {
+  const n = v ? Date.parse(v) : NaN;
+  return Number.isFinite(n) ? n : null;
+};
+
 const rotuloExigencia = (e: ExigenciaLike) =>
   String(e.nome_documento || e.tipo_documento || "").replace(/_/g, " ").toUpperCase();
 
@@ -92,6 +105,26 @@ export function montarLinhaEntrega(
     if (tHub && !exigenciasPorTipo.has(tHub)) exigenciasPorTipo.set(tHub, e);
     if (tRaw && tRaw !== tHub && !exigenciasPorTipo.has(tRaw)) exigenciasPorTipo.set(tRaw, e);
   });
+
+  /** Slot de identidade civil do checklist (CIN/CNH/RG são a MESMA exigência). */
+  const exigenciaIdentidade = exigencias.find((e) =>
+    ehDocumentoIdentidade(e.tipo_documento, e.nome_documento),
+  );
+
+  const acharExigencia = (doc: EntregaDocLike): ExigenciaLike | undefined => {
+    const tipo = norm(doc.tipo_documento);
+    const direta = exigenciasPorTipo.get(tipo);
+    if (direta) return direta;
+    // CIN, CNH e RG cumprem o mesmo slot: a CNH entregue casa com a exigência de CIN.
+    if (
+      exigenciaIdentidade &&
+      ehDocumentoIdentidade(doc.tipo_documento, doc.nome_documento) &&
+      mesmaExigenciaIdentidade(tipo || doc.nome_documento, exigenciaIdentidade.tipo_documento)
+    ) {
+      return exigenciaIdentidade;
+    }
+    return undefined;
+  };
 
   // Exigências obrigatórias com ordem definida, para detectar "atropelo".
   const comOrdem = exigencias
@@ -134,7 +167,7 @@ export function montarLinhaEntrega(
   return ordenados.map((doc, idx) => {
     const tipo = norm(doc.tipo_documento);
     const anotacoes: AnotacaoEntrega[] = [];
-    const exigencia = exigenciasPorTipo.get(tipo);
+    const exigencia = acharExigencia(doc);
 
     if (norm(doc.origem) !== "cliente") {
       anotacoes.push({
@@ -175,17 +208,25 @@ export function montarLinhaEntrega(
     if (exigencia && typeof exigencia.ordem === "number") {
       const corte = doc.created_at ? Date.parse(doc.created_at) : Number.MAX_SAFE_INTEGER;
       const anteriores = comOrdem.filter(
-        (e) =>
-          (e.ordem ?? 0) < (exigencia.ordem ?? 0) &&
-          !CUMPRIDOS.has(norm(e.status)) &&
-          !entregueAntesDe(e, corte),
+        (e) => {
+          if ((e.ordem ?? 0) >= (exigencia.ordem ?? 0)) return false;
+          if (CUMPRIDOS.has(norm(e.status))) return false;
+          if (entregueAntesDe(e, corte)) return false;
+          // A exigência precisa existir no momento da entrega: item criado depois
+          // não podia ser cumprido antes.
+          const criada = ts(e.created_at);
+          if (criada !== null && criada > corte) return false;
+          // Laudos e exames dependem de agendamento com credenciado.
+          if (DEPENDEM_DE_TERCEIRO(norm(e.tipo_documento))) return false;
+          return true;
+        },
       );
       if (anteriores.length > 0) {
         anotacoes.push({
           codigo: "fora_de_ordem",
-          severidade: "atencao",
-          titulo: "ENTREGUE FORA DA ORDEM",
-          detalhe: `O checklist previa antes: ${anteriores.slice(0, 3).map(rotuloExigencia).join(" · ")}.`,
+          severidade: "info",
+          titulo: "ENTREGUE ANTES DE ITENS AINDA ABERTOS",
+          detalhe: `O cliente adiantou esta entrega. Seguem em aberto: ${anteriores.slice(0, 3).map(rotuloExigencia).join(" · ")}.`,
         });
       }
     }
