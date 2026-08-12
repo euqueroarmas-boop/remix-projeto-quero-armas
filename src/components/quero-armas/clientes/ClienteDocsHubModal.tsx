@@ -1579,7 +1579,9 @@ export function ClienteDocsHubModal({
     cep: string | null;
     cidade: string | null;
     uf: string | null;
-  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, naturalidade_uf: null, rg: null, cep: null, cidade: null, uf: null });
+    ocupacao_licita_cnpj: string | null;
+    ocupacao_licita_razao_social: string | null;
+  }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, naturalidade_uf: null, rg: null, cep: null, cidade: null, uf: null, ocupacao_licita_cnpj: null, ocupacao_licita_razao_social: null });
 
   // Docs aprovados carregados internamente quando o prop vier vazio
   const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
@@ -1651,7 +1653,7 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, naturalidade_uf, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, naturalidade_uf, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado, ocupacao_licita_cnpj, ocupacao_licita_razao_social")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
@@ -1685,6 +1687,9 @@ export function ClienteDocsHubModal({
           rg: row.rg || null,
           // Endereço: sempre atualiza — nunca vem como prop
           cep, cidade, uf,
+          // Dados da empresa do cadastro: referência do grupo Ocupação Lícita.
+          ocupacao_licita_cnpj: row.ocupacao_licita_cnpj || null,
+          ocupacao_licita_razao_social: row.ocupacao_licita_razao_social || null,
         }));
       } catch {
         // Silencioso — conformidade apenas degrada para "sem referência".
