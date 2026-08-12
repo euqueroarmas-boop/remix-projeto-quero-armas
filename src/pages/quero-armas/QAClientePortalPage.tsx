@@ -4871,6 +4871,8 @@ export default function QAClientePortalPage() {
             .filter((p: any) => p.kind === "documento")
             .map((p: any) => String(p.tipo || ""))
             .filter(Boolean)}
+          gruposBloqueados={travaGrupos.gruposBloqueados}
+          grupoCorrenteLabel={travaGrupos.grupoCorrenteLabel}
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}
