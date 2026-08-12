@@ -373,3 +373,17 @@
 @media (max-width: 400px) {
   .qa-dash-compact { zoom: 0.82; }
 }
+
+/* Telas menores que 14" (ex.: MacBook 3024x1964 lógico ~1512px): reduz 1px nos textos do painel */
+@media (max-width: 1600px) {
+  .qa-dash-compact .text-\[18px\] { font-size: 17px !important; }
+  .qa-dash-compact .text-\[12\.5px\] { font-size: 11.5px !important; }
+  .qa-dash-compact .text-\[11\.5px\] { font-size: 10.5px !important; }
+  .qa-dash-compact .text-\[11px\] { font-size: 10px !important; }
+  .qa-dash-compact .text-\[10\.5px\] { font-size: 9.5px !important; }
+  .qa-dash-compact .text-\[10px\] { font-size: 9px !important; }
+  .qa-dash-compact .text-\[9\.5px\] { font-size: 8.5px !important; }
+  .qa-dash-compact .text-\[9px\] { font-size: 8px !important; }
+  .qa-dash-compact .text-\[8\.5px\] { font-size: 7.5px !important; }
+}
+
