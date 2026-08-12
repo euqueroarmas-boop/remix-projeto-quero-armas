@@ -272,11 +272,18 @@ function LinhaGrupos({ r }: { r: Row }) {
 export default function DashboardProgressoClientes() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>("dias_parado");
-  const [asc, setAsc] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>(() => (lerOrdemSalva()?.key as SortKey) ?? "dias_parado");
+  const [asc, setAsc] = useState<boolean>(() => lerOrdemSalva()?.asc ?? false);
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
-  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
-  const [contador, setContador] = useState<ContadorKey>("todos");
+  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
+    try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
+  });
+  const [contador, setContador] = useState<ContadorKey>(() => {
+    try {
+      const v = localStorage.getItem(LS_CONTADOR);
+      return v && CONTADORES_VALIDOS.includes(v) ? (v as ContadorKey) : "todos";
+    } catch { return "todos"; }
+  });
   /** Modo credenciados: troca as colunas a partir de PRÓXIMO PASSO. */
   const [modoCred, setModoCred] = useState<"psicologo" | "instrutor_tiro" | null>(null);
   const [credRows, setCredRows] = useState<CredRow[]>([]);
@@ -294,6 +301,12 @@ export default function DashboardProgressoClientes() {
 
   useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
   useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
+  useEffect(() => {
+    if (filtroTrilha) localStorage.setItem(LS_TRILHA, filtroTrilha);
+    else localStorage.removeItem(LS_TRILHA);
+  }, [filtroTrilha]);
+  useEffect(() => { localStorage.setItem(LS_CONTADOR, contador); }, [contador]);
+  useEffect(() => { localStorage.setItem(LS_ORDEM, JSON.stringify({ key: sortKey, asc })); }, [sortKey, asc]);
 
   /** Credenciados (psicólogos e IAT) não localizados na base da PF. */
   useEffect(() => {
