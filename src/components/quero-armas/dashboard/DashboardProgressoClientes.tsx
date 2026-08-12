@@ -96,14 +96,27 @@ type CredRow = {
 
 /* Cores semânticas travadas: verde = em dia, âmbar = atenção, vermelho = crítico. */
 const VERDE = "#0F7A45";
-const VERDE_BG = "#F1FAF4";
+const VERDE_BG = "#E4F4EA";
 const AMBAR = "#8A6A17";
-const AMBAR_BG = "#FDFAF1";
+const AMBAR_BG = "#FAF0D8";
 const VERMELHO = "#7A1F2B";
-const VERMELHO_BG = "#FDF4F5";
+const VERMELHO_BG = "#F7E4E7";
 const TINTA = "#0A0A0A";
 const TINTA_2 = "#3A3A3A";
 const TINTA_3 = "#6A6A6A";
+const NEUTRO_BG = "#F0EFEC";
+
+/** Borda 1px sempre visível para cada fundo semântico — o chip não pode sumir na tela do operador. */
+const BORDA_POR_FUNDO: Record<string, string> = {
+  [VERDE_BG]: "#9FCFB4",
+  [AMBAR_BG]: "#D9BE79",
+  [VERMELHO_BG]: "#D2A2AA",
+  [NEUTRO_BG]: "#CFCCC5",
+};
+
+function bordaDe(fundo: string, cor: string) {
+  return BORDA_POR_FUNDO[fundo] ?? `${cor}55`;
+}
 
 type Saude = "ok" | "atencao" | "critico";
 
