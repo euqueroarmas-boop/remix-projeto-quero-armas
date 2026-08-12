@@ -2926,6 +2926,10 @@ export function ClienteDocsHubModal({
         (campos as any).data_avaliacao || campos.data_emissao || null,
         tipoIA,
         [clienteAutoFetch.naturalidade_municipio, clienteAutoFetch.naturalidade_uf].filter(Boolean).join(" ") || null,
+        {
+          cnpj: clienteAutoFetch.ocupacao_licita_cnpj,
+          razao_social: clienteAutoFetch.ocupacao_licita_razao_social,
+        },
       );
       setConformidade(items);
 
