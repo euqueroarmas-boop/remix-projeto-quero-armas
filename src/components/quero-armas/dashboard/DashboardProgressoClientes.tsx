@@ -542,6 +542,13 @@ export default function DashboardProgressoClientes() {
     return rows.some((r) => r.online) ? ["ONLINE", ...lista] : lista;
   }, [trilhas, rows]);
 
+  /** Trilha salva que não existe mais nos dados atuais: cai para "sem filtro". */
+  useEffect(() => {
+    if (filtroTrilha && trilhasDisponiveis.length > 0 && !trilhasDisponiveis.includes(filtroTrilha)) {
+      setFiltroTrilha(null);
+    }
+  }, [filtroTrilha, trilhasDisponiveis]);
+
   /** Processos bloqueados não têm documentos — herdam a trilha dos outros processos do mesmo cliente. */
   const trilhasEfetivas = useMemo(() => {
     const porCliente: Record<number, Set<string>> = {};
