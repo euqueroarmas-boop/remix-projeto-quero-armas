@@ -5849,9 +5849,22 @@ export function ClienteDocsHubModal({
               </div>
 
               {semDatasOcupacao ? (
+                // Dois grupos caem aqui por motivos DIFERENTES: os constitutivos
+                // (que não têm emissão nem vencimento) e a nota fiscal (que tem
+                // emissão impressa e é conferida pelo emitente, mas não vence).
+                // Um texto só descrevia errado o documento que o cliente anexou.
                 <div className="rounded-xl border border-[#7A1F2B]/20 bg-[#7A1F2B]/5 px-3 py-2 text-[11px] leading-snug text-[#7A1F2B]">
-                  Documento constitutivo da empresa — <strong>sem data de emissão e sem vencimento</strong>.
-                  A atualidade da ocupação lícita é conferida pelo Cartão CNPJ e pelo QSA (30 dias).
+                  {isNotaFiscalOcupacao(form.tipo_documento) ? (
+                    <>
+                      Nota fiscal — <strong>não vence</strong>. A conferência é do emitente
+                      (prestador) contra o seu cadastro.
+                    </>
+                  ) : (
+                    <>
+                      Documento constitutivo da empresa — <strong>sem data de emissão e sem vencimento</strong>.
+                      A atualidade da ocupação lícita é conferida pelo Cartão CNPJ e pelo QSA (30 dias).
+                    </>
+                  )}
                 </div>
               ) : (
               <Field
