@@ -421,7 +421,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       // Sem emissão não há validade — e o documento entraria no Hub "SEM DATA".
       // Herda a data do cartão enviado no mesmo lote, e com ela os 30 dias.
       const emissaoCartaoCnpj = docsParaPersistir.find((a) =>
-        ["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei"].includes(resolveTipoHub(a.tipo)) && a.data_emissao,
+        ["renda_cartao_cnpj", "renda_cnpj_autonomo"].includes(resolveTipoHub(a.tipo)) && a.data_emissao,
       )?.data_emissao ?? null;
 
       if (docsParaPersistir.length > 0) {

@@ -51,8 +51,9 @@ function validadePorTipo(tipo: string, emissaoIso: string): string | null {
   const addDias = (n: number) => { const x = new Date(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   const addMeses = (n: number) => { const x = new Date(d); x.setUTCMonth(x.getUTCMonth() + n); return x.toISOString().slice(0, 10); };
 
-  // Documentos societários da Receita: 30 dias
-  if (["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei", "renda_qsa"].includes(tipo)) return addDias(30);
+  // CCMEI é constitutivo: não tem emissão nem validade. Somente a consulta
+  // atual da Receita (Cartão CNPJ/QSA) recebe prazo de 30 dias.
+  if (["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_qsa"].includes(tipo)) return addDias(30);
   // Certidões de 90 dias
   if (["antecedentes_federal_trf3_regional", "antecedentes_militar", "antecedentes_militar_estadual"].includes(tipo)) return addDias(90);
   // Identificação civil: 10 anos
@@ -214,7 +215,7 @@ Deno.serve(async (req) => {
       // O QSA é emitido junto com o cartão CNPJ e não traz data própria.
       // Ao datar o cartão, propaga para os QSA do mesmo cliente que estão sem data.
       let qsaAtualizados = 0;
-      if (novaEmissao && ["renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_ccmei"].includes(tipoFinal)) {
+      if (novaEmissao && ["renda_cartao_cnpj", "renda_cnpj_autonomo"].includes(tipoFinal)) {
         const { data: qsas } = await admin
           .from("qa_documentos_cliente")
           .select("id")
