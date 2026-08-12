@@ -97,11 +97,17 @@ export function emitenteConfere(
 ): boolean | null {
   const cnpjDoc = soDigitos(doc.cnpj);
   const cnpjRef = soDigitos(ref.cnpj);
-  if (cnpjDoc && cnpjRef) return cnpjDoc === cnpjRef;
   const razaoDoc = normNome(doc.razao_social);
   const razaoRef = normNome(ref.razao_social);
-  if (razaoDoc && razaoRef) return razaoDoc === razaoRef || razaoDoc.includes(razaoRef) || razaoRef.includes(razaoDoc);
-  return null;
+  const comparacoes: boolean[] = [];
+  if (cnpjDoc && cnpjRef) comparacoes.push(cnpjDoc === cnpjRef);
+  if (razaoDoc && razaoRef) {
+    comparacoes.push(
+      razaoDoc === razaoRef || razaoDoc.includes(razaoRef) || razaoRef.includes(razaoDoc),
+    );
+  }
+  if (!comparacoes.length) return null;
+  return comparacoes.some(Boolean);
 }
 
 /** QSA e Cartão CNPJ devem vir da MESMA consulta da Receita (mesma emissão). */
