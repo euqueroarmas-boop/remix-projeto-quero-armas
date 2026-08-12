@@ -889,10 +889,15 @@ export default function DashboardProgressoClientes() {
                   ) : (
                     <Chip cor={TINTA} fundo="#F4F4F4">
                       {r.grupo_atual ?? r.fase}
-                      {(r.grupo_total ?? 0) > 0 ? ` ${r.grupo_concluidos ?? 0}/${r.grupo_total}` : ""}
+                      {passoAtual(r) ? ` ${passoAtual(r)!.atual}/${passoAtual(r)!.total}` : ""}
                     </Chip>
                   )}
                   <LinhaGrupos r={r} />
+                  {retroativas[r.processo_id] && (
+                    <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
+                      NOVA EXIGÊNCIA
+                    </Chip>
+                  )}
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                   {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -900,7 +905,7 @@ export default function DashboardProgressoClientes() {
                 </div>
                 <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
                   {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
+                  <span className="min-w-0 flex-1 truncate" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                 </div>
                 {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
                   <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
@@ -1059,9 +1064,16 @@ export default function DashboardProgressoClientes() {
                         <div>
                           <LinhaTopo><Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
                           <div className="mt-1"><LinhaGrupos r={r} /></div>
-                          {(r.grupo_total ?? 0) > 0 && (
+                          {retroativas[r.processo_id] && (
+                            <div className="mt-1">
+                              <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
+                                NOVA EXIGÊNCIA
+                              </Chip>
+                            </div>
+                          )}
+                          {passoAtual(r) && (
                             <div className="mt-1 text-[10.5px] font-medium uppercase leading-[1.25] tabular-nums" style={{ color: TINTA_2 }}>
-                              PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
+                              PASSO {passoAtual(r)!.atual} DE {passoAtual(r)!.total} NESTA ETAPA
                             </div>
                           )}
                         </div>
@@ -1100,7 +1112,7 @@ export default function DashboardProgressoClientes() {
                   proximo_doc: (
                     <div className="min-w-0 text-[10.5px] font-medium uppercase leading-[22px]" style={{ color: TINTA }}>
                       {r.proximo_tipo === "pergunta" && <HelpCircle className="mr-1.5 inline-block h-3.5 w-3.5 align-[-2px]" style={{ color: AMBAR }} />}
-                      <span className="break-words">{r.proximo_doc ?? "—"}</span>
+                      <span className="break-words" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                     </div>
                   ),
                   efetiva: ef
