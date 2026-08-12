@@ -307,6 +307,7 @@ export default function DashboardProgressoClientes() {
   const [recarregando, setRecarregando] = useState(false);
   /** email -> { hoje, total } de entradas no portal. */
   const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
+  const [retroativas, setRetroativas] = useState<Record<string, boolean>>({});
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   /** Resumo de e-mails disparados (deduplicado por message_id). */
