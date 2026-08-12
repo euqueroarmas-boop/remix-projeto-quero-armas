@@ -681,7 +681,11 @@ export default function DashboardProgressoClientes() {
             </div>
             <button
               type="button"
-              onClick={() => { setLarguras({}); setVisiveis({}); }}
+              onClick={() => {
+                setLarguras({}); setVisiveis({});
+                setFiltroTrilha(null); setContador("todos");
+                setSortKey("dias_parado"); setAsc(false);
+              }}
               className="mt-3 w-full rounded-sm border border-[#DADADA] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[#0A0A0A]"
               style={{ color: TINTA_2 }}
             >
