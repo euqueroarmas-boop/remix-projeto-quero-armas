@@ -352,7 +352,7 @@ Deno.serve(async (req) => {
 
     const { data: processo } = await supabase
       .from("qa_processos")
-      .select("id, cliente_id, servico_id, condicao_profissional, status")
+      .select("id, cliente_id, servico_id, condicao_profissional, status, respostas_questionario_json")
       .eq("id", processo_id)
       .maybeSingle();
     if (!processo) return json({ error: "Processo não encontrado" }, 404);
@@ -368,9 +368,20 @@ Deno.serve(async (req) => {
       if (!link) return json({ error: "Sem permissão para este processo" }, 403);
     }
 
-    // 1) Atualiza condicao no processo
+    // 1) Atualiza condicao no processo.
+    //    A resposta TAMBÉM vai para respostas_questionario_json: sem isso, uma
+    //    reexplosão do checklist recria a pergunta-pivot já respondida (bug do
+    //    Anthony/Fábio). Merge, nunca sobrescrita das demais chaves.
+    const respostasAtuais =
+      (processo as any)?.respostas_questionario_json &&
+      typeof (processo as any).respostas_questionario_json === "object"
+        ? { ...(processo as any).respostas_questionario_json }
+        : {};
     await supabase.from("qa_processos")
-      .update({ condicao_profissional: condicao })
+      .update({
+        condicao_profissional: condicao,
+        respostas_questionario_json: { ...respostasAtuais, condicao_profissional: condicao },
+      })
       .eq("id", processo_id);
 
     // 2) Remove placeholder renda_definir_condicao (sempre)

@@ -82,6 +82,7 @@ import {
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
+import { grupoDaPendencia } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
@@ -1420,6 +1421,13 @@ interface Props {
    *  do exigido mas que cobre outra pendência, o Hub reclassifica sozinho e
    *  aceita salvar nesse outro tipo. */
   pendingHubTipos?: string[];
+  /** TRAVA DE ORDEM POR GRUPO (portal do cliente, 12/08/2026).
+   *  Grupos do checklist que ainda estão bloqueados porque um grupo anterior
+   *  não foi concluído. O Hub recusa salvar documento classificado num desses
+   *  grupos — a trava não pode viver só na navegação do pop-up guiado. */
+  gruposBloqueados?: string[];
+  /** Label do grupo corrente, usado na mensagem de bloqueio. */
+  grupoCorrenteLabel?: string | null;
   /** Se preenchido, o documento salvo substitui este documento existente:
    *  grava `substitui_documento_id` no novo registro e marca o antigo como
    *  `substituido` (soft delete com trilha de auditoria). Usado pelo botão
@@ -1446,6 +1454,8 @@ export function ClienteDocsHubModal({
   clienteNomeMae,
   docsAprovados = [],
   pendingHubTipos = [],
+  gruposBloqueados = [],
+  grupoCorrenteLabel = null,
   substituirDocumentoId = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
@@ -1756,6 +1766,22 @@ export function ClienteDocsHubModal({
     form.tipo_documento &&
     !cobreOutraPendencia
   );
+  // ── TRAVA DE ORDEM POR GRUPO ────────────────────────────────────────────
+  // O documento pertence a um grupo que ainda não foi liberado (ex.: cliente
+  // manda certidões de Idoneidade com a Ocupação lícita em aberto). Só vale
+  // no portal do cliente e só depois de a leitura identificar o tipo.
+  const grupoDoDocumento =
+    form.tipo_documento && (classificacao || conferenciaLocal)
+      ? grupoDaPendencia(form.tipo_documento, form.tipo_documento).id
+      : null;
+  const grupoBloqueadoTrava = !!(
+    mode === "portal" &&
+    grupoDoDocumento &&
+    (gruposBloqueados || []).includes(grupoDoDocumento)
+  );
+  const mensagemGrupoBloqueado = grupoCorrenteLabel
+    ? `Este documento é de uma etapa mais adiante do seu checklist. Conclua ${grupoCorrenteLabel} para liberar esta entrega.`
+    : "Este documento é de uma etapa mais adiante do seu checklist. Conclua a etapa atual para liberar esta entrega.";
   // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
   // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
   // hora, com carimbo vermelho, e o cliente precisa excluir o anterior ou
@@ -3487,6 +3513,10 @@ export function ClienteDocsHubModal({
     }
     // Trava: certidão não é o que o slot pede E também não cobre nenhuma
     // outra pendência do processo → não deixa salvar.
+    if (grupoBloqueadoTrava) {
+      toast.error(mensagemGrupoBloqueado);
+      return;
+    }
     if (certidaoIncorreta) {
       toast.error(
         `Esta certidão não é a exigida (${expectedTipoMeta?.label ?? "documento pedido"}) e não cobre nenhuma outra pendência deste processo. Anexe o documento correto.`,
@@ -4434,7 +4464,17 @@ export function ClienteDocsHubModal({
               </p>
             </div>
 
-            {certidaoIncorreta ? (
+            {grupoBloqueadoTrava ? (
+              <div
+                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[#7A1F2B]"
+                style={{ boxShadow: "0 0 0 2px rgba(122,31,43,0.15)" }}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Etapa ainda bloqueada
+                </span>
+              </div>
+            ) : certidaoIncorreta ? (
               <div
                 className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-red-600 bg-red-50 px-3 py-1.5 text-red-700"
                 style={{ boxShadow: "0 0 0 2px rgba(220,38,38,0.15)" }}
@@ -4550,6 +4590,14 @@ export function ClienteDocsHubModal({
                     enviado para análise. Anexe o documento em nome do próprio titular
                     {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
                   </div>
+                </div>
+              </div>
+            ) : grupoBloqueadoTrava ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] p-2 text-[10px] leading-snug text-[#5A1622]">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Etapa ainda bloqueada</div>
+                  <div>{mensagemGrupoBloqueado}</div>
                 </div>
               </div>
             ) : rejeitadoDuplicidade ? (
@@ -5675,7 +5723,8 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : (certidaoIncorreta ||
+          ) : (grupoBloqueadoTrava ||
+              certidaoIncorreta ||
               rejeitadoDuplicidade ||
               (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) ||
               notaTomadorParentesco) ? (

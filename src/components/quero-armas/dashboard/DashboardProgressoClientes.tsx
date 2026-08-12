@@ -199,6 +199,21 @@ function rotaCadastroCliente(clienteId: number) {
 }
 
 /** "GRUPO 4 DE 7 · FALTAM 4" — leitura de quanto falta para terminar o processo. */
+/** Rótulo limpo do próximo passo: remove sufixos técnicos (" — SALGADEIRO") que quebram a coluna. */
+function rotuloProximoPasso(texto?: string | null) {
+  const bruto = String(texto ?? "").trim();
+  if (!bruto) return "—";
+  return bruto.split(/\s+[—–-]\s+/)[0].trim() || bruto;
+}
+
+/** Passo humano: o item em andamento é o próximo, não o último concluído. */
+function passoAtual(r: Row) {
+  const total = r.grupo_total ?? 0;
+  if (total <= 0) return null;
+  const feitos = r.grupo_concluidos ?? 0;
+  return { atual: Math.min(total, feitos + 1), total };
+}
+
 function LinhaGrupos({ r }: { r: Row }) {
   const total = r.grupos_total ?? 0;
   if (total <= 0) return null;
@@ -307,6 +322,7 @@ export default function DashboardProgressoClientes() {
   const [recarregando, setRecarregando] = useState(false);
   /** email -> { hoje, total } de entradas no portal. */
   const [acessos, setAcessos] = useState<Record<string, { hoje: number; total: number }>>({});
+  const [retroativas, setRetroativas] = useState<Record<string, boolean>>({});
   /** Totais globais de acessos ao portal (hoje e desde o início). */
   const [acessosGlobais, setAcessosGlobais] = useState<{ hoje: number; total: number }>({ hoje: 0, total: 0 });
   /** Resumo de e-mails disparados (deduplicado por message_id). */
@@ -356,6 +372,15 @@ export default function DashboardProgressoClientes() {
         setRows(lista);
 
         const ids = lista.map((r) => r.processo_id).filter(Boolean);
+
+        // Exigências criadas DEPOIS da última entrega do cliente: explicam por que
+        // um processo parece "voltar" de etapa no painel.
+        const { data: retro } = await supabase.rpc("qa_exigencias_retroativas" as any);
+        if (!cancelled) {
+          const mapa: Record<string, boolean> = {};
+          for (const x of ((retro as any[]) ?? [])) if (x?.processo_id) mapa[String(x.processo_id)] = true;
+          setRetroativas(mapa);
+        }
 
         // Contagem de entradas no portal por cliente (hoje e histórico).
         const { data: logins } = await supabase
@@ -864,10 +889,15 @@ export default function DashboardProgressoClientes() {
                   ) : (
                     <Chip cor={TINTA} fundo="#F4F4F4">
                       {r.grupo_atual ?? r.fase}
-                      {(r.grupo_total ?? 0) > 0 ? ` ${r.grupo_concluidos ?? 0}/${r.grupo_total}` : ""}
+                      {passoAtual(r) ? ` ${passoAtual(r)!.atual}/${passoAtual(r)!.total}` : ""}
                     </Chip>
                   )}
                   <LinhaGrupos r={r} />
+                  {retroativas[r.processo_id] && (
+                    <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
+                      NOVA EXIGÊNCIA
+                    </Chip>
+                  )}
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                   {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
@@ -875,7 +905,7 @@ export default function DashboardProgressoClientes() {
                 </div>
                 <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
                   {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate">{r.proximo_doc ?? "—"}</span>
+                  <span className="min-w-0 flex-1 truncate" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                 </div>
                 {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
                   <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
@@ -1034,9 +1064,16 @@ export default function DashboardProgressoClientes() {
                         <div>
                           <LinhaTopo><Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
                           <div className="mt-1"><LinhaGrupos r={r} /></div>
-                          {(r.grupo_total ?? 0) > 0 && (
+                          {retroativas[r.processo_id] && (
+                            <div className="mt-1">
+                              <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
+                                NOVA EXIGÊNCIA
+                              </Chip>
+                            </div>
+                          )}
+                          {passoAtual(r) && (
                             <div className="mt-1 text-[10.5px] font-medium uppercase leading-[1.25] tabular-nums" style={{ color: TINTA_2 }}>
-                              PASSO {r.grupo_concluidos ?? 0} DE {r.grupo_total} NESTA ETAPA
+                              PASSO {passoAtual(r)!.atual} DE {passoAtual(r)!.total} NESTA ETAPA
                             </div>
                           )}
                         </div>
@@ -1075,7 +1112,7 @@ export default function DashboardProgressoClientes() {
                   proximo_doc: (
                     <div className="min-w-0 text-[10.5px] font-medium uppercase leading-[22px]" style={{ color: TINTA }}>
                       {r.proximo_tipo === "pergunta" && <HelpCircle className="mr-1.5 inline-block h-3.5 w-3.5 align-[-2px]" style={{ color: AMBAR }} />}
-                      <span className="break-words">{r.proximo_doc ?? "—"}</span>
+                      <span className="break-words" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                     </div>
                   ),
                   efetiva: ef

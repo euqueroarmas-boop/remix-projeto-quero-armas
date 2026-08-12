@@ -81,6 +81,7 @@ import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
@@ -2590,6 +2591,9 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  // TRAVA DE ORDEM POR GRUPO — só o grupo corrente da fila aceita entrega.
+  const travaGrupos = useMemo(() => calcularTravaGrupos(pendenciasGuiadas as any), [pendenciasGuiadas]);
+
   // ── Varredura silenciosa por baixo do portal ───────────────────────────────
   // Só liga quando o cliente logado TEM pendência aberta (assinatura ou
   // exigência de checklist). Nesse caso o portal se atualiza sozinho quando o
@@ -4871,6 +4875,8 @@ export default function QAClientePortalPage() {
             .filter((p: any) => p.kind === "documento")
             .map((p: any) => String(p.tipo || ""))
             .filter(Boolean)}
+          gruposBloqueados={travaGrupos.gruposBloqueados}
+          grupoCorrenteLabel={travaGrupos.grupoCorrenteLabel}
           onSaved={() => setDocsReloadKey((k) => k + 1)}
         />
       )}

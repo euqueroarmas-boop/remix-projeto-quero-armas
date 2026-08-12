@@ -13409,6 +13409,14 @@ export type Database = {
         Args: { _evento: string; _solicitacao_id: string; _status_novo: string }
         Returns: boolean
       }
+      qa_exigencias_retroativas: {
+        Args: never
+        Returns: {
+          criada_em: string
+          processo_id: string
+          retroativa: boolean
+        }[]
+      }
       qa_explodir_checklist_processo: {
         Args: { p_processo_id: string }
         Returns: {
