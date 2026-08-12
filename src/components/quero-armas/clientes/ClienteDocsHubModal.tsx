@@ -4592,6 +4592,14 @@ export function ClienteDocsHubModal({
                   </div>
                 </div>
               </div>
+            ) : grupoBloqueadoTrava ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] p-2 text-[10px] leading-snug text-[#5A1622]">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Etapa ainda bloqueada</div>
+                  <div>{mensagemGrupoBloqueado}</div>
+                </div>
+              </div>
             ) : rejeitadoDuplicidade ? (
               <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
