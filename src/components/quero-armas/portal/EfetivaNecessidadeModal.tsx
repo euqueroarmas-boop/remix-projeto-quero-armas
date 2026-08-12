@@ -343,6 +343,10 @@ export default function EfetivaNecessidadeModal({
         });
         setRelato(reg.relato_cliente ?? "");
         setContexto(reg.contexto_risco ?? "");
+        baseTextoRef.current = {
+          relato_cliente: reg.relato_cliente ?? "",
+          contexto_risco: reg.contexto_risco ?? "",
+        };
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
         setTextoBo(reg.texto_bo ?? "");
         setBoPendenteRegistro(Boolean(reg.bo_pendente_registro));
