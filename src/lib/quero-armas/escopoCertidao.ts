@@ -15,8 +15,16 @@
 
 export type EscopoCertidao = "criminal" | "civel" | "indefinido";
 
+/**
+ * Higieniza antes de detectar: URLs, e-mails e códigos colados do rodapé
+ * (ex.: `.../CertidaoCivelEleitoralCriminal/...`) não podem influenciar o
+ * veredicto — nem para cível, nem para criminal.
+ */
 function achatar(texto: string): string {
   return String(texto || "")
+    .replace(/https?:\/\/\S+/gi, " ")
+    .replace(/\bwww\.\S+/gi, " ")
+    .replace(/\S+@\S+\.\S+/g, " ")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
@@ -46,7 +54,13 @@ const MARCADORES_CIVEIS: RegExp[] = [
   /DISTRIBUICAO CIVEL/,
   /DISTRIBUICO[EO]S CIVEIS/,
   /AREA CIVEL/,
-  /CERTIDAO CIVEL/,
+  // TRF3 e correlatos: "CERTIDÃO JUDICIAL CÍVEL", "CERTIDÃO NEGATIVA CÍVEL",
+  // "CERTIDÃO DE DISTRIBUIÇÃO CÍVEL".
+  /CERTIDAO (?:[A-Z]+ ){0,3}CIVEL/,
+  /CLASSES CIVEIS/,
+  /PROCESSOS CIVEIS/,
+  /NATUREZA CIVEL/,
+  /MATERIA CIVEL/,
   /REU\s*\/\s*REQUERIDO/,
   /FAMILIA E SUCESSOES/,
   /FALENCIA|CONCORDATA|RECUPERACAO JUDICIAL/,
@@ -54,12 +68,23 @@ const MARCADORES_CIVEIS: RegExp[] = [
   /EXECUCOES FISCAIS/,
 ];
 
+/**
+ * Cabeçalho manda mais que corpo: quando o título declara CÍVEL, esse é o
+ * escopo — mesmo que "criminal" apareça depois em observações ou no nome do
+ * sistema consultado.
+ */
+function cabecalhoDeclaraCivel(textoAchatado: string): boolean {
+  const cabecalho = textoAchatado.slice(0, 600);
+  return MARCADORES_CIVEIS.some((re) => re.test(cabecalho));
+}
+
 export function detectarEscopoCertidao(texto: string): EscopoCertidao {
   const t = achatar(texto);
   if (!t) return "indefinido";
+  const civel = MARCADORES_CIVEIS.some((re) => re.test(t));
+  if (civel && cabecalhoDeclaraCivel(t)) return "civel";
   const criminal = MARCADORES_CRIMINAIS.some((re) => re.test(t));
   if (criminal) return "criminal";
-  const civel = MARCADORES_CIVEIS.some((re) => re.test(t));
   return civel ? "civel" : "indefinido";
 }
 
