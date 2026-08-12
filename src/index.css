@@ -239,6 +239,13 @@ html.qa-noite [data-sonner-toaster] {
 }
 
 /* Re-inversão do que não pode aparecer em negativo. */
+/* Escopo aninhado: o container pai já inverteu — inverter de novo devolveria
+   a tela para o modo claro (era o caso de /clientes dentro do QALayout). */
+html.qa-noite .qa-scope .qa-scope {
+  filter: none;
+  background-color: transparent;
+}
+
 html.qa-noite .qa-scope :where(img, video, canvas, iframe, svg image, [data-nao-inverter]),
 html.qa-noite [data-radix-popper-content-wrapper] :where(img, video, canvas, iframe, svg image, [data-nao-inverter]),
 html.qa-noite [data-radix-portal] :where(img, video, canvas, iframe, svg image, [data-nao-inverter]) {
