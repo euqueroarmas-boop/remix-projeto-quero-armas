@@ -362,3 +362,14 @@
   /* Barras horizontais roláveis com o dedo */
   .qa-scope [class*="overflow-x-auto"] { touch-action: pan-x; -webkit-overflow-scrolling: touch; }
 }
+
+/* Progresso dos clientes: reduz a escala tipográfica em telas menores */
+@media (max-width: 1024px) {
+  .qa-dash-compact { zoom: 0.94; }
+}
+@media (max-width: 640px) {
+  .qa-dash-compact { zoom: 0.88; }
+}
+@media (max-width: 400px) {
+  .qa-dash-compact { zoom: 0.82; }
+}
