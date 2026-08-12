@@ -199,7 +199,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("qa_processo_documentos" as any)
-        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio")
+        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio, created_at")
         .eq("cliente_id", clienteId);
       return ((data as any[]) || []);
     },
