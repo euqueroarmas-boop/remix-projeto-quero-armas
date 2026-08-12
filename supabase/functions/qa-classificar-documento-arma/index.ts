@@ -680,6 +680,33 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
 
+  // O PDF oficial do CCMEI pode incluir, na segunda página, o próprio Cartão
+  // CNPJ da Receita. O título e os marcadores específicos do certificado têm
+  // precedência absoluta sobre a frase genérica de situação cadastral.
+  const ehCcmei =
+    (/CERTIFICADO DA CONDICAO DE[\s\S]{0,120}MICROEMPREENDEDOR INDIVIDUAL/.test(norm)) ||
+    /MEI RECEITA ECONOMIA GOV BR CERTIFICADO/.test(norm) ||
+    /ENQUADRADO NA CONDICAO DE MEI|PERIODOS DE ENQUADRAMENTO COMO MEI/.test(norm) ||
+    (/OCUPACAO PRINCIPAL/.test(norm) && /ATIVIDADE PRINCIPAL CNAE/.test(norm) && /CNPJ/.test(norm)) ||
+    (/COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL/.test(norm) && /MICROEMPREENDEDOR INDIVIDUAL|PORTE MEI/.test(norm));
+  if (ehCcmei) {
+    parsed.tipoDetectado = "CCMEI";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.nome_completo = campos.nome_completo ||
+      textoPdf.match(/NOME CIVIL\s*\n\s*([^\n]{6,120})/i)?.[1]?.trim() || "";
+    campos.cpf = campos.cpf || textoPdf.match(/\b(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\b/)?.[1] || "";
+    campos.cnpj = campos.cnpj || textoPdf.match(/\b(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})\b/)?.[1] || "";
+    campos.razao_social = campos.razao_social ||
+      textoPdf.match(/NOME EMPRESARIAL\s*\n\s*([^\n]{3,160})/i)?.[1]?.trim() || "";
+    campos.situacao_cadastral = campos.situacao_cadastral ||
+      norm.match(/SITUACAO CADASTRAL(?: VIGENTE)?[\s\S]{0,100}\b(ATIVA|ATIVO|BAIXADA|SUSPENSA|INAPTA|NULA)\b/)?.[1] || "";
+    delete campos.data_emissao;
+    delete campos.data_validade;
+    parsed.justificativa =
+      "Classificação determinística: certificado oficial CCMEI; eventual Cartão CNPJ anexo integra o mesmo PDF e não altera o tipo principal.";
+    return parsed;
+  }
+
   const contaConsumoImovel =
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(norm) &&
     /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(norm);
