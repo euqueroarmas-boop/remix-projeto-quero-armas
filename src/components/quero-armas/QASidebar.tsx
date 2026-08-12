@@ -138,7 +138,19 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
       className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
         width: collapsed ? "4.25rem" : "16rem",
-        minHeight: "100%",
+        /* Altura presa à tela, não ao conteúdo do menu.
+           O grid do QALayout usa `items-stretch`: com altura natural, o menu
+           (~16 itens) ficava mais alto que a tela e passava a ditar a altura da
+           página — a coluna do conteúdo esticava junto e empurrava o rodapé,
+           abrindo um vazio entre o fim do conteúdo e o rodapé.
+           `align-self: start` sozinho não resolve: a linha continua dimensionada
+           pela altura natural da sidebar. O que resolve é limitá-la a 100vh e
+           dar rolagem própria. O sticky mantém o menu visível em telas longas. */
+        height: "100vh",
+        position: "sticky",
+        top: 0,
+        alignSelf: "start",
+        overflowY: "auto",
         background: "var(--qa-sb-bg)",
         borderColor: "var(--qa-sb-border)",
       }}
