@@ -49,8 +49,12 @@ import {
 } from "@/lib/quero-armas/somentePdfOriginal";
 import { ehCcmei, parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
+  hojeISOBRT,
+  isDocumentoConstitutivoPerpetuo,
   isDocumentoEmpresa30Dias,
+  isDocumentoVencido,
   isNotaFiscalSemVencimento,
+  isTipoSemVencimento,
   textoIndicaValidadeIndeterminada,
 } from "@/lib/quero-armas/validadeDocumento";
 import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
@@ -1159,6 +1163,10 @@ function addCalendarMonthsIso(iso?: string | null, months = 1): string {
 }
 
 function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): string {
+  // Tipos sem vencimento POR NATUREZA (CCMEI, contrato social, requerimento de
+  // empresário, nota fiscal, carteira funcional, certidão civil) precedem
+  // qualquer regra de prazo: nunca inferir validade a partir da emissão.
+  if (isTipoSemVencimento(tipo)) return "";
   const emissao = dataIsoFromBr(dataEmissao) || String(dataEmissao || "").slice(0, 10);
   if (!emissao) return "";
   if (
@@ -2216,7 +2224,9 @@ export function ClienteDocsHubModal({
     if (!showArmaFields) {
       const base: SensitiveKey[] = [];
       if (iaExtraido.numero_documento) base.push("numero_documento");
-      if (iaExtraido.data_validade) base.push("data_validade");
+      // Tipo sem vencimento nunca exibe o campo Validade — não pode exigir a
+      // confirmação de uma data que a tela não mostra (travava o Salvar).
+      if (iaExtraido.data_validade && !isTipoSemVencimento(t)) base.push("data_validade");
       return base;
     }
     if (t === "cr" || t === "autorizacao_compra") {
@@ -2269,8 +2279,8 @@ export function ClienteDocsHubModal({
     return null;
   }
 
-  // Documento expirado: compara data_validade (ISO) com hoje sem depender de timezone.
-  const hoje = new Date().toISOString().slice(0, 10);
+  // Documento expirado: compara data_validade (ISO) com o "hoje" de Brasília.
+  const hoje = hojeISOBRT();
   // Validade INDETERMINADA declarada no próprio documento (ex.: identidade
   // funcional "VALIDADE: INDETERM."): não conta prazo, nunca reprova por
   // vencimento e entra no Hub sem data de vencimento.
@@ -2284,13 +2294,41 @@ export function ClienteDocsHubModal({
       campos?.observacoes,
       form.observacoes,
     );
-  const docExpirado = !validadeIndeterminada && !!form.data_validade && form.data_validade < hoje;
+  // Tipos que NÃO têm vencimento por natureza (CCMEI, contrato social,
+  // requerimento/ficha da Junta, nota fiscal, carteira funcional, certidão
+  // civil). A trava de vencimento não pode olhar apenas para `form.data_validade`:
+  // uma data residual de um arquivo trocado dentro do mesmo modal carimbava
+  // "REPROVADO — VENCIDO" num CCMEI, que não tem validade nenhuma.
+  const tipoSemVencimento = isTipoSemVencimento(form.tipo_documento);
+  // Constitutivos da empresa: também não têm data de emissão a conferir.
+  const constitutivoSemDatas = isDocumentoConstitutivoPerpetuo(form.tipo_documento);
+  // Fonte única da trava: `isDocumentoVencido` já recusa reprovar tipo que não
+  // exige validade, mesmo com data residual no estado ou no banco.
+  const docExpirado = isDocumentoVencido(form.tipo_documento, form.data_validade, {
+    validadeIndeterminada,
+    hoje,
+  });
 
   // Documento sem prazo: limpa qualquer validade inferida por regra de tipo.
   useEffect(() => {
     if (!validadeIndeterminada) return;
     setForm((prev) => (prev.data_validade ? { ...prev, data_validade: "" } : prev));
   }, [validadeIndeterminada]);
+
+  // Tipo sem vencimento: zera qualquer data residual que tenha sobrado de uma
+  // leitura anterior (troca de arquivo no mesmo modal) ou de dado legado.
+  useEffect(() => {
+    if (!tipoSemVencimento) return;
+    setForm((prev) => {
+      const limparEmissao = constitutivoSemDatas && !!prev.data_emissao;
+      if (!prev.data_validade && !limparEmissao) return prev;
+      return {
+        ...prev,
+        data_validade: "",
+        ...(limparEmissao ? { data_emissao: "" } : {}),
+      };
+    });
+  }, [tipoSemVencimento, constitutivoSemDatas]);
   const isLaudoExameTipo = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(form.tipo_documento);
 
   // Busca psicólogos próximos APENAS quando laudo está vencido e temos CEP do cliente.
@@ -2859,6 +2897,9 @@ export function ClienteDocsHubModal({
         // A regra legal (Lei 10.826/03) vincula validade à DATA DA AVALIAÇÃO,
         // não à data de emissão impressa.
         data_emissao: (() => {
+          // Constitutivos (CCMEI, contrato social, requerimento/ficha da Junta):
+          // sem emissão a conferir em QUALQUER caminho de leitura, inclusive IA.
+          if (isDocumentoConstitutivoPerpetuo(tipoIA)) return "";
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
           if (isLaudoExame) {
             return (
@@ -2870,6 +2911,9 @@ export function ClienteDocsHubModal({
           return dataIsoFromBr(campos.data_emissao) || prev.data_emissao;
         })(),
         data_validade: (() => {
+          // Tipo sem vencimento por natureza: nunca aceitar validade da IA nem
+          // herdar a data que sobrou da leitura anterior.
+          if (isTipoSemVencimento(tipoIA)) return "";
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
           // Regra legal (Lei 10.826/03): para laudos/exames a validade é SEMPRE
           // data_avaliacao + 1 ano, ignorando a data de validade impressa no documento
@@ -2946,6 +2990,10 @@ export function ClienteDocsHubModal({
         arma_modelo: modeloExtraidoSeguro,
         arma_calibre: campos.arma_calibre || "",
         data_validade: (() => {
+          // Sem vencimento por natureza: não registra validade extraída, senão
+          // a trava de campos sensíveis passaria a exigir a confirmação de uma
+          // data que a tela nem exibe.
+          if (isTipoSemVencimento(tipoIA)) return "";
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
           if (isLaudoExame) {
             const avaliacao = dataIsoFromBr((campos as any).data_avaliacao) || dataIsoFromBr(campos.data_emissao);
@@ -3023,6 +3071,10 @@ export function ClienteDocsHubModal({
         );
         const sugestao = (extra as any)?.sugestao || {};
         setForm((prev) => {
+          // Fallback de IA também respeita os tipos sem datas: constitutivos não
+          // ganham emissão nem validade por enriquecimento do extractor.
+          const semEmissao = isDocumentoConstitutivoPerpetuo(tipoIA);
+          const semValidade = isTipoSemVencimento(tipoIA);
           const isLaudoExame = /laudo|exame|capacidade_tecnica|psicotecnico/i.test(tipoIA);
           // Para laudos/exames, a DATA DA AVALIAÇÃO do extractor SEMPRE prevalece
           // sobre qualquer data_emissao previamente capturada pelo classify (que
@@ -3045,13 +3097,14 @@ export function ClienteDocsHubModal({
             nome_documento: prev.nome_documento || sugestao.titulo_oficial || "",
             numero_documento: prev.numero_documento || sugestao.numero_documento || "",
             orgao_emissor: prev.orgao_emissor || sugestao.orgao_emissor || "",
-            data_emissao: dataEmissaoFinal,
+            data_emissao: semEmissao ? "" : dataEmissaoFinal,
           // Para comprovante de residência, nunca usar data_validade da sugestão:
           // a IA pode extrair vencimento/fatura; a validade operacional é calculada pela regra canônica.
-            data_validade:
+            data_validade: semValidade
+              ? ""
               // Para laudos/exames, recalcula localmente pela data da avaliação/emissão
               // e nunca aceita a validade bruta inferida pela IA (ex.: 2028 em vez de 2026).
-              (isLaudoExame && validadeLaudoExame)
+              : (isLaudoExame && validadeLaudoExame)
                 ? validadeLaudoExame
                 : (validadeRegra || prev.data_validade || (tipoIA === "comprovante_residencia" ? "" : dataIsoFromBr(sugestao.data_validade) || sugestao.data_validade) || ""),
           observacoes: prev.observacoes || sugestao.observacoes || "",
@@ -3281,6 +3334,11 @@ export function ClienteDocsHubModal({
         nome_documento: "CCMEI — Certificado da Condição de Microempreendedor Individual",
         numero_documento: ccmei.cnpj ?? prev.numero_documento,
         orgao_emissor: "Receita Federal do Brasil",
+        // BLINDAGEM: o CCMEI é documento CONSTITUTIVO — não tem emissão nem
+        // validade a conferir. Nunca herdar `prev` aqui: qualquer data residual
+        // de um arquivo anexado antes viraria carimbo de "vencido".
+        data_emissao: "",
+        data_validade: "",
         observacoes: [
           ccmei.nome_civil ? `Nome Civil: ${ccmei.nome_civil}` : "",
           ccmei.cnpj ? `CNPJ: ${ccmei.cnpj}` : "",
@@ -3481,6 +3539,24 @@ export function ClienteDocsHubModal({
     setCpfConfrontoAberto(false);
     setDatasConsumo(null);
     setCpfConfrontoErro(null);
+    // ── RESET DO ESTADO RESIDUAL ──────────────────────────────────────────
+    // Cada arquivo anexado é uma leitura NOVA. Sem zerar aqui, os campos do
+    // documento anterior sobreviviam ao `...prev` dos blocos de leitura — foi
+    // assim que a validade de um documento vencido continuou no formulário e
+    // reprovou um CCMEI, que não tem vencimento nenhum. Preservamos apenas o
+    // contexto do slot/checklist aberto: o tipo de documento exigido.
+    setForm((prev) => ({ ...EMPTY, tipo_documento: prev.tipo_documento }));
+    setIaExtraido({});
+    setConfirmados({});
+    setConformidade([]);
+    setTemApontamento(false);
+    setReconheceApontamento(null);
+    setHomonimiaSalva(false);
+    setShowDeclaracao(false);
+    setProfissionalExtraido({ nome: null, registro: null });
+    setConferenciaLaudo(null);
+    setEnderecoLocal(null);
+    setAutoResult(null);
     if (!f) return;
 
     // ── Trava global: PDF ORIGINAL em todas as fases ─────────────────────
@@ -4090,8 +4166,12 @@ export function ClienteDocsHubModal({
           ? (form.numero_documento || form.numero_registro_sigma || null)
           : (form.numero_documento || null),
         orgao_emissor: form.orgao_emissor || null,
-        data_emissao: form.data_emissao || null,
-        data_validade: validadeIndeterminada ? null : (form.data_validade || null),
+        // Constitutivo da empresa entra no Hub SEM datas — nem emissão, nem
+        // validade. Assim nenhuma leitura posterior (card, checklist, trigger)
+        // consegue recalcular vencimento em cima de uma data que não existe.
+        data_emissao: constitutivoSemDatas ? null : (form.data_emissao || null),
+        data_validade:
+          validadeIndeterminada || tipoSemVencimento ? null : (form.data_validade || null),
         validade_filiacao: form.tipo_documento === "comprovante_clube_tiro" ? (form.validade_filiacao || null) : null,
         observacoes: form.observacoes || null,
         arma_marca: showArmaFields ? form.arma_marca || null : null,
@@ -4113,6 +4193,8 @@ export function ClienteDocsHubModal({
               recomendacao: classificacao.recomendacao,
               camposExtraidos: classificacao.camposExtraidos || {},
               validade_indeterminada: validadeIndeterminada || undefined,
+              // Rastro do motivo pelo qual o documento entrou sem data_validade.
+              tipo_sem_vencimento: tipoSemVencimento || undefined,
               avaliado_em: new Date().toISOString(),
               origem_fluxo: "arsenal_hub_documental",
               auto_cadastro: false,

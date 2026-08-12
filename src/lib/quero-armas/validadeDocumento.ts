@@ -480,6 +480,56 @@ export function isComprovantePagamentoContrato(tipo?: string | null): boolean {
 }
 
 /**
+ * AGREGADOR CANÔNICO — o tipo NÃO tem prazo de validade por natureza.
+ *
+ * Fonte única para qualquer camada que precise decidir "este documento pode
+ * ser considerado VENCIDO?". Nenhuma tela pode inventar a própria lista: a
+ * falsa reprovação do CCMEI nasceu exatamente de uma trava genérica que olhava
+ * só para `data_validade` e ignorava a natureza do tipo, carimbando
+ * "REPROVADO — VENCIDO" num certificado que não tem vencimento.
+ *
+ * Cobre: comprovante de pagamento do contrato, nota fiscal, documentos
+ * constitutivos da empresa (CCMEI, contrato social, requerimento/ficha da
+ * Junta), carteira/identidade funcional e certidões civis.
+ *
+ * NÃO cobre Cartão CNPJ nem QSA — esses continuam com 30 dias da emissão.
+ */
+export function isTipoSemVencimento(tipo?: string | null): boolean {
+  return (
+    isComprovantePagamentoContrato(tipo) ||
+    isNotaFiscalSemVencimento(tipo) ||
+    isDocumentoConstitutivoPerpetuo(tipo) ||
+    isIdentidadeFuncionalPerpetua(tipo) ||
+    isCertidaoCivilSemVencimento(tipo)
+  );
+}
+
+/**
+ * TRAVA DE VENCIMENTO — fonte única do "este documento está vencido?".
+ *
+ * Regra: só pode estar vencido o tipo que realmente exige validade. Antes de
+ * comparar a data, a natureza do tipo manda. Um `data_validade` residual (troca
+ * de arquivo no formulário, dado legado no banco, palpite da IA) NUNCA pode
+ * reprovar CCMEI, contrato social, requerimento de empresário, nota fiscal,
+ * carteira funcional ou certidão civil.
+ *
+ * O "hoje" é o de Brasília — comparar com UTC virava o dia às 21h e reprovava
+ * documento que ainda valia.
+ */
+export function isDocumentoVencido(
+  tipo: string | null | undefined,
+  dataValidade: string | null | undefined,
+  opts: { validadeIndeterminada?: boolean; hoje?: string; ref?: Date } = {},
+): boolean {
+  if (opts.validadeIndeterminada) return false;
+  if (isTipoSemVencimento(tipo)) return false;
+  const validade = String(dataValidade || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validade)) return false;
+  const hoje = opts.hoje || hojeISOBRT(opts.ref);
+  return validade < hoje;
+}
+
+/**
  * Grupo OCUPAÇÃO LÍCITA E RENDA: regra oficial Quero Armas — todos valem
  * 30 dias a partir da emissão (CCMEI, cartão CNPJ, QSA, contrato social,
  * ficha JUCESP, holerite, extrato INSS, CTPS, carteira funcional etc.).
