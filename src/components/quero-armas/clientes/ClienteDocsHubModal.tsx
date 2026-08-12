@@ -4464,7 +4464,17 @@ export function ClienteDocsHubModal({
               </p>
             </div>
 
-            {certidaoIncorreta ? (
+            {grupoBloqueadoTrava ? (
+              <div
+                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[#7A1F2B]"
+                style={{ boxShadow: "0 0 0 2px rgba(122,31,43,0.15)" }}
+              >
+                <AlertTriangle className="h-4 w-4" />
+                <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
+                  Etapa ainda bloqueada
+                </span>
+              </div>
+            ) : certidaoIncorreta ? (
               <div
                 className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-red-600 bg-red-50 px-3 py-1.5 text-red-700"
                 style={{ boxShadow: "0 0 0 2px rgba(220,38,38,0.15)" }}
@@ -5705,7 +5715,8 @@ export function ClienteDocsHubModal({
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
             </div>
-          ) : (certidaoIncorreta ||
+          ) : (grupoBloqueadoTrava ||
+              certidaoIncorreta ||
               rejeitadoDuplicidade ||
               (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) ||
               notaTomadorParentesco) ? (
