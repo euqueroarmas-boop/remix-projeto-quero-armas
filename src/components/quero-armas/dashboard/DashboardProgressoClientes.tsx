@@ -147,10 +147,10 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={`inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0 align-top text-left uppercase leading-[22px] tracking-[0.06em] ${
+      className={`inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
         miudo ? "text-[10.5px] font-medium" : "text-[10.5px] font-bold"
-      } ${quebra ? "[overflow-wrap:anywhere]" : "break-words"}`}
-      style={{ background: fundo, color: cor }}
+      } break-words [overflow-wrap:anywhere]`}
+      style={{ background: fundo, color: cor, borderColor: bordaDe(fundo, cor) }}
     >
       {children}
     </span>
@@ -163,7 +163,7 @@ function Chip({
  * chips e textos assentem exatamente na mesma linha de base.
  */
 function LinhaTopo({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <div className={`h-[22px] leading-[22px] ${className}`}>{children}</div>;
+  return <div className={`min-h-[22px] leading-[22px] ${className}`}>{children}</div>;
 }
 
 type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
