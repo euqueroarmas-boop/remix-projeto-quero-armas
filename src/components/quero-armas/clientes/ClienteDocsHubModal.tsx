@@ -60,6 +60,7 @@ import { conferirCertidao, naturalidadeConfere } from "@/lib/quero-armas/confere
 import {
   isCartaoCnpj,
   isConstitutivoEmpresa,
+  isNotaFiscalOcupacao,
   isQsa,
   exigeDatasOcupacao,
   situacaoCadastralAprovada,
