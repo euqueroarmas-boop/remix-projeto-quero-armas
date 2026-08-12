@@ -86,6 +86,24 @@
       }
     ]
     </script>
+    <!-- Modo noturno do admin: aplica a classe antes da pintura para não piscar branco. -->
+    <script>
+      (function () {
+        try {
+          var p = location.pathname.replace(/\/+$/, "") || "/";
+          var raizes = ["/dashboard","/admin","/operacao","/ia","/base-conhecimento","/base-equipe",
+            "/legislacao","/jurisprudencia","/modelos-docx","/modelos-declaracao","/wizard-perguntas",
+            "/armamentos","/gerar-peca","/correcoes-ia","/chat-aprovacao","/casos","/processos",
+            "/contratacoes-pendentes","/historico","/configuracoes","/clientes","/clientes-lista",
+            "/acessos","/clubes","/financeiro","/precos-servicos","/relatorios","/auditoria"];
+          var admin = raizes.some(function (r) { return p === r || p.indexOf(r + "/") === 0; });
+          if (!admin) return;
+          var v = localStorage.getItem("qa_admin_tema");
+          var noite = v === "noite" || (v === null && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          if (noite) document.documentElement.classList.add("qa-noite");
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body style="margin:0;background:#0a0a0a;color:#0a0a0a">
     <!--

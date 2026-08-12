@@ -158,6 +158,28 @@
   --background: 220 20% 97%;
   --foreground: 222 47% 11%;
 
+  /* Paleta editorial do admin — usada em inline styles dos painéis. */
+  --qa-app: #F5F6F8;
+  --qa-paper: #FFFFFF;
+  --qa-paper-2: #FAFAFA;
+  --qa-linha: #E4E4E4;
+  --qa-linha-2: #DADADA;
+  --qa-linha-3: #F3F3F3;
+  --qa-tinta: #0A0A0A;
+  --qa-tinta-2: #3A3A3A;
+  --qa-tinta-3: #6A6A6A;
+  --qa-neutro-bg: #F0EFEC;
+  --qa-neutro-borda: #CFCCC5;
+  --qa-verde: #0F7A45;
+  --qa-verde-bg: #E4F4EA;
+  --qa-verde-borda: #9FCFB4;
+  --qa-ambar: #8A6A17;
+  --qa-ambar-bg: #FAF0D8;
+  --qa-ambar-borda: #D9BE79;
+  --qa-vermelho: #7A1F2B;
+  --qa-vermelho-bg: #F7E4E7;
+  --qa-vermelho-borda: #D2A2AA;
+
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
 
@@ -195,6 +217,106 @@
   --sidebar-accent-foreground: 222 47% 11%;
   --sidebar-border: 220 13% 91%;
   --sidebar-ring: 217 91% 60%;
+}
+
+/* =====================================================================
+   QUERO ARMAS — Modo Noturno do admin (html.qa-noite)
+   Escala neutra Dark AAA. Aplicado no <html> para alcançar também os
+   portais do Radix (Dialog/Popover/Select). A área do cliente e o site
+   público não recebem a classe.
+   ===================================================================== */
+html.qa-noite .qa-scope,
+html.qa-noite [data-radix-popper-content-wrapper] .qa-scope,
+html.qa-noite .qa-noite-portal {
+  --background: 240 4% 6%;
+  --foreground: 0 0% 92%;
+
+  --card: 240 4% 9%;
+  --card-foreground: 0 0% 92%;
+
+  --popover: 240 4% 9%;
+  --popover-foreground: 0 0% 92%;
+
+  --secondary: 240 4% 14%;
+  --secondary-foreground: 0 0% 92%;
+
+  --muted: 240 4% 14%;
+  --muted-foreground: 0 0% 64%;
+
+  --accent: 240 4% 16%;
+  --accent-foreground: 0 0% 92%;
+
+  --border: 240 4% 20%;
+  --input: 240 4% 20%;
+
+  --surface-elevated: 240 4% 11%;
+  --surface-overlay: 240 4% 11%;
+
+  --sidebar-background: 240 4% 8%;
+  --sidebar-foreground: 0 0% 88%;
+  --sidebar-accent: 240 4% 16%;
+  --sidebar-accent-foreground: 0 0% 92%;
+  --sidebar-border: 240 4% 20%;
+
+  --qa-app: #0B0B0C;
+  --qa-paper: #141416;
+  --qa-paper-2: #17171A;
+  --qa-linha: #2A2A2E;
+  --qa-linha-2: #34343A;
+  --qa-linha-3: #212125;
+  --qa-tinta: #EDEDED;
+  --qa-tinta-2: #C2C2C6;
+  --qa-tinta-3: #8E8E95;
+  --qa-neutro-bg: #202024;
+  --qa-neutro-borda: #3A3A40;
+  --qa-verde: #5FD39B;
+  --qa-verde-bg: #12291F;
+  --qa-verde-borda: #2C6B4C;
+  --qa-ambar: #E7C56A;
+  --qa-ambar-bg: #2A2313;
+  --qa-ambar-borda: #6E5A22;
+  --qa-vermelho: #E98494;
+  --qa-vermelho-bg: #2C1418;
+  --qa-vermelho-borda: #6E2C38;
+}
+
+/* Ponte para os hex fixos ainda presentes no admin. */
+html.qa-noite .qa-scope { background: var(--qa-app) !important; color: var(--qa-tinta); }
+html.qa-noite .qa-scope main,
+html.qa-noite .qa-scope header,
+html.qa-noite .qa-scope aside { background: var(--qa-app) !important; }
+html.qa-noite .qa-scope .qa-card,
+html.qa-noite .qa-scope .bg-white,
+html.qa-noite .qa-scope .bg-\[\#FFFFFF\],
+html.qa-noite .qa-scope .bg-\[\#FAFAFA\],
+html.qa-noite .qa-scope .bg-\[\#F7F8FA\],
+html.qa-noite .qa-scope .bg-\[\#F9F9F9\] { background-color: var(--qa-paper) !important; }
+html.qa-noite .qa-scope .border-\[\#E4E4E4\],
+html.qa-noite .qa-scope .border-\[\#EAEAEA\],
+html.qa-noite .qa-scope .border-\[\#DADADA\],
+html.qa-noite .qa-scope .border-\[\#E5E5E5\] { border-color: var(--qa-linha) !important; }
+html.qa-noite .qa-scope .border-\[\#F3F3F3\],
+html.qa-noite .qa-scope .border-\[\#F1F1F1\] { border-color: var(--qa-linha-3) !important; }
+html.qa-noite .qa-scope .text-\[\#0A0A0A\] { color: var(--qa-tinta) !important; }
+html.qa-noite .qa-scope .text-\[\#3A3A3A\] { color: var(--qa-tinta-2) !important; }
+html.qa-noite .qa-scope .text-\[\#6A6A6A\],
+html.qa-noite .qa-scope .text-\[\#9A9A9A\] { color: var(--qa-tinta-3) !important; }
+html.qa-noite .qa-scope .hover\:text-\[\#0A0A0A\]:hover { color: var(--qa-tinta) !important; }
+
+/* Chip do painel: nunca quebra linha — a fonte encolhe conforme a coluna aperta. */
+.qa-dash-compact td,
+.qa-dash-compact .qa-cq { container-type: inline-size; }
+.qa-chip-fit {
+  white-space: nowrap !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  font-size: clamp(8px, 1.9cqi, 10.5px);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 1600px) {
+  .qa-dash-compact .qa-chip-fit { font-size: clamp(8px, 1.8cqi, 9.5px) !important; }
 }
 
 /* Quero Armas — inline contract prose formatting */
