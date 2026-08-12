@@ -720,6 +720,7 @@ function calcularConformidade(
   dataAvaliacaoDoc?: string | null,
   tipoDocumentoAtual?: string | null,
   clienteNaturalidade?: string | null,
+  empresaCadastro?: { cnpj?: string | null; razao_social?: string | null } | null,
 ): ConformidadeItem[] {
   type Ref = { valor: string; fonte: string; tier: number };
   const ref: Record<string, Ref> = {};
@@ -884,12 +885,72 @@ function calcularConformidade(
       cnpj?: { valor: string; fonte: string };
       razao?: { valor: string; fonte: string };
     } = {};
+    // Cadastro do cliente é a referência-base da empresa (Central de Adesão).
+    if (empresaCadastro?.cnpj) empresaRefs.cnpj = { valor: empresaCadastro.cnpj, fonte: "Cadastro do cliente" };
+    if (empresaCadastro?.razao_social) empresaRefs.razao = { valor: empresaCadastro.razao_social, fonte: "Cadastro do cliente" };
+    let emissaoCartaoCnpj: string | null = null;
     for (const doc of sorted) {
       if (!TIPOS_EMPRESARIAIS.has(String(doc.tipo_documento || ""))) continue;
       const c = (doc.ia_dados_extraidos?.camposExtraidos || {}) as Record<string, string>;
       const nomeDoc = getNomeDocumentoDisplay(doc, doc.tipo_documento);
       if (c.cnpj && !empresaRefs.cnpj) empresaRefs.cnpj = { valor: c.cnpj, fonte: nomeDoc };
       if (c.razao_social && !empresaRefs.razao) empresaRefs.razao = { valor: c.razao_social, fonte: nomeDoc };
+      if (isCartaoCnpj(doc.tipo_documento) && !emissaoCartaoCnpj) {
+        emissaoCartaoCnpj = String(doc.data_emissao || c.data_emissao || "").slice(0, 10) || null;
+      }
+    }
+
+    const tipoAtual = String(tipoDocumentoAtual || "");
+
+    // ── SITUAÇÃO CADASTRAL: qualquer coisa diferente de ATIVA reprova ──────
+    if (campos.situacao_cadastral) {
+      const ok = situacaoCadastralAprovada(campos.situacao_cadastral);
+      items.push({
+        campo: "situacao_cadastral",
+        label: "Situação cadastral",
+        valorCertidao: campos.situacao_cadastral,
+        valorReferencia: "ATIVA",
+        fonteReferencia: "Receita Federal — exigência da PF",
+        status: ok === true ? "conforme" : ok === false ? "divergente" : "sem_referencia",
+      });
+    }
+
+    // ── CONSTITUTIVOS (CCMEI, contrato social, requerimento): nome + CPF ───
+    if (isConstitutivoEmpresa(tipoAtual)) {
+      const nomeDoc = campos.nome_completo || campos.nome_titular || campos.nome_civil;
+      if (nomeDoc) pushItem("nome_completo", "Nome do titular", nomeDoc, fuzzyName);
+      if (campos.cpf) {
+        pushItem("cpf", "CPF do titular", campos.cpf, (a, b) =>
+          normCpf(a) === normCpf(b) || cpfComDigitosVerificadores(a) === cpfComDigitosVerificadores(b));
+      }
+    }
+
+    // ── QSA: precisa conter, no mínimo, o nome do cliente ─────────────────
+    if (isQsa(tipoAtual)) {
+      const listaSocios =
+        campos.socios || campos.quadro_socios || campos.qsa || campos.nome_completo || campos.nome_titular || "";
+      const contem = qsaContemCliente(listaSocios, clienteNome);
+      if (contem !== null) {
+        items.push({
+          campo: "qsa_socio",
+          label: "Cliente no quadro de sócios",
+          valorCertidao: String(listaSocios).slice(0, 240),
+          valorReferencia: clienteNome ?? null,
+          fonteReferencia: "Cadastro do cliente",
+          status: contem ? "conforme" : "divergente",
+        });
+      }
+      const mesmaConsulta = qsaMesmaEmissaoDoCartao(dataIsoFromBr(campos.data_emissao), emissaoCartaoCnpj);
+      if (mesmaConsulta !== null) {
+        items.push({
+          campo: "qsa_emissao",
+          label: "Emissão do QSA (mesma consulta do Cartão CNPJ)",
+          valorCertidao: dataIsoFromBr(campos.data_emissao),
+          valorReferencia: emissaoCartaoCnpj,
+          fonteReferencia: "Cartão CNPJ aprovado",
+          status: mesmaConsulta ? "conforme" : "divergente",
+        });
+      }
     }
     const cnpjDoc = campos.cnpj;
     const razaoDoc = campos.razao_social;
