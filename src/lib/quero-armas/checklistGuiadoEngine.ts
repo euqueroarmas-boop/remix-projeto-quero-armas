@@ -560,13 +560,20 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   }>();
   if (processo.servico_id && (dList?.length ?? 0) > 0) {
     try {
+      // O catálogo tem linhas DUPLICADAS por tipo — a vigente e as antigas,
+      // desativadas. Sem ordenar, o Map ficava com a última lida (ordem
+      // arbitrária do banco) e o tipo herdava ordem/conteúdo de linha morta.
+      // Ativa primeiro, menor `ordem` primeiro, quem chega antes vence.
       const { data: tpl } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("tipo_documento, ordem, regra_validacao, condicao_modalidade, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, modelo_url, exemplo_url, prazo_recomendado_dias")
-        .eq("servico_id", processo.servico_id);
+        .select("tipo_documento, ordem, ativo, regra_validacao, condicao_modalidade, link_emissao, instrucoes, observacoes_cliente, orgao_emissor, modelo_url, exemplo_url, prazo_recomendado_dias")
+        .eq("servico_id", processo.servico_id)
+        .order("ativo", { ascending: false })
+        .order("ordem", { ascending: true });
       if (tpl) {
         for (const t of tpl as any[]) {
           const key = String(t.tipo_documento ?? "").toLowerCase();
+          if (ordemMap.has(key)) continue;
           ordemMap.set(key, Number(t.ordem ?? 0));
           if (t.regra_validacao && typeof t.regra_validacao === "object") {
             catalogoRegraMap.set(key, t.regra_validacao);
@@ -1217,14 +1224,20 @@ export async function listarProcessosElegiveisGuia(clienteId: number): Promise<P
     let docsHidratados = (docs ?? []) as GuiaDoc[];
     if (p.servico_id && docsHidratados.length > 0) {
       try {
+        // Linha ATIVA de menor `ordem` manda — sem isso a regra de validação
+        // podia vir de uma versão desativada do mesmo tipo de documento.
         const { data: tpl } = await supabase
           .from("qa_servicos_documentos" as any)
-          .select("tipo_documento, regra_validacao")
-          .eq("servico_id", p.servico_id);
+          .select("tipo_documento, regra_validacao, ativo, ordem")
+          .eq("servico_id", p.servico_id)
+          .order("ativo", { ascending: false })
+          .order("ordem", { ascending: true });
         const mapCat = new Map<string, any>();
         for (const t of (tpl ?? []) as any[]) {
+          const chave = String(t?.tipo_documento ?? "").toLowerCase();
+          if (mapCat.has(chave)) continue;
           if (t?.regra_validacao && typeof t.regra_validacao === "object") {
-            mapCat.set(String(t.tipo_documento ?? "").toLowerCase(), t.regra_validacao);
+            mapCat.set(chave, t.regra_validacao);
           }
         }
         docsHidratados = docsHidratados.map((d) => ({
