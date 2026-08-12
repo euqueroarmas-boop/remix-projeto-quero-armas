@@ -876,15 +876,15 @@ export default function DashboardProgressoClientes() {
                 to={rotaCadastroCliente(r.cliente_id)}
                 className="block px-4 py-3 border-b border-[#EFEFEF] active:bg-[#FAFAFA]"
               >
-                <div className="flex items-baseline gap-2">
-                  <span className="text-[12.5px] font-bold uppercase truncate flex-1" style={{ color: TINTA }}>
+                <div className="flex items-start gap-2">
+                  <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: TINTA }}>
                     {r.cliente_nome ?? "—"}
                   </span>
                   <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
                     {r.dias_parado}d
                   </Chip>
                 </div>
-                <div className="text-[10px] font-medium uppercase tracking-wider truncate" style={{ color: TINTA_3 }}>
+                <div className="text-[10px] font-medium uppercase tracking-wider break-words [overflow-wrap:anywhere]" style={{ color: TINTA_3 }}>
                   {r.servico_nome ?? "—"}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
@@ -916,12 +916,12 @@ export default function DashboardProgressoClientes() {
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="#F4F4F4">{r.cobrancas} COB.</Chip>}
                 </div>
-                <div className="mt-1 flex min-w-0 items-center gap-1.5 overflow-hidden text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
-                  {r.proximo_tipo === "pergunta" && <HelpCircle className="h-3 w-3 shrink-0" />}
-                  <span className="min-w-0 flex-1 truncate" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
+                <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
+                  {r.proximo_tipo === "pergunta" && <HelpCircle className="mt-[2px] h-3 w-3 shrink-0" />}
+                  <span className="min-w-0 flex-1 break-words [overflow-wrap:anywhere]" title={r.proximo_doc ?? undefined}>{rotuloProximoPasso(r.proximo_doc)}</span>
                 </div>
                 {(trilhasEfetivas[r.processo_id] ?? []).length > 0 && (
-                  <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] truncate" style={{ color: TINTA_3 }}>
+                  <div className="mt-1 text-[9.5px] font-semibold uppercase tracking-[0.12em] break-words [overflow-wrap:anywhere]" style={{ color: TINTA_3 }}>
                     {trilhaCompacta(trilhasEfetivas[r.processo_id]).join(" · ")}
                   </div>
                 )}
