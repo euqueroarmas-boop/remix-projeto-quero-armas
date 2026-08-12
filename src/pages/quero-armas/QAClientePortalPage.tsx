@@ -2590,6 +2590,9 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  // TRAVA DE ORDEM POR GRUPO — só o grupo corrente da fila aceita entrega.
+  const travaGrupos = useMemo(() => calcularTravaGrupos(pendenciasGuiadas as any), [pendenciasGuiadas]);
+
   // ── Varredura silenciosa por baixo do portal ───────────────────────────────
   // Só liga quando o cliente logado TEM pendência aberta (assinatura ou
   // exigência de checklist). Nesse caso o portal se atualiza sozinho quando o
