@@ -70,6 +70,29 @@ const COLS: ColDef[] = [
 
 const LS_LARGURAS = "qa_painel_progresso_larguras";
 const LS_VISIVEIS = "qa_painel_progresso_visiveis";
+const LS_TRILHA = "qa_dash_trilha";
+const LS_CONTADOR = "qa_dash_contador";
+const LS_ORDEM = "qa_dash_ordem";
+
+const SORT_KEYS_VALIDAS: readonly string[] = [
+  "cliente_nome", "servico_nome", "fase", "progresso", "proximo_doc",
+  "dias_parado", "cobrancas", "criado_em", "online", "efetiva", "protocolo",
+];
+const CONTADORES_VALIDOS: readonly string[] = [
+  "todos", "online", "pronto", "analise", "pendencia", "parado", "bloqueado",
+];
+
+function lerOrdemSalva(): { key: string; asc: boolean } | null {
+  try {
+    const bruto = localStorage.getItem(LS_ORDEM);
+    if (!bruto) return null;
+    const o = JSON.parse(bruto);
+    if (o && typeof o.key === "string" && SORT_KEYS_VALIDAS.includes(o.key)) {
+      return { key: o.key, asc: !!o.asc };
+    }
+  } catch { /* estado local corrompido: ignora */ }
+  return null;
+}
 
 /** Colunas do modo "credenciados não localizados" (substituem daqui pra frente). */
 type CredKey = "cred_nome" | "cred_endereco" | "cred_cidade" | "cred_telefone" | "cred_situacao";
