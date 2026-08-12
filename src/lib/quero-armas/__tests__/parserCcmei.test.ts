@@ -28,7 +28,42 @@ COMPROVANTE DE INSCRIÇÃO E DE SITUAÇÃO CADASTRAL
       tipoDocumento: "renda_ccmei",
       cpf: "343.170.468-90",
       cnpj: "68.472.983/0001-00",
+      nome_civil: "FABIO CORREIA DE MELO",
+      nome_empresarial: "68.472.983 FABIO CORREIA DE MELO",
       situacao_cadastral: "ATIVA",
+      ocupacao_principal: "COMERCIANTE",
+      cnae_principal: "COMERCIO VAREJISTA",
+    });
+  });
+
+  it("extrai a referência empresarial completa do modelo oficial", () => {
+    const texto = `
+Certificado da Condição de
+Microempreendedor Individual
+Nome Civil
+FABIO CORREIA DE MELO
+CPF
+343.170.468-90
+CNPJ Data de Abertura
+68.472.983/0001-00 09/08/2026
+Nome Empresarial
+68.472.983 FABIO CORREIA DE MELO
+Situação Cadastral Vigente Data da Situação Cadastral
+ATIVA 09/08/2026
+Ocupação Principal
+Salgadeiro(a) independente
+Atividade Principal (CNAE)
+5620-1/04 - Fornecimento de alimentos preparados preponderantemente para consumo domiciliar
+`;
+
+    expect(parseCcmei(texto)).toMatchObject({
+      nome_civil: "FABIO CORREIA DE MELO",
+      cpf: "343.170.468-90",
+      cnpj: "68.472.983/0001-00",
+      nome_empresarial: "68.472.983 FABIO CORREIA DE MELO",
+      situacao_cadastral: "ATIVA",
+      ocupacao_principal: "SALGADEIRO(A) INDEPENDENTE",
+      cnae_principal: "5620-1/04 - FORNECIMENTO DE ALIMENTOS PREPARADOS PREPONDERANTEMENTE PARA CONSUMO DOMICILIAR",
     });
   });
 

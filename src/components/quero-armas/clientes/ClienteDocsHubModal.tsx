@@ -65,6 +65,7 @@ import {
   situacaoCadastralAprovada,
   qsaContemCliente,
   qsaMesmaEmissaoDoCartao,
+  emitenteConfere,
 } from "@/lib/quero-armas/ocupacaoLicitaConferencia";
 import { trackTelemetria } from "@/shared/quero-armas/telemetria";
 import {
@@ -962,7 +963,14 @@ function calcularConformidade(
       }
     }
     const cnpjDoc = campos.cnpj;
-    const razaoDoc = campos.razao_social;
+    const razaoDoc = campos.razao_social || campos.nome_empresarial;
+    const ehNotaFiscalAtual = isNotaFiscalOcupacao(tipoAtual);
+    const emitenteOk = ehNotaFiscalAtual
+      ? emitenteConfere(
+          { cnpj: cnpjDoc, razao_social: razaoDoc },
+          { cnpj: empresaRefs.cnpj?.valor, razao_social: empresaRefs.razao?.valor },
+        )
+      : null;
     if (cnpjDoc) {
       const r = empresaRefs.cnpj;
       items.push({
@@ -971,7 +979,13 @@ function calcularConformidade(
         valorCertidao: cnpjDoc,
         valorReferencia: r?.valor ?? null,
         fonteReferencia: r?.fonte ?? null,
-        status: !r ? "sem_referencia" : normCnpj(cnpjDoc) === normCnpj(r.valor) ? "conforme" : "divergente",
+        status: ehNotaFiscalAtual && emitenteOk === true
+          ? "conforme"
+          : !r
+            ? "sem_referencia"
+            : normCnpj(cnpjDoc) === normCnpj(r.valor)
+              ? "conforme"
+              : "divergente",
       });
     }
     if (razaoDoc) {
@@ -983,7 +997,15 @@ function calcularConformidade(
         valorCertidao: razaoDoc,
         valorReferencia: r?.valor ?? null,
         fonteReferencia: r?.fonte ?? null,
-        status: !r ? "sem_referencia" : res === true ? "conforme" : res === "gray" ? "verificando" : "divergente",
+        status: ehNotaFiscalAtual && emitenteOk === true
+          ? "conforme"
+          : !r
+            ? "sem_referencia"
+            : res === true
+              ? "conforme"
+              : res === "gray"
+                ? "verificando"
+                : "divergente",
       });
     }
     // ── TOMADOR DA NOTA FISCAL ────────────────────────────────────────────
@@ -3201,6 +3223,57 @@ export function ClienteDocsHubModal({
     const ccmei = parseCcmei(texto);
     if (ccmei) {
       setConferenciaLocal(null);
+      const camposCcmei: Record<string, string | undefined> = {
+        nome_completo: ccmei.nome_civil,
+        nome_civil: ccmei.nome_civil,
+        cpf: ccmei.cpf,
+        cnpj: ccmei.cnpj,
+        razao_social: ccmei.nome_empresarial,
+        nome_empresarial: ccmei.nome_empresarial,
+        situacao_cadastral: ccmei.situacao_cadastral,
+        cnae_principal: ccmei.cnae_principal,
+        atividade_principal: ccmei.cnae_principal,
+        ocupacao_principal: ccmei.ocupacao_principal,
+      };
+      const conformidadeCcmei = calcularConformidade(
+        camposCcmei,
+        refClienteNome,
+        refClienteCpf,
+        refClienteDataNascimento,
+        refClienteNomeMae,
+        docsEfetivos,
+        null,
+        "renda_ccmei",
+        [clienteAutoFetch.naturalidade_municipio, clienteAutoFetch.naturalidade_uf].filter(Boolean).join(" ") || null,
+        {
+          cnpj: clienteAutoFetch.ocupacao_licita_cnpj,
+          razao_social: clienteAutoFetch.ocupacao_licita_razao_social,
+        },
+      );
+      const camposObrigatoriosPresentes = !!(
+        ccmei.nome_civil &&
+        ccmei.cpf &&
+        ccmei.situacao_cadastral
+      );
+      const situacaoAtiva = situacaoCadastralAprovada(ccmei.situacao_cadastral) === true;
+      const titularConfere = !conformidadeCcmei.some(
+        (item) =>
+          (item.campo === "nome_completo" || item.campo === "cpf") &&
+          item.status === "divergente",
+      );
+      const ccmeiAceitavel = camposObrigatoriosPresentes && situacaoAtiva && titularConfere;
+      const classificacaoCcmei: IAClass = {
+        tipoDetectado: "CCMEI",
+        confianca: 0.99,
+        camposExtraidos: camposCcmei,
+        recomendacao: ccmeiAceitavel ? "aceitar" : "revisao_obrigatoria",
+        revisao_obrigatoria: !ccmeiAceitavel,
+        justificativa: ccmeiAceitavel
+          ? "Certificado oficial CCMEI: nome, CPF e situação cadastral ATIVA conferidos."
+          : "Certificado oficial CCMEI identificado, mas nome, CPF ou situação cadastral exigem correção.",
+      };
+      setClassificacao(classificacaoCcmei);
+      setConformidade(conformidadeCcmei);
       setForm((prev) => ({
         ...prev,
         tipo_documento: "renda_ccmei",
@@ -3216,10 +3289,14 @@ export function ClienteDocsHubModal({
         ].filter(Boolean).join("\n") || prev.observacoes,
       }));
       setCategoriaHub("renda_ocupacao");
-      if (ccmei.situacao_cadastral && ccmei.situacao_cadastral !== "ATIVA") {
+      if (!camposObrigatoriosPresentes) {
+        toast.error("CCMEI identificado, mas não foi possível ler nome, CPF e situação cadastral no PDF original.");
+      } else if (!situacaoAtiva) {
         toast.error(`CCMEI com situação cadastral ${ccmei.situacao_cadastral}. A PF só aceita MEI ATIVO.`);
+      } else if (!titularConfere) {
+        toast.error("CCMEI identificado, mas o nome ou CPF não confere com o cadastro do cliente.");
       } else {
-        toast.success("CCMEI lido e reconhecido — ocupação lícita.");
+        toast.success("CCMEI lido e aprovado — nome, CPF e situação ATIVA conferidos.");
       }
       return true;
     }
