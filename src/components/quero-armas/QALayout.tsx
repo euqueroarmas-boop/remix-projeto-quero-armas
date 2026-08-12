@@ -1,6 +1,7 @@
 import { QASidebar } from "./QASidebar";
 import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
+import { QATemaProvider } from "./QATemaContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
 import { lazy, Suspense } from "react";
@@ -79,7 +80,9 @@ function QALayoutInner() {
 export default function QALayout() {
   return (
     <QAAuthProvider>
-      <QALayoutInner />
+      <QATemaProvider>
+        <QALayoutInner />
+      </QATemaProvider>
     </QAAuthProvider>
   );
 }
