@@ -130,12 +130,17 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
   return (
     <aside
       data-qa-sidebar="true"
+      /* Escapa do `filter: invert(1)` que o modo noturno aplica em .qa-scope:
+         o filtro do pai inverte, o desta regra devolve, e a sidebar volta a
+         renderizar nas cores declaradas. Sem isso não existe branco — branco
+         invertido é preto. Tokens em index.css ([data-qa-sidebar]). */
+      data-nao-inverter
       className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
       style={{
         width: collapsed ? "4.25rem" : "16rem",
         minHeight: "100%",
-        background: "hsl(0 0% 100%)",
-        borderColor: "hsl(220 13% 91%)",
+        background: "var(--qa-sb-bg)",
+        borderColor: "var(--qa-sb-border)",
       }}
     >
       <div className="py-3 flex flex-col">
@@ -144,8 +149,8 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
           <button
             onClick={toggleSidebar}
             className="flex items-center justify-center mx-auto mb-3 w-9 h-9 rounded-lg transition-colors"
-            style={{ color: "hsl(220 10% 52%)" }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 94%)"; }}
+            style={{ color: "var(--qa-sb-toggle)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
             title="Expandir menu"
             aria-label="Expandir menu"
@@ -153,18 +158,18 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
             <PanelLeftOpen className="h-5 w-5" />
           </button>
         ) : (
-          <div className="px-4 pb-3 mb-1 border-b flex items-center justify-between" style={{ borderColor: "hsl(220 13% 93%)" }}>
+          <div className="px-4 pb-3 mb-1 border-b flex items-center justify-between" style={{ borderColor: "var(--qa-sb-divider)" }}>
             <div className="flex items-center gap-2.5 min-w-0">
               <QALogo className="h-9 w-auto max-w-[110px] rounded-lg" />
-              <div className="text-[10px] tracking-widest uppercase truncate" style={{ color: "hsl(220 10% 62%)" }}>
+              <div className="text-[10px] tracking-widest uppercase truncate" style={{ color: "var(--qa-sb-label)" }}>
                 Inteligência Jurídica
               </div>
             </div>
             <button
               onClick={toggleSidebar}
               className="h-7 w-7 rounded-md flex items-center justify-center transition-colors shrink-0"
-              style={{ color: "hsl(220 10% 58%)" }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 94%)"; }}
+              style={{ color: "var(--qa-sb-toggle)" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
               title="Recolher menu"
               aria-label="Recolher menu"
@@ -183,7 +188,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
               <div key={group.label} className={`py-1 ${collapsed ? "" : "px-1"}`}>
                 {!collapsed && (
                   <div className="text-[10px] uppercase tracking-[0.15em] font-semibold px-4 py-1.5"
-                    style={{ color: "hsl(220 10% 62%)" }}>
+                    style={{ color: "var(--qa-sb-label)" }}>
                     {group.label}
                   </div>
                 )}
@@ -197,30 +202,30 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                           title={collapsed ? item.title : undefined}
                           className={`${itemBase} relative ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
                           style={{
-                            background: active ? "hsl(352 33% 97%)" : "transparent",
-                            color: active ? "hsl(352 60% 46%)" : "hsl(220 10% 46%)",
+                            background: active ? "var(--qa-sb-active-bg)" : "transparent",
+                            color: active ? "var(--qa-sb-active-text)" : "var(--qa-sb-text)",
                           }}
                           onMouseEnter={e => {
                             if (!active) {
-                              (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 96%)";
-                              (e.currentTarget as HTMLElement).style.color = "hsl(220 20% 25%)";
+                              (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-hover-bg)";
+                              (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-hover-text)";
                             }
                           }}
                           onMouseLeave={e => {
                             if (!active) {
                               (e.currentTarget as HTMLElement).style.background = "transparent";
-                              (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 46%)";
+                              (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-text)";
                             }
                           }}
                         >
                           <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
-                            color: active ? "hsl(352 60% 30%)" : "hsl(220 10% 62%)",
+                            color: active ? "var(--qa-sb-active-icon)" : "var(--qa-sb-icon)",
                           }} />
                           {!collapsed && <span className="truncate flex-1">{item.title}</span>}
                           {item.url === "/chat-aprovacao" && pendentesAprendizado > 0 && (
                             <span
                               className={`inline-flex items-center justify-center font-bold rounded-full ${collapsed ? "absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 text-[9px]" : "h-4 min-w-[18px] px-1 text-[10px]"}`}
-                              style={{ background: "hsl(352 60% 30%)", color: "#fff" }}
+                              style={{ background: "var(--qa-sb-accent)", color: "#fff" }}
                             >
                               {pendentesAprendizado > 99 ? "99+" : pendentesAprendizado}
                             </span>
@@ -236,16 +241,16 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         </nav>
 
         {/* Footer: profile + back to site + logout */}
-        <div className={`pt-2 border-t ${collapsed ? "" : "px-1"}`} style={{ borderColor: "hsl(220 13% 93%)" }}>
+        <div className={`pt-2 border-t ${collapsed ? "" : "px-1"}`} style={{ borderColor: "var(--qa-sb-divider)" }}>
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1">
               <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                style={{ background: "hsl(352 60% 30%)" }}>
+                style={{ background: "var(--qa-sb-accent)" }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 18%)" }}>{nome}</div>
-                <div className="text-[10px] capitalize" style={{ color: "hsl(220 10% 62%)" }}>{perfil.replace(/_/g, " ")}</div>
+                <div className="text-xs font-medium truncate" style={{ color: "var(--qa-sb-name)" }}>{nome}</div>
+                <div className="text-[10px] capitalize" style={{ color: "var(--qa-sb-label)" }}>{perfil.replace(/_/g, " ")}</div>
               </div>
             </div>
           )}
@@ -257,17 +262,17 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                 href="/"
                 title={collapsed ? "Voltar ao site" : undefined}
                 className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
-                style={{ color: "hsl(220 10% 46%)" }}
+                style={{ color: "var(--qa-sb-text)" }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.background = "hsl(220 14% 96%)";
-                  (e.currentTarget as HTMLElement).style.color = "hsl(220 20% 25%)";
+                  (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-hover-bg)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-hover-text)";
                 }}
                 onMouseLeave={e => {
                   (e.currentTarget as HTMLElement).style.background = "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 46%)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-text)";
                 }}
               >
-                <Home className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{ color: "hsl(220 10% 62%)" }} />
+                <Home className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{ color: "var(--qa-sb-icon)" }} />
                 {!collapsed && <span>Voltar ao site</span>}
               </a>
             </li>
@@ -278,13 +283,13 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
                 onClick={signOut}
                 title={collapsed ? "Sair" : undefined}
                 className={`${itemBase} w-full ${collapsed ? "justify-center !w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
-                style={{ color: "hsl(220 10% 62%)" }}
+                style={{ color: "var(--qa-sb-icon)" }}
                 onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.color = "hsl(0 72% 51%)";
-                  (e.currentTarget as HTMLElement).style.background = "hsl(0 72% 96%)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-danger-text)";
+                  (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-danger-bg)";
                 }}
                 onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.color = "hsl(220 10% 62%)";
+                  (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-icon)";
                   (e.currentTarget as HTMLElement).style.background = "transparent";
                 }}
               >

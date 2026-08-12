@@ -261,6 +261,66 @@ html.qa-noite [data-radix-portal] > [data-state][class*="bg-background"] {
 /* Sombras claras somem na inversão; reforça a separação por borda. */
 html.qa-noite .qa-scope [class*="shadow"] { box-shadow: none; }
 
+/* =====================================================================
+   SIDEBAR — tema real, fora do filtro de inversão.
+   ETAPA 1 da migração do painel para tokens de tema.
+
+   O restante do painel ainda depende de `filter: invert(1)` acima, porque
+   suas ~8.800 declarações de cor foram escritas em tema claro. A sidebar
+   carrega `data-nao-inverter`: o filtro do pai a inverte, o dela devolve,
+   e ela volta a renderizar nas cores declaradas aqui. Assim dá para ter
+   tema escuro de verdade neste bloco sem tocar nas outras telas.
+
+   Para migrar a próxima tela: repetir o padrão — `data-nao-inverter` no
+   container + tokens próprios. As duas abordagens convivem.
+   ===================================================================== */
+[data-qa-sidebar] {
+  --qa-sb-bg: hsl(0 0% 100%);
+  --qa-sb-border: hsl(220 13% 91%);
+  --qa-sb-divider: hsl(220 13% 93%);
+  --qa-sb-label: hsl(220 10% 62%);
+  --qa-sb-icon: hsl(220 10% 62%);
+  --qa-sb-text: hsl(220 10% 46%);
+  --qa-sb-hover-bg: hsl(220 14% 96%);
+  --qa-sb-hover-text: hsl(220 20% 25%);
+  --qa-sb-active-bg: hsl(352 33% 97%);
+  --qa-sb-active-text: hsl(352 60% 46%);
+  --qa-sb-active-icon: hsl(352 60% 30%);
+  --qa-sb-toggle: hsl(220 10% 55%);
+  --qa-sb-toggle-hover-bg: hsl(220 14% 94%);
+  --qa-sb-name: hsl(220 20% 18%);
+  --qa-sb-accent: hsl(352 60% 30%);
+  --qa-sb-danger-text: hsl(0 72% 51%);
+  --qa-sb-danger-bg: hsl(0 72% 96%);
+}
+
+/* Modo noturno: ícone branco, item ativo em vermelho da marca. */
+html.qa-noite [data-qa-sidebar] {
+  --qa-sb-bg: hsl(240 6% 9%);
+  --qa-sb-border: hsl(240 5% 18%);
+  --qa-sb-divider: hsl(240 5% 16%);
+  --qa-sb-label: hsl(240 4% 50%);
+  --qa-sb-icon: hsl(0 0% 100%);
+  --qa-sb-text: hsl(240 5% 80%);
+  --qa-sb-hover-bg: hsl(240 5% 15%);
+  --qa-sb-hover-text: hsl(0 0% 100%);
+  --qa-sb-active-bg: hsl(352 45% 17%);
+  --qa-sb-active-text: hsl(352 90% 74%);
+  --qa-sb-active-icon: hsl(352 90% 70%);
+  --qa-sb-toggle: hsl(0 0% 100%);
+  --qa-sb-toggle-hover-bg: hsl(240 5% 16%);
+  --qa-sb-name: hsl(0 0% 96%);
+  --qa-sb-accent: hsl(352 70% 46%);
+  --qa-sb-danger-text: hsl(0 85% 70%);
+  --qa-sb-danger-bg: hsl(0 60% 18%);
+}
+
+/* A regra genérica de mídia do modo noturno inverteria o logo dentro da
+   sidebar, que já não está invertida. Neutraliza. */
+html.qa-noite [data-qa-sidebar] :where(img, video, canvas, iframe, svg image) {
+  filter: none;
+}
+
 /* Chip do painel: nunca quebra linha — a fonte encolhe conforme a coluna aperta. */
 .qa-dash-compact td,
 .qa-dash-compact .qa-cq { container-type: inline-size; }
