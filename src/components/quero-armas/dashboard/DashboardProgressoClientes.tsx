@@ -578,7 +578,7 @@ export default function DashboardProgressoClientes() {
   if (loading) return null;
 
   return (
-    <div ref={wrapperRef} className="qa-card overflow-hidden">
+    <div ref={wrapperRef} className="qa-card overflow-hidden qa-dash-compact">
       <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
         <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
