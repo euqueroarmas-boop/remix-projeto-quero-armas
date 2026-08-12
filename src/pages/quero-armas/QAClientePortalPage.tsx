@@ -937,17 +937,31 @@ export default function QAClientePortalPage() {
             });
             setCatalogoByServicoId(catalogMap);
             // Carrega ordem por documento do catálogo para ordenar o popup de exigências
+            // O catálogo tem LINHAS DUPLICADAS por tipo — a versão vigente e as
+            // antigas, desativadas (ex.: Cartão CNPJ em ordem 170 ativa e 230
+            // inativa). A consulta não filtrava `ativo` nem ordenava, e o Map
+            // guardava a ÚLTIMA linha lida. Como o banco devolve em ordem
+            // arbitrária, cada tipo podia herdar a ordem da linha errada — foi
+            // assim que o QSA (180) passou na frente do Cartão CNPJ (230 da
+            // linha morta) na fila do cliente, de forma instável entre um
+            // carregamento e outro.
+            //
+            // Agora: linha ATIVA primeiro, menor `ordem` primeiro, e quem chega
+            // antes vence. A linha inativa só é usada como último recurso,
+            // quando não existe nenhuma ativa para aquele tipo.
             const { data: servicoDocsData } = await supabase
               .from("qa_servicos_documentos" as any)
-              .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente")
-              .in("servico_id", servicoIds);
+              .select("servico_id, tipo_documento, ordem, ativo, instrucoes, link_emissao, observacoes_cliente")
+              .in("servico_id", servicoIds)
+              .order("ativo", { ascending: false })
+              .order("ordem", { ascending: true });
             const docOrdemMap = new Map<string, number>();
             const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null }>();
             ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
               const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
               const ord = Number(sd.ordem);
-              if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
-              if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente) {
+              if (Number.isFinite(ord) && !docOrdemMap.has(key)) docOrdemMap.set(key, ord);
+              if (!docInfoMap.has(key) && (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente)) {
                 docInfoMap.set(key, {
                   instrucoes: sd.instrucoes ?? null,
                   link_emissao: sd.link_emissao ?? null,
@@ -1316,18 +1330,25 @@ export default function QAClientePortalPage() {
     let cancelled = false;
 
     const recarregarCatalogoDocs = async () => {
+      // Mesma regra da carga inicial: o catálogo tem linhas duplicadas por tipo
+      // (a vigente e as antigas desativadas). Sem filtrar `ativo` e sem ordenar,
+      // o Map ficava com a última linha lida — e o cliente via a fila em ordem
+      // errada e instável. Ativa primeiro, menor `ordem` primeiro, quem chega
+      // antes vence; a inativa só entra quando não há ativa para o tipo.
       const { data: servicoDocsData } = await supabase
         .from("qa_servicos_documentos" as any)
-        .select("servico_id, tipo_documento, ordem, instrucoes, link_emissao, observacoes_cliente, regra_validacao")
-        .in("servico_id", servicoIds);
+        .select("servico_id, tipo_documento, ordem, ativo, instrucoes, link_emissao, observacoes_cliente, regra_validacao")
+        .in("servico_id", servicoIds)
+        .order("ativo", { ascending: false })
+        .order("ordem", { ascending: true });
       if (cancelled) return;
       const docOrdemMap = new Map<string, number>();
       const docInfoMap = new Map<string, { instrucoes: string | null; link_emissao: string | null; observacoes_cliente: string | null; grupo_checklist?: string | null; ordem_grupo_checklist?: number | null }>();
       ((servicoDocsData as any[]) ?? []).forEach((sd: any) => {
         const key = `${sd.servico_id}:${String(sd.tipo_documento || "").toLowerCase()}`;
         const ord = Number(sd.ordem);
-        if (Number.isFinite(ord)) docOrdemMap.set(key, ord);
-        if (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente || sd.regra_validacao?.grupo_checklist) {
+        if (Number.isFinite(ord) && !docOrdemMap.has(key)) docOrdemMap.set(key, ord);
+        if (!docInfoMap.has(key) && (sd.instrucoes || sd.link_emissao || sd.observacoes_cliente || sd.regra_validacao?.grupo_checklist)) {
           docInfoMap.set(key, {
             instrucoes: sd.instrucoes ?? null,
             link_emissao: sd.link_emissao ?? null,
