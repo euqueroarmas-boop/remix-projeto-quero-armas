@@ -1476,7 +1476,7 @@ export default function EfetivaNecessidadeModal({
         )}
 
         <div className={embedded
-          ? "sticky bottom-0 z-20 -mx-1 mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-1 pb-1 pt-3"
+          ? "sticky bottom-0 z-30 -mx-6 mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-6 pb-3 pt-3 shadow-[0_-8px_12px_-8px_rgba(0,0,0,0.12)]"
           : "shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4"}>
           <div className="flex min-w-0 items-center gap-3">
             <button
