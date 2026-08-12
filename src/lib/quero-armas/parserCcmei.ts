@@ -56,11 +56,16 @@ export function ehCcmei(textoBruto: string): boolean {
   const t = normalizar(textoBruto);
   const titulo =
     t.includes("CERTIFICADO DA CONDICAO DE") && t.includes("MICROEMPREENDEDOR INDIVIDUAL");
-  const rodape =
+  const marcadorMei =
     t.includes("MEI.RECEITA.ECONOMIA.GOV.BR/CERTIFICADO") ||
     t.includes("ENQUADRADO NA CONDICAO DE MEI") ||
-    t.includes("PERIODOS DE ENQUADRAMENTO COMO MEI");
-  return titulo || (rodape && t.includes("CNPJ"));
+    t.includes("PERIODOS DE ENQUADRAMENTO COMO MEI") ||
+    t.includes("OCUPACAO PRINCIPAL") ||
+    t.includes("ATIVIDADE PRINCIPAL (CNAE)");
+  const anexoCnpj =
+    t.includes("COMPROVANTE DE INSCRICAO E DE SITUACAO CADASTRAL") &&
+    (t.includes("MICROEMPREENDEDOR INDIVIDUAL") || t.includes("PORTE") && t.includes("MEI"));
+  return titulo || (marcadorMei && t.includes("CNPJ")) || anexoCnpj;
 }
 
 /**

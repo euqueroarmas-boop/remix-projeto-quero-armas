@@ -47,7 +47,7 @@ import {
   MSG_SOMENTE_PDF_ORIGINAL,
   MSG_FOTO_SOMENTE_IMAGEM,
 } from "@/lib/quero-armas/somentePdfOriginal";
-import { parseCcmei } from "@/lib/quero-armas/parserCcmei";
+import { ehCcmei, parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
   isDocumentoEmpresa30Dias,
   isNotaFiscalSemVencimento,
@@ -2499,6 +2499,13 @@ export function ClienteDocsHubModal({
         }
         if (limpo.length >= 80) {
           try {
+            // O CCMEI oficial pode trazer o Cartão CNPJ como segunda página.
+            // Se o slot pede CCMEI e há sinais oficiais no texto completo, o
+            // parser local sempre prevalece sobre a classificação genérica.
+            if (expectedTipoMeta?.value === "renda_ccmei" && ehCcmei(textoNativo)) {
+              const resolvido = await tentarLeituraLocal(target);
+              if (resolvido) return;
+            }
             const docLocal = parseCertidao(textoNativo);
             // PARSE-01: o gate deixava passar só certidão. Comprovante de
             // endereço (DANF3E / fatura de concessionária) é igualmente
@@ -2524,7 +2531,20 @@ export function ClienteDocsHubModal({
       );
       if (clsErr) throw clsErr;
 
-      const ia = (cls || {}) as IAClass;
+      const iaBruta = (cls || {}) as IAClass;
+      const ccmeiContextual =
+        expectedTipoMeta?.value === "renda_ccmei" &&
+        ehCcmei(String(textoLocalRef.current || ""));
+      const ia = ccmeiContextual
+        ? {
+            ...iaBruta,
+            tipoDetectado: "CCMEI",
+            confianca: Math.max(Number(iaBruta.confianca || 0), 0.99),
+            divergenciaComSelecaoManual: false,
+            recomendacao: "aceitar",
+            justificativa: "Classificação determinística: certificado oficial CCMEI; o Cartão CNPJ anexo não altera o tipo principal.",
+          }
+        : iaBruta;
       // A invoke só devolve `error` quando o HTTP falha. Se a função responder
       // 200 com corpo vazio ou sem confiança — chave da IA ausente, quota
       // estourada, resposta que não passou no schema — chegava aqui um objeto
