@@ -14,6 +14,7 @@ import { AgendarExamePainel } from "@/components/quero-armas/clientes/AgendarExa
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
 import { grupoDaPendencia, type PendenciaGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import {
   resolveLinkAntecedentePorUf,
   aplicarUfEmTexto,
