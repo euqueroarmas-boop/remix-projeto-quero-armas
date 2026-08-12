@@ -70,6 +70,29 @@ const COLS: ColDef[] = [
 
 const LS_LARGURAS = "qa_painel_progresso_larguras";
 const LS_VISIVEIS = "qa_painel_progresso_visiveis";
+const LS_TRILHA = "qa_dash_trilha";
+const LS_CONTADOR = "qa_dash_contador";
+const LS_ORDEM = "qa_dash_ordem";
+
+const SORT_KEYS_VALIDAS: readonly string[] = [
+  "cliente_nome", "servico_nome", "fase", "progresso", "proximo_doc",
+  "dias_parado", "cobrancas", "criado_em", "online", "efetiva", "protocolo",
+];
+const CONTADORES_VALIDOS: readonly string[] = [
+  "todos", "online", "pronto", "analise", "pendencia", "parado", "bloqueado",
+];
+
+function lerOrdemSalva(): { key: string; asc: boolean } | null {
+  try {
+    const bruto = localStorage.getItem(LS_ORDEM);
+    if (!bruto) return null;
+    const o = JSON.parse(bruto);
+    if (o && typeof o.key === "string" && SORT_KEYS_VALIDAS.includes(o.key)) {
+      return { key: o.key, asc: !!o.asc };
+    }
+  } catch { /* estado local corrompido: ignora */ }
+  return null;
+}
 
 /** Colunas do modo "credenciados não localizados" (substituem daqui pra frente). */
 type CredKey = "cred_nome" | "cred_endereco" | "cred_cidade" | "cred_telefone" | "cred_situacao";
@@ -249,11 +272,18 @@ function LinhaGrupos({ r }: { r: Row }) {
 export default function DashboardProgressoClientes() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortKey, setSortKey] = useState<SortKey>("dias_parado");
-  const [asc, setAsc] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>(() => (lerOrdemSalva()?.key as SortKey) ?? "dias_parado");
+  const [asc, setAsc] = useState<boolean>(() => lerOrdemSalva()?.asc ?? false);
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
-  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(null);
-  const [contador, setContador] = useState<ContadorKey>("todos");
+  const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
+    try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
+  });
+  const [contador, setContador] = useState<ContadorKey>(() => {
+    try {
+      const v = localStorage.getItem(LS_CONTADOR);
+      return v && CONTADORES_VALIDOS.includes(v) ? (v as ContadorKey) : "todos";
+    } catch { return "todos"; }
+  });
   /** Modo credenciados: troca as colunas a partir de PRÓXIMO PASSO. */
   const [modoCred, setModoCred] = useState<"psicologo" | "instrutor_tiro" | null>(null);
   const [credRows, setCredRows] = useState<CredRow[]>([]);
@@ -271,6 +301,12 @@ export default function DashboardProgressoClientes() {
 
   useEffect(() => { localStorage.setItem(LS_LARGURAS, JSON.stringify(larguras)); }, [larguras]);
   useEffect(() => { localStorage.setItem(LS_VISIVEIS, JSON.stringify(visiveis)); }, [visiveis]);
+  useEffect(() => {
+    if (filtroTrilha) localStorage.setItem(LS_TRILHA, filtroTrilha);
+    else localStorage.removeItem(LS_TRILHA);
+  }, [filtroTrilha]);
+  useEffect(() => { localStorage.setItem(LS_CONTADOR, contador); }, [contador]);
+  useEffect(() => { localStorage.setItem(LS_ORDEM, JSON.stringify({ key: sortKey, asc })); }, [sortKey, asc]);
 
   /** Credenciados (psicólogos e IAT) não localizados na base da PF. */
   useEffect(() => {
@@ -506,6 +542,13 @@ export default function DashboardProgressoClientes() {
     return rows.some((r) => r.online) ? ["ONLINE", ...lista] : lista;
   }, [trilhas, rows]);
 
+  /** Trilha salva que não existe mais nos dados atuais: cai para "sem filtro". */
+  useEffect(() => {
+    if (filtroTrilha && trilhasDisponiveis.length > 0 && !trilhasDisponiveis.includes(filtroTrilha)) {
+      setFiltroTrilha(null);
+    }
+  }, [filtroTrilha, trilhasDisponiveis]);
+
   /** Processos bloqueados não têm documentos — herdam a trilha dos outros processos do mesmo cliente. */
   const trilhasEfetivas = useMemo(() => {
     const porCliente: Record<number, Set<string>> = {};
@@ -645,7 +688,11 @@ export default function DashboardProgressoClientes() {
             </div>
             <button
               type="button"
-              onClick={() => { setLarguras({}); setVisiveis({}); }}
+              onClick={() => {
+                setLarguras({}); setVisiveis({});
+                setFiltroTrilha(null); setContador("todos");
+                setSortKey("dias_parado"); setAsc(false);
+              }}
               className="mt-3 w-full rounded-sm border border-[#DADADA] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[#0A0A0A]"
               style={{ color: TINTA_2 }}
             >
