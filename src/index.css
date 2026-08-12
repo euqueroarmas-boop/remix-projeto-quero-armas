@@ -221,87 +221,38 @@
 
 /* =====================================================================
    QUERO ARMAS — Modo Noturno do admin (html.qa-noite)
-   Escala neutra Dark AAA. Aplicado no <html> para alcançar também os
-   portais do Radix (Dialog/Popover/Select). A área do cliente e o site
-   público não recebem a classe.
+   Inversão calibrada: o admin tem milhares de cores fixas em style inline,
+   então inverter o container cobre 100% das superfícies de uma vez.
+   hue-rotate(180deg) devolve o matiz original (bordô continua bordô).
+   Mídia (imagens, vídeo, canvas) é re-invertida para não ficar em negativo.
+   Área do cliente e site público não recebem a classe.
    ===================================================================== */
+html.qa-noite { background: #101012; }
+html.qa-noite body { background: #101012; }
+
 html.qa-noite .qa-scope,
-html.qa-noite [data-radix-popper-content-wrapper] .qa-scope,
-html.qa-noite .qa-noite-portal {
-  --background: 240 4% 6%;
-  --foreground: 0 0% 92%;
-
-  --card: 240 4% 9%;
-  --card-foreground: 0 0% 92%;
-
-  --popover: 240 4% 9%;
-  --popover-foreground: 0 0% 92%;
-
-  --secondary: 240 4% 14%;
-  --secondary-foreground: 0 0% 92%;
-
-  --muted: 240 4% 14%;
-  --muted-foreground: 0 0% 64%;
-
-  --accent: 240 4% 16%;
-  --accent-foreground: 0 0% 92%;
-
-  --border: 240 4% 20%;
-  --input: 240 4% 20%;
-
-  --surface-elevated: 240 4% 11%;
-  --surface-overlay: 240 4% 11%;
-
-  --sidebar-background: 240 4% 8%;
-  --sidebar-foreground: 0 0% 88%;
-  --sidebar-accent: 240 4% 16%;
-  --sidebar-accent-foreground: 0 0% 92%;
-  --sidebar-border: 240 4% 20%;
-
-  --qa-app: #0B0B0C;
-  --qa-paper: #141416;
-  --qa-paper-2: #17171A;
-  --qa-linha: #2A2A2E;
-  --qa-linha-2: #34343A;
-  --qa-linha-3: #212125;
-  --qa-tinta: #EDEDED;
-  --qa-tinta-2: #C2C2C6;
-  --qa-tinta-3: #8E8E95;
-  --qa-neutro-bg: #202024;
-  --qa-neutro-borda: #3A3A40;
-  --qa-verde: #5FD39B;
-  --qa-verde-bg: #12291F;
-  --qa-verde-borda: #2C6B4C;
-  --qa-ambar: #E7C56A;
-  --qa-ambar-bg: #2A2313;
-  --qa-ambar-borda: #6E5A22;
-  --qa-vermelho: #E98494;
-  --qa-vermelho-bg: #2C1418;
-  --qa-vermelho-borda: #6E2C38;
+html.qa-noite [data-radix-popper-content-wrapper],
+html.qa-noite [data-radix-portal],
+html.qa-noite [data-sonner-toaster] {
+  filter: invert(1) hue-rotate(180deg) brightness(0.94) contrast(1.06);
+  background-color: #FFFFFF;
 }
 
-/* Ponte para os hex fixos ainda presentes no admin. */
-html.qa-noite .qa-scope { background: var(--qa-app) !important; color: var(--qa-tinta); }
-html.qa-noite .qa-scope main,
-html.qa-noite .qa-scope header,
-html.qa-noite .qa-scope aside { background: var(--qa-app) !important; }
-html.qa-noite .qa-scope .qa-card,
-html.qa-noite .qa-scope .bg-white,
-html.qa-noite .qa-scope .bg-\[\#FFFFFF\],
-html.qa-noite .qa-scope .bg-\[\#FAFAFA\],
-html.qa-noite .qa-scope .bg-\[\#F7F8FA\],
-html.qa-noite .qa-scope .bg-\[\#F9F9F9\] { background-color: var(--qa-paper) !important; }
-html.qa-noite .qa-scope .border-\[\#E4E4E4\],
-html.qa-noite .qa-scope .border-\[\#EAEAEA\],
-html.qa-noite .qa-scope .border-\[\#DADADA\],
-html.qa-noite .qa-scope .border-\[\#E5E5E5\] { border-color: var(--qa-linha) !important; }
-html.qa-noite .qa-scope .border-\[\#F3F3F3\],
-html.qa-noite .qa-scope .border-\[\#F1F1F1\] { border-color: var(--qa-linha-3) !important; }
-html.qa-noite .qa-scope .text-\[\#0A0A0A\] { color: var(--qa-tinta) !important; }
-html.qa-noite .qa-scope .text-\[\#3A3A3A\] { color: var(--qa-tinta-2) !important; }
-html.qa-noite .qa-scope .text-\[\#6A6A6A\],
-html.qa-noite .qa-scope .text-\[\#9A9A9A\] { color: var(--qa-tinta-3) !important; }
-html.qa-noite .qa-scope .hover\:text-\[\#0A0A0A\]:hover { color: var(--qa-tinta) !important; }
+/* Re-inversão do que não pode aparecer em negativo. */
+html.qa-noite .qa-scope :where(img, video, canvas, iframe, svg image, [data-nao-inverter]),
+html.qa-noite [data-radix-popper-content-wrapper] :where(img, video, canvas, iframe, svg image, [data-nao-inverter]),
+html.qa-noite [data-radix-portal] :where(img, video, canvas, iframe, svg image, [data-nao-inverter]) {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Overlay escuro de modais viraria mancha branca — mantém escuro. */
+html.qa-noite [data-radix-portal] > [data-state][class*="bg-black"],
+html.qa-noite [data-radix-portal] > [data-state][class*="bg-background"] {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+/* Sombras claras somem na inversão; reforça a separação por borda. */
+html.qa-noite .qa-scope [class*="shadow"] { box-shadow: none; }
 
 /* Chip do painel: nunca quebra linha — a fonte encolhe conforme a coluna aperta. */
 .qa-dash-compact td,
