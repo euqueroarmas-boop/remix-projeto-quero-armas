@@ -4233,9 +4233,20 @@ export function ClienteDocsHubModal({
       // Documentos vencidos são aceitos como histórico — a rejeição para uso em
       // processos acontece no checklist, não no upload. Só bloqueiam revisão humana
       // documentos com apontamento criminal ou divergência de dados do cliente.
+      const divergenciaBloqueante = conformidade.some((item) => {
+        if (item.status !== "divergente") return false;
+        // CCMEI é liberado exclusivamente por nome, CPF e situação ATIVA.
+        // CNPJ/razão/CNAE extraídos passam a ser a referência empresarial para
+        // QSA e nota fiscal; um cadastro empresarial antigo não pode reprovar o
+        // certificado oficial correto do mesmo titular.
+        if (form.tipo_documento === "renda_ccmei") {
+          return ["nome_completo", "cpf", "situacao_cadastral"].includes(item.campo);
+        }
+        return true;
+      });
       const bloqueioRevisao =
         !ehFoto3x4Deterministica &&
-        (temApontamento || (!terceiroDados && conformidade.some((i) => i.status === "divergente")));
+        (temApontamento || (!terceiroDados && divergenciaBloqueante));
       const iaConfia =
         ehFoto3x4Deterministica ||
         (!bloqueioRevisao && !terceiroDados && (
