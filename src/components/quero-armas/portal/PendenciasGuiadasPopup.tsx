@@ -8,7 +8,7 @@
 // link de emissão em botão bordô e ações fixadas no rodapé.
 // ============================================================================
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, MapPin, Search, Upload, X } from "lucide-react";
 import { AgendarExamePainel } from "@/components/quero-armas/clientes/AgendarExame/AgendarExamePainel";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
@@ -19,6 +19,11 @@ import {
   resolveLinkAntecedentePorUf,
   aplicarUfEmTexto,
 } from "@/lib/quero-armas/linksAntecedentesPorUf";
+import {
+  loadChecklistRetomada,
+  resolveRetomadaIndex,
+  saveChecklistRetomada,
+} from "@/lib/quero-armas/documentAssistantProgress";
 
 export type PendenciaKind = "signature" | "documento" | "pergunta";
 
@@ -153,6 +158,14 @@ interface Props {
   } | null;
   /** Nome do cliente — usado no H1 de abertura do popup. */
   nomeCliente?: string | null;
+  /**
+   * Id do cliente para RETOMADA — quando presente, o popup lembra em qual
+   * pendência e em que ponto da leitura o cliente parou (localStorage) e
+   * devolve exatamente essa tela quando ele volta, mesmo depois de fechar o
+   * navegador. Ausente = comportamento antigo, sem memória (ex.: simulador
+   * da equipe, que não pode gravar nada no aparelho de quem está testando).
+   */
+  retomadaClienteId?: number | string | null;
   /** CEP do cliente — usado para listar credenciados da PF mais próximos. */
   cepCliente?: string | null;
   /** Cidade do cliente — fallback quando não há CEP válido. */
@@ -196,7 +209,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, retomadaClienteId = null, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
@@ -217,9 +230,42 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
   // Sincroniza com `pinnedId` sempre que o portal pede foco em uma pendência
   // específica (ex.: clique em card do kanban / botão "Enviar X").
   const [indice, setIndice] = useState(0);
+  /**
+   * Retomada (localStorage, por cliente): em que pendência ele parou.
+   *
+   * A memória só posiciona a fila enquanto o cliente não navegar por conta
+   * própria — depois disso quem manda é ele. `indiceRef` deixa o efeito ler a
+   * posição corrente sem depender de `indice` (o que o faria re-rodar e
+   * desfazer a navegação a cada tecla).
+   */
+  const navegouRef = useRef(false);
+  const indiceRef = useRef(0);
+  indiceRef.current = indice;
+  useEffect(() => {
+    if (!open) navegouRef.current = false;
+  }, [open]);
+
+  /** Marca a pendência em tela como o ponto de retomada (rolagem no topo). */
+  const marcarRetomada = (id: string | null | undefined) => {
+    if (retomadaClienteId == null || !id) return;
+    if (loadChecklistRetomada(retomadaClienteId)?.pendenciaId === id) return;
+    saveChecklistRetomada(retomadaClienteId, { pendenciaId: id, scrollTop: 0 });
+  };
 
   useEffect(() => {
     if (!open) return;
+    // Toda decisão de posição vira ponto de retomada — assim a memória
+    // acompanha a fila sozinha (item resolvido sai, o seguinte assume).
+    const posicionar = (i: number) => {
+      const alvo = Math.max(0, Math.min(i, pendencias.length - 1));
+      setIndice(alvo);
+      marcarRetomada(pendencias[alvo]?.id);
+    };
+    // TRAVA DE ORDEM POR GRUPO: nem pin nem retomada puxam a fila para um
+    // grupo que ainda não chegou a vez.
+    const trava = calcularTravaGrupos(pendencias as any);
+    const grupoLiberado = (p: PendenciaItem | undefined) =>
+      !!p && trava.liberado(p.grupoId || grupoDaPendencia(p.rawTipo, p.tipo).id);
     // REGRA DE NEGÓCIO (ordem inegociável): 1) contrato e procuração,
     // 2) exigências cadastrais, 3) checklist documental. Enquanto houver
     // assinatura na fila, o popup fica travado nela — nenhum pin de card
@@ -228,31 +274,41 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     if (iAssinatura >= 0) {
       const pinEhAssinatura =
         pinnedId != null && pendencias.find((p) => p.id === pinnedId)?.kind === "signature";
-      setIndice(pinEhAssinatura ? pendencias.findIndex((p) => p.id === pinnedId) : iAssinatura);
+      posicionar(pinEhAssinatura ? pendencias.findIndex((p) => p.id === pinnedId) : iAssinatura);
       return;
     }
     if (pinnedId) {
       const i = pendencias.findIndex((p) => p.id === pinnedId);
-      // TRAVA DE ORDEM POR GRUPO: um card de grupo bloqueado não pode puxar a
-      // fila para frente. O pin só vale dentro do grupo corrente.
-      const trava = calcularTravaGrupos(pendencias as any);
-      const pinLiberado =
-        i >= 0 &&
-        trava.liberado(
-          pendencias[i].grupoId || grupoDaPendencia(pendencias[i].rawTipo, pendencias[i].tipo).id,
-        );
+      // Um card de grupo bloqueado não pode puxar a fila para frente: o pin
+      // só vale dentro do grupo corrente.
+      const pinLiberado = i >= 0 && grupoLiberado(pendencias[i]);
       if (pinLiberado) {
-        setIndice(i);
+        posicionar(i);
         return;
       }
       if (i >= 0) {
-        setIndice(0);
+        posicionar(0);
         return;
       }
     }
-    setIndice((cur) => Math.min(cur, Math.max(0, pendencias.length - 1)));
+    // RETOMADA: o cliente fechou a aba (ou saiu para outra seção do portal) no
+    // meio do checklist. Se a pendência em que ele parou continua pendente e o
+    // grupo dela está liberado, devolvemos exatamente aquela tela. Se ela já
+    // foi resolvida (inclusive em outro aparelho), a fila manda e ele cai no
+    // primeiro item — nunca num passo que não existe mais.
+    if (retomadaClienteId != null && !navegouRef.current) {
+      const iSalvo = resolveRetomadaIndex(pendencias, loadChecklistRetomada(retomadaClienteId));
+      if (iSalvo >= 0 && grupoLiberado(pendencias[iSalvo])) {
+        // Já é o ponto salvo — reposiciona sem reescrever (a rolagem
+        // guardada seria zerada).
+        setIndice(iSalvo);
+        return;
+      }
+    }
+    posicionar(indiceRef.current);
     // Reagimos a mudanças de foco/lista; abrir/fechar reseta pelo `open` guard.
-  }, [open, pinnedId, pendencias]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, pinnedId, pendencias, retomadaClienteId]);
 
   const atual = Math.min(indice, total - 1);
   const active = pendencias[atual];
@@ -266,6 +322,44 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     void carregarExplicacoesBiblioteca().then(() => { if (vivo) setBibliotecaCarregada(true); });
     return () => { vivo = false; };
   }, [open]);
+
+  // ─── Retomada: devolve a rolagem de onde ele parou ────────────────────────
+  // Os passos são longos (o texto do BO ocupa várias telas). Voltar e ter que
+  // rolar tudo de novo até achar onde parou é perder o lugar do mesmo jeito.
+  const corpoRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open || retomadaClienteId == null) return;
+    const salvo = loadChecklistRetomada(retomadaClienteId);
+    if (salvo?.pendenciaId !== active.id || salvo.scrollTop <= 0) return;
+    // O rAF espera o corpo do passo pintar — sem isso o container ainda não
+    // tem altura e o scroll é engolido.
+    const raf = requestAnimationFrame(() => {
+      if (corpoRef.current) corpoRef.current.scrollTop = salvo.scrollTop;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, retomadaClienteId, active.id]);
+
+  useEffect(() => {
+    if (!open || retomadaClienteId == null) return;
+    const el = corpoRef.current;
+    if (!el) return;
+    let timer: number | undefined;
+    const onScroll = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        saveChecklistRetomada(retomadaClienteId, {
+          pendenciaId: active.id,
+          scrollTop: el.scrollTop,
+        });
+      }, 300);
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.clearTimeout(timer);
+      el.removeEventListener("scroll", onScroll);
+    };
+  }, [open, retomadaClienteId, active.id]);
+
   const activeGrupo = active.grupoLabel || grupoDaPendencia(active.rawTipo, active.tipo).label;
   const activeGrupoId = active.grupoId || grupoDaPendencia(active.rawTipo, active.tipo).id;
   const grupoInfo = gruposOrdenados.find((g) => g.id === activeGrupoId);
@@ -721,7 +815,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         </div>
 
         {/* Scrollable body */}
-        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
+        <div ref={corpoRef} className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
 
 
           {exameModal ? (
@@ -976,7 +1070,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               <div className={asPage ? "flex gap-3" : "flex gap-2"}>
                 <button
                   type="button"
-                  onClick={() => setIndice((i) => Math.max(0, i - 1))}
+                  onClick={() => {
+                    // Navegação manual: a partir daqui quem manda é o cliente,
+                    // e é este item que ele espera reencontrar ao voltar.
+                    navegouRef.current = true;
+                    const alvo = Math.max(0, atual - 1);
+                    setIndice(alvo);
+                    marcarRetomada(pendencias[alvo]?.id);
+                  }}
                   disabled={!podeVoltar}
                   className={`qa-btn-label flex-1 px-3 rounded-sm border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-3 px-4" : "h-10"}`}
                 >

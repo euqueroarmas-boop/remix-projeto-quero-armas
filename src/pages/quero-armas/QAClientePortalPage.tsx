@@ -42,6 +42,7 @@ import {
 } from "@/lib/quero-armas/efetivaNecessidadePassos";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
+import { loadChecklistRetomada, saveChecklistRetomada } from "@/lib/quero-armas/documentAssistantProgress";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
@@ -2591,6 +2592,57 @@ export default function QAClientePortalPage() {
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
+  // ── RETOMADA DA SEÇÃO — "voltei e continuo onde eu estava" ────────────────
+  // A navegação interna do portal não mexe na URL (ver `goSection`), então sem
+  // esta memória qualquer F5, troca de aba ou fechar/abrir o navegador devolve
+  // o cliente ao "Resumo" — no meio do checklist, isso é o cliente achando que
+  // perdeu tudo o que já tinha feito.
+  //
+  // Só a POSIÇÃO é guardada, em localStorage e por cliente. O conteúdo continua
+  // no banco (Efetiva Necessidade autossalva; documentos vivem no Hub) — nada
+  // de dado de processo sai daqui para o aparelho.
+  const retomadaClienteId = cliente?.id != null ? String(cliente.id) : null;
+  const secaoRestauradaRef = useRef(false);
+  useEffect(() => {
+    if (secaoRestauradaRef.current || !retomadaClienteId) return;
+    // Deep link manda mais que memória: quem chegou por `?secao=` ou por rota
+    // específica pediu aquela tela agora.
+    const params = new URLSearchParams(location.search);
+    const temDeepLink =
+      !!params.get("secao") ||
+      navItems.some((item) => item.path !== "/area-do-cliente" && location.pathname.startsWith(item.path));
+    if (temDeepLink) {
+      secaoRestauradaRef.current = true;
+      return;
+    }
+    const secao = loadChecklistRetomada(retomadaClienteId)?.secao ?? null;
+    if (!secao || secao === "resumo") {
+      secaoRestauradaRef.current = true;
+      return;
+    }
+    if (secao === "checklist_guiado") {
+      // A página do checklist (mobile/granada) só volta se ainda houver o que
+      // resolver — devolver uma tela vazia seria pior que o Resumo. Espera a
+      // fila carregar antes de decidir.
+      if (!pendingContractsLoaded) return;
+      secaoRestauradaRef.current = true;
+      if (isBelowLg && pendenciasGuiadasCount > 0) setActiveSection("checklist_guiado");
+      return;
+    }
+    secaoRestauradaRef.current = true;
+    if (navItems.some((item) => item.key === secao)) {
+      setActiveSection(secao as typeof activeSection);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retomadaClienteId, pendingContractsLoaded, pendenciasGuiadasCount, isBelowLg]);
+
+  // Grava só DEPOIS de restaurar — senão o "resumo" do primeiro render
+  // apagaria a seção salva antes de ela ser lida.
+  useEffect(() => {
+    if (!retomadaClienteId || !secaoRestauradaRef.current) return;
+    saveChecklistRetomada(retomadaClienteId, { secao: activeSection });
+  }, [retomadaClienteId, activeSection]);
+
   // TRAVA DE ORDEM POR GRUPO — só o grupo corrente da fila aceita entrega.
   const travaGrupos = useMemo(() => calcularTravaGrupos(pendenciasGuiadas as any), [pendenciasGuiadas]);
 
@@ -4847,6 +4899,7 @@ export default function QAClientePortalPage() {
                 nomeCliente={(cliente as any)?.nome_completo ?? null}
                 cepCliente={(cliente as any)?.cep ?? null}
                 cidadeCliente={(cliente as any)?.cidade ?? null}
+                retomadaClienteId={retomadaClienteId}
                 resumoProcesso={resumoProcesso}
               />
             ) : (
@@ -5037,7 +5090,8 @@ export default function QAClientePortalPage() {
         nomeCliente={(cliente as any)?.nome_completo ?? null}
         cepCliente={(cliente as any)?.cep ?? null}
         cidadeCliente={(cliente as any)?.cidade ?? null}
-                resumoProcesso={resumoProcesso}
+        retomadaClienteId={retomadaClienteId}
+        resumoProcesso={resumoProcesso}
         />
       <DeclaracaoResponsavelImovelModal
         open={declResidenciaAberta}

@@ -66,6 +66,9 @@ interface Props {
 
 type TipoProva = "boletim_ocorrencia" | "inquerito_policial" | "acao_criminal" | "outro";
 
+/** Campos de texto livre com autosave — o cliente digita, o banco acompanha. */
+type CampoTexto = "relato_cliente" | "contexto_risco" | "texto_bo";
+
 interface Prova {
   id: string;
   tipo: TipoProva;
@@ -346,6 +349,7 @@ export default function EfetivaNecessidadeModal({
         baseTextoRef.current = {
           relato_cliente: reg.relato_cliente ?? "",
           contexto_risco: reg.contexto_risco ?? "",
+          texto_bo: reg.texto_bo ?? "",
         };
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
         setTextoBo(reg.texto_bo ?? "");
@@ -425,33 +429,44 @@ export default function EfetivaNecessidadeModal({
    * sobrescrevia com "" o texto recém-digitado em outra. Agora guardamos o
    * valor que veio do banco e só gravamos quando o texto realmente mudou;
    * string vazia nunca sobrescreve conteúdo existente.                      */
-  const baseTextoRef = useRef<Record<"relato_cliente" | "contexto_risco", string>>({
+  const baseTextoRef = useRef<Record<CampoTexto, string>>({
     relato_cliente: "",
     contexto_risco: "",
+    texto_bo: "",
   });
 
-  const salvarTexto = useCallback(async (campo: "relato_cliente" | "contexto_risco", valor: string) => {
+  const salvarTexto = useCallback(async (campo: CampoTexto, valor: string) => {
     if (!registroId) return;
     const base = baseTextoRef.current[campo] ?? "";
     if (valor === base) return;
     if (!valor.trim() && base.trim()) return; // vazio não apaga o que existe
+    const patch: Record<string, unknown> = { [campo]: valor, updated_at: new Date().toISOString() };
+    // Só chega aqui quem digitou por cima do texto gerado — a geração atualiza
+    // a base sem passar por este caminho. Marca a mesma flag que a aprovação
+    // grava, para a equipe ver "· ajustado pelo cliente".
+    if (campo === "texto_bo") patch.texto_bo_editado_pelo_cliente = true;
     const { error } = await supabase
       .from("qa_efetiva_necessidade" as any)
-      .update({ [campo]: valor, updated_at: new Date().toISOString() })
+      .update(patch)
       .eq("id", registroId);
     if (!error) baseTextoRef.current[campo] = valor;
   }, [registroId]);
 
   /* Flush ao desmontar: avançar de passo desmonta o componente e cancelaria o
    * debounce de 800 ms, perdendo o texto digitado por último.               */
-  const pendenteRef = useRef<{ relato: string; contexto: string }>({ relato: "", contexto: "" });
-  pendenteRef.current = { relato, contexto };
+  const pendenteRef = useRef<{ relato: string; contexto: string; textoBo: string }>({
+    relato: "",
+    contexto: "",
+    textoBo: "",
+  });
+  pendenteRef.current = { relato, contexto, textoBo };
   const salvarTextoRef = useRef(salvarTexto);
   salvarTextoRef.current = salvarTexto;
   useEffect(() => {
     return () => {
       void salvarTextoRef.current("relato_cliente", pendenteRef.current.relato);
       void salvarTextoRef.current("contexto_risco", pendenteRef.current.contexto);
+      void salvarTextoRef.current("texto_bo", pendenteRef.current.textoBo);
     };
   }, []);
 
@@ -475,6 +490,16 @@ export default function EfetivaNecessidadeModal({
     return () => clearTimeout(t);
   }, [contexto, registroId, carregando, salvarTexto]);
 
+  /* O texto do BO é o que o cliente leva para a delegacia. Ele pode ajustar a
+   * redação em "Ajustar" e só depois voltar para aprovar o relato — antes, esse
+   * ajuste só ia para o banco na aprovação, e fechar a página no meio o
+   * apagava. Agora grava sozinho, 800 ms depois da última tecla.            */
+  useEffect(() => {
+    if (!registroId || carregando) return;
+    const t = setTimeout(() => void salvarTexto("texto_bo", textoBo), 800);
+    return () => clearTimeout(t);
+  }, [textoBo, registroId, carregando, salvarTexto]);
+
   /* ── Parte B: a IA monta o relato em primeira pessoa ────────────────── */
   const gerarNarrativa = useCallback(async () => {
     if (!registroId) return;
@@ -487,6 +512,9 @@ export default function EfetivaNecessidadeModal({
       });
       if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
       setNarrativa(String(data.narrativa));
+      // A edge function já gravou o texto gerado. Alinhar a base impede que o
+      // autosave o devolva ao banco marcado como "ajustado pelo cliente".
+      baseTextoRef.current.texto_bo = String(data.texto_bo ?? "");
       setTextoBo(String(data.texto_bo ?? ""));
       setTextoBoTocado(false);
       setEditandoBo(false);
