@@ -1,62 +1,53 @@
-# Por que o "próximo passo" do Fábio sai diferente dos outros
+# O furo do checklist do Fábio: ordem por grupo não é travada
 
-O motor é o mesmo para todos (a função `qa_painel_progresso_clientes`, que pega a primeira pendência acionável do checklist, na ordem de grupo e de item). O que está errado no Fábio não é o motor: é **o rótulo** e **a contagem do passo**.
-
-## O que a consulta mostrou
-
-Linha do Fábio hoje:
+## Diagnóstico (dados reais do processo dele)
 
 ```text
-grupo atual .......... OCUPAÇÃO LÍCITA (grupo 3 de 7)
-próximo passo ........ "CCMEI — Certificado da Condição de Microempreendedor Individual — SALGADEIRO"
-grupo_total .......... 1
-grupo_concluidos ..... 0   → a tela escreve "PASSO 0 DE 1 NESTA ETAPA"
+06/08 20:22  checklist explodido — grupo 3 OCUPAÇÃO nasce com a pergunta-pivot
+             "Defina sua condição profissional" (renda_definir_condicao), pendente
+11/08 14:05  cliente entrega Antecedentes Eleitoral   (grupo 6 — IDONEIDADE)
+11/08 14:13  cliente entrega Antecedentes Militar     (grupo 6 — IDONEIDADE)
+11/08 18:02  cliente responde "autônomo/MEI" → placeholder é apagado e nasce
+             a exigência CCMEI (grupo 3) → o "próximo passo" volta ao grupo 3
 ```
 
-Dois problemas:
+Ou seja: a pergunta do grupo 3 estava aberta desde 06/08 e mesmo assim ele entregou documentos do grupo 6. Não é falha do motor de próximo passo — ele sempre apontou a pergunta do grupo 3. Os furos são três:
 
-1. **Nome do documento longo demais.** A exigência do CCMEI foi criada em 11/08 com o nome já concatenado com a profissão (`— SALGADEIRO`). A coluna PRÓXIMO PASSO tem 210px; nos outros clientes o nome é curto ("Foto 3x4 do requerente"), no dele quebra em quatro linhas e estoura a altura da linha. Parece "errado", mas é o texto cru vindo do banco.
-2. **"PASSO 0 DE 1" está semanticamente errado.** A tela imprime `grupo_concluidos / grupo_total`, ou seja, quantos itens do grupo já foram concluídos — não em que passo o cliente está. Como o grupo Ocupação tem 1 item e nenhum concluído, sai "PASSO 0 DE 1". No Anthony sai "PASSO 1 DE 2" por coincidência (1 concluído de 2) e o leitor entende como "passo atual". A leitura fica inconsistente entre clientes.
+1. **Não existe trava de ordem por grupo.** O pop-up guiado só é obrigatório para contrato/procuração e para cadastro incompleto (`bloqueante`); na fila do checklist documental o cliente navega livre por Anterior/Próximo, e os cards/Hub aceitam upload de qualquer grupo.
+2. **A pergunta-pivot não bloqueia nada.** Ela define quais documentos existirão nos grupos seguintes, mas fica na fila como um item comum.
+3. **A resposta não é gravada no questionário do processo.** `qa-processo-set-condicao` grava `qa_processos.condicao_profissional` e apaga o placeholder, mas não escreve `condicao_profissional` em `respostas_questionario_json` (confirmado: o JSON do Fábio só tem as respostas de endereço). Numa reexplosão a pergunta ressuscita — mesma classe do bug do Anthony.
 
-Ou seja: o próximo passo do Fábio está **correto no conteúdo** (o CCMEI é mesmo a próxima pendência), mas é exibido de forma que destoa dos demais.
+## O que será feito
 
-## E por que ele entregou idoneidade antes de ocupação?
+### 1. Trava de ordem por grupo (área do cliente)
 
-Porque **o passo de ocupação ainda não existia** quando ele entregou as certidões. Linha do tempo real do processo dele:
+- O checklist passa a liberar **apenas o grupo corrente** — o primeiro grupo, na ordem canônica, que ainda tem pendência acionável.
+- Grupos posteriores aparecem na trilha como **BLOQUEADO**, com o motivo ("conclua Ocupação lícita"). Sem envio, sem abrir passo a passo.
+- Grupos anteriores já cumpridos continuam abertos para reenvio (documento rejeitado/vencido não pode ficar refém da trava).
+- Vale para as três portas de entrada: pop-up guiado, cards do resumo e Hub do cliente.
+- Regra dura: item **rejeitado ou vencido** de grupo anterior reabre aquele grupo e volta a ser o grupo corrente.
+- A trava é só do lado do cliente. A equipe continua podendo lançar qualquer documento pelo admin.
 
-```text
-06/08 20:22  checklist explodido — grupo OCUPAÇÃO nasce VAZIO (nenhuma exigência)
-11/08 14:05  entrega Antecedentes Eleitoral      (grupo IDONEIDADE = grupo corrente)
-11/08 14:13  entrega Antecedentes Militar (STM)  (grupo IDONEIDADE = grupo corrente)
-11/08 18:02  nasce a exigência renda_ccmei (CCMEI — ... — SALGADEIRO)
-             → grupo corrente volta para OCUPAÇÃO LÍCITA (grupo 3)
-```
+### 2. Pergunta-pivot bloqueia o grupo
 
-Ele não furou a ordem: às 14h o primeiro item acionável do checklist era mesmo de idoneidade. Às 18h, quando a condição profissional foi definida, o motor criou a exigência do CCMEI num grupo **anterior**, e o "próximo passo" andou para trás. É o mesmo efeito que já tinha gerado o falso aviso de "entregue fora da ordem" (corrigido ontem ignorando exigências criadas depois da entrega).
+- Enquanto a pergunta que define o checklist (condição profissional, imóvel de terceiro) estiver sem resposta, o grupo dela é o grupo corrente e nada além dele é liberado — o cliente cai direto nessa tela ao abrir o portal.
 
-O que falta consertar é a leitura no painel: hoje ele mostra só "OCUPAÇÃO LÍCITA / passo 0 de 1" e a equipe entende que o cliente pulou etapa.
+### 3. Resposta gravada no questionário + backfill
 
-### Correção 3 — sinalizar exigência retroativa
+- `qa-processo-set-condicao` passa a gravar `condicao_profissional` também em `qa_processos.respostas_questionario_json` (merge, nunca sobrescrevendo outras chaves).
+- Backfill: processos que já têm `qa_processos.condicao_profissional` preenchida e não têm a chave no JSON recebem a resposta (Fábio, Anthony, Pedro, Gilson).
 
-- Quando a exigência que virou "próximo passo" foi **criada depois** da última entrega do cliente, mostrar um chip discreto `NOVA EXIGÊNCIA` ao lado do próximo passo (e no tooltip, a data de criação).
-- Isso deixa explícito que o retrocesso de grupo é do sistema, não desleixo do cliente. Sem mudar ordem, sem bloquear nada.
+### 4. Leitura no painel do admin
 
-## Correções propostas (só apresentação)
-
-1. **Rótulo curto e estável na coluna PRÓXIMO PASSO**
-   - Cortar sufixos descritivos após o segundo travessão (o "— SALGADEIRO"), mantendo "CCMEI — Certificado da Condição de Microempreendedor Individual".
-   - Limitar a duas linhas com reticências e mostrar o nome completo em tooltip.
-   - Mesma regra na lista desktop e no card mobile, para não haver duas verdades.
-
-2. **Contagem do passo coerente**
-   - Trocar o texto para `PASSO {grupo_concluidos + 1} DE {grupo_total}` enquanto houver pendência no grupo, e `{grupo_total} DE {grupo_total}` quando o grupo estiver concluído — nunca "PASSO 0".
-   - Manter o chip `GRUPO x/y` como está (ali a leitura de "concluídos" é a correta).
+- Coluna PRÓXIMO PASSO: cortar sufixo descritivo do nome (o "— SALGADEIRO" do CCMEI), limitar a duas linhas e mostrar o nome completo no tooltip.
+- Trocar "PASSO 0 DE 1" por `PASSO {concluídos+1} DE {total}` — nunca "passo 0".
+- Chip discreto `NOVA EXIGÊNCIA` quando a exigência do próximo passo nasceu depois da última entrega do cliente, para a equipe não ler retrocesso de grupo como desleixo do cliente.
 
 ## Detalhes técnicos
 
-- Arquivo único: `src/components/quero-armas/dashboard/DashboardProgressoClientes.tsx`
-  - Novo helper `rotuloProximoPasso(nome)` (corta sufixo após o 2º travessão, colapsa espaços).
-  - Linha 878 (lista) e 1078 (card): usar o helper + `line-clamp-2` + `title` com o nome completo.
-  - Linha 1039: `PASSO {min(grupo_concluidos + 1, grupo_total)} DE {grupo_total}`.
-- Para o chip `NOVA EXIGÊNCIA`: expor em `public.qa_painel_progresso_clientes` dois campos já disponíveis no CTE `proximo` — `proximo_criado_em` (`pr.created_at`) e `ultimo_envio` (`dt.ultimo_envio`); o front compara os dois. Migração aditiva, nenhuma coluna existente muda.
-- Sem mudança de banco, de view ou do motor de pendências — a ordem de itens continua exatamente a mesma para todos os clientes.
+- **Motor de ordem** — novo helper `src/lib/quero-armas/ordemGruposChecklist.ts`: recebe os documentos do processo + respostas e devolve `{ grupoCorrente, gruposBloqueados[], motivo }`, reusando `pendenciasGrupos.ts` (ordem canônica) e `itemBloqueanteEtapa.ts` (o que ainda bloqueia). Espelho em `supabase/functions/_shared/` para o backend usar a mesma regra.
+- **Consumo no front**: `PendenciasGuiadasPopup.tsx` filtra a fila pelo grupo corrente e desenha os demais como bloqueados; `ClienteResumoKanban.tsx` e `ClienteDocsHubModal.tsx` desabilitam envio fora do grupo corrente com a mesma mensagem.
+- **Backend**: `qa-processo-set-condicao` faz o merge no `respostas_questionario_json`; a validação de upload do cliente (`qa-classificar-documento-arma` / rota de envio) rejeita documento de grupo bloqueado com erro claro, para a trava não viver só na UI.
+- **Backfill**: update pontual em `qa_processos` para os processos com condição definida e chave ausente no JSON.
+- **Painel**: `src/components/quero-armas/dashboard/DashboardProgressoClientes.tsx` (rótulo, contagem do passo, chip) + expor `proximo_criado_em` e `ultimo_envio` em `qa_painel_progresso_clientes` (migração aditiva, nenhuma coluna existente muda).
+- **Testes**: casos de regressão para ordem por grupo (entrega de grupo posterior recusada, grupo anterior reaberto por rejeição) e para o merge da resposta.
