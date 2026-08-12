@@ -21,7 +21,15 @@ Travas ativas: guard no front (`checklistGuiadoEngine.responderPerguntaGuia` + p
 
 ## Golden Record — preenchimento automático (Hub Documental)
 - **Nº do documento:** para todo o grupo renda/ocupação o identificador é o **CNPJ formatado** (cartão CNPJ, CCMEI, QSA). Para nota fiscal é o **número da NF**.
-- **Validade:** **emissão + 30 dias** apenas para **Cartão CNPJ e QSA**. **Sem prazo:** nota fiscal, **CCMEI, contrato social e requerimento de empresário** (documentos constitutivos — a atualidade da ocupação é conferida pela emissão do Cartão CNPJ/QSA).
+- **Validade:** **emissão + 30 dias** apenas para **Cartão CNPJ e QSA**. **Sem prazo:** nota fiscal, **CCMEI, contrato social e requerimento de empresário / ficha da Junta** (documentos constitutivos — a atualidade da ocupação é conferida pela emissão do Cartão CNPJ/QSA).
+- Documentos constitutivos **não pedem emissão nem validade** no Hub: os campos somem (`exigeDatasOcupacao` em `src/lib/quero-armas/ocupacaoLicitaConferencia.ts`) e `isDocumentoConstitutivoPerpetuo` curto-circuita **antes** do catálogo `qa_validade_documentos`, para que uma linha errada no banco nunca reintroduza prazo.
+
+## Conferência canônica (o que cada documento confronta)
+- **CCMEI / contrato social / requerimento de empresário:** apenas **nome do titular, CPF e situação cadastral**. Situação diferente de ATIVA/ATIVO **reprova**. CNPJ e razão social são confrontados com o Cartão CNPJ/QSA aprovados e com `qa_clientes.ocupacao_licita_cnpj` / `ocupacao_licita_razao_social`.
+- **Cartão CNPJ:** emissão obrigatória, validade = emissão + 30 dias.
+- **QSA:** precisa conter **ao menos** o nome do cliente cadastrado (nomes extras não reprovam) e ter a **mesma data de emissão** do Cartão CNPJ aprovado.
+- **Nota fiscal:** confere apenas o **emitente/prestador** — aprova se CNPJ **ou** razão social baterem com o cadastro. Tomador nunca é comparado com o cadastro (salvo a regra de parentesco).
+- Fonte única: `src/lib/quero-armas/ocupacaoLicitaConferencia.ts`, espelhada nos prompts de `qa-processo-doc-validar-ia` e `qa-classificar-documento-arma`.
 - **Duplicidade:** documento do mesmo tipo já enviado (aprovado ou em análise) **bloqueia o envio**. O cliente é avisado para excluir o anterior e enviar o correto — nunca salvar duas vezes.
 - Fonte única das regras: `isDocumentoEmpresa30Dias` / `isNotaFiscalSemVencimento` em `src/lib/quero-armas/validadeDocumento.ts`. O Hub (`calcularValidadeHubPorTipo`) e `numeroDocumentoRenda` delegam para elas — nunca duplicar a regra.
 
