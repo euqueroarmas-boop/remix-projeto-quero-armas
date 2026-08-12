@@ -82,6 +82,7 @@ import {
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
+import { grupoDaPendencia } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   HUB_CATEGORIAS,
   getHubCategoriaMeta,
