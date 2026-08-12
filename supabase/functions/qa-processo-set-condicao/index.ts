@@ -1,9 +1,16 @@
 // qa-processo-set-condicao
 // Permite ao cliente (ou staff) definir/alterar a condição profissional do PROCESSO.
 // - Atualiza qa_processos.condicao_profissional
-// - Remove itens antigos de renda (status pendente / dispensado_grupo / em_analise) e o placeholder renda_definir_condicao
+// - Remove itens antigos de renda AINDA NÃO CUMPRIDOS e o placeholder renda_definir_condicao
 // - Insere os itens de renda corretos (CLT / autônomo / empresário / aposentado / servidor público)
-// - Itens de renda já APROVADOS são preservados; não são recriados nem cobrados de novo.
+// - Itens já CUMPRIDOS ou EM ANÁLISE são preservados; não são recriados nem cobrados de novo.
+//
+// ATENÇÃO — por que "cumprido" e não apenas "aprovado":
+// o Hub Documental é o canal de entrega do cliente. Quando ele anexa um
+// documento lá, a exigência do processo é satisfeita pelo motor de
+// reaproveitamento e fica em `dispensado_por_reaproveitamento` — NUNCA em
+// `aprovado`. Enquanto esta função olhava só para `aprovado`, uma entrega real
+// do cliente era tratada como descartável e apagada na reaplicação da condição.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
@@ -16,6 +23,42 @@ function json(body: unknown, status = 200) {
     status, headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+/**
+ * Exigências que NÃO podem ser apagadas ao (re)aplicar a condição profissional.
+ *
+ * Espelha STATUS_CHECKLIST_CUMPRIDO + STATUS_CHECKLIST_EM_ANALISE de
+ * `src/lib/quero-armas/checklistMetrics.ts` — a Edge Function não importa do
+ * bundle do app, então a lista é replicada aqui. Se aquela mudar, mudar esta.
+ *
+ * Regra: se o cliente já entregou (cumprido) ou está sendo avaliado (em
+ * análise), a linha é preservada. Só some o que ainda não foi entregue —
+ * pendente, não enviado ou reprovado —, que é o lixo real de uma troca de
+ * condição profissional.
+ */
+const STATUS_PRESERVAR: ReadonlySet<string> = new Set([
+  // cumprido
+  "aprovado",
+  "validado",
+  "concluido",
+  "concluído",
+  "dispensado",
+  "dispensado_grupo",
+  "dispensado_por_reaproveitamento",
+  "nao_aplicavel",
+  // em análise — o arquivo já está no processo, a avaliação é que não terminou
+  "em_analise",
+  "enviado",
+  "fila",
+  "processando",
+  "revisao_humana",
+  "em_revisao_humana",
+  "pendente_aprovacao",
+  "aguardando_equipe",
+]);
+
+const preservaStatus = (s: unknown) =>
+  STATUS_PRESERVAR.has(String(s ?? "").trim().toLowerCase());
 
 type Cond =
   | "clt"
@@ -418,10 +461,12 @@ Deno.serve(async (req) => {
       .in("tipo_documento", tiposParaLimpar.length > 0 ? tiposParaLimpar : ["__noop__"]);
     console.log("[set-condicao] existentes condicionais:", JSON.stringify(existentes), "err:", errExist);
 
-    const aprovados = new Set((existentes ?? []).filter((d: any) => d.status === "aprovado").map((d: any) => d.tipo_documento));
+    const preservados = new Set(
+      (existentes ?? []).filter((d: any) => preservaStatus(d.status)).map((d: any) => d.tipo_documento),
+    );
     const aRemover = (existentes ?? []).filter((d: any) =>
       d.tipo_documento !== "renda_definir_condicao" &&
-      d.status !== "aprovado"
+      !preservaStatus(d.status)
     ).map((d: any) => d.id);
 
     let removidosReais = 0;
@@ -551,7 +596,7 @@ Deno.serve(async (req) => {
       processo_id,
       tipo_evento: "condicao_profissional_definida",
       descricao: `Condição profissional definida: ${condicao.toUpperCase()}.`,
-      dados_json: { condicao, removidos_solicitados: aRemover.length, removidos_reais: removidosReais, criados: novos.length, preservados_aprovados: Array.from(aprovados) },
+      dados_json: { condicao, removidos_solicitados: aRemover.length, removidos_reais: removidosReais, criados: novos.length, preservados_cumpridos: Array.from(preservados) },
       // origem registrada para auditoria do que ditou a lista
       ator: staffRow ? "staff" : "cliente",
       user_id: userId,
