@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   BadgeCheck,
-  ChevronRight,
   CreditCard,
   FileSignature,
   FileText,
@@ -62,6 +61,11 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const ARRASTO_MINIMO = 6;
 const ARRASTO_DESCARTE = 56;
 
+// Cascata: quantos cartões aparecem atrás do da frente e quantos pixels cada
+// um desce, deixando visível que há mais avisos na pilha.
+const MAX_CASCATA = 3;
+const DESLOCAMENTO_CASCATA = 7;
+
 // Seções do portal por categoria de notificação. Sem isso, links genéricos
 // "/area-do-cliente" caíam em "resumo" — a seção onde o cliente já estava —
 // e o clique em "Ver detalhes" parecia não fazer nada.
@@ -73,14 +77,6 @@ function secaoPorCategoria(categoria: string): string | null {
   if (c.includes("arsenal")) return "arsenal";
   if (c.includes("cadastro")) return "configuracoes";
   return null;
-}
-
-// Tem para onde levar o cliente? Contrato/assinatura abre o popup de
-// assinaturas mesmo sem link; o resto depende do link gravado.
-function temAcao(n: { categoria: string; link: string | null }) {
-  const c = String(n.categoria || "").toLowerCase();
-  if (c.includes("contrato") || c.includes("assinatura") || c.includes("procuracao")) return true;
-  return Boolean(n.link);
 }
 
 // Ícone por categoria da notificação (o "assunto" gravado no banco), para o
@@ -106,8 +102,10 @@ function iconePorCategoria(categoria: string, urgente: boolean): LucideIcon {
  * documentos vencendo em até 30 dias) reaparecem no dia seguinte até a
  * pendência real ser resolvida — fechar no X só esconde temporariamente.
  * Notificações normais somem até o próximo login ao serem fechadas.
- * Os avisos vêm agrupados num bloco único, e "Limpar tudo" apaga o bloco
- * inteiro em definitivo (nem os urgentes voltam).
+ * Os avisos aparecem em cascata (um cartão sobre o outro, como na Central
+ * de Notificação do admin): só o da frente é legível, os de trás mostram a
+ * borda. Remoção 1 a 1 pelo X ou arrastando com o dedo, e "Limpar tudo"
+ * apaga a pilha inteira — em qualquer um dos casos o aviso não volta.
  */
 export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false }: { clienteId: number | null; bloqueado?: boolean }) {
   const [todas, setTodas] = useState<NotificacaoAtiva[]>([]);
@@ -154,7 +152,7 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
     // Deduplicação: um único aviso por categoria (o mais recente). O motor
     // cria uma linha por evento (ex: cada arquivo removido), o que empilhava
     // dezenas de cartões idênticos no portal. Sem corte de quantidade — o
-    // cliente precisa ver quantos avisos tem; a lista rola dentro do bloco.
+    // rodapé mostra quantos avisos existem de fato na pilha.
     const porCategoria = new Map<string, NotificacaoAtiva>();
     for (const n of [...filtradas].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -269,107 +267,131 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
 
   if (visiveis.length === 0 || bloqueado) return null;
 
+  // Cascata: só o aviso da frente é legível; os de trás aparecem deslocados
+  // para baixo e para a esquerda, mostrando que existem mais. Mesmo padrão da
+  // Central de Notificação do administrador.
+  const frente = visiveis[0];
+  const atras = visiveis.slice(1, 1 + MAX_CASCATA);
+  const urgente = frente.urgencia === "urgente";
+  const IconeFrente = iconePorCategoria(frente.categoria, urgente);
+  const dx = arrasto?.id === frente.id ? arrasto.dx : 0;
+
   return (
-    // Bloco único no alto à direita, encostado à esquerda do rail de ícones
-    // (56px) e, no desktop, abaixo do avatar fixo. Antes eram cartões soltos
-    // de ~380px com folga larga, que no celular tomavam quase a tela toda.
-    <div className="fixed top-2 right-[64px] z-[200] w-[66vw] max-w-[250px] lg:top-[84px] lg:right-[72px] lg:w-[250px]">
-      <div className="rounded-xl border border-black/5 bg-white/90 backdrop-blur-xl shadow-[0_8px_24px_-10px_rgba(0,0,0,0.32)] overflow-hidden animate-in slide-in-from-top-2 fade-in">
-        <div className="flex items-center justify-between gap-2 px-2 py-1 border-b border-black/5 bg-black/[0.03]">
-          <span className="text-[9.5px] font-semibold uppercase tracking-[0.08em] text-black/40">
-            {visiveis.length} {visiveis.length > 1 ? "avisos" : "aviso"}
-          </span>
-          <button
-            onClick={limparTodas}
-            className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-[0.06em] text-black/60 hover:text-[#7A1F2B] hover:bg-black/5"
-            aria-label="Limpar todas as notificações"
-          >
-            <Trash2 className="w-2.5 h-2.5" />
-            Limpar tudo
-          </button>
-        </div>
-        {/* Lista rolável: nenhum aviso fica escondido atrás do outro, e a
-            contagem do cabeçalho é sempre o total real. */}
-        <ul className="divide-y divide-black/5 max-h-[42vh] overflow-y-auto overscroll-contain">
-          {visiveis.map((n) => {
-            const urgente = n.urgencia === "urgente";
-            const IconeCategoria = iconePorCategoria(n.categoria, urgente);
-            const dx = arrasto?.id === n.id ? arrasto.dx : 0;
+    // Bloco no alto à direita, encostado à esquerda do rail de ícones (56px)
+    // e, no desktop, abaixo do avatar fixo. Antes ficava centralizado com
+    // ~380px, tomando quase toda a largura no celular.
+    <div className="fixed top-2 right-[64px] z-[200] w-[70vw] max-w-[260px] lg:top-[84px] lg:right-[72px] lg:w-[260px]">
+      <div style={{ paddingBottom: atras.length * DESLOCAMENTO_CASCATA }}>
+        <div className="relative">
+          {/* Cartões de trás — sem interação, só a borda aparecendo. */}
+          {atras.map((n, i) => {
+            const nivel = i + 1;
+            const urgenteAtras = n.urgencia === "urgente";
+            const IconeAtras = iconePorCategoria(n.categoria, urgenteAtras);
             return (
-              <li
+              <div
                 key={n.id}
-                onPointerDown={(e) => arrastoInicio(e, n)}
-                onPointerMove={(e) => arrastoMover(e, n)}
-                onPointerUp={() => arrastoFim(n)}
-                onPointerCancel={() => arrastoFim(n)}
-                onClick={
-                  temAcao(n)
-                    ? (e) => {
-                        // Depois de arrastar, o clique do navegador não deve
-                        // abrir a seção — o dedo estava removendo o aviso.
-                        if (arrastou.current) {
-                          arrastou.current = false;
-                          return;
-                        }
-                        abrirDetalhes(n, e);
-                      }
-                    : undefined
-                }
-                onKeyDown={
-                  temAcao(n)
-                    ? (e) => {
-                        if (e.key === "Enter" || e.key === " ") abrirDetalhes(n, e as unknown as React.MouseEvent);
-                      }
-                    : undefined
-                }
-                role={temAcao(n) ? "button" : undefined}
-                tabIndex={temAcao(n) ? 0 : undefined}
+                aria-hidden
+                className="absolute inset-0 overflow-hidden rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_4px_14px_-8px_rgba(0,0,0,0.28)] px-3 py-2.5 pr-8 pointer-events-none"
                 style={{
-                  transform: dx ? `translateX(${dx}px)` : undefined,
-                  opacity: dx ? Math.max(0.25, 1 - Math.abs(dx) / 140) : undefined,
-                  transition: dx ? "none" : "transform 160ms ease, opacity 160ms ease",
-                  touchAction: "pan-y",
+                  transform: `translate(${-nivel * 4}px, ${nivel * DESLOCAMENTO_CASCATA}px) scale(${1 - nivel * 0.02})`,
+                  transformOrigin: "top center",
+                  zIndex: 10 - nivel,
+                  opacity: Math.max(0.45, 1 - nivel * 0.18),
                 }}
-                className={`flex items-start gap-1.5 px-2 py-1.5 bg-white/0 ${
-                  temAcao(n) ? "cursor-pointer hover:bg-black/[0.03]" : ""
-                }`}
               >
-                <span
-                  className={`shrink-0 mt-[1px] h-4 w-4 rounded-md flex items-center justify-center ${
-                    urgente ? "bg-[#7A1F2B]" : "bg-black/80"
-                  }`}
-                >
-                  <IconeCategoria className="w-2.5 h-2.5 text-white" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  {/* A linha inteira abre os detalhes — o chevron substitui o
-                      antigo link "Ver detalhes", que gastava uma linha só dele. */}
-                  <p className="flex items-start gap-0.5 text-[11px] leading-tight font-semibold text-black tracking-[-0.01em]">
-                    <span className="line-clamp-2">{n.titulo}</span>
-                    {temAcao(n) && (
-                      <ChevronRight
-                        className={`shrink-0 w-3 h-3 ${urgente ? "text-[#7A1F2B]" : "text-black/40"}`}
-                      />
-                    )}
-                  </p>
-                  <p className="text-[10.5px] leading-[1.3] text-black/55 line-clamp-2">
-                    {n.mensagem}
-                  </p>
+                <div className="flex items-start gap-2.5">
+                  <span
+                    className={`shrink-0 mt-0.5 h-6 w-6 rounded-[9px] flex items-center justify-center ${
+                      urgenteAtras ? "bg-[#7A1F2B]" : "bg-black/80"
+                    }`}
+                  >
+                    <IconeAtras className="w-3.5 h-3.5 text-white" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">
+                      {n.titulo}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    fechar(n);
-                  }}
-                  className="shrink-0 -mr-0.5 h-5 w-5 rounded-full flex items-center justify-center text-black/30 hover:text-black/70 hover:bg-black/5"
-                  aria-label="Fechar notificação"
-                >
-                  <X className="w-2.5 h-2.5" />
-                </button>
-              </li>
+              </div>
             );
           })}
-        </ul>
+
+          {/* Aviso da frente — arrastar para o lado ou tocar no X remove. */}
+          <div
+            key={frente.id}
+            onPointerDown={(e) => arrastoInicio(e, frente)}
+            onPointerMove={(e) => arrastoMover(e, frente)}
+            onPointerUp={() => arrastoFim(frente)}
+            onPointerCancel={() => arrastoFim(frente)}
+            style={{
+              transform: dx ? `translateX(${dx}px)` : undefined,
+              opacity: dx ? Math.max(0.25, 1 - Math.abs(dx) / 140) : undefined,
+              transition: dx ? "none" : "transform 160ms ease, opacity 160ms ease",
+              touchAction: "pan-y",
+            }}
+            className="relative z-20 rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_-8px_rgba(0,0,0,0.28)] px-3 py-2.5 pr-8 animate-in slide-in-from-top-2 fade-in"
+          >
+            <button
+              onClick={() => fechar(frente)}
+              className="absolute top-1.5 right-1.5 h-6 w-6 rounded-full flex items-center justify-center text-black/35 hover:text-black/70 hover:bg-black/5"
+              aria-label="Fechar notificação"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex items-start gap-2.5">
+              <span
+                className={`shrink-0 mt-0.5 h-6 w-6 rounded-[9px] flex items-center justify-center ${
+                  urgente ? "bg-[#7A1F2B]" : "bg-black/80"
+                }`}
+              >
+                <IconeFrente className="w-3.5 h-3.5 text-white" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">
+                  {frente.titulo}
+                </p>
+                <p className="text-[12px] leading-snug mt-0.5 text-black/55 line-clamp-2">
+                  {frente.mensagem}
+                </p>
+                {frente.link && (
+                  <a
+                    href={frente.link}
+                    onClick={(e) => {
+                      // Depois de arrastar, o clique do navegador não deve
+                      // abrir a seção — o dedo estava removendo o aviso.
+                      if (arrastou.current) {
+                        arrastou.current = false;
+                        e.preventDefault();
+                        return;
+                      }
+                      abrirDetalhes(frente, e);
+                    }}
+                    className={`text-[12px] font-semibold mt-1 inline-block ${urgente ? "text-[#7A1F2B]" : "text-black/80"}`}
+                  >
+                    Ver detalhes
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rodapé: quantos avisos existem ao todo e a limpeza de uma vez só. */}
+      <div className="mt-1.5 flex items-center justify-between gap-2">
+        <span className="text-[9px] uppercase tracking-[0.18em] text-black/40">
+          {visiveis.length} {visiveis.length > 1 ? "avisos" : "aviso"}
+        </span>
+        <button
+          onClick={limparTodas}
+          className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-black/50 hover:text-[#7A1F2B] hover:bg-black/5"
+          aria-label="Limpar todas as notificações"
+        >
+          <Trash2 className="w-2.5 h-2.5" />
+          Limpar tudo
+        </button>
       </div>
     </div>
   );
