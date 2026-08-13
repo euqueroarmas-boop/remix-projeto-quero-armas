@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   BadgeCheck,
@@ -57,6 +57,11 @@ function estaLimpa(id: string) {
 // (contrato-<id>) quebrariam o RPC de dispensa, que espera uuid.
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Arrastar com o dedo para remover: a partir de 6px já é arrasto (e não
+// toque), e soltar depois de 56px descarta o aviso.
+const ARRASTO_MINIMO = 6;
+const ARRASTO_DESCARTE = 56;
+
 // Seções do portal por categoria de notificação. Sem isso, links genéricos
 // "/area-do-cliente" caíam em "resumo" — a seção onde o cliente já estava —
 // e o clique em "Ver detalhes" parecia não fazer nada.
@@ -107,6 +112,13 @@ function iconePorCategoria(categoria: string, urgente: boolean): LucideIcon {
 export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false }: { clienteId: number | null; bloqueado?: boolean }) {
   const [todas, setTodas] = useState<NotificacaoAtiva[]>([]);
   const [visiveis, setVisiveis] = useState<NotificacaoAtiva[]>([]);
+  const [arrasto, setArrasto] = useState<{ id: string; dx: number } | null>(null);
+  const arrastoId = useRef<string | null>(null);
+  const arrastoInicioX = useRef(0);
+  const arrastoDx = useRef(0);
+  const arrastoCapturado = useRef(false);
+  // Marca que houve arrasto para o clique seguinte não abrir os detalhes.
+  const arrastou = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -139,9 +151,10 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       }
       return !sessionStorage.getItem(seenNormalKey(n.id));
     });
-    // Deduplicação: um único aviso por categoria (o mais recente) e no máximo
-    // 3 na tela. O motor cria uma linha por evento (ex: cada arquivo removido),
-    // o que empilhava dezenas de cartões idênticos no portal.
+    // Deduplicação: um único aviso por categoria (o mais recente). O motor
+    // cria uma linha por evento (ex: cada arquivo removido), o que empilhava
+    // dezenas de cartões idênticos no portal. Sem corte de quantidade — o
+    // cliente precisa ver quantos avisos tem; a lista rola dentro do bloco.
     const porCategoria = new Map<string, NotificacaoAtiva>();
     for (const n of [...filtradas].sort(
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -149,40 +162,72 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
       const chave = `${n.categoria}|${n.titulo}`;
       if (!porCategoria.has(chave)) porCategoria.set(chave, n);
     }
-    setVisiveis(Array.from(porCategoria.values()).slice(0, 3));
+    setVisiveis(Array.from(porCategoria.values()));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [todas]);
 
+  // Remoção definitiva de um aviso — pelo X ou arrastando com o dedo. Vale o
+  // mesmo do "Limpar tudo": marca no aparelho e, para os avisos com linha no
+  // banco, dispensa server-side. Uma vez removido, não volta.
   function fechar(n: NotificacaoAtiva) {
-    if (n.urgencia === "urgente") {
-      localStorage.setItem(hiddenUntilKey(n.id), String(Date.now() + REAPARECER_MS));
-    } else {
-      sessionStorage.setItem(seenNormalKey(n.id), "1");
-      // Avisos informativos são dispensados de verdade no banco — assim não
-      // voltam no próximo login nem se acumulam.
+    try {
+      localStorage.setItem(limpaKey(n.id), "1");
+      if (n.urgencia === "urgente") {
+        localStorage.setItem(hiddenUntilKey(n.id), String(Date.now() + REAPARECER_MS));
+      } else {
+        sessionStorage.setItem(seenNormalKey(n.id), "1");
+      }
+    } catch {
+      /* storage indisponível: a remoção vale ao menos para esta sessão */
+    }
+    if (UUID_RE.test(n.id)) {
       supabase.rpc("qa_notificacao_dispensar" as any, { p_id: n.id }).then(() => {});
     }
     setVisiveis((prev) => prev.filter((x) => x.id !== n.id));
   }
 
-  // Limpa o bloco inteiro de uma vez. Diferente do X (que só adia o aviso
-  // urgente por 24h), aqui a limpeza é definitiva: marca no aparelho e, para
-  // os avisos com linha no banco, dispensa server-side.
+  // Limpa o bloco inteiro de uma vez, com a mesma regra do X.
   function limparTodas() {
-    const agora = String(Date.now() + REAPARECER_MS);
-    for (const n of visiveis) {
+    for (const n of visiveis) fechar(n);
+    setVisiveis([]);
+  }
+
+  // ── Arrastar com o dedo para remover ────────────────────────────────
+  // A captura do ponteiro só começa depois de 6px de movimento: assim o
+  // toque no X continua sendo um clique normal no botão, sem sequestro.
+  function arrastoInicio(e: React.PointerEvent, n: NotificacaoAtiva) {
+    arrastoId.current = n.id;
+    arrastoInicioX.current = e.clientX;
+    arrastoDx.current = 0;
+    arrastoCapturado.current = false;
+    arrastou.current = false;
+    setArrasto({ id: n.id, dx: 0 });
+  }
+
+  function arrastoMover(e: React.PointerEvent, n: NotificacaoAtiva) {
+    if (arrastoId.current !== n.id) return;
+    const dx = e.clientX - arrastoInicioX.current;
+    if (!arrastoCapturado.current && Math.abs(dx) > ARRASTO_MINIMO) {
+      arrastoCapturado.current = true;
+      arrastou.current = true;
       try {
-        localStorage.setItem(limpaKey(n.id), "1");
-        if (n.urgencia === "urgente") localStorage.setItem(hiddenUntilKey(n.id), agora);
-        else sessionStorage.setItem(seenNormalKey(n.id), "1");
+        e.currentTarget.setPointerCapture(e.pointerId);
       } catch {
-        /* storage indisponível: a limpeza vale ao menos para esta sessão */
-      }
-      if (UUID_RE.test(n.id)) {
-        supabase.rpc("qa_notificacao_dispensar" as any, { p_id: n.id }).then(() => {});
+        /* navegador sem pointer capture: o arrasto ainda funciona dentro da linha */
       }
     }
-    setVisiveis([]);
+    arrastoDx.current = dx;
+    setArrasto({ id: n.id, dx });
+  }
+
+  function arrastoFim(n: NotificacaoAtiva) {
+    if (arrastoId.current !== n.id) return;
+    const dx = arrastoDx.current;
+    arrastoId.current = null;
+    arrastoDx.current = 0;
+    arrastoCapturado.current = false;
+    setArrasto(null);
+    if (Math.abs(dx) >= ARRASTO_DESCARTE) fechar(n);
   }
 
   function abrirDetalhes(n: NotificacaoAtiva, e: React.MouseEvent) {
@@ -243,14 +288,33 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
             Limpar tudo
           </button>
         </div>
-        <ul className="divide-y divide-black/5">
+        {/* Lista rolável: nenhum aviso fica escondido atrás do outro, e a
+            contagem do cabeçalho é sempre o total real. */}
+        <ul className="divide-y divide-black/5 max-h-[42vh] overflow-y-auto overscroll-contain">
           {visiveis.map((n) => {
             const urgente = n.urgencia === "urgente";
             const IconeCategoria = iconePorCategoria(n.categoria, urgente);
+            const dx = arrasto?.id === n.id ? arrasto.dx : 0;
             return (
               <li
                 key={n.id}
-                onClick={temAcao(n) ? (e) => abrirDetalhes(n, e) : undefined}
+                onPointerDown={(e) => arrastoInicio(e, n)}
+                onPointerMove={(e) => arrastoMover(e, n)}
+                onPointerUp={() => arrastoFim(n)}
+                onPointerCancel={() => arrastoFim(n)}
+                onClick={
+                  temAcao(n)
+                    ? (e) => {
+                        // Depois de arrastar, o clique do navegador não deve
+                        // abrir a seção — o dedo estava removendo o aviso.
+                        if (arrastou.current) {
+                          arrastou.current = false;
+                          return;
+                        }
+                        abrirDetalhes(n, e);
+                      }
+                    : undefined
+                }
                 onKeyDown={
                   temAcao(n)
                     ? (e) => {
@@ -260,7 +324,13 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
                 }
                 role={temAcao(n) ? "button" : undefined}
                 tabIndex={temAcao(n) ? 0 : undefined}
-                className={`flex items-start gap-1.5 px-2 py-1.5 ${
+                style={{
+                  transform: dx ? `translateX(${dx}px)` : undefined,
+                  opacity: dx ? Math.max(0.25, 1 - Math.abs(dx) / 140) : undefined,
+                  transition: dx ? "none" : "transform 160ms ease, opacity 160ms ease",
+                  touchAction: "pan-y",
+                }}
+                className={`flex items-start gap-1.5 px-2 py-1.5 bg-white/0 ${
                   temAcao(n) ? "cursor-pointer hover:bg-black/[0.03]" : ""
                 }`}
               >
