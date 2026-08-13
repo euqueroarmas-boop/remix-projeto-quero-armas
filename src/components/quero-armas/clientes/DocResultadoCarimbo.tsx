@@ -47,11 +47,19 @@ export default function DocResultadoCarimbo({
   tipo,
   percentual,
   mensagem,
+  titulo,
   onDone,
 }: {
   tipo: DocResultadoTipo;
   percentual?: number | null;
   mensagem?: string | null;
+  /**
+   * Sobrescreve o título canônico do status. Existe para o caso em que o
+   * documento do cliente está CERTO e só o modo de salvar falhou — carimbar
+   * "REPROVADO" ali pune quem não errou. O tipo continua `reprovado` para
+   * manter a cor, o ícone de alerta e o fluxo de reenvio imediato.
+   */
+  titulo?: string | null;
   onDone: () => void;
 }) {
   const c = CORES[tipo];
@@ -88,7 +96,7 @@ export default function DocResultadoCarimbo({
       >
         <Icone className="h-12 w-12" strokeWidth={2.5} />
         <div style={{ fontSize: 42, fontWeight: 700, lineHeight: 1, letterSpacing: ".08em" }}>
-          {c.titulo}
+          {(titulo || c.titulo).toUpperCase()}
         </div>
         {tipo === "aprovado" && percentual != null && (
           <div style={{ fontSize: 63, fontWeight: 700, lineHeight: 0.9, letterSpacing: "-.02em" }}>

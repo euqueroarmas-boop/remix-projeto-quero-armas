@@ -53,6 +53,7 @@ import {
   isDocumentoConstitutivoPerpetuo,
   isDocumentoEmpresa30Dias,
   isDocumentoVencido,
+  isIdentidadeFuncionalPerpetua,
   isNotaFiscalSemVencimento,
   isTipoSemVencimento,
   textoIndicaValidadeIndeterminada,
@@ -1589,8 +1590,16 @@ export function ClienteDocsHubModal({
    * para reaproveitar o parser determinístico e completar a conformidade.
    */
   const textoLocalRef = useRef<string>("");
+  /**
+   * A extração do PDF TERMINOU sem erro? Serve para separar dois casos que
+   * chegam iguais em `textoLocalRef` vazio:
+   *  - `true`  → o PDF foi lido e realmente não tem texto (salvo como imagem);
+   *  - `false` → o pdf.js falhou (worker, memória) e o documento não é culpado.
+   * Sem essa distinção, uma falha técnica nossa viraria acusação ao cliente.
+   */
+  const extracaoPdfOkRef = useRef(false);
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
-    { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null } | null
+    { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null; titulo?: string | null } | null
   >(null);
   const [dragOver, setDragOver] = useState(false);
   const [classificacao, setClassificacao] = useState<IAClass | null>(null);
@@ -3255,9 +3264,11 @@ export function ClienteDocsHubModal({
     if (f.type !== "application/pdf") return false;
     let texto = "";
     textoLocalRef.current = "";
+    extracaoPdfOkRef.current = false;
     try {
       texto = await extrairTextoPdf(f);
       textoLocalRef.current = texto;
+      extracaoPdfOkRef.current = true;
     } catch (e) {
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
@@ -3647,6 +3658,43 @@ export function ClienteDocsHubModal({
     } finally {
       setExtracting(false);
     }
+
+    // ── PDF SEM CAMADA DE TEXTO ───────────────────────────────────────────
+    // O documento do cliente pode estar perfeito e ainda assim chegar ilegível:
+    // ao usar "Compartilhar" em vez de "Imprimir", o celular reimprime a tela e
+    // converte cada letra em traço vetorial. O arquivo fica idêntico aos olhos
+    // e vazio para a máquina — nem parser, nem IA conseguem ler.
+    //
+    // Antes isso caía na conferência de dados e virava "não confere com os seus
+    // dados de cadastro": acusávamos o cliente de mandar documento de outra
+    // pessoa quando ele só salvou pela via errada.
+    //
+    // EXCEÇÃO — documentos que NASCEM como imagem e por isso não têm texto:
+    //  - identidade civil (CNH-e, CIN): caminho próprio, lê o QR Code no pixel;
+    //  - carteira/identidade funcional: é foto do documento, não há texto;
+    //  - foto 3x4 e afins: imagem por definição.
+    // Composto dos predicados canônicos — nada de lista literal nova aqui.
+    const documentoNasceImagem =
+      isTipoIdentidadeComQr(form.tipo_documento) ||
+      isIdentidadeFuncionalPerpetua(form.tipo_documento) ||
+      tipoAceitaImagem(form.tipo_documento);
+
+    if (
+      f.type === "application/pdf" &&
+      extracaoPdfOkRef.current &&
+      !String(textoLocalRef.current || "").trim() &&
+      !documentoNasceImagem
+    ) {
+      setResultadoCarimbo({
+        tipo: "reprovado",
+        titulo: "Salve de novo",
+        mensagem:
+          "O PDF ficou sem texto, só imagem. Use o botão IMPRIMIR da página da Receita, não o Compartilhar. " +
+          "Depois: Salvar como PDF (Android) ou Salvar em Arquivos (iPhone).",
+      });
+      return;
+    }
+
     await classifyAndExtract(f);
   }
 
@@ -6190,6 +6238,7 @@ export function ClienteDocsHubModal({
         tipo={resultadoCarimbo.tipo}
         percentual={resultadoCarimbo.percentual}
         mensagem={resultadoCarimbo.mensagem}
+        titulo={resultadoCarimbo.titulo}
         onDone={() => {
           // Com a declaração do responsável pendente, o hub permanece aberto:
           // o próximo passo do cliente é assinar, e fechar aqui o perderia.
