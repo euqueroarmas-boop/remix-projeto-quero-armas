@@ -13187,6 +13187,10 @@ export type Database = {
         Args: { _data_emissao: string; _tipo_documento: string }
         Returns: string
       }
+      qa_canonizar_condicao_profissional: {
+        Args: { v: string }
+        Returns: string
+      }
       qa_carimbos_conexao_cliente: {
         Args: { _cliente_id: number }
         Returns: {
