@@ -77,6 +77,23 @@ export interface EfetivaRegistroLike {
   texto_bo?: string | null;
   bo_pendente_registro?: boolean | null;
   aprovado_cliente?: boolean | null;
+  /** `rascunho` | `em_revisao` | `aprovado` | `devolvido` (qa_efetiva_necessidade.status). */
+  status?: string | null;
+  devolucao_motivo?: string | null;
+}
+
+/**
+ * A equipe devolveu o relato para ajustes?
+ *
+ * O aceite eletrônico do cliente (`aprovado_cliente`) é prova de sessão —
+ * carimbo, IP e hash do texto — e NUNCA é apagado. Quem diz se o passo voltou
+ * a ser exigível é o `status` do registro: devolvido pela equipe reabre a
+ * defesa final para o cliente ajustar o texto e aprovar de novo.
+ */
+export function efetivaFoiDevolvida(
+  registro: EfetivaRegistroLike | null | undefined,
+): boolean {
+  return String(registro?.status ?? "").trim().toLowerCase() === "devolvido";
 }
 
 export interface EfetivaProvaLike {
@@ -211,6 +228,10 @@ export function calcularPassosEfetiva(
   // passos de registro/envio não ficam travados esperando documento novo.
   const boEntregue =
     provasBo.length > 0 && (!suficiencia.exigeNovoBo || !reg.bo_pendente_registro);
+  // Devolvido pela equipe: a defesa final volta a ser pendência, mesmo com o
+  // aceite anterior do cliente gravado. É isso que faz o checklist retroceder
+  // para o grupo "Efetiva necessidade" em vez de seguir para os laudos.
+  const devolvida = efetivaFoiDevolvida(reg);
 
   const concluido = (id: EfetivaPassoId): boolean => {
     switch (id) {
@@ -232,7 +253,7 @@ export function calcularPassosEfetiva(
       case "enviar_bo":
         return boEntregue;
       case "defesa_final":
-        return reg.aprovado_cliente === true;
+        return !devolvida && reg.aprovado_cliente === true;
       default:
         return false;
     }

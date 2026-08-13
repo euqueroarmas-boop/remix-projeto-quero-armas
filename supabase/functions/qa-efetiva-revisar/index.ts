@@ -13,6 +13,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/**
+ * Códigos com que a efetiva necessidade aparece no checklist do processo.
+ * Espelha `ehTipoEfetivaNecessidade` (src/lib/quero-armas/efetivaNecessidadePassos.ts)
+ * somado ao código legado usado por qa-efetiva-aprovar.
+ */
+const TIPOS_EFETIVA_NECESSIDADE = [
+  "declaracao_necessidade_efetiva",
+  "comprovante_efetiva_necessidade",
+  "efetiva_necessidade",
+];
+
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -63,7 +74,7 @@ Deno.serve(async (req) => {
 
   const { data: reg } = await sb
     .from("qa_efetiva_necessidade")
-    .select("id, cliente_id, status")
+    .select("id, cliente_id, processo_id, status")
     .eq("id", registroId)
     .maybeSingle();
   if (!reg) return json({ error: "Registro não encontrado" }, 404);
@@ -96,6 +107,28 @@ Deno.serve(async (req) => {
     .update(patch)
     .eq("id", registroId);
   if (upErr) return json({ error: "Falha ao gravar", details: upErr.message }, 500);
+
+  /* ── Devolveu? A exigência do checklist REABRE ──────────────────────────
+   * O aceite do cliente fecha a exigência em `qa_processo_documentos` com
+   * status `aprovado` (qa-efetiva-aprovar). Enquanto ela ficasse assim, a área
+   * do cliente não tinha como voltar: o documento aprovado sai da fila do
+   * pop-up guiado e o checklist pulava a Efetiva necessidade direto para os
+   * Laudos. Devolver para ajustes reabre a linha como pendência, com o motivo
+   * escrito pela equipe — é o que faz o guiado retroceder para o grupo certo.
+   */
+  if (acao === "devolver" && reg.processo_id) {
+    const { error: docErr } = await sb
+      .from("qa_processo_documentos")
+      .update({
+        status: "ajuste_necessario",
+        motivo_rejeicao: observacao,
+        observacoes: `Devolvido pela equipe para ajustes: ${observacao}`,
+        updated_at: agora,
+      })
+      .eq("processo_id", reg.processo_id)
+      .in("tipo_documento", TIPOS_EFETIVA_NECESSIDADE);
+    if (docErr) console.warn("[qa-efetiva-revisar] checklist nao reaberto:", docErr.message);
+  }
 
   await sb.from("qa_efetiva_necessidade_auditoria").insert({
     efetiva_id: registroId,

@@ -33,7 +33,7 @@ import {
   TERMO_BO_VERSAO,
   montarTextoTermoBo,
 } from "@/lib/quero-armas/boExplicacao";
-import { avaliarSuficienciaBo } from "@/lib/quero-armas/efetivaNecessidadePassos";
+import { avaliarSuficienciaBo, efetivaFoiDevolvida } from "@/lib/quero-armas/efetivaNecessidadePassos";
 
 interface Props {
   open: boolean;
@@ -302,6 +302,8 @@ export default function EfetivaNecessidadeModal({
   const [ameacadorNome, setAmeacadorNome] = useState("");
   const [ameacadorCpf, setAmeacadorCpf] = useState("");
   const [gerando, setGerando] = useState(false);
+  /** Motivo escrito pela equipe quando o relato volta para ajustes. */
+  const [devolucaoMotivo, setDevolucaoMotivo] = useState<string | null>(null);
   const [editandoNarrativa, setEditandoNarrativa] = useState(false);
   const [narrativaTocada, setNarrativaTocada] = useState(false);
   const [aprovando, setAprovando] = useState(false);
@@ -348,6 +350,9 @@ export default function EfetivaNecessidadeModal({
           contexto_risco: reg.contexto_risco ?? "",
         };
         setNarrativa(reg.narrativa_final ?? reg.narrativa_gerada ?? "");
+        setDevolucaoMotivo(
+          efetivaFoiDevolvida(reg as any) ? (reg.devolucao_motivo ?? "") : null,
+        );
         setTextoBo(reg.texto_bo ?? "");
         setBoPendenteRegistro(Boolean(reg.bo_pendente_registro));
         if (reg.narrativa_final || reg.narrativa_gerada) {
@@ -918,6 +923,22 @@ export default function EfetivaNecessidadeModal({
         ) : narrativaNaTela ? (
           <div className={embedded ? "space-y-4" : "no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-6 py-5"}>
             {passoId ? null : <Trilha passos={passos} passoIndex={passoIndex} maxVisitado={maxVisitado} passoConcluido={passoConcluido} irPara={irPara} />}
+            {/* Devolvido para ajustes: o cliente precisa saber O QUE mudar
+                antes de aprovar de novo — senão reaprova o mesmo texto. */}
+            {devolucaoMotivo !== null && (
+              <div className="rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  Nossa equipe devolveu para ajustes
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-700">
+                  {devolucaoMotivo || "Ajuste o texto abaixo e aprove novamente."}
+                </p>
+                <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
+                  Edite o relato abaixo com o que foi pedido e aprove de novo. A sua
+                  aprovação anterior fica guardada no histórico do processo.
+                </p>
+              </div>
+            )}
             {passo?.tipo === "registrar_bo" ? null : (
             <>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">

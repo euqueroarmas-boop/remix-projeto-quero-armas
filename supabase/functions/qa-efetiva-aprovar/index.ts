@@ -318,6 +318,9 @@ Deno.serve(async (req) => {
       enviado_equipe_em: agora.toISOString(),
       // O aceite do cliente NÃO é a aprovação da equipe: entra em revisão.
       status: "em_revisao",
+      // Ciclo fechado: o texto voltou ajustado, então o motivo da devolução
+      // anterior sai da tela. O histórico fica na tabela de auditoria.
+      devolucao_motivo: null,
       updated_at: agora.toISOString(),
     }).eq("id", registroId);
 
@@ -359,7 +362,14 @@ Deno.serve(async (req) => {
           updated_at: agora.toISOString(),
         })
         .eq("cliente_id", reg.cliente_id)
-        .in("tipo_documento", ["comprovante_efetiva_necessidade", "efetiva_necessidade"])
+        // `declaracao_necessidade_efetiva` é o código que o portal usa para
+        // reconhecer a exigência. Sem ele aqui, a linha devolvida para ajustes
+        // ficava eternamente pendente depois de o cliente aprovar de novo.
+        .in("tipo_documento", [
+          "declaracao_necessidade_efetiva",
+          "comprovante_efetiva_necessidade",
+          "efetiva_necessidade",
+        ])
         .neq("status", "aprovado");
     } catch (e) {
       console.warn("[qa-efetiva-aprovar] checklist nao atualizado:", e);
