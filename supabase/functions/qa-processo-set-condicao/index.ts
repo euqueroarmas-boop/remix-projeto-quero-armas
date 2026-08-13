@@ -45,6 +45,7 @@ const STATUS_PRESERVAR: ReadonlySet<string> = new Set([
   "dispensado",
   "dispensado_grupo",
   "dispensado_por_reaproveitamento",
+  "entregue_pelo_hub",
   "nao_aplicavel",
   // em análise — o arquivo já está no processo, a avaliação é que não terminou
   "em_analise",

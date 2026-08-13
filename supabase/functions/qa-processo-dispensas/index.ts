@@ -26,6 +26,9 @@ const json = (b: unknown, status = 200) =>
 /** Status que já representam entrega/entrada em análise — intocáveis. */
 const INTOCAVEIS = new Set([
   "aprovado", "validado", "concluido", "em_analise", "enviado",
+  // Entrega feita pelo cliente PELO HUB durante o processo: é entrega, não
+  // reuso — nunca pode ser dispensada por esta rotina.
+  "entregue_pelo_hub",
   "revisao_humana", "em_revisao_humana", "substituido",
 ]);
 

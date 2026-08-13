@@ -2260,7 +2260,7 @@ export default function QAClientePortalPage() {
         const st = String(x?.status || "").toLowerCase();
         return (
           !!x?.arquivo_storage_key ||
-          ["aprovado", "validado", "dispensado_grupo", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st)
+          ["aprovado", "validado", "dispensado_grupo", "entregue_pelo_hub", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st)
         );
       });
     const perguntasPendentes = ordenar(
@@ -2870,6 +2870,7 @@ export default function QAClientePortalPage() {
       return st === "aprovado"
         || st === "dispensado_grupo"
         || st === "dispensado_por_reaproveitamento"
+        || st === "entregue_pelo_hub"
         || st === "nao_aplicavel";
     };
     const ehReaproveitado = (d: any) =>
@@ -3052,7 +3053,7 @@ export default function QAClientePortalPage() {
       const st = String(d?.status || "").toLowerCase();
       const temComprovanteAnexado =
         !!d?.arquivo_storage_key ||
-        ["aprovado", "validado", "dispensado_grupo", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st);
+        ["aprovado", "validado", "dispensado_grupo", "entregue_pelo_hub", "em_analise", "enviado", "revisao_humana", "em_revisao_humana"].includes(st);
       if (!temComprovanteAnexado && !nomeExtraido && flagTerceiro == null) continue;
       const atual = comprovantesPorProcesso.get(String(d.processo_id));
       const atualTs = atual?.updated_at ? new Date(atual.updated_at).getTime() : 0;

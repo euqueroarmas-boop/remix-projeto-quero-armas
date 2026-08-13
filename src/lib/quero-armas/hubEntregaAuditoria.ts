@@ -64,6 +64,7 @@ const DOCS_CONTRATUAIS = new Set([
 const CUMPRIDOS = new Set([
   "aprovado", "recebido", "arquivado", "concluido",
   "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento",
+  "entregue_pelo_hub",
 ]);
 
 /**

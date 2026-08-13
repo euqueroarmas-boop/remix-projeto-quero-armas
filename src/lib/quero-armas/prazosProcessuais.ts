@@ -218,7 +218,7 @@ const STATUS_INATIVO_PRAZO = new Set([
   "cancelado",
 ]);
 
-const STATUS_CUMPRIDO_PRAZO = new Set(["aprovado", "validado"]);
+const STATUS_CUMPRIDO_PRAZO = new Set(["aprovado", "validado", "entregue_pelo_hub"]);
 
 const CERTIDOES_CIVIS_SEM_VALIDADE = new Set([
   "certidao_nascimento",

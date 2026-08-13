@@ -53,6 +53,7 @@ const STATUS_REAPROVEITAVEIS = new Set([
   "aprovado",
   "validado",
   "dispensado_por_reaproveitamento",
+  "entregue_pelo_hub",
 ]);
 
 function vencido(dataValidade?: string | null): boolean {

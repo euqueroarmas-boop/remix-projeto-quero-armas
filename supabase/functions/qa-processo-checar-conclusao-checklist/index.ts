@@ -37,6 +37,7 @@ function json(body: Record<string, unknown>, status = 200) {
 const CUMPRIDO = new Set([
   "aprovado", "validado", "concluido", "concluído",
   "dispensado", "dispensado_grupo", "dispensado_por_reaproveitamento",
+  "entregue_pelo_hub",
   "nao_aplicavel", "hub_reaproveitado",
 ]);
 const EM_ANALISE = new Set([

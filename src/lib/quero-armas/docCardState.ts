@@ -15,7 +15,8 @@ export type ExtractionStatus =
   | "extraido"
   | "falhou"
   | "revisao_manual"
-  | "dispensado_por_reaproveitamento";
+  | "dispensado_por_reaproveitamento"
+  | "entregue_pelo_hub";
 
 export type DocCardTone = "neutral" | "success" | "warn" | "error";
 
@@ -109,6 +110,15 @@ export function computeDocCardState(input: DocCardInput): DocCardState {
         tone: "success",
         badge: "JÁ RECEBIDO",
         hint: "Documento já existente no Arsenal",
+        podeAvancar: true,
+      };
+    // Entrega feita AGORA, neste processo, pelo Hub Documental. Não é reuso:
+    // o cliente acabou de enviar, e a tela não pode dizer que veio do histórico.
+    case "entregue_pelo_hub":
+      return {
+        tone: "success",
+        badge: "ENTREGUE",
+        hint: fileName ? `${fileName} — entregue` : "Documento entregue",
         podeAvancar: true,
       };
     case "falhou":

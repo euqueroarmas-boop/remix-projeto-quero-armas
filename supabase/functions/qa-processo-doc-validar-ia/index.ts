@@ -1965,7 +1965,7 @@ Deno.serve(async (req) => {
         const dispensar = (irmaos ?? []).filter((it: any) =>
           it.id !== documento_id &&
           it?.regra_validacao?.grupo_alternativo === grupo &&
-          !["aprovado", "dispensado_grupo"].includes(String(it.status))
+          !["aprovado", "dispensado_grupo", "entregue_pelo_hub"].includes(String(it.status))
         );
         if (dispensar.length > 0) {
           const ids = dispensar.map((d: any) => d.id);

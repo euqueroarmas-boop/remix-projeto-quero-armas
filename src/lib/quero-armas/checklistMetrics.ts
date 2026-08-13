@@ -35,6 +35,9 @@ export const STATUS_CHECKLIST_CUMPRIDO: ReadonlySet<string> = new Set([
   "dispensado",
   "dispensado_grupo",
   "dispensado_por_reaproveitamento",
+  // Entrega feita pelo cliente PELO HUB durante este processo — cumprimento,
+  // não reuso. Segue `aprovado`, nunca `dispensado_por_reaproveitamento`.
+  "entregue_pelo_hub",
   "nao_aplicavel",
 ]);
 

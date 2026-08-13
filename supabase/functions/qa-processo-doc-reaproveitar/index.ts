@@ -227,7 +227,7 @@ function docHubCasaComDestinoArma(
 
 const STATUS_ORIGEM_OK = new Set(["aprovado", "validado"]);
 const STATUS_DESTINO_BLOQUEIA = new Set([
-  "aprovado", "validado", "dispensado_por_reaproveitamento",
+  "aprovado", "validado", "dispensado_por_reaproveitamento", "entregue_pelo_hub",
   "dispensado_grupo", "em_revisao_humana", "revisao_humana",
 ]);
 

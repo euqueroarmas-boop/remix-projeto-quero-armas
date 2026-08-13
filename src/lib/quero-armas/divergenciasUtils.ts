@@ -13,6 +13,7 @@ const STATUS_LIMPEZA_AGRESSIVA = new Set([
   "dispensado",
   "dispensado_grupo",
   "dispensado_por_reaproveitamento",
+  "entregue_pelo_hub",
   "nao_aplicavel",
   "concluido",
 ]);

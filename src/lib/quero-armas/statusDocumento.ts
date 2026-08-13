@@ -44,6 +44,9 @@ const ALIAS_STATUS_DOC: Record<string, StatusDocCanonico> = {
   conforme: "aprovado",
   concluido: "aprovado",
   entregue: "aprovado",
+  // Entrega do cliente pelo Hub durante o processo: é cumprimento COM envio,
+  // por isso canoniza como `aprovado` e não como `dispensado`.
+  entregue_pelo_hub: "aprovado",
   ok: "aprovado",
   pre_validado: "aprovado",
 

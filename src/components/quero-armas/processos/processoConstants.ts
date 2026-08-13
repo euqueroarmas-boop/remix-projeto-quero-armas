@@ -28,6 +28,7 @@ export const STATUS_DOCUMENTO = {
   invalido: { label: "INVÁLIDO", color: "#EF4444", icon: "XCircle" },
   aprovado: { label: "APROVADO", color: "#10B981", icon: "CheckCircle" },
   dispensado_por_reaproveitamento: { label: "REAPROVEITADO", color: "#059669", icon: "Database" },
+  entregue_pelo_hub: { label: "ENTREGUE PELO HUB", color: "#10B981", icon: "CheckCircle" },
   dispensado_grupo: { label: "DISPENSADO (GRUPO SATISFEITO)", color: "#64748B", icon: "ShieldCheck" },
 } as const;
 
