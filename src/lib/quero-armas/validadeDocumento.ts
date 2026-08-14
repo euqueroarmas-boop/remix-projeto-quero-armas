@@ -549,16 +549,99 @@ export function isDocumentoEmpresa30Dias(tipo?: string | null): boolean {
   );
 }
 
+// ─── FAIXAS DE ALERTA DE VENCIMENTO (fonte única) ────────────────────────────
+/**
+ * REGRA CANÔNICA DE COR/ALERTA POR PRAZO (definida pelo usuário, 14/08/2026).
+ *
+ * O erro que isto conserta: as faixas eram fixas (vermelho ≤10, amarelo ≤30) e
+ * ignoravam quanto tempo o documento vive. Numa certidão de 30 dias isso fazia
+ * o alerta NASCER amarelo — 25 dias restantes já apareciam como pendência — e
+ * ficar vermelho na metade da vida útil. Alerta que nasce aceso não é alerta.
+ *
+ * CICLO CURTO (validade nominal de 30 dias: antecedentes de 30 dias e
+ * comprovante de endereço):
+ *
+ *   30 → 10 dias  → VERDE   (nasce em dia e fica ~20 dias tranquilo)
+ *    9 →  5 dias  → AMARELO (abre a janela de renovação)
+ *    4 → vencido  → VERMELHO
+ *
+ * DEMAIS DOCUMENTOS (certidões de 90 dias, CR, CRAF, laudos, procuração…):
+ * seguem a faixa padrão de sempre — vermelho ≤10, amarelo ≤30, verde acima.
+ * Um CR com 20 dias para vencer é crítico; uma certidão de 30 dias com 20
+ * dias para vencer é rotina. A faixa tem que respeitar o ciclo de cada um.
+ */
+export const PRAZO_CRITICO_DIAS = 10;
+export const PRAZO_ATENCAO_DIAS = 30;
+export const CICLO_CURTO_CRITICO_DIAS = 4;
+export const CICLO_CURTO_ATENCAO_DIAS = 9;
+/** Teto de validade nominal (em dias) para um tipo ser tratado como ciclo curto. */
+export const CICLO_CURTO_VALIDADE_MAX_DIAS = 31;
+
+/**
+ * O tipo é de CICLO CURTO (vive ~30 dias)?
+ *
+ * Só entram aqui os documentos que a regra de negócio renova todo mês:
+ * comprovante de endereço e as certidões de antecedentes SEM os 90 dias
+ * oficiais (TRF/Seção Judiciária/JEF, STM e TJM continuam com 90).
+ * Quando o catálogo do banco (`qa_validade_documentos`) tem o tipo, é ele
+ * quem decide — regra local é só fallback.
+ */
+export function isVencimentoCicloCurto(tipo?: string | null): boolean {
+  const t = String(tipo ?? "").trim().toLowerCase();
+  if (!t) return false;
+  if (isTipoSemVencimento(t)) return false;
+  const curtoPorNatureza = isComprovanteEndereco(t) || t.startsWith("antecedentes_");
+  if (!curtoPorNatureza) return false;
+  const regra = getRegraValidade(t);
+  if (regra) {
+    if (regra.perpetuo || regra.validade_dias <= 0) return false;
+    const dias = regra.unidade === "meses" ? regra.validade_dias * 30 : regra.validade_dias;
+    return dias <= CICLO_CURTO_VALIDADE_MAX_DIAS;
+  }
+  return !isCertidao90Dias(t);
+}
+
+export type FaixaVencimento = "bad" | "warn" | "ok";
+
+/**
+ * Faixa de alerta de um documento a partir dos dias restantes e do tipo.
+ * Retorna null quando não há prazo conhecido (o chamador decide o "neutro").
+ */
+export function faixaVencimento(
+  dias: number | null | undefined,
+  tipo?: string | null,
+): FaixaVencimento | null {
+  if (dias === null || dias === undefined || Number.isNaN(dias)) return null;
+  if (isVencimentoCicloCurto(tipo)) {
+    if (dias <= CICLO_CURTO_CRITICO_DIAS) return "bad";
+    if (dias <= CICLO_CURTO_ATENCAO_DIAS) return "warn";
+    return "ok";
+  }
+  if (dias <= PRAZO_CRITICO_DIAS) return "bad";
+  if (dias <= PRAZO_ATENCAO_DIAS) return "warn";
+  return "ok";
+}
+
+/**
+ * Dia em que o documento começa a alertar (primeiro dia amarelo).
+ * Ciclo curto: 9 dias. Demais: 30 dias.
+ */
+export function inicioAlertaDias(tipo?: string | null): number {
+  return isVencimentoCicloCurto(tipo) ? CICLO_CURTO_ATENCAO_DIAS : PRAZO_ATENCAO_DIAS;
+}
+
 /**
  * Janela de alerta antecipado (status "vence_em_breve") por tipo.
  * Padrão: 7 dias. Procuração: 90 dias — a renovação exige nova assinatura
  * Gov.br do cliente, então os avisos começam com 90 dias de antecedência
- * (90 → 45 → 30 → 15 → 7 → hoje → vencida).
+ * (90 → 45 → 30 → 15 → 7 → hoje → vencida). Ciclo curto: 9 dias, o mesmo dia
+ * em que a faixa vira amarela — chip e cor têm que contar a mesma história.
  */
 export function limiarAlertaDias(tipo?: string | null): number {
   const regra = getRegraValidade(tipo);
   if (regra && regra.alerta_dias > 0) return regra.alerta_dias;
   if (isProcuracao(tipo)) return 90;
+  if (isVencimentoCicloCurto(tipo)) return CICLO_CURTO_ATENCAO_DIAS;
   // NÃO estender aqui as janelas de CR (180d) e laudos (120d): este limiar
   // pinta o chip "vence em breve" no Hub e deixaria quase todo laudo amarelo.
   // Essas janelas vivem no motor de avisos (badge da home + e-mails):

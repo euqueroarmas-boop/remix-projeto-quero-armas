@@ -110,6 +110,45 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
   },
 ] as const;
 
+/**
+ * PADRÃO CANÔNICO DE NOME DAS CERTIDÕES DE ANTECEDENTES (fonte única).
+ *
+ * Formato fixo: `Certidão <espécie> — <órgão/abrangência>`.
+ *
+ * Este mapa é a ÚNICA verdade sobre como cada certidão se chama. Ele alimenta
+ * ao mesmo tempo:
+ *   • o rótulo do catálogo (`HUB_TIPOS_DOCUMENTO[].label`), usado no seletor
+ *     "Alterar tipo", nos agrupamentos e em toda tela que só conhece o tipo;
+ *   • o nome inferido do documento real (`inferNomeCertidaoOficial`), usado no
+ *     resumo do cliente e nos cards do Hub.
+ *
+ * Antes eles eram listas separadas e divergiram: o resumo dizia "Certidão
+ * Estadual de Distribuições Criminais — TJSP" e o Hub Documental, para o MESMO
+ * documento, dizia "Certidão de Distribuição de Ações Criminais — TJSP".
+ * Nunca mais duplicar: mexeu no nome, mexe aqui.
+ */
+export const NOME_CANONICO_ANTECEDENTES: Readonly<Record<string, string>> = {
+  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)",
+  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — TJSP",
+  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — TJSP",
+  antecedentes_federal_trf3_regional:
+    "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região",
+  antecedentes_federal_sjsp_jef:
+    "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP",
+  antecedentes_militar: "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)",
+  antecedentes_militar_estadual: "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)",
+  antecedentes_eleitoral: "Certidão de Crimes Eleitorais — TSE",
+  // Legados: ficam só para registros antigos (não aparecem no seletor).
+  antecedentes_estadual: "Certidão Estadual Criminal — TJSP",
+  antecedentes_federal: "Certidão de Distribuição Criminal — Justiça Federal",
+} as const;
+
+/** Nome canônico de uma certidão de antecedentes, quando existir. */
+export function getNomeCanonicoAntecedentes(tipoDocumento: string | null | undefined): string | null {
+  const tipo = String(tipoDocumento || "").trim().toLowerCase();
+  return NOME_CANONICO_ANTECEDENTES[tipo] ?? null;
+}
+
 export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "rg_com_cpf", label: "RG com CPF", short: "RG", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "foto_3x4", label: "Foto 3x4 do requerente", short: "FOTO 3X4", categoria: "identificacao", escopo: "permanente" },
@@ -133,16 +172,18 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
-  { value: "antecedentes_criminais", label: "Certidão de Antecedentes Criminais — Polícia Civil", short: "Antecedentes Criminais — Polícia Civil", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal", label: "Certidão de Distribuição Criminal — Justiça Federal", short: "Certidão de Distribuição Criminal — Justiça Federal", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual", label: "Certidão Estadual Criminal — TJSP", short: "Certidão Estadual Criminal — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_trf3_regional", label: "Certidão do Tribunal Regional Federal da 3ª Região", short: "Certidão Federal — TRF 3ª Região", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_sjsp_jef", label: "Certidão da Seção Judiciária/JEF do Estado de São Paulo", short: "Certidão Federal — Seção Judiciária/JEF-SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_distribuicao", label: "Certidão de Distribuição de Ações Criminais — TJSP", short: "Distribuição de Ações Criminais — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_execucoes", label: "Certidão de Execuções Criminais — TJSP", short: "Execuções Criminais — TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar", label: "Certidão da Justiça Militar da União — STM", short: "Certidão Criminal Militar — STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_militar_estadual", label: "Certidão da Justiça Militar Estadual — TJM", short: "Certidão Criminal Militar — TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_eleitoral", label: "Certidão de Crimes Eleitorais — TSE", short: "Certidão de Crimes Eleitorais — TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  // Certidões de antecedentes: `label` SEMPRE vem de NOME_CANONICO_ANTECEDENTES
+  // (padrão "Certidão <espécie> — <órgão>"). Nunca escrever o nome à mão aqui.
+  { value: "antecedentes_criminais", label: NOME_CANONICO_ANTECEDENTES.antecedentes_criminais, short: "ANTECEDENTES PC/SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal, short: "DISTRIBUIÇÃO FEDERAL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual, short: "ESTADUAL TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_trf3_regional", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_trf3_regional, short: "DISTRIBUIÇÃO TRF3", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_sjsp_jef", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_sjsp_jef, short: "DISTRIBUIÇÃO SJSP/JEF", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_distribuicao", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_distribuicao, short: "DISTRIBUIÇÕES TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_execucoes", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_execucoes, short: "EXECUÇÕES TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar", label: NOME_CANONICO_ANTECEDENTES.antecedentes_militar, short: "CRIMES MILITARES STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_militar_estadual", label: NOME_CANONICO_ANTECEDENTES.antecedentes_militar_estadual, short: "ANTECEDENTES TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_eleitoral", label: NOME_CANONICO_ANTECEDENTES.antecedentes_eleitoral, short: "CRIMES ELEITORAIS TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "declaracao_sem_inquerito_processo_criminal", label: "Declaração de não responder a inquérito/processo", short: "DECL. PENAL", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_guarda_responsavel", label: "Declaração de guarda responsável", short: "DECL. GUARDA", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
   { value: "declaracao_correlata", label: "Declaração correlata", short: "DECLARAÇÃO", categoria: "declaracoes", escopo: "permanente", revisaoHumanaObrigatoria: true },
@@ -299,6 +340,10 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     doc?.numero_documento,
   ].filter(Boolean).join(" "));
 
+  // Certidões de antecedentes — o nome sai SEMPRE de NOME_CANONICO_ANTECEDENTES.
+  // Aqui só resolvemos QUAL certidão é, quando o tipo gravado é genérico/legado.
+  const CANON = NOME_CANONICO_ANTECEDENTES;
+
   if (
     tipo === "trf" ||
     tipo === "trf3" ||
@@ -308,63 +353,63 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
     tipo === "antecedentes_federal_trf3"
   ) {
     if (haystack.includes("3 REGIAO") || haystack.includes("3A REGIAO") || haystack.includes("TRF3")) {
-      return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+      return CANON.antecedentes_federal_trf3_regional;
     }
-    return "Certidão de Distribuição Criminal — Justiça Federal";
+    return CANON.antecedentes_federal;
   }
 
   if (tipo === "antecedentes_eleitoral" || haystack.includes("CRIMES ELEITORAIS")) {
-    return "Certidão de Crimes Eleitorais — TSE";
+    return CANON.antecedentes_eleitoral;
   }
 
   if (tipo === "antecedentes_estadual") {
     if (haystack.includes("EXECUCOES") || haystack.includes("EXECUCAO") || haystack.includes("1448406")) {
-      return "Certidão Estadual de Execuções Criminais — TJSP";
+      return CANON.antecedentes_estadual_execucoes;
     }
     if (haystack.includes("DISTRIBUICOES") || haystack.includes("DISTRIBUICAO") || haystack.includes("1448405")) {
-      return "Certidão Estadual de Distribuições Criminais — TJSP";
+      return CANON.antecedentes_estadual_distribuicao;
     }
-    return "Certidão Estadual Criminal — TJSP";
+    return CANON.antecedentes_estadual;
   }
   if (tipo === "antecedentes_estadual_execucoes") {
-    return "Certidão Estadual de Execuções Criminais — TJSP";
+    return CANON.antecedentes_estadual_execucoes;
   }
   if (tipo === "antecedentes_estadual_distribuicao") {
-    return "Certidão Estadual de Distribuições Criminais — TJSP";
+    return CANON.antecedentes_estadual_distribuicao;
   }
 
   if (tipo === "antecedentes_federal") {
     if (haystack.includes("JUDICIARIA SP") || haystack.includes("SECAO JUDICIARIA") || haystack.includes("JEF") || haystack.includes("871659")) {
-      return "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP";
+      return CANON.antecedentes_federal_sjsp_jef;
     }
     if (haystack.includes("TRIBUNAL REGIONAL FEDERAL") || haystack.includes("TRF DA 3") || haystack.includes("3A REGIAO") || haystack.includes("3 REGIAO")) {
-      return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+      return CANON.antecedentes_federal_trf3_regional;
     }
-    return "Certidão de Distribuição Criminal — Justiça Federal";
+    return CANON.antecedentes_federal;
   }
   if (tipo === "antecedentes_federal_sjsp_jef") {
-    return "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP";
+    return CANON.antecedentes_federal_sjsp_jef;
   }
   if (tipo === "antecedentes_federal_trf3_regional") {
-    return "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região";
+    return CANON.antecedentes_federal_trf3_regional;
   }
 
   if (tipo === "antecedentes_militar_estadual") {
-    return "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)";
+    return CANON.antecedentes_militar_estadual;
   }
 
   if (tipo === "antecedentes_militar") {
-    if (haystack.includes("MILITAR DA UNIAO") || haystack.includes("STM") || haystack.includes("29983659")) {
-      return "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)";
-    }
+    // Registros legados: o tipo "antecedentes_militar" já foi usado tanto para
+    // o STM quanto para o TJM. O texto do documento desempata; na dúvida vale
+    // o slot atual do catálogo, que é o da União (STM).
     if (haystack.includes("TJM") || haystack.includes("JUSTICA MILITAR DO ESTADO DE SAO PAULO") || haystack.includes("22E982")) {
-      return "Certidão de Antecedentes Criminais — Justiça Militar/SP (TJM-SP)";
+      return CANON.antecedentes_militar_estadual;
     }
-    return "Certidão Criminal Militar";
+    return CANON.antecedentes_militar;
   }
 
   if (tipo === "antecedentes_criminais") {
-    return "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)";
+    return CANON.antecedentes_criminais;
   }
 
   // ===== Identificação civil =====

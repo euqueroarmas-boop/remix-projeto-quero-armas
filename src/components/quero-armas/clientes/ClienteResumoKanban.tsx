@@ -19,7 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
-import { diasAteBRT } from "@/lib/quero-armas/validadeDocumento";
+import { diasAteBRT, faixaVencimento } from "@/lib/quero-armas/validadeDocumento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -143,21 +143,17 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 }
 
 /**
- * Faixas de prazo, iguais para QUALQUER documento (definidas pelo usuário,
- * 30/07/2026):
+ * Faixas de prazo — a régua é do documento, não da tela.
  *
- *   vencido ou até 10 dias → vermelho, crítico
- *   11 a 30 dias           → amarelo, precisa se programar
- *   acima de 30 dias       → verde, tranquilo
+ * Documento de CICLO CURTO (30 dias: antecedentes de 30 dias e comprovante de
+ * endereço) nasce verde e fica ~20 dias assim; amarelo de 9 a 5 dias; vermelho
+ * de 4 até vencer. Demais documentos (CR, CRAF, laudos, certidões de 90 dias)
+ * seguem a faixa padrão: vermelho até 10, amarelo até 30, verde acima.
+ *
+ * Fonte única das faixas: `faixaVencimento` em validadeDocumento.ts.
  */
-const PRAZO_CRITICO_DIAS = 10;
-const PRAZO_ATENCAO_DIAS = 30;
-
-function frontStatus(days: number | null): FrontItem["tone"] {
-  if (days === null) return "muted";
-  if (days < 0 || days <= PRAZO_CRITICO_DIAS) return "bad";
-  if (days <= PRAZO_ATENCAO_DIAS) return "warn";
-  return "ok";
+function frontStatus(days: number | null, tipo?: string | null): FrontItem["tone"] {
+  return faixaVencimento(days, tipo) ?? "muted";
 }
 
 function compactStatus(days: number | null, percent?: number | null) {
@@ -377,16 +373,17 @@ export default function ClienteResumoKanban({
     const registerArsenalKey = (...values: unknown[]) => {
       values.map(normArsenalKey).filter(Boolean).forEach((key) => arsenalKeys.add(key));
     };
-    const addArsenal = (label: string, date: string | null | undefined) => {
+    const addArsenal = (label: string, date: string | null | undefined, tipo?: string) => {
       const days = daysUntil(date);
-      arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days), dias: days });
+      arsenalItems.push({ label, status: compactStatus(days), tone: frontStatus(days, tipo), dias: days });
     };
-    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr);
+    if (cadastro?.validade_cr) addArsenal(hubLabel("cr", "CR — Certificado de Registro"), cadastro.validade_cr, "cr");
     crafs.forEach((cr: any) => {
       registerArsenalKey(cr.numero_arma, cr.numero_sigma, cr.numero_registro_sigma, cr.numero_cad_sinarm, cr.nome_arma);
       addArsenal(
         `${hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo")} — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`,
         cr.data_validade,
+        "craf",
       );
     });
     gtes.forEach((g: any) => {
@@ -394,6 +391,7 @@ export default function ClienteResumoKanban({
       addArsenal(
         `${hubLabel("gte", "GTE — Guia de Tráfego Eventual")} — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`,
         g.data_validade,
+        "gte",
       );
     });
     meusDocs.forEach((doc: any) => {
@@ -411,7 +409,7 @@ export default function ClienteResumoKanban({
       const labelBase = tipo === "sinarm"
         ? hubLabel("sinarm", "SINARM — Registro de Arma de Fogo")
         : hubLabel("craf", "CRAF — Certificado de Registro de Arma de Fogo");
-      addArsenal(`${labelBase} — ${shortName(nomeArma || doc?.nome_documento || doc?.nome_original, "Arma")}`, doc?.data_validade_efetiva || doc?.data_validade);
+      addArsenal(`${labelBase} — ${shortName(nomeArma || doc?.nome_documento || doc?.nome_original, "Arma")}`, doc?.data_validade_efetiva || doc?.data_validade, tipo);
       registerArsenalKey(...keys, nomeArma);
     });
     armasManual.forEach((arma: any) => {
@@ -425,13 +423,13 @@ export default function ClienteResumoKanban({
       exameByTipo.get("psicologico") && {
         label: getNomeDocumentoDisplay({ tipo_documento: "laudo_psicologico" }, "Laudo de Avaliação Psicológica para Aquisição/Porte de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
-        tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento)),
+        tone: frontStatus(daysUntil(exameByTipo.get("psicologico")?.data_vencimento), "laudo_psicologico"),
         dias: daysUntil(exameByTipo.get("psicologico")?.data_vencimento),
       },
       exameByTipo.get("tiro") && {
         label: getNomeDocumentoDisplay({ tipo_documento: "laudo_capacidade_tecnica" }, "Atestado de Capacidade Técnica para Manuseio de Arma de Fogo"),
         status: compactStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
-        tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento)),
+        tone: frontStatus(daysUntil(exameByTipo.get("tiro")?.data_vencimento), "laudo_capacidade_tecnica"),
         dias: daysUntil(exameByTipo.get("tiro")?.data_vencimento),
       },
     ].filter(Boolean) as FrontItem[];
@@ -441,7 +439,7 @@ export default function ClienteResumoKanban({
       return {
         label: titleCaseServico(shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"), "Clube"),
         status: compactStatus(days),
-        tone: frontStatus(days),
+        tone: frontStatus(days, "comprovante_clube_tiro"),
       };
     });
 
@@ -519,14 +517,15 @@ export default function ClienteResumoKanban({
         const nomeBruto = getNomeDocumentoDisplay(g.principal, "Documento");
         const nome = shortName(nomeBruto, "Documento");
         const days = g.validadePrincipal.dias;
-        // A cor sai SEMPRE da faixa de dias (frontStatus: <=7 vermelho,
-        // <=45 amarelo, >45 verde). Antes ela vinha de `statusConsolidado`,
-        // cujo "vigente" pintava de verde qualquer documento não vencido —
-        // por isso 22 e 24 dias apareciam verdes, e não amarelos.
+        // A cor sai SEMPRE da faixa de dias, e a faixa respeita o CICLO do
+        // documento: uma certidão de 30 dias só fica amarela em 9 dias e
+        // vermelha em 4; um CR segue a régua padrão (10/30).
         // Só "histórico" continua vindo do consolidado: versão antiga não tem
         // prazo a cobrar, é registro.
         const tone: FrontItem["tone"] =
-          g.statusConsolidado === "historico" ? "muted" : frontStatus(days);
+          g.statusConsolidado === "historico"
+            ? "muted"
+            : frontStatus(days, g.principal?.tipo_documento);
         // O prazo restante é sempre a informação principal — é o que diz ao
         // cliente se precisa agir. A existência de versões anteriores já é
         // sinalizada pelo indicador `stack`; mostrar "4v" no lugar dos dias
@@ -1088,9 +1087,12 @@ export default function ClienteResumoKanban({
               </div>
               {front.items.some((i) => typeof i.dias === "number") && (
                 <div className="qa-front-card__legend" onClick={(e) => e.stopPropagation()}>
-                  <span><i style={{ background: "var(--red)" }} />vencido ou até 10 dias</span>
-                  <span><i style={{ background: "var(--amber)" }} />11 a 30 dias</span>
-                  <span><i style={{ background: "var(--green)" }} />mais de 30 dias para vencer</span>
+                  {/* Sem números fixos: a faixa depende do ciclo de cada
+                      documento (30 dias → amarelo em 9, vermelho em 4;
+                      demais → amarelo em 30, vermelho em 10). */}
+                  <span><i style={{ background: "var(--red)" }} />vencido ou nos últimos dias</span>
+                  <span><i style={{ background: "var(--amber)" }} />hora de renovar</span>
+                  <span><i style={{ background: "var(--green)" }} />em dia</span>
                 </div>
               )}
             </article>

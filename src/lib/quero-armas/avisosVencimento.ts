@@ -15,7 +15,15 @@
  *
  * 3) Tipos SEM prazo de validade (ex.: nota fiscal recente) não entram no motor
  *    de alerta — continuam normalmente no Hub Documental e no checklist.
+ *
+ * 4) DOCUMENTOS DE CICLO CURTO (antecedentes de 30 dias e comprovante de
+ *    endereço) — a janela padrão de 30 dias fazia o alerta nascer junto com o
+ *    documento: recém-emitido já entrava em "PRÓXIMO VENCIMENTO". Eles abrem a
+ *    janela em 9 dias, o mesmo dia em que a faixa vira amarela
+ *    (`inicioAlertaDias` em validadeDocumento.ts).
  */
+
+import { inicioAlertaDias, isVencimentoCicloCurto } from "./validadeDocumento";
 
 export const JANELA_ALERTA_PADRAO_DIAS = 30;
 export const JANELA_ALERTA_CR_DIAS = 180;
@@ -43,6 +51,8 @@ export function janelaAlertaDias(tipo?: string | null): number {
   const t = norm(tipo);
   if (t === "cr") return JANELA_ALERTA_CR_DIAS;
   if (TIPOS_LAUDO.has(t)) return JANELA_ALERTA_LAUDO_DIAS;
+  // Ciclo curto (30 dias): alerta só quando a faixa vira amarela — 9 dias.
+  if (isVencimentoCicloCurto(t)) return inicioAlertaDias(t);
   return JANELA_ALERTA_PADRAO_DIAS;
 }
 
@@ -176,8 +186,14 @@ export function avisoCR(dias: number, validadeCr?: string | null): string {
 // Marcos de e-mail
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Certidões: 15, 10 e depois contagem regressiva diária até o último dia. */
+/** Certidões de 90 dias: 15, 10 e depois contagem regressiva diária. */
 export const MARCOS_EMAIL_CERTIDAO = [15, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0] as const;
+
+/**
+ * Certidões de CICLO CURTO (30 dias): o primeiro e-mail sai no mesmo dia em que
+ * a faixa vira amarela. Marcos em 15/10 avisariam com o documento ainda verde.
+ */
+export const MARCOS_EMAIL_CERTIDAO_CICLO_CURTO = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0] as const;
 
 /** Laudos: 120/90/60/45/30/20/10 e regressiva diária até o último dia. */
 export const MARCOS_EMAIL_LAUDO = [120, 90, 60, 45, 30, 20, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0] as const;
@@ -185,7 +201,9 @@ export const MARCOS_EMAIL_LAUDO = [120, 90, 60, 45, 30, 20, 10, 9, 8, 7, 6, 5, 4
 export function marcosEmailParaTipo(tipo?: string | null): readonly number[] | null {
   const t = norm(tipo);
   if (TIPOS_LAUDO.has(t)) return MARCOS_EMAIL_LAUDO;
-  if (t.startsWith("antecedentes_")) return MARCOS_EMAIL_CERTIDAO;
+  if (t.startsWith("antecedentes_")) {
+    return isVencimentoCicloCurto(t) ? MARCOS_EMAIL_CERTIDAO_CICLO_CURTO : MARCOS_EMAIL_CERTIDAO;
+  }
   return null;
 }
 

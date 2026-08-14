@@ -42,15 +42,21 @@ const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
   renda_nf_recente: "Nota fiscal recente",
   renda_comprovante_beneficio: "Comprovante de benefício",
   renda_extrato_inss: "Extrato INSS",
-  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP",
+  // Espelho do padrão canônico definido em
+  // src/lib/quero-armas/documentosHubCatalogo.ts → NOME_CANONICO_ANTECEDENTES.
+  // O e-mail precisa chamar a certidão exatamente como o Hub Documental chama.
+  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)",
   antecedentes_federal: "Certidão de Distribuição Criminal — Justiça Federal",
   antecedentes_estadual: "Certidão Estadual Criminal — TJSP",
-  antecedentes_federal_trf3_regional: "Certidão Federal — TRF 3ª Região",
-  antecedentes_federal_sjsp_jef: "Certidão Federal — Seção Judiciária SP e JEF/SP",
-  antecedentes_estadual_distribuicao: "Certidão Estadual TJSP — Distribuição de Ações Criminais",
-  antecedentes_estadual_execucoes: "Certidão Estadual TJSP — Execuções Criminais",
-  antecedentes_militar: "Certidão Criminal Militar — STM (União)",
-  antecedentes_militar_estadual: "Certidão Criminal Militar — TJM (Estadual)",
+  antecedentes_federal_trf3_regional:
+    "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região",
+  antecedentes_federal_sjsp_jef:
+    "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP",
+  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — TJSP",
+  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — TJSP",
+  antecedentes_militar: "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)",
+  antecedentes_militar_estadual:
+    "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)",
   antecedentes_eleitoral: "Certidão de Crimes Eleitorais — TSE",
   declaracao_sem_inquerito_processo_criminal: "Declaração de não responder a inquérito/processo",
   declaracao_guarda_responsavel: "Declaração de guarda responsável",

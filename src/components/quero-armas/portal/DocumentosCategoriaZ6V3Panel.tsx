@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp, Plus, Eye, Download, RefreshCw, Trash2, X } fro
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HUB_CATEGORIAS, getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
-import { diasAteBRT, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { diasAteBRT, faixaVencimento, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
 import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -79,7 +79,12 @@ const formatMemberSince = (d: string | null | undefined) => {
   }
 };
 
-function dotColor(d: number | null, status?: string | null): string {
+/**
+ * Cor do prazo — mesma régua do resumo (`faixaVencimento`). A faixa respeita o
+ * ciclo do documento: certidão de 30 dias e comprovante de endereço só ficam
+ * amarelos em 9 dias e vermelhos em 4; os demais seguem 30/10.
+ */
+function dotColor(d: number | null, status?: string | null, tipo?: string | null): string {
   const s = String(status || "").toLowerCase();
   // Documentos aprovados sem data de validade (contrato, procuração, etc.)
   // devem exibir verde — indicam exigência cumprida e não têm ciclo de expiração.
@@ -88,9 +93,9 @@ function dotColor(d: number | null, status?: string | null): string {
     if (s === "reprovado") return "#D9342B";
     return "#8A8A8A";
   }
-  if (d < 0) return "#D9342B";
-  if (d <= 7) return "#D9342B";
-  if (d <= 30) return "#D6A64B";
+  const faixa = faixaVencimento(d, tipo);
+  if (faixa === "bad") return "#D9342B";
+  if (faixa === "warn") return "#D6A64B";
   return "#2F8F4A";
 }
 
@@ -542,7 +547,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const nome = getNomeDocumentoDisplay(d, "Documento");
                 const validade = dataValidadeHub(d);
                 const dias = daysUntil(validade);
-                const cor = dotColor(dias, d.status);
+                const cor = dotColor(dias, d.status, d.tipo_documento);
                 const dataEmissao = dataEmissaoHub(d);
                 // Emissor e número podem estar só no resultado da leitura
                 // automática (camposExtraidos) quando as colunas não foram
