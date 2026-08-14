@@ -96,8 +96,12 @@ describe("CCMEI — documento constitutivo não tem validade", () => {
   });
 
   it("a data de abertura/situação do CCMEI nunca vira emissão ou validade", () => {
-    const ccmei = parseCcmei(CCMEI_FABIO) as Record<string, unknown>;
-    expect(ccmei.data_emissao).toBeUndefined();
-    expect(ccmei.data_validade).toBeUndefined();
+    const ccmei = parseCcmei(CCMEI_FABIO);
+    expect(ccmei).not.toBeNull();
+    // `CcmeiParseado` nem declara esses campos: a ausência é do TIPO, não do
+    // valor. Afirmar pela chave dispensa o cast para Record<string, unknown>,
+    // que o TS recusa (a interface não tem índice de string).
+    expect(ccmei).not.toHaveProperty("data_emissao");
+    expect(ccmei).not.toHaveProperty("data_validade");
   });
 });
