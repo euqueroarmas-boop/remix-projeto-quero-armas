@@ -359,7 +359,8 @@ export default function ClienteResumoKanban({
     // declarações) só é cobrado enquanto existe processo antes do protocolo:
     // ele precisa estar válido no dia da entrega à PF, e não depois disso.
     // Documento de GESTÃO PERMANENTE (CR, CRAF, GT/GTE, autorização de compra,
-    // laudos, atividade CAC) alerta sempre. Ver gestaoAlertaDocumento.ts.
+    // laudos, atividade CAC e procuração) alerta sempre.
+    // Ver gestaoAlertaDocumento.ts.
     const instrucaoExigida = instrucaoAindaExigida(processos);
     const sobGestao = (tipo?: string | null) =>
       documentoSobGestaoDeAlerta(tipo, { instrucaoExigida });

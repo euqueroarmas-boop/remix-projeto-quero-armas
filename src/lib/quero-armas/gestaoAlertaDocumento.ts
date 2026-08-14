@@ -12,9 +12,11 @@
  *    a partir daí é ruído, e ruído treina o cliente a ignorar alerta.
  *
  * 2) GESTÃO PERMANENTE — CR, CRAF/SINARM, GT, GTE, autorização de compra,
- *    laudos (psicológico e capacidade técnica) e a atividade do CAC (filiação,
- *    habitualidade). Esses valem por si: vencidos, o cliente fica irregular
- *    independentemente de haver processo em andamento. Alertam SEMPRE.
+ *    laudos (psicológico e capacidade técnica), a atividade do CAC (filiação,
+ *    habitualidade) e a PROCURAÇÃO. Esses valem por si: vencidos, o cliente
+ *    fica irregular independentemente de haver processo em andamento — e, no
+ *    caso da procuração, é ela que sustenta a atuação do escritório em
+ *    exigência e recurso, que acontecem DEPOIS do protocolo. Alertam SEMPRE.
  *
  * O gatilho do silêncio é o PROTOCOLO, não o fim do processo: enquanto existir
  * ao menos um processo vivo que ainda não foi protocolado, a instrução segue
@@ -47,6 +49,19 @@ const CATEGORIAS_GESTAO_PERMANENTE: ReadonlySet<HubCategoria> = new Set<HubCateg
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
 
 /**
+ * Exceção por TIPO, acima da categoria.
+ *
+ * A procuração mora na categoria "juridico" junto com contrato, recurso e
+ * mandado de segurança — mas não é instrução de pasta como eles. Ela é o
+ * instrumento que mantém o escritório atuando no caso, inclusive em exigência
+ * e recurso, que só existem DEPOIS do protocolo. Vencida, o escritório perde a
+ * capacidade de agir no processo do cliente.
+ */
+function isProcuracaoTipo(tipoNormalizado: string): boolean {
+  return tipoNormalizado === "procuracao" || tipoNormalizado.startsWith("procuracao_");
+}
+
+/**
  * O documento é de gestão permanente ou só serve para instruir o processo?
  *
  * Sem tipo não dá para classificar — cai em "permanente" para não silenciar
@@ -55,6 +70,7 @@ const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/[\s-]
 export function regimeAlertaDocumento(tipo?: string | null): RegimeAlertaDocumento {
   const t = norm(tipo);
   if (!t) return "permanente";
+  if (isProcuracaoTipo(t)) return "permanente";
   return CATEGORIAS_GESTAO_PERMANENTE.has(inferHubCategoriaFromTipo(t)) ? "permanente" : "instrucao";
 }
 

@@ -23,6 +23,10 @@ describe("regime de gestão do alerta", () => {
     "laudo_capacidade_tecnica",
     "comprovante_clube_tiro",
     "comprovante_habitualidade",
+    // Procuração: sustenta a atuação do escritório em exigência e recurso,
+    // que só existem depois do protocolo. Vencida, o escritório para.
+    "procuracao",
+    "procuracao_assinada",
   ];
 
   const INSTRUCAO = [
@@ -94,9 +98,27 @@ describe("documento sob gestão de alerta", () => {
     expect(documentoSobGestaoDeAlerta("comprovante_residencia", montandoPasta)).toBe(true);
     expect(documentoSobGestaoDeAlerta("antecedentes_criminais", montandoPasta)).toBe(true);
 
-    for (const tipo of ["cr", "craf", "gte", "gt", "autorizacao_compra", "laudo_psicologico"]) {
+    for (const tipo of [
+      "cr",
+      "craf",
+      "gte",
+      "gt",
+      "autorizacao_compra",
+      "laudo_psicologico",
+      "comprovante_clube_tiro",
+      "comprovante_habitualidade",
+      "procuracao",
+      "procuracao_assinada",
+    ]) {
       expect(documentoSobGestaoDeAlerta(tipo, protocolado), tipo).toBe(true);
       expect(documentoSobGestaoDeAlerta(tipo, montandoPasta), tipo).toBe(true);
     }
+  });
+
+  it("as demais peças jurídicas seguem como instrução — só a procuração é exceção", () => {
+    const protocolado = { instrucaoExigida: false };
+    expect(documentoSobGestaoDeAlerta("contrato_assinado", protocolado)).toBe(false);
+    expect(documentoSobGestaoDeAlerta("recurso_administrativo_doc", protocolado)).toBe(false);
+    expect(documentoSobGestaoDeAlerta("mandado_seguranca_doc", protocolado)).toBe(false);
   });
 });
