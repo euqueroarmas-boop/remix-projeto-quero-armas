@@ -224,8 +224,11 @@ export default function BibliotecaModelosParser({
 
   return (
     <div className="rounded-lg border bg-white p-3" style={{ borderColor: "hsl(220 15% 90%)" }}>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <div>
+      {/* No mobile empilha: o `overflow-wrap: anywhere` global (index.css) zera a
+          largura mínima do texto, e num flex lado a lado com o botão `shrink-0`
+          o título colapsava para uma letra por linha. */}
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
           <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             Modelos de referência do parser
           </p>
@@ -237,7 +240,7 @@ export default function BibliotecaModelosParser({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 text-xs gap-1 shrink-0"
+          className="h-8 w-full shrink-0 gap-1 text-xs sm:h-7 sm:w-auto"
           disabled={!!enviando}
           onClick={() => inputRef.current?.click()}
         >
@@ -259,14 +262,14 @@ export default function BibliotecaModelosParser({
           className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border px-2 py-1.5"
           style={{ borderColor: "#FDE68A", background: "#FFFBEB" }}
         >
-          <p className="text-[10px] text-amber-800">
+          <p className="min-w-0 flex-1 text-[10px] text-amber-800">
             <strong>{faltamIa}</strong> modelo(s) sem referência de IA — não entram na comparação
             automática.
           </p>
           <Button
             size="sm"
             variant="outline"
-            className="h-7 shrink-0 gap-1 text-xs"
+            className="h-8 w-full shrink-0 gap-1 text-xs sm:h-7 sm:w-auto"
             disabled={gerandoIa}
             onClick={() => void gerarReferenciasIa()}
           >
@@ -300,7 +303,7 @@ export default function BibliotecaModelosParser({
                 </p>
               </div>
               <span
-                className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border font-semibold uppercase"
+                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase"
                 style={
                   m.tem_deterministico
                     ? { color: "#065F46", borderColor: "#A7F3D0", background: "#ECFDF5" }
@@ -311,7 +314,7 @@ export default function BibliotecaModelosParser({
                 <ScanLine className="w-2.5 h-2.5" /> det
               </span>
               <span
-                className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border font-semibold uppercase"
+                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase"
                 style={
                   m.tem_ia
                     ? { color: "#1D4ED8", borderColor: "#BFDBFE", background: "#EFF6FF" }
@@ -323,7 +326,7 @@ export default function BibliotecaModelosParser({
               </span>
               <button
                 onClick={() => void remover(m)}
-                className="h-6 w-6 inline-flex items-center justify-center rounded text-slate-400 hover:text-red-600 hover:bg-red-50"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600"
                 title="Remover modelo"
               >
                 <Trash2 className="w-3 h-3" />
