@@ -199,6 +199,15 @@ Deno.serve(async (req) => {
         origem: "qa_vendas_pago",
         qa_cliente_id: cliente.id,
         nome: cliente.nome_completo,
+        // TROCA OBRIGATÓRIA NO PRIMEIRO ACESSO — não remover.
+        // A senha provisória vai por e-mail (template credenciais-portal), e é
+        // esta flag que a torna descartável: o portal trava em
+        // ForcePasswordChangeModal antes de carregar qualquer dado
+        // (deveForcarTrocaSenha em QAClientePortalPage) e o próprio modal
+        // limpa a flag depois da troca. Sem ela, a senha enviada por e-mail
+        // continuaria valendo por tempo indeterminado na caixa de entrada.
+        // Login social (Google/Apple) é dispensado no próprio gate.
+        password_change_required: true,
       },
     });
     if (createErr || !created?.user) {

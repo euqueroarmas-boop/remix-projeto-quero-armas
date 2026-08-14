@@ -48,19 +48,51 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       expect(src).toMatch(/NUNCA resetamos a senha automaticamente/);
     });
 
-    it("não envia senha em texto puro no e-mail", () => {
-      // O e-mail é montado via templates qaArsenalWelcomeHtml/Text que
-      // recebem apenas { name, email, servicoInteresse } — sem senha.
-      const welcomeCalls = src.match(/qaArsenalWelcome(Html|Text)\([\s\S]*?\)/g) || [];
-      expect(welcomeCalls.length).toBeGreaterThan(0);
-      for (const call of welcomeCalls) {
-        expect(call).not.toMatch(/password|senha|tempPwd/i);
-      }
-      // sendWelcomeEmail não aceita / não passa campo password
-      const sendDef = src.match(/function sendWelcomeEmail[\s\S]*?\n}\n/);
-      if (sendDef) {
-        expect(sendDef[0]).not.toMatch(/\bpassword\b/);
-      }
+    /**
+     * DECISÃO DE PRODUTO (14/08/2026): a senha provisória VAI no e-mail de
+     * boas-vindas (template credenciais-portal), para o cliente entrar em um
+     * clique. A regra antiga — "nunca enviar senha em texto puro" — foi
+     * revertida de propósito, e este bloco passou a vigiar o que torna esse
+     * envio aceitável, em vez de proibi-lo:
+     *
+     *   1. a senha é DESCARTÁVEL: troca obrigatória no primeiro acesso;
+     *   2. a senha guardada no banco tem TTL e some sozinha;
+     *   3. quem já tem conta no Auth nunca tem a senha resetada;
+     *   4. login social não usa essa senha.
+     *
+     * Se um dia a decisão voltar atrás, é este bloco que muda.
+     */
+    it("a senha provisória do e-mail é descartável: troca obrigatória no 1º acesso", () => {
+      // Sem esta flag no metadata, a senha enviada por e-mail valeria por tempo
+      // indeterminado na caixa de entrada do cliente.
+      expect(src).toMatch(/password_change_required:\s*true/);
+
+      // E o portal precisa realmente travar com base nela.
+      const portal = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+      expect(portal).toMatch(/function deveForcarTrocaSenha/);
+      expect(portal).toMatch(/user_metadata\?\.password_change_required !== true/);
+      expect(portal).toMatch(/setMustChangePassword\(true\)/);
+      expect(portal).toMatch(/ForcePasswordChangeModal/);
+
+      // Login social não usa a senha temporária do Arsenal.
+      expect(portal).toMatch(/google|apple/i);
+
+      // Depois da troca, a flag é limpa — o cliente não fica preso no modal.
+      const modal = r("src/components/quero-armas/clientes/ForcePasswordChangeModal.tsx");
+      expect(modal).toMatch(/password_change_required:\s*false/);
+    });
+
+    it("a senha provisória guardada no banco expira sozinha", () => {
+      expect(src).toMatch(/senha_temporaria_expira_em/);
+      expect(src).toMatch(/24 \* 60 \* 60 \* 1000/);
+    });
+
+    it("o e-mail de credenciais só sai com senha temporária, nunca com a definitiva", () => {
+      // O único caminho de senha para o e-mail é a coluna senha_temporaria.
+      expect(src).toMatch(/templateName: "credenciais-portal"/);
+      expect(src).toMatch(/senhaProvisoria: clienteAtualizado\?\.senha_temporaria/);
+      // Cliente que já tinha conta não recebe senha nenhuma: cai no fallback.
+      expect(src).toMatch(/\(use Esqueci minha senha\)/);
     });
 
     it("não cria processo nem checklist", () => {
@@ -133,7 +165,11 @@ describe("FASE 2C-5 — acesso QA puro pós-pagamento", () => {
       const src = r("src/pages/quero-armas/QAClientePortalPage.tsx");
       expect(src).toMatch(/portalStartupAction/);
       expect(src).toMatch(/pendingContractsLoaded/);
-      expect(src).toMatch(/if \(pendingContracts > 0\) return \{ type: "contrato"/);
+      // O contador de contratos pendentes virou `pendingSignatureCount`; o que
+      // este teste garante é a PRIORIDADE, não o nome da variável — por isso a
+      // asserção olha o retorno `type: "contrato"` como primeira saída da
+      // função, e não uma linha literal que qualquer refactor derruba.
+      expect(src).toMatch(/if \(pendingSignatureCount > 0\) return \{ type: "contrato"/);
       expect(src).toMatch(/entrada_wizard/);
       expect(src.indexOf('type: "contrato"')).toBeLessThan(src.indexOf('type: "entrada_wizard"'));
       expect(src).toMatch(/Obrigações do cliente sempre aparecem antes do assistente de compra/);
