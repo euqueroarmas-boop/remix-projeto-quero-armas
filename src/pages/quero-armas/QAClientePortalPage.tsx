@@ -4499,6 +4499,7 @@ export default function QAClientePortalPage() {
                 cliente={cliente}
                 meusDocs={meusDocs}
                 customerId={customerId}
+                processos={processos}
                 onReload={() => setDocsReloadKey((k) => k + 1)}
                 onOpenAdd={(tipo, substituirId) => {
                   if (tipo) setEditDocTipo(tipo);

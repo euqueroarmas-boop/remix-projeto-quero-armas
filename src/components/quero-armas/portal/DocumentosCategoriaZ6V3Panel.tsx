@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { HUB_CATEGORIAS, getHubCategoriaMeta, getNomeDocumentoDisplay, getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import { diasAteBRT, faixaVencimento, getDataEmissaoDocumentoHub, getValidadeInfo } from "@/lib/quero-armas/validadeDocumento";
+import { documentoSobGestaoDeAlerta, instrucaoAindaExigida, type ProcessoParaGestao } from "@/lib/quero-armas/gestaoAlertaDocumento";
 import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { labelStatusDocumentoCliente, normalizarStatusDocumento } from "@/lib/quero-armas/statusDocumento";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -83,8 +84,16 @@ const formatMemberSince = (d: string | null | undefined) => {
  * Cor do prazo — mesma régua do resumo (`faixaVencimento`). A faixa respeita o
  * ciclo do documento: certidão de 30 dias e comprovante de endereço só ficam
  * amarelos em 9 dias e vermelhos em 4; os demais seguem 30/10.
+ *
+ * Documento de instrução já protocolado sai da cobrança e fica cinza — cumpriu
+ * o papel dele na pasta. Ver gestaoAlertaDocumento.ts.
  */
-function dotColor(d: number | null, status?: string | null, tipo?: string | null): string {
+function dotColor(
+  d: number | null,
+  status?: string | null,
+  tipo?: string | null,
+  sobGestao = true,
+): string {
   const s = String(status || "").toLowerCase();
   // Documentos aprovados sem data de validade (contrato, procuração, etc.)
   // devem exibir verde — indicam exigência cumprida e não têm ciclo de expiração.
@@ -93,6 +102,7 @@ function dotColor(d: number | null, status?: string | null, tipo?: string | null
     if (s === "reprovado") return "#D9342B";
     return "#8A8A8A";
   }
+  if (!sobGestao) return "#8A8A8A";
   const faixa = faixaVencimento(d, tipo);
   if (faixa === "bad") return "#D9342B";
   if (faixa === "warn") return "#D6A64B";
@@ -183,11 +193,17 @@ interface Props {
   cliente: any;
   meusDocs: any[];
   customerId?: string | null;
+  /**
+   * Processos do cliente — definem se a documentação de instrução ainda é
+   * cobrada. Sem a lista, o painel cobra tudo (padrão conservador).
+   */
+  processos?: readonly ProcessoParaGestao[];
   onReload: () => void;
   onOpenAdd: (tipoDocumento?: string, substituirDocumentoId?: string) => void;
 }
 
-export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, customerId, onReload, onOpenAdd }: Props) {
+export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, customerId, processos, onReload, onOpenAdd }: Props) {
+  const instrucaoExigida = useMemo(() => instrucaoAindaExigida(processos), [processos]);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<null | "total" | "aprov" | "venc7" | "venc30" | "vencidos" | "hoje">(null);
   const [preview, setPreview] = useState<null | { url: string; nome: string; mime: string; blob: Blob }>(null);
@@ -547,7 +563,12 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
                 const nome = getNomeDocumentoDisplay(d, "Documento");
                 const validade = dataValidadeHub(d);
                 const dias = daysUntil(validade);
-                const cor = dotColor(dias, d.status, d.tipo_documento);
+                const cor = dotColor(
+                  dias,
+                  d.status,
+                  d.tipo_documento,
+                  documentoSobGestaoDeAlerta(d.tipo_documento, { instrucaoExigida }),
+                );
                 const dataEmissao = dataEmissaoHub(d);
                 // Emissor e número podem estar só no resultado da leitura
                 // automática (camposExtraidos) quando as colunas não foram

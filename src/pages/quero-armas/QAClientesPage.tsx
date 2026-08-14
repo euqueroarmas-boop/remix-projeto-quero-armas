@@ -1338,6 +1338,7 @@ function ClientePortalMirrorAdmin({
               cliente={cliente}
               meusDocs={docsCliente}
               customerId={customerId}
+              processos={processosComNomeDisplay}
               onReload={onReload}
               onOpenAdd={onOpenAddDoc}
             />

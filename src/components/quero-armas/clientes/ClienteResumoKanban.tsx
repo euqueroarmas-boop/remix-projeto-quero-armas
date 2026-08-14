@@ -20,6 +20,7 @@ import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
 import { diasAteBRT, faixaVencimento } from "@/lib/quero-armas/validadeDocumento";
+import { documentoSobGestaoDeAlerta, instrucaoAindaExigida } from "@/lib/quero-armas/gestaoAlertaDocumento";
 
 // Rótulo canônico do Hub de Documentos para um tipo conhecido.
 // Mantemos as 5 frentes alinhadas com o Hub: mesma fonte de verdade.
@@ -353,6 +354,15 @@ export default function ClienteResumoKanban({
     const activeProcessosTodos = processos.filter((p: any) => !PROCESSO_FINAL_STATUSES.has(String(p.status || "").toLowerCase()));
     const processosBloqueados = activeProcessosTodos.filter((p: any) => p?._bloqueadoPrerequisito === true);
     const activeProcessos = activeProcessosTodos.filter((p: any) => p?._bloqueadoPrerequisito !== true);
+    // ── ESCOPO DO ALERTA (regra canônica, 14/08/2026) ──────────────────
+    // Documento de INSTRUÇÃO (endereço, antecedentes, ocupação lícita, BO,
+    // declarações) só é cobrado enquanto existe processo antes do protocolo:
+    // ele precisa estar válido no dia da entrega à PF, e não depois disso.
+    // Documento de GESTÃO PERMANENTE (CR, CRAF, GT/GTE, autorização de compra,
+    // laudos, atividade CAC) alerta sempre. Ver gestaoAlertaDocumento.ts.
+    const instrucaoExigida = instrucaoAindaExigida(processos);
+    const sobGestao = (tipo?: string | null) =>
+      documentoSobGestaoDeAlerta(tipo, { instrucaoExigida });
     const prazosProc = calcularPrazosProcessuais(
       itens.map((it: any) => ({
         id: it.id,
@@ -521,9 +531,10 @@ export default function ClienteResumoKanban({
         // documento: uma certidão de 30 dias só fica amarela em 9 dias e
         // vermelha em 4; um CR segue a régua padrão (10/30).
         // Só "histórico" continua vindo do consolidado: versão antiga não tem
-        // prazo a cobrar, é registro.
+        // prazo a cobrar, é registro. Documento de instrução já protocolado
+        // também sai do vermelho/amarelo: cumpriu o papel, vira registro.
         const tone: FrontItem["tone"] =
-          g.statusConsolidado === "historico"
+          g.statusConsolidado === "historico" || !sobGestao(g.principal?.tipo_documento)
             ? "muted"
             : frontStatus(days, g.principal?.tipo_documento);
         // O prazo restante é sempre a informação principal — é o que diz ao
@@ -583,11 +594,14 @@ export default function ClienteResumoKanban({
       kicker?: string,
     ) => {
       const days = daysUntil(date);
-      // Sincronizado com a página DOCUMENTOS: a janela padrão é a mesma usada
-      // nos KPIs "A VENCER 7D / 30D" (até 30 dias). Exceções por tipo:
-      // CR abre em 180 dias (prazo fatal de protocolo em 90) e laudos em 120.
+      // Janela por tipo: ciclo curto abre em 9 dias (o mesmo dia em que a faixa
+      // fica amarela), CR em 180 (prazo fatal de protocolo em 90), laudos em
+      // 120, demais em 30.
       if (days === null) return;
       if (!tipoGeraAlertaVencimento(tipo)) return;
+      // Instrução já protocolada não é mais cobrada — nem no banner, nem por
+      // e-mail. Ver gestaoAlertaDocumento.ts.
+      if (!sobGestao(tipo)) return;
       if (days > janelaAlertaDias(tipo)) return;
       urgents.push({ label, sub, days, navTo, ctaLabel, frontKey, examTipo, detalhe, tipo, kicker });
     };
@@ -608,7 +622,9 @@ export default function ClienteResumoKanban({
     }
     crafs.forEach((cr: any) => pushUrgent(`CRAF — ${shortName(cr.nome_arma || cr.nome_craf, "Arma")}`, URG_SUB.craf, cr.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal", undefined, undefined, "craf"));
     gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal", undefined, undefined, "gte"));
-    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao"));
+    // Filiação é atividade do CAC (gestão permanente): não silencia com o
+    // protocolo. O tipo vai explícito para o motor não tratá-la como instrução.
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao", undefined, undefined, "comprovante_clube_tiro"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
     // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.
