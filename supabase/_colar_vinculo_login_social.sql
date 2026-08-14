@@ -306,3 +306,24 @@ COMMIT;
 --    WHERE n.nspname = 'public'
 --      AND p.proname IN ('qa_ensure_cliente_from_auth','qa_vincular_por_cpf')
 --    ORDER BY 1, 2;
+
+
+-- =============================================================================
+-- 3) LIMPEZA OBRIGATÓRIA — remover as assinaturas ANTIGAS
+--
+-- Adicionar um parâmetro com DEFAULT não substitui a função: cria uma SEGUNDA,
+-- porque no Postgres a identidade da função inclui os tipos dos argumentos.
+-- Ficaram duas de cada:
+--     qa_ensure_cliente_from_auth(text,text,text,text)          ← antiga
+--     qa_ensure_cliente_from_auth(text,text,text,text,boolean)  ← nova
+--     qa_vincular_por_cpf(text)                                 ← antiga
+--     qa_vincular_por_cpf(text,date)                            ← nova
+--
+-- Qualquer chamada com a contagem antiga de argumentos pode bater em
+-- "function is not unique". O front já manda a contagem nova, mas conviver com
+-- as duas é pedir para quebrar. Rode isto logo depois do bloco acima.
+-- =============================================================================
+BEGIN;
+DROP FUNCTION IF EXISTS public.qa_ensure_cliente_from_auth(text, text, text, text);
+DROP FUNCTION IF EXISTS public.qa_vincular_por_cpf(text);
+COMMIT;
