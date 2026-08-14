@@ -418,3 +418,48 @@ WHERE upper(coalesce(v.status, '')) = 'PAGO'
   -- troque pelos ids marcados como FALHA no bloco 5
   AND v.cliente_id IN (101, 127, 129, 141)
 ORDER BY v.cliente_id, v.created_at;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- BLOCO 8 — O bug ainda está vivo? Vendas pagas DEPOIS da correção de 14/05
+--
+-- O QUE JÁ SE SABE (blocos 5-7, rodados em produção)
+--   Venda 999902 do cliente 141 é a prova de que houve falha real:
+--     16:27:57 venda criada · 16:28:03 pagamento confirmado
+--     16:28:06 CONTRATO EMITIDO (trigger irmão 2a rodou em 3 segundos)
+--     portal_provisionado_em: NULL
+--   Mesmo evento, dois triggers irmãos: o do contrato foi, o do portal não.
+--
+--   Só que às 16:28 do dia 14/05 o trigger do portal ainda era a versão de
+--   01/05, que chamava `create-client-user` (WMTi). A migration FASE 2C-5
+--   (20260514194603 = 14/05 19:46) trocou essa chamada por
+--   `qa-provisionar-acesso-portal`, três horas depois — o cabeçalho dela diz
+--   exatamente "Substitui chamada anterior a create-client-user (WMTi)".
+--   Ou seja: a falha aconteceu no caminho ANTIGO, que já foi substituído.
+--
+-- O QUE ESTE BLOCO RESPONDE
+--   Se alguma venda foi paga DEPOIS de 14/05 19:46 e provisionou o portal, o
+--   caminho novo está de pé e o que sobrou é só dívida daquele período.
+--   Se todas as pagas de lá para cá também estão sem portal, a correção nunca
+--   foi exercida e o problema continua aberto.
+-- ═════════════════════════════════════════════════════════════════════════════
+SELECT
+  CASE
+    WHEN c.portal_provisionado_em IS NOT NULL THEN 'ok - provisionou'
+    ELSE                                           'SEM PORTAL - conferir'
+  END                                   AS resultado,
+  v.cliente_id,
+  c.nome_completo,
+  v.id                                  AS venda_id,
+  v.valor_a_pagar,
+  v.cobranca_confirmada_em,
+  c.portal_provisionado_em,
+  c.user_id                             AS auth_user_vinculado,
+  ct.contract_number,
+  ct.issued_at                          AS contrato_emitido_em
+FROM public.qa_vendas v
+JOIN public.qa_clientes c  ON c.id  = v.cliente_id
+LEFT JOIN public.qa_contracts ct ON ct.venda_id = v.id
+WHERE upper(coalesce(v.status, '')) = 'PAGO'
+  AND v.cobranca_confirmada_em > TIMESTAMPTZ '2026-05-14 19:46:03-03'
+ORDER BY v.cobranca_confirmada_em DESC;
