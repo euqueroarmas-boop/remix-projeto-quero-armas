@@ -2213,6 +2213,21 @@ export default function QAClientePortalPage() {
       return !resp || String(resp).toLowerCase() === "sim";
     };
 
+    // ─── Efetiva necessidade: quem manda são os PASSOS, não o status da linha ──
+    //
+    // O aceite do cliente fecha a linha de qa_processo_documentos como
+    // `aprovado` (qa-efetiva-aprovar). Quando a equipe devolve o relato para
+    // ajustes, o registro em qa_efetiva_necessidade volta a ter passo pendente,
+    // mas a linha do checklist continua aprovada — e documento aprovado é
+    // filtrado daqui, então o guiado pulava a Efetiva necessidade e ficava
+    // travado nos Laudos. Para esta exigência o estado real vive nos passos:
+    // havendo passo em aberto, ela entra na fila independentemente do status.
+    const temPassoEfetivaPendente = (d: any): boolean => {
+      if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return false;
+      const ps = efetivaPassos[String(d?.processo_id ?? "")];
+      return !!ps && ps.some((p) => !p.concluido);
+    };
+
     const reprovados = ordenar(
       processoDocs.filter((d) => {
         if (!d?.obrigatorio) return false;
@@ -2242,7 +2257,7 @@ export default function QAClientePortalPage() {
           ehTipoIdentificacaoPessoal(d?.tipo_documento, toHubTipoCompartilhado(String(d?.tipo_documento || "")))
         ) return false;
         if (ehDocGrupoBloqueado(d)) return false;
-        return isChecklistPendente(d.status);
+        return isChecklistPendente(d.status) || temPassoEfetivaPendente(d);
       }),
     );
 
@@ -2875,7 +2890,14 @@ export default function QAClientePortalPage() {
     };
     const ehReaproveitado = (d: any) =>
       String(d?.status ?? "").toLowerCase() === "dispensado_por_reaproveitamento";
-    const abertos = obrigatorios.filter((d: any) => !concluido(d));
+    // Devolvida para ajustes, a efetiva necessidade volta a ser pendência mesmo
+    // com a linha do checklist ainda aprovada — mesma regra usada na fila.
+    const efetivaEmAberto = (d: any): boolean => {
+      if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return false;
+      const ps = efetivaPassos[String(d?.processo_id ?? "")];
+      return !!ps && ps.some((p) => !p.concluido);
+    };
+    const abertos = obrigatorios.filter((d: any) => !concluido(d) || efetivaEmAberto(d));
     // A efetiva necessidade vale pelos seus passos, não por 1 documento.
     const passosDoDoc = (d: any): EfetivaPasso[] | null => {
       if (!ehTipoEfetivaNecessidade(d?.tipo_documento)) return null;
