@@ -304,3 +304,57 @@ WHERE user_id IS NULL
   AND qt_vinculos = 0
   AND (qt_vendas > 0 OR qt_processos > 0)
 ORDER BY qt_vendas_pagas DESC, created_at DESC;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- BLOCO 6 — As vendas pagas de quem ficou sem portal: QUANDO virou PAGO?
+--
+-- Rode com os ids que o bloco 5 marcou como FALHA (troque a lista do IN).
+--
+-- POR QUE ISTO É NECESSÁRIO
+--   O bloco 5 mostra `ultima_venda_paga_em`, mas esse campo é o `created_at`
+--   da venda — quando a venda foi CRIADA, não quando virou PAGO. Para saber se
+--   o pagamento aconteceu antes ou depois de o trigger existir, o campo certo é
+--   `cobranca_confirmada_em` (e, na falta dele, `data_ultima_atualizacao`).
+--
+-- O QUE PROCURAR
+--   O trigger `qa_vendas_after_pago_provisionar_portal` é
+--   AFTER INSERT OR UPDATE OF status ON qa_vendas e nasceu em 01/05/2026.
+--   Venda confirmada ANTES disso nunca teve chance de provisionar — é dívida
+--   histórica, não bug ativo. Confirmada DEPOIS, com portal em branco, é falha
+--   de verdade e merece investigação no log da edge function.
+--
+-- ATENÇÃO AO PONTO CEGO DA AUDITORIA
+--   O trigger grava sucesso e falha em `qa_processo_eventos`, mas amarrado a
+--   um processo do cliente (SELECT p.id ... WHERE p.cliente_id = ... LIMIT 1).
+--   Cliente SEM processo não tem onde gravar o evento: o INSERT não insere
+--   nada e o trigger fica mudo, tenha dado certo ou errado. É exatamente o
+--   caso desses clientes (0 processos), então a ausência de evento aqui NÃO
+--   prova que o trigger não rodou.
+-- ═════════════════════════════════════════════════════════════════════════════
+SELECT
+  v.cliente_id,
+  c.nome_completo,
+  c.email,
+  c.portal_provisionado_em,
+  v.id                          AS venda_id,
+  v.status                      AS venda_status,
+  v.created_at                  AS venda_criada_em,
+  v.cobranca_confirmada_em      AS pagamento_confirmado_em,
+  v.data_ultima_atualizacao,
+  v.valor_a_pagar,
+  v.solicitacao_id,
+  v.numero_processo,
+  CASE
+    WHEN v.cobranca_confirmada_em IS NULL
+      THEN 'sem data de confirmacao — conferir na mao'
+    WHEN v.cobranca_confirmada_em < TIMESTAMPTZ '2026-05-01 01:12:00-03'
+      THEN 'anterior ao trigger — divida historica'
+    ELSE 'posterior ao trigger — FALHA ATIVA, investigar log da edge'
+  END                           AS leitura
+FROM public.qa_vendas v
+JOIN public.qa_clientes c ON c.id = v.cliente_id
+WHERE upper(coalesce(v.status, '')) = 'PAGO'
+  -- troque pelos ids marcados como FALHA no bloco 5
+  AND v.cliente_id IN (101, 127, 129, 141)
+ORDER BY v.cliente_id, v.created_at;
