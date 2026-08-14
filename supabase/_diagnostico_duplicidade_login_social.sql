@@ -358,3 +358,63 @@ WHERE upper(coalesce(v.status, '')) = 'PAGO'
   -- troque pelos ids marcados como FALHA no bloco 5
   AND v.cliente_id IN (101, 127, 129, 141)
 ORDER BY v.cliente_id, v.created_at;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- BLOCO 7 — DECISIVO: o trigger de pagamento rodou ou não rodou?
+--
+-- CONTEXTO QUE MUDA A LEITURA (vem de homologacaoFluxo2C.test.ts, que documenta
+-- o pipeline canônico):
+--
+--   1) qa-checkout-criar-venda            → cria qa_vendas
+--   2) venda vira PAGO, e DOIS triggers disparam:
+--        2a) qa_vendas_after_pago_invoke_contract  → qa-generate-contract
+--        2b) qa_vendas_provisionar_portal_on_pago  → qa-provisionar-acesso-portal
+--   3) cliente assina e sobe o PDF (qa-upload-signed-contract)
+--   4) contrato validado → qa-liberar-servicos-contrato
+--        → SÓ AQUI nascem qa_solicitacoes_servico, qa_processos e checklist
+--
+-- Ou seja: cliente com 0 processos NÃO é bug do pagamento. Processo nasce
+-- depois da assinatura do contrato. Se o portal nunca foi provisionado, o
+-- cliente não teve como assinar — e a ausência de processo é CONSEQUÊNCIA
+-- disso, não uma segunda falha.
+--
+-- O QUE ESTE BLOCO DECIDE
+--   Contrato e portal saem do MESMO evento (venda → PAGO), por dois triggers
+--   irmãos. Então:
+--     • existe contrato + não existe portal → a cadeia rodou e só o passo do
+--       portal falhou. Bug específico, procurar no log da edge function.
+--     • não existe nem contrato nem portal  → nenhum trigger rodou. A venda foi
+--       marcada PAGO por fora do fluxo (importação/ajuste manual), e nada
+--       disparou. É dívida operacional, não bug de código.
+-- ═════════════════════════════════════════════════════════════════════════════
+SELECT
+  v.cliente_id,
+  c.nome_completo,
+  v.id                              AS venda_id,
+  v.valor_a_pagar,
+  v.created_at                      AS venda_criada_em,
+  v.cobranca_confirmada_em,
+  c.portal_provisionado_em,
+  ct.id                             AS contrato_id,
+  ct.contract_number,
+  ct.status                         AS contrato_status,
+  ct.issued_at                      AS contrato_emitido_em,
+  ct.customer_uploaded_at           AS assinado_enviado_em,
+  ct.validation_status,
+  CASE
+    WHEN ct.id IS NOT NULL AND c.portal_provisionado_em IS NULL
+      THEN 'contrato SIM / portal NAO — so o passo do portal falhou'
+    WHEN ct.id IS NULL AND c.portal_provisionado_em IS NULL
+      THEN 'contrato NAO / portal NAO — nenhum trigger rodou nesta venda'
+    WHEN ct.id IS NULL AND c.portal_provisionado_em IS NOT NULL
+      THEN 'portal SIM / contrato NAO — investigar o trigger do contrato'
+    ELSE 'ambos ok'
+  END                               AS veredito
+FROM public.qa_vendas v
+JOIN public.qa_clientes c  ON c.id  = v.cliente_id
+LEFT JOIN public.qa_contracts ct ON ct.venda_id = v.id
+WHERE upper(coalesce(v.status, '')) = 'PAGO'
+  -- troque pelos ids marcados como FALHA no bloco 5
+  AND v.cliente_id IN (101, 127, 129, 141)
+ORDER BY v.cliente_id, v.created_at;
