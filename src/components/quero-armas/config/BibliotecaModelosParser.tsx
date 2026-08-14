@@ -113,6 +113,7 @@ export default function BibliotecaModelosParser({
   const [modelos, setModelos] = useState<ModeloParser[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState<string | null>(null);
+  const [gerandoIa, setGerandoIa] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const carregar = useCallback(async () => {
@@ -138,6 +139,55 @@ export default function BibliotecaModelosParser({
   }, [codigo]);
 
   useEffect(() => { void carregar(); }, [carregar]);
+
+  /**
+   * Gera a referência de IA dos modelos que estão sem ela.
+   *
+   * Existe porque até 14/08/2026 o embedding falhava em silêncio e TODOS os
+   * modelos foram gravados sem referência. Sem isto, a única saída era chamar
+   * a função pelo painel do Supabase — inviável no dia a dia.
+   *
+   * O resultado é mostrado por inteiro, inclusive o motivo de cada falha: foi
+   * justamente o silêncio que escondeu o problema por meses.
+   */
+  const gerarReferenciasIa = async () => {
+    setGerandoIa(true);
+    try {
+      const invocar = async (accessToken: string) =>
+        supabase.functions.invoke("qa-modelos-embedding-backfill", {
+          body: { limite: 200 },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      const { data: sessaoAtual } = await supabase.auth.getSession();
+      let accessToken = sessaoAtual.session?.access_token;
+      if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+      let { data, error } = await invocar(accessToken);
+      if (error && String((error as any)?.context?.status ?? "") === "401") {
+        const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
+        accessToken = renovada.session?.access_token;
+        if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+        ({ data, error } = await invocar(accessToken));
+      }
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      const gerados = Number((data as any)?.gerados ?? 0);
+      const falhas = ((data as any)?.falhas ?? []) as Array<{ motivo: string }>;
+      if (gerados > 0) toast.success(`${gerados} referência(s) de IA gerada(s).`);
+      if (falhas.length > 0) {
+        toast.error(`${falhas.length} falha(s) — ${falhas[0]?.motivo ?? "motivo não informado"}`);
+      }
+      if (gerados === 0 && falhas.length === 0) toast.info("Nenhum modelo pendente de referência.");
+      await carregar();
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar referências de IA.");
+    } finally {
+      setGerandoIa(false);
+    }
+  };
+
+  const faltamIa = modelos.filter((m) => !m.tem_ia).length;
 
   async function enviarArquivos(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -203,6 +253,28 @@ export default function BibliotecaModelosParser({
           onChange={(e) => void enviarArquivos(e.target.files)}
         />
       </div>
+
+      {faltamIa > 0 && !carregando && (
+        <div
+          className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border px-2 py-1.5"
+          style={{ borderColor: "#FDE68A", background: "#FFFBEB" }}
+        >
+          <p className="text-[10px] text-amber-800">
+            <strong>{faltamIa}</strong> modelo(s) sem referência de IA — não entram na comparação
+            automática.
+          </p>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 shrink-0 gap-1 text-xs"
+            disabled={gerandoIa}
+            onClick={() => void gerarReferenciasIa()}
+          >
+            {gerandoIa ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+            {gerandoIa ? "Gerando…" : "Gerar referências"}
+          </Button>
+        </div>
+      )}
 
       {carregando ? (
         <div className="flex items-center gap-2 text-[11px] text-slate-400 py-2">
