@@ -40,8 +40,30 @@ export default function QAAuthCallbackPage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error("Sessão não foi criada pelo Google.");
 
+        // TRAVA DE VÍNCULO — não entrar no portal sem cadastro resolvido.
+        //
+        // O login social por REDIRECT volta aqui, e não pela tela de login: o
+        // fallback por CPF que existe lá nunca era oferecido. Entrando assim,
+        // o portal chamava `qa_ensure_cliente_from_auth` sem CPF e, quando o
+        // e-mail do Google era diferente do e-mail do contrato, nada casava e
+        // um cadastro NOVO era criado — cliente num Arsenal vazio e o cadastro
+        // verdadeiro órfão. Aqui conferimos antes e mandamos para o CPF.
+        const userId = session.user.id;
+        const [{ data: link }, { data: clienteDireto }] = await Promise.all([
+          supabase.from("cliente_auth_links" as any)
+            .select("id").eq("user_id", userId).eq("status", "active").maybeSingle(),
+          supabase.from("qa_clientes" as any)
+            .select("id").eq("user_id", userId).eq("excluido", false).maybeSingle(),
+        ]);
+
         clearOAuthNext();
-        if (!cancelled) navigate(next, { replace: true });
+        if (cancelled) return;
+        if (!link && !clienteDireto) {
+          const destino = `/area-do-cliente/login?vincular=1&next=${encodeURIComponent(next)}`;
+          navigate(destino, { replace: true });
+          return;
+        }
+        navigate(next, { replace: true });
       } catch (err: any) {
         if (cancelled) return;
         setFailed(true);

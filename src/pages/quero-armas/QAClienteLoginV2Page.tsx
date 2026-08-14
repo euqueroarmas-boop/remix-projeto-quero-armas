@@ -44,10 +44,14 @@ export default function QAClienteLoginV2Page() {
   // Social
   const [loadingProvider, setLoadingProvider] = useState<"google" | "apple" | null>(null);
 
-  // Fallback CPF
-  const [needCpf, setNeedCpf] = useState(false);
+  // Fallback CPF. `?vincular=1` chega do callback OAuth quando a sessão foi
+  // criada mas nenhum cadastro casou — o cliente precisa informar o CPF antes
+  // de entrar, senão o portal criaria um cadastro novo por engano.
+  const [needCpf, setNeedCpf] = useState(() => searchParams.get("vincular") === "1");
   const [cpf, setCpf] = useState("");
   const [loadingCpf, setLoadingCpf] = useState(false);
+  const [nascimento, setNascimento] = useState("");
+  const [precisaNascimento, setPrecisaNascimento] = useState(false);
 
   const nextPath = (() => {
     const n = searchParams.get("next");
@@ -217,7 +221,10 @@ export default function QAClienteLoginV2Page() {
     }
     setLoadingCpf(true);
     try {
-      const { data, error } = await supabase.rpc("qa_vincular_por_cpf" as any, { _cpf: digits });
+      const { data, error } = await supabase.rpc("qa_vincular_por_cpf" as any, {
+        _cpf: digits,
+        _data_nascimento: nascimento || null,
+      });
       if (error) {
         toast.error("Erro ao vincular cadastro.");
         return;
@@ -231,8 +238,14 @@ export default function QAClienteLoginV2Page() {
       const reason = res?.reason as string | undefined;
       if (reason === "cliente_nao_encontrado") {
         toast.error("Nenhum cadastro encontrado com este CPF. Verifique ou faça novo cadastro.");
+      } else if (reason === "contato_divergente_informe_nascimento") {
+        // O CPF achou o cadastro, mas o e-mail do login é outro (típico de
+        // quem entra com Google pessoal). Pedimos a data de nascimento como
+        // segundo fator em vez de mandar o cliente procurar a equipe.
+        setPrecisaNascimento(true);
+        toast.info("Confirme sua data de nascimento para vincular o cadastro.");
       } else if (reason === "contato_divergente") {
-        toast.error("Para sua segurança, o e-mail/telefone do cadastro deve coincidir com o usado no login. Procure a equipe Quero Armas.");
+        toast.error("Os dados não conferem com o cadastro. Procure a equipe Quero Armas.");
       } else {
         toast.error("Não foi possível vincular. Tente novamente.");
       }
@@ -306,6 +319,20 @@ export default function QAClienteLoginV2Page() {
                     autoFocus
                   />
                 </Field>
+                {/* 2º fator: só aparece quando o CPF sozinho não bastou. O
+                    Google não fornece telefone, então o cliente que entrou com
+                    e-mail pessoal não tinha como provar que é o titular. */}
+                {precisaNascimento ? (
+                  <Field label="Data de nascimento">
+                    <input
+                      type="date"
+                      value={nascimento}
+                      onChange={(e) => setNascimento(e.target.value)}
+                      className="qa-input"
+                      autoFocus
+                    />
+                  </Field>
+                ) : null}
                 <div className="flex gap-2">
                   <button
                     type="button"

@@ -826,7 +826,20 @@ export default function QAClientePortalPage() {
                 customerLink?.responsavel ||
                 customerLink?.razao_social ||
                 null,
+              // Sem CPF em mãos, criar cadastro aqui é chute: se o e-mail do
+              // login for diferente do e-mail do contrato, nasce um cadastro
+              // duplicado e vazio, e o verdadeiro fica órfão. Preferimos parar
+              // e mandar o cliente informar o CPF.
+              criarSeNaoEncontrar: !!cpfDigits,
             });
+            if (ensured.reason === "sem_vinculo_precisa_cpf") {
+              navigate(
+                `/area-do-cliente/login?vincular=1&next=${encodeURIComponent("/area-do-cliente")}`,
+                { replace: true },
+              );
+              setLoading(false);
+              return;
+            }
             if (ensured.needs_manual_review) {
               toast.error(
                 "Encontramos mais de um cadastro com seus dados. Nossa equipe foi avisada para vincular manualmente.",

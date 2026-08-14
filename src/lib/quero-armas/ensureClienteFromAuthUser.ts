@@ -22,6 +22,13 @@ export interface EnsureClienteInput {
   cpf?: string | null;
   nome?: string | null;
   telefone?: string | null;
+  /**
+   * Cria um cadastro novo quando nada casa? Padrão true (auto-cadastro pelo
+   * portal). Passe false quando não há CPF para casar: sem ele, criar é chute
+   * e produz cadastro duplicado se o e-mail do login diferir do cadastro.
+   * Nesse caso a RPC devolve `reason: 'sem_vinculo_precisa_cpf'`.
+   */
+  criarSeNaoEncontrar?: boolean;
 }
 
 export interface EnsureClienteResult {
@@ -56,6 +63,7 @@ export async function ensureClienteFromAuthUser(
     p_cpf: input.cpf ?? null,
     p_nome: input.nome ?? null,
     p_telefone: input.telefone ?? null,
+    p_criar_se_nao_encontrar: input.criarSeNaoEncontrar ?? true,
   });
 
   if (error) {
