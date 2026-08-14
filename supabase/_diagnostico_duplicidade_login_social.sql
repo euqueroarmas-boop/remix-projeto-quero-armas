@@ -245,3 +245,62 @@ ORDER BY
        WHEN dup.nome_norm = orf.nome_norm                      THEN 2
        ELSE 3 END,
   dup.created_at DESC;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- BLOCO 5 — Os "reais sem nenhum login": por que essas pessoas não têm acesso?
+--
+-- Rode quando o bloco 1 acusar `reais_sem_nenhum_login` > 0.
+-- Não é o furo do login social (aquele deixa cadastro duplicado para trás).
+-- Aqui a pergunta é outra: o cliente tem venda ou processo e NUNCA teve conta.
+--
+-- O provisionamento do portal dispara pelo trigger
+-- `qa_vendas_provisionar_portal_on_pago`, que só roda quando a venda entra em
+-- status 'PAGO'. Então a coluna `veredito` separa os dois mundos:
+--   • sem venda paga → esperado, o provisionamento nem devia ter rodado
+--     (cadastro da equipe, importação legada, venda ainda em aberto);
+--   • pagou e não foi provisionado → aí sim é falha, investigar.
+-- `portal_ultimo_envio_status` / `portal_ultimo_envio_erro` mostram se houve
+-- tentativa de envio das credenciais e no que ela deu.
+-- ═════════════════════════════════════════════════════════════════════════════
+WITH base AS (
+  SELECT
+    c.id, c.nome_completo, c.cpf, c.email, c.celular, c.created_at,
+    c.user_id, c.origem, c.tipo_cliente, c.id_legado,
+    c.portal_provisionado_em, c.portal_credenciais_enviadas_em,
+    c.portal_ultimo_envio_status, c.portal_ultimo_envio_erro,
+    (SELECT count(*) FROM public.qa_vendas v
+      WHERE v.cliente_id = c.id)                                              AS qt_vendas,
+    (SELECT count(*) FROM public.qa_vendas v
+      WHERE v.cliente_id = c.id
+        AND upper(coalesce(v.status, '')) = 'PAGO')                           AS qt_vendas_pagas,
+    (SELECT max(v.created_at) FROM public.qa_vendas v
+      WHERE v.cliente_id = c.id
+        AND upper(coalesce(v.status, '')) = 'PAGO')                           AS ultima_venda_paga_em,
+    (SELECT count(*) FROM public.qa_processos p
+      WHERE p.cliente_id = c.id)                                              AS qt_processos,
+    (SELECT count(*) FROM public.qa_documentos_cliente d
+      WHERE d.qa_cliente_id = c.id)                                           AS qt_documentos,
+    (SELECT count(*) FROM public.cliente_auth_links l
+      WHERE l.qa_cliente_id = c.id AND l.status = 'active')                   AS qt_vinculos
+  FROM public.qa_clientes c
+  WHERE coalesce(c.excluido, false) = false
+    AND coalesce(c.status, '')     <> 'excluido_lgpd'
+)
+SELECT
+  CASE
+    WHEN qt_vendas_pagas = 0            THEN 'ok - sem venda paga, provisionamento nao devia rodar'
+    WHEN portal_provisionado_em IS NULL THEN 'FALHA - pagou e nao foi provisionado'
+    ELSE                                     'FALHA - provisionado mas ficou sem vinculo'
+  END                                   AS veredito,
+  id, nome_completo, cpf, email, celular,
+  qt_vendas, qt_vendas_pagas, ultima_venda_paga_em,
+  qt_processos, qt_documentos,
+  portal_provisionado_em, portal_credenciais_enviadas_em,
+  portal_ultimo_envio_status, portal_ultimo_envio_erro,
+  origem, tipo_cliente, id_legado, created_at
+FROM base
+WHERE user_id IS NULL
+  AND qt_vinculos = 0
+  AND (qt_vendas > 0 OR qt_processos > 0)
+ORDER BY qt_vendas_pagas DESC, created_at DESC;
