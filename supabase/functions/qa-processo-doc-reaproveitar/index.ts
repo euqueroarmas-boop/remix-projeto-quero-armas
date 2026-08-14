@@ -50,7 +50,7 @@ const TIPOS_CLIENTE = new Set<string>([
   "certidao_tjsp_distribuicao_criminal", "certidao_tjsp_execucoes_criminais",
   "certidao_casamento", "certidao_nascimento", "certidao_alteracao_nome",
   "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social",
-  "renda_ccmei", "renda_nf_recente", "renda_comprovante_beneficio",
+  "renda_ccmei", "renda_nf_empresa", "renda_comprovante_beneficio",
   "renda_extrato_inss", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico",
 ]);
 const TIPOS_CAC_ATIVIDADE = new Set<string>([

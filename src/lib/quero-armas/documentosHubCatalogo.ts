@@ -154,7 +154,6 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "foto_3x4", label: "Foto 3x4 do requerente", short: "FOTO 3X4", categoria: "identificacao", escopo: "permanente" },
   { value: "cin", label: "CIN — Carteira de Identidade Nacional", short: "CIN", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "cnh", label: "CNH — Carteira Nacional de Habilitação", short: "CNH", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
-  { value: "cpf", label: "CPF", short: "CPF", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "certidao_alteracao_nome", label: "Certidão averbada de alteração de nome", short: "AVERBADA", categoria: "identificacao", escopo: "permanente", aceitaIA: true },
   { value: "comprovante_residencia", label: "Comprovante de residência", short: "END", categoria: "endereco", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "declaracao_responsavel_imovel", label: "Declaração do responsável pelo imóvel", short: "DECL. IMÓVEL", categoria: "endereco", escopo: "permanente" },
@@ -169,7 +168,10 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_ficha_cadastral_jucesp", label: "Ficha Cadastral Completa (Junta Comercial)", short: "FICHA JUNTA", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_ccmei", label: "CCMEI — Certificado da Condição de MEI", short: "CCMEI", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_cnpj_autonomo", label: "Cartão CNPJ (autônomo / MEI)", short: "CNPJ MEI", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
-  { value: "renda_nf_recente", label: "Nota fiscal recente", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
+  // Renomeada em 20260807270000: a nota fiscal NÃO precisa ser recente, logo
+  // não tem prazo de validade (`validade_dias` foi a NULL na migration). O slug
+  // antigo `renda_nf_recente` saiu do CHECK e vive apenas em TIPOS_RETIRADOS.
+  { value: "renda_nf_empresa", label: "Nota Fiscal da Empresa", short: "NF", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true },
   { value: "renda_comprovante_beneficio", label: "Comprovante de benefício", short: "BENEFÍCIO", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   // Certidões de antecedentes: `label` SEMPRE vem de NOME_CANONICO_ANTECEDENTES
@@ -207,9 +209,10 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "gte", label: "GTE — Guia de Tráfego Eventual", short: "GTE · Guia de Tráfego Eventual", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "autorizacao_compra", label: "Autorização de compra", short: "AC", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true, exigeValidade: true },
   { value: "nota_fiscal_arma", label: "Nota fiscal da arma", short: "NF ARMA", categoria: "arma_acervo", escopo: "arma", aceitaIA: true, aceitaVinculoArma: true },
-  { value: "comprovante_habitualidade", label: "Comprovante de habitualidade", short: "HABITUALIDADE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
-  { value: "declaracao_compromisso_habitualidade", label: "Declaração de compromisso de habitualidade", short: "COMPROMISSO HAB.", categoria: "cac_atividade", escopo: "cac_atividade", aceitaIA: true },
-  { value: "comprovante_clube_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
+  // O CHECK conhece `comprovante_filiacao_entidade_tiro`; `comprovante_clube_tiro`
+  // é o nome legado que hubTipoMap já traduzia — o Hub é que continuava gravando
+  // o slug morto porque o seletor o oferecia direto, sem passar pela tradução.
+  { value: "comprovante_filiacao_entidade_tiro", label: "Comprovante de clube / entidade", short: "CLUBE", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   { value: "habilitacao_cacador_ibama", label: "Habilitação ambiental de caçador (IBAMA/IBRAM)", short: "HAB. CAÇADOR", categoria: "cac_atividade", escopo: "cac_atividade", aceitaIA: true, exigeValidade: true },
   { value: "comprovante_competicao", label: "Comprovante de competição / atividade", short: "COMPETIÇÃO", categoria: "cac_atividade", escopo: "cac_atividade", exigeValidade: true },
   // REGRA GLOBAL: o comprovante de pagamento pertence ao CONTRATO (documento da
@@ -244,6 +247,42 @@ const TIPOS_LEGADOS_OCULTOS = new Set<string>([
   // Substituída pelos subtipos TRF3 Regional e Seção Judiciária/JEF-SP.
   "antecedentes_federal",
 ]);
+
+/**
+ * Slugs que o CHECK `qa_doc_cliente_tipo_check` NÃO aceita mais, e o tipo vivo
+ * que os substitui (`null` = aposentado sem sucessor).
+ *
+ * Por que isto existe: o seletor do Hub grava `tipo_documento` direto na
+ * tabela, sem passar por `hubTipoMap` (que só traduz slug de PROCESSO para slug
+ * de Hub). Quando uma migration renomeava um tipo, o catálogo do front ficava
+ * para trás e o INSERT estourava a constraint na cara do cliente — foi o que
+ * aconteceu com a nota fiscal em 14/08/2026.
+ *
+ * Mantenha esta tabela ao renomear/aposentar qualquer tipo. O teste
+ * `catalogoHubVsConstraint.test.ts` falha se o catálogo divergir do CHECK.
+ */
+export const TIPOS_RETIRADOS: Readonly<Record<string, string | null>> = {
+  renda_nf_recente: "renda_nf_empresa",
+  comprovante_clube_tiro: "comprovante_filiacao_entidade_tiro",
+  cpf: "rg_com_cpf",
+  comprovante_habitualidade: null,
+  declaracao_compromisso_habitualidade: null,
+};
+
+/**
+ * Última barreira antes de gravar em `qa_documentos_cliente`: converte slug
+ * aposentado no slug vivo. Um bundle em cache, uma classificação da IA ou uma
+ * exigência antiga não podem mais derrubar o INSERT com erro cru de constraint.
+ *
+ * Slug aposentado SEM sucessor cai em `outro` — o documento entra e um humano
+ * reclassifica, que é sempre melhor do que perder o upload do cliente.
+ */
+export function normalizeTipoDocumentoParaBanco(tipoDocumento: string | null | undefined): string {
+  const tipo = normalizeTipoDocumento(tipoDocumento);
+  if (!tipo) return "outro";
+  if (!(tipo in TIPOS_RETIRADOS)) return tipo;
+  return TIPOS_RETIRADOS[tipo] ?? "outro";
+}
 
 /**
  * Tipos que podem existir por compatibilidade/auditoria, mas não pertencem ao
@@ -475,7 +514,7 @@ function inferNomeCertidaoOficial(doc: Record<string, unknown>): string | null {
   }
 
   // ===== CAC / habitualidade =====
-  if (tipo === "comprovante_clube_tiro") {
+  if (tipo === "comprovante_filiacao_entidade_tiro" || tipo === "comprovante_clube_tiro") {
     const orgao = String(doc?.orgao_emissor || "").trim();
     if (orgao) return `Declaração de Filiação — ${orgao}`;
     return "Declaração de Filiação a Clube de Tiro";

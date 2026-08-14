@@ -374,7 +374,12 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
  */
 export function isFiliacaoClube(tipo?: string | null): boolean {
   const t = String(tipo ?? "").toLowerCase();
-  return t === "comprovante_clube_tiro" || t === "filiacao_clube" || t === "carteirinha_clube_tiro";
+  return (
+    t === "comprovante_filiacao_entidade_tiro" ||
+    t === "comprovante_clube_tiro" ||
+    t === "filiacao_clube" ||
+    t === "carteirinha_clube_tiro"
+  );
 }
 
 export function isDocumentoIdentificacao10Anos(tipo?: string | null): boolean {

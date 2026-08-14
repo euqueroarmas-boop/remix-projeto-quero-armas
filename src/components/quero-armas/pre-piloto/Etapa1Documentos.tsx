@@ -18,12 +18,12 @@ const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "a
 // banco — e a exigência correspondente nunca seria cumprida.
 // "gov_br" é a única exceção: não é documento, vira senha do cliente.
 const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
-  { grupo: "Identificação", tipos: ["cin", "rg_com_cpf", "cnh", "cpf", "certidao_alteracao_nome"] },
+  { grupo: "Identificação", tipos: ["cin", "rg_com_cpf", "cnh", "certidao_alteracao_nome"] },
   { grupo: "Endereço", tipos: ["comprovante_residencia", "declaracao_responsavel_imovel", "documento_identificacao_terceiro"] },
   { grupo: "Ocupação Lícita / Renda", tipos: [
     "ctps", "renda_holerite_mes_atual", "renda_holerite_funcionario_publico", "renda_carteira_funcional",
     "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_contrato_social", "renda_ccmei",
-    "renda_qsa", "renda_nf_recente", "renda_comprovante_beneficio", "renda_extrato_inss",
+    "renda_qsa", "renda_nf_empresa", "renda_comprovante_beneficio", "renda_extrato_inss",
   ] },
   { grupo: "Antecedentes e Regularidade", tipos: [
     "antecedentes_criminais", "antecedentes_federal",
@@ -33,7 +33,7 @@ const GRUPOS_TIPOS: Array<{ grupo: string; tipos: string[] }> = [
   ] },
   { grupo: "Laudos e Exames", tipos: ["laudo_psicologico", "laudo_capacidade_tecnica"] },
   { grupo: "Arma e Acervo", tipos: ["cr", "craf", "sinarm", "gt", "gte", "autorizacao_compra", "nota_fiscal_arma"] },
-  { grupo: "CAC / Atividade", tipos: ["comprovante_clube_tiro", "comprovante_habitualidade", "declaracao_compromisso_habitualidade", "comprovante_competicao", "habilitacao_cacador_ibama", "declaracao_nao_possuir_segundo_endereco"] },
+  { grupo: "CAC / Atividade", tipos: ["comprovante_filiacao_entidade_tiro", "comprovante_competicao", "habilitacao_cacador_ibama", "declaracao_nao_possuir_segundo_endereco"] },
   { grupo: "Processo", tipos: ["requerimento_de_posse_de_arma_de_fogo", "gru", "documento_complementar_caso"] },
   { grupo: "Contrato", tipos: ["contrato_assinado", "comprovante_pagamento", "procuracao_assinada"] },
   { grupo: "Outros", tipos: ["gov_br", "outro"] },
@@ -489,7 +489,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
     if (n.includes("ctps") || n.includes("carteira de trabalho")) return "ctps";
     if (n.includes("cnis") || n.includes("inss")) return "renda_extrato_inss";
     if (n.includes("beneficio")) return "renda_comprovante_beneficio";
-    if (n.includes("decore") || n.includes("nota fiscal") || n.includes("nfe")) return "renda_nf_recente";
+    if (n.includes("decore") || n.includes("nota fiscal") || n.includes("nfe")) return "renda_nf_empresa";
     // Comprovante de residência — "comprovante" e "fatura" genéricos só depois das anteriores
     if (
       n.includes("residencia") || n.includes("endereco") ||

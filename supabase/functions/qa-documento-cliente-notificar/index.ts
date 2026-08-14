@@ -39,7 +39,7 @@ const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
   renda_contrato_social: "Contrato Social / Requerimento de Empresário",
   renda_ccmei: "CCMEI — Certificado da Condição de MEI",
   renda_cnpj_autonomo: "Cartão CNPJ (autônomo / MEI)",
-  renda_nf_recente: "Nota fiscal recente",
+  renda_nf_empresa: "Nota Fiscal da Empresa",
   renda_comprovante_beneficio: "Comprovante de benefício",
   renda_extrato_inss: "Extrato INSS",
   // Espelho do padrão canônico definido em

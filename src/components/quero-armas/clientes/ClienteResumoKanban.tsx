@@ -450,7 +450,7 @@ export default function ClienteResumoKanban({
       return {
         label: titleCaseServico(shortName(f.nome_filiacao || f.nome_clube || `Clube #${f.clube_id || ""}`, "Clube"), "Clube"),
         status: compactStatus(days),
-        tone: frontStatus(days, "comprovante_clube_tiro"),
+        tone: frontStatus(days, "comprovante_filiacao_entidade_tiro"),
       };
     });
 
@@ -625,7 +625,7 @@ export default function ClienteResumoKanban({
     gtes.forEach((g: any) => pushUrgent(`GTE — ${shortName(g.nome_arma || g.nome_gte, "Arma")}`, URG_SUB.gte, g.data_validade, "arsenal", "RENOVAR AGORA →", "arsenal", undefined, undefined, "gte"));
     // Filiação é atividade do CAC (gestão permanente): não silencia com o
     // protocolo. O tipo vai explícito para o motor não tratá-la como instrução.
-    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao", undefined, undefined, "comprovante_clube_tiro"));
+    filiacoes.forEach((f: any) => pushUrgent(`Filiação — ${titleCaseServico(shortName(f.nome_filiacao || f.nome_clube, "Clube"), "Clube")}`, URG_SUB.filiacao, f.validade_filiacao, "documentos", "ATUALIZAR AGORA →", "filiacao", undefined, undefined, "comprovante_filiacao_entidade_tiro"));
     // Exames psicológico/tiro NÃO entram em "Próximo Vencimento": já são
     // contabilizados via qa_documentos_cliente (laudo_psicologico /
     // laudo_capacidade_tecnica). Empurrá-los aqui gera duplicação no banner.

@@ -142,7 +142,6 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   renda_holerite_mes_atual: "Holerite mais recente. Extraia OBRIGATORIAMENTE: nome_titular, cpf (se houver), empregador, periodo_referencia (mes/ano no formato YYYY-MM), mes_referencia (YYYY-MM), data_emissao (YYYY-MM-DD se houver).",
   renda_cnpj_autonomo: "Cartão CNPJ de autônomo/MEI emitido pela Receita Federal. Extraia: razao_social, nome_fantasia (se houver), cnpj (apenas dígitos), situacao_cadastral, data_abertura (YYYY-MM-DD se houver), atividade_principal, endereco_sede, cidade_sede e uf_sede. NÃO exija 'nome_titular': cartão CNPJ identifica empresa por razão social/CNPJ.",
   renda_ccmei: "CCMEI (Certificado da Condição de Microempreendedor Individual). Extraia: razao_social/nome_empresarial, nome_fantasia (se houver), cnpj (apenas dígitos), cpf do titular se constar, situacao_cadastral, data_abertura (YYYY-MM-DD se houver), atividade_principal, ocupacao, endereco_sede, cidade_sede e uf_sede. CCMEI é opção própria de ocupação lícita e substitui apenas Contrato Social ou Requerimento de Empresário; NUNCA substitui Cartão CNPJ. REGRA DE PRAZO: CCMEI é documento CONSTITUTIVO — NÃO tem data de emissão nem validade. NUNCA exija, invente ou rejeite por 'data_emissao'/'data_validade' ausente. CONFERÊNCIA: confronte APENAS nome do titular, CPF e situacao_cadastral. Situação diferente de ATIVA/ATIVO reprova; qualquer outra diferença NÃO reprova.",
-  renda_nf_recente: "Nota fiscal recente emitida por CNPJ/MEI/autônomo. Extraia: razao_social_emitente, cnpj_emitente (apenas dígitos), numero_nota, serie, data_emissao (YYYY-MM-DD), valor_total, municipio_emissao e natureza_operacao/servico. NÃO exija 'nome_titular': nota fiscal identifica emitente por razão social/CNPJ.",
   certidao_civel: "Certidão Cível Federal. Extraia: nome_titular, cpf, resultado (NADA_CONSTA ou CONSTA), data_emissao (YYYY-MM-DD).",
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
@@ -372,7 +371,7 @@ function checaCamposExigidos(
   tipoDocumento?: string,
 ): string[] {
   const faltando: string[] = [];
-  const isPJ = ["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(tipoDocumento || "");
+  const isPJ = ["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo"].includes(tipoDocumento || "");
   const sociosArr = Array.isArray(extraidos?.socios) ? extraidos.socios : [];
   const adminsArr = Array.isArray(extraidos?.administradores) ? extraidos.administradores : [];
   const hasValue = (v: any) => v !== undefined && v !== null && !(typeof v === "string" && v.trim() === "");
@@ -987,7 +986,6 @@ Deno.serve(async (req) => {
         "renda_nf_empresa",
         "renda_cartao_cnpj",
         "renda_cnpj_autonomo",
-        "renda_nf_recente",
       ]);
       if (PJ_TIPOS.has(doc.tipo_documento)) {
         const cx: Record<string, any> = parsed.campos_extraidos || {};

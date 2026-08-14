@@ -77,6 +77,7 @@ const TIPOS_CLIENTE = new Set<string>([
   "renda_cnpj_autonomo",
   "renda_contrato_social",
   "renda_ccmei",
+  "renda_nf_empresa",
   "renda_nf_recente",
   "renda_comprovante_beneficio",
   "renda_extrato_inss",
@@ -86,6 +87,7 @@ const TIPOS_CLIENTE = new Set<string>([
 
 const TIPOS_CAC_ATIVIDADE = new Set<string>([
   "comprovante_habitualidade",
+  "comprovante_filiacao_entidade_tiro",
   "comprovante_clube_tiro",
   "comprovante_competicao",
   "declaracao_guarda_acervo_1endereco",

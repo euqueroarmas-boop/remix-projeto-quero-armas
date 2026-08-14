@@ -179,7 +179,7 @@ function rendaPara(c: Cond): Item[] {
         ],
       },
       {
-        tipo_documento: "renda_nf_recente",
+        tipo_documento: "renda_nf_empresa",
         nome_documento: "Nota fiscal emitida para um cliente",
         obrigatorio: true,
         link_emissao: null,
@@ -566,7 +566,7 @@ Deno.serve(async (req) => {
           // evitando bloqueio indevido na validação IA.
           exige:
             (d as any).regra_catalogo?.exige ??
-            (["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo", "renda_nf_recente"].includes(d.tipo_documento)
+            (["renda_qsa", "renda_contrato_social", "renda_ccmei", "renda_nf_empresa", "renda_cartao_cnpj", "renda_cnpj_autonomo"].includes(d.tipo_documento)
               ? ["razao_social"]
               : ["nome_titular"]),
           label_botao: d.label_botao,

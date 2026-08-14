@@ -109,6 +109,7 @@ import {
   isCategoriaArmaAcervo,
   isTipoDocumentoMonitoravelNoHub,
   listTiposByCategoria,
+  normalizeTipoDocumentoParaBanco,
   type EscopoDocumental,
   type HubCategoria,
 } from "@/lib/quero-armas/documentosHubCatalogo";
@@ -200,7 +201,7 @@ const IA_TO_TIPO: Record<string, string> = {
   CONTRATO_SOCIAL: "renda_contrato_social",
   QSA: "renda_qsa",
   CCMEI: "renda_ccmei",
-  NOTA_FISCAL_AUTONOMO: "renda_nf_recente",
+  NOTA_FISCAL_AUTONOMO: "renda_nf_empresa",
   COMPROVANTE_BENEFICIO: "renda_comprovante_beneficio",
   EXTRATO_INSS: "renda_extrato_inss",
   // Antecedentes
@@ -227,7 +228,7 @@ const IA_TO_TIPO: Record<string, string> = {
   DOCUMENTO_COMPLEMENTAR: "documento_complementar_caso",
   // CAC
   COMPROVANTE_HABITUALIDADE: "comprovante_habitualidade",
-  COMPROVANTE_CLUBE: "comprovante_clube_tiro",
+  COMPROVANTE_CLUBE: "comprovante_filiacao_entidade_tiro",
   COMPROVANTE_COMPETICAO: "comprovante_competicao",
   // Processuais
   PROTOCOLO_PROCESSO: "protocolo_processo",
@@ -489,7 +490,7 @@ function normCnpj(s: string): string {
  * exemplo, traz o TOMADOR, que legitimamente é outra pessoa.
  */
 const TIPOS_EMPRESARIAIS = new Set([
-  "renda_nf_recente",
+  "renda_nf_empresa",
   "renda_cartao_cnpj",
   "renda_cnpj_autonomo",
   "cartao_cnpj",
@@ -688,11 +689,11 @@ const DOC_TRUST_TIER: Record<string, number> = {
   renda_comprovante_beneficio: 2,
   renda_extrato_inss: 2,
   comprovante_habitualidade: 2,
-  comprovante_clube_tiro: 2,
+  comprovante_filiacao_entidade_tiro: 2,
   // Nível 3 — Empresas mercantis / empregadores / concessionárias
   comprovante_residencia: 3,
   renda_holerite_mes_atual: 3,
-  renda_nf_recente: 3,
+  renda_nf_empresa: 3,
   renda_cartao_cnpj: 3,
   renda_contrato_social: 3,
   renda_ccmei: 3,
@@ -1280,7 +1281,7 @@ type FormState = {
   numero_registro_sigma: string;
   /** Regime canônico inferido pela IA: SINARM | SIGMA | REVISAR. */
   sistema_registro: "" | "SINARM" | "SIGMA" | "REVISAR";
-  /** Validade da filiação anual (comprovante_clube_tiro): data_filiacao + 1 ano. */
+  /** Validade da filiação anual (comprovante_filiacao_entidade_tiro): data_filiacao + 1 ano. */
   validade_filiacao: string;
 };
 
@@ -2940,13 +2941,13 @@ export function ClienteDocsHubModal({
           if (valExplicita) return valExplicita;
           if (!emissao) return prev.data_validade;
           // Comprovante de clube: declaração válida por 90 dias da data de emissão
-          if (tipoIA === "comprovante_clube_tiro") {
+          if (normalizeTipoDocumentoParaBanco(tipoIA) === "comprovante_filiacao_entidade_tiro") {
             return addDaysIso(emissao, 90);
           }
           return prev.data_validade;
         })(),
         validade_filiacao: (() => {
-          if (tipoIA !== "comprovante_clube_tiro") return prev.validade_filiacao;
+          if (normalizeTipoDocumentoParaBanco(tipoIA) !== "comprovante_filiacao_entidade_tiro") return prev.validade_filiacao;
           // Prioridade: data_filiacao extraída do corpo do documento, senão data_emissao
           const base =
             dataIsoFromBr((campos as any).data_filiacao) ||
@@ -4220,7 +4221,7 @@ export function ClienteDocsHubModal({
         data_emissao: constitutivoSemDatas ? null : (form.data_emissao || null),
         data_validade:
           validadeIndeterminada || tipoSemVencimento ? null : (form.data_validade || null),
-        validade_filiacao: form.tipo_documento === "comprovante_clube_tiro" ? (form.validade_filiacao || null) : null,
+        validade_filiacao: normalizeTipoDocumentoParaBanco(form.tipo_documento) === "comprovante_filiacao_entidade_tiro" ? (form.validade_filiacao || null) : null,
         observacoes: form.observacoes || null,
         arma_marca: showArmaFields ? form.arma_marca || null : null,
         arma_modelo: showArmaFields ? form.arma_modelo || null : null,
@@ -4469,6 +4470,9 @@ export function ClienteDocsHubModal({
       if (alvoSubstituicao) {
         payload.substitui_documento_id = alvoSubstituicao;
       }
+      // Último ponto antes do banco: slug aposentado vira o slug vivo. Sem isto
+      // o CHECK devolve erro cru de constraint para o cliente (14/08/2026, NF).
+      payload.tipo_documento = normalizeTipoDocumentoParaBanco(payload.tipo_documento);
       const { data: inserted, error: insertError } = await supabase
         .from("qa_documentos_cliente" as any)
         .insert(payload)
@@ -5935,7 +5939,7 @@ export function ClienteDocsHubModal({
               )}
             </div>
 
-            {form.tipo_documento === "comprovante_clube_tiro" && (
+            {normalizeTipoDocumentoParaBanco(form.tipo_documento) === "comprovante_filiacao_entidade_tiro" && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm sm:p-5">
                 <div className="mb-3 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-amber-700" />

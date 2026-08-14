@@ -1092,7 +1092,7 @@ function parseNotaFiscal(texto: string): CamposCertidao {
 
   return {
     orgao: "nota_fiscal",
-    tipoDocumento: "renda_nf_recente",
+    tipoDocumento: "renda_nf_empresa",
     numero_nf:
       g(/N[UÚ]MERO DA NOTA\s*:?\s*(\d+)/i) ??
       g(/N[º°o]\s*(?:da\s*)?Nota\s*:?\s*(\d+)/i) ??

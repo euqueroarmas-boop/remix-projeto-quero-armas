@@ -51,7 +51,7 @@ const TIPOS_PERMANENTES: ReadonlySet<string> = new Set([
   "rg_com_cpf", "cin", "cnh", "cpf",
   "comprovante_residencia", "declaracao_responsavel_imovel",
   "laudo_psicologico", "laudo_capacidade_tecnica",
-  "comprovante_habitualidade", "comprovante_clube_tiro", "comprovante_competicao",
+  "comprovante_habitualidade", "comprovante_filiacao_entidade_tiro", "comprovante_clube_tiro", "comprovante_competicao",
   "cr",
 ]);
 

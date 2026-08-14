@@ -32,7 +32,7 @@ export const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
   renda_ficha_cadastral_jucesp: "Ficha Cadastral Completa (Junta Comercial)",
   renda_ccmei: "CCMEI — Certificado da Condição de MEI",
   renda_cnpj_autonomo: "Cartão CNPJ (autônomo / MEI)",
-  renda_nf_recente: "Nota fiscal recente",
+  renda_nf_empresa: "Nota Fiscal da Empresa",
   renda_comprovante_beneficio: "Comprovante de benefício",
   renda_extrato_inss: "Extrato INSS",
   // Certidões — padrão canônico "Certidão <espécie> — <órgão>".

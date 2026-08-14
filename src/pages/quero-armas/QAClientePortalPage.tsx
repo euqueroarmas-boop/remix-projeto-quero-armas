@@ -1034,7 +1034,7 @@ export default function QAClientePortalPage() {
             .from("qa_documentos_cliente" as any)
             .select("id, orgao_emissor, data_emissao, data_validade, validade_filiacao, status")
             .or(docFiltersEarly)
-            .eq("tipo_documento", "comprovante_clube_tiro")
+            .in("tipo_documento", ["comprovante_filiacao_entidade_tiro", "comprovante_clube_tiro"])
             .neq("status", "excluido")
             .order("data_emissao", { ascending: false });
           const hubFil = ((clubeDocs as any[]) ?? []).map((d: any) => ({

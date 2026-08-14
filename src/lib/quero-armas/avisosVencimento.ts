@@ -38,6 +38,8 @@ export const TIPOS_LAUDO = new Set(["laudo_psicologico", "laudo_capacidade_tecni
 
 /** Tipos que nunca geram alerta de vencimento na badge. */
 export const TIPOS_SEM_ALERTA_VENCIMENTO = new Set([
+  "renda_nf_empresa",
+  // Slug aposentado: registro antigo do Hub ainda o carrega.
   "renda_nf_recente",
   "nota_fiscal_arma",
 ]);
