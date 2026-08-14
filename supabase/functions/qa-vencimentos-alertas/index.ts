@@ -1,6 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { escolherMarco, marcosParaTipo, MARCOS_PADRAO } from "../_shared/marcosVencimento.ts";
+import {
+  documentoSobGestaoDeAlerta,
+  faixaVencimento,
+  instrucaoAindaExigida,
+  marcosFaixaDocumento,
+} from "../_shared/faixaAlertaDocumento.ts";
+import { comoResolverDocumento, nomeDocumentoCanonico } from "../_shared/nomeDocumento.ts";
 
 /**
  * qa-vencimentos-alertas (BLOCO 5 — Etapas A+B+D)
@@ -44,6 +51,10 @@ interface Candidato {
   data_validade: string;
   dias: number;
   marco: number;
+  /** Faixa em que o documento acabou de entrar (só fonte DOCUMENTO). */
+  faixa?: "atencao" | "critico";
+  /** Frase dinâmica de "onde emitir a via nova" (só fonte DOCUMENTO). */
+  comoResolver?: string;
 }
 
 function diasRestantes(validade: string): number {
@@ -61,11 +72,53 @@ function pickMarco(d: number, tipo?: string | null): number | null {
   return escolherMarco(d, marcos);
 }
 
+/**
+ * MARCOS POR VIRADA DE FAIXA (documentos do Hub) — regra canônica 14/08/2026.
+ *
+ * O cliente é avisado quando o documento MUDA DE STATUS, não todo dia:
+ *   entra em AMARELO  → 9 dias (ciclo curto) ou 30 dias (demais)
+ *   entra em VERMELHO → 4 dias (ciclo curto) ou 10 dias (demais)
+ *   vence             → marco 0 e, passado o dia, marco -1
+ *
+ * `escolherMarco` devolve o MENOR marco ainda >= dias restantes, então cada
+ * faixa dispara uma única vez mesmo se o cron falhar por alguns dias. A trava
+ * de repetição é a dedupe (fonte, ref_id, marco, canal, data_referencia): como
+ * a data de referência é a validade do documento, enviar uma via nova cria um
+ * ciclo novo e os alertas voltam a valer do zero.
+ */
+function pickMarcoFaixa(d: number, tipo?: string | null): number | null {
+  if (d < -1) return -1;
+  const { atencao, critico } = marcosFaixaDocumento(tipo);
+  return escolherMarco(d, [atencao, critico, 0]);
+}
+
+/** Em qual faixa o documento entrou — define qual dos dois textos sai. */
+function faixaDoMarco(d: number, tipo?: string | null): "atencao" | "critico" {
+  return faixaVencimento(d, tipo) === "warn" ? "atencao" : "critico";
+}
+
 function brDate(iso: string): string {
   return iso.split("-").reverse().join("/");
 }
 
-function buildSubject(fonte: Fonte, titulo: string, dias: number, marco: number): string {
+function buildSubject(
+  fonte: Fonte,
+  titulo: string,
+  dias: number,
+  marco: number,
+  faixa?: "atencao" | "critico",
+): string {
+  // Documento em virada de faixa usa o assunto aprovado do template novo —
+  // o dry_run precisa mostrar exatamente o que o cliente vai receber.
+  if (faixa && dias >= 0) {
+    const plural = dias === 1 ? "dia" : "dias";
+    if (faixa === "critico") {
+      return dias <= 0
+        ? `${titulo} vence hoje — envie agora`
+        : `${titulo} vence em ${dias} ${plural} — envie hoje`;
+    }
+    return `${titulo} entra em contagem — ${dias} ${plural} para vencer`;
+  }
   if (dias < 0) return `🚨 ${fonte} ${titulo} VENCIDA há ${Math.abs(dias)} dia(s)`;
   if (marco === 0) return `🚨 ${fonte} ${titulo} vence HOJE`;
   return `⚠️ ${fonte} ${titulo} vence em ${dias} dia(s)`;
@@ -169,26 +222,71 @@ serve(async (req) => {
     {
       const { data, error } = await sb
         .from("qa_documentos_cliente")
-        .select("id, qa_cliente_id, tipo_documento, numero_documento, data_validade")
+        .select(
+          "id, qa_cliente_id, tipo_documento, nome_documento, numero_documento, orgao_emissor, status, data_validade, ia_dados_extraidos",
+        )
         .not("data_validade", "is", null);
       if (error) throw error;
+
+      // Regime de gestão do alerta: documento de INSTRUÇÃO para de ser cobrado
+      // depois do protocolo na PF. Precisamos dos processos de cada cliente
+      // para saber se ainda existe pasta antes do protocolo.
+      const clientesComDoc = [
+        ...new Set((data || []).map((r) => r.qa_cliente_id).filter(Boolean)),
+      ] as number[];
+      const processosPorCliente = new Map<number, Array<{ status?: string | null }>>();
+      if (clientesComDoc.length) {
+        const { data: procs } = await sb
+          .from("qa_processos")
+          .select("cliente_id, status")
+          .in("cliente_id", clientesComDoc);
+        for (const p of (procs || []) as Array<{ cliente_id: number; status: string | null }>) {
+          if (p?.cliente_id == null) continue;
+          const lista = processosPorCliente.get(p.cliente_id) ?? [];
+          lista.push({ status: p.status });
+          processosPorCliente.set(p.cliente_id, lista);
+        }
+      }
+
+      const STATUS_DOC_IGNORADOS = new Set(["reprovado", "substituido", "excluido"]);
+
       for (const r of data || []) {
         if (!r.qa_cliente_id || !r.data_validade) continue;
         const tipo = String(r.tipo_documento || "").toLowerCase();
         // Pular o que já é tratado por outras rotinas
         if (tipo.includes("gte") || tipo.includes("exame") || tipo.includes("laudo")) continue;
+        // Documento reprovado/substituído/excluído não cobra prazo: o que vale
+        // é a via vigente, e o cliente já foi avisado por outro caminho.
+        if (STATUS_DOC_IGNORADOS.has(String(r.status || "").toLowerCase())) continue;
         const ehAutorizacao = tipo.includes("autoriza") || tipo.includes("aquisi");
         const d = diasRestantes(r.data_validade);
-        const m = pickMarco(d, tipo);
+
+        // Instrução já protocolada não gera mais alerta — nem cor, nem e-mail.
+        if (
+          !documentoSobGestaoDeAlerta(tipo, {
+            instrucaoExigida: instrucaoAindaExigida(processosPorCliente.get(r.qa_cliente_id)),
+          })
+        ) {
+          continue;
+        }
+
+        // O DOCUMENTO comum avisa na VIRADA DE FAIXA (verde→amarelo,
+        // amarelo→vermelho) e no vencimento — não em contagem diária.
+        // Autorização de compra mantém os marcos próprios dela.
+        const m = ehAutorizacao ? pickMarco(d, tipo) : pickMarcoFaixa(d, tipo);
         if (m === null) continue;
         candidatos.push({
           fonte: ehAutorizacao ? "AUTORIZACAO" : "DOCUMENTO",
           ref_id: `${ehAutorizacao ? "auth" : "doc"}:${r.id}`,
           cliente_id: r.qa_cliente_id,
-          titulo: `${r.tipo_documento}${r.numero_documento ? ` ${r.numero_documento}` : ""}`,
+          titulo: ehAutorizacao
+            ? `${r.tipo_documento}${r.numero_documento ? ` ${r.numero_documento}` : ""}`
+            : nomeDocumentoCanonico(r, String(r.tipo_documento || "Documento")),
           data_validade: r.data_validade,
           dias: d,
           marco: m,
+          faixa: ehAutorizacao ? undefined : faixaDoMarco(d, tipo),
+          comoResolver: ehAutorizacao ? undefined : comoResolverDocumento(r),
         });
       }
     }
@@ -239,7 +337,7 @@ serve(async (req) => {
       }
 
       const nome = cliente.nome_completo || "Cliente";
-      const subject = buildSubject(c.fonte, c.titulo, c.dias, c.marco);
+      const subject = buildSubject(c.fonte, c.titulo, c.dias, c.marco, c.faixa);
       const resumo = buildResumo(c, nome);
 
       previews.push({
@@ -251,6 +349,8 @@ serve(async (req) => {
         data_vencimento: c.data_validade,
         marco_dias: c.marco,
         dias_restantes: c.dias,
+        faixa: c.faixa ?? null,
+        como_resolver: c.comoResolver ?? null,
         mensagem: resumo,
         portal: PORTAL_LINK,
         cliente_nome: nome,
@@ -288,11 +388,29 @@ serve(async (req) => {
               vencimento: vencimentoBR,
               portalUrl: PORTAL_LINK,
             };
+          } else if (c.fonte === "DOCUMENTO" && c.faixa && c.dias >= 0) {
+            // VIRADA DE FAIXA — o texto nomeia o documento, diz o prazo real e
+            // fecha com onde emitir a via nova. Um e-mail por virada.
+            templateName = "documento-mudanca-faixa";
+            templateData = {
+              nome,
+              documento: c.titulo,
+              faixa: c.faixa,
+              diasRestantes: String(c.dias),
+              vencimento: vencimentoBR,
+              comoResolver: c.comoResolver,
+              portalUrl: PORTAL_LINK,
+            };
           }
           const res = await sendTransactional({
             templateName,
             recipientEmail: cliente.email,
-            idempotencyKey: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}`,
+            // A data de validade entra na chave DE PROPÓSITO: ela é o ciclo do
+            // documento. Sem ela, um cliente que renovasse o documento e caísse
+            // no mesmo marco (ex.: 9 dias de novo) seria barrado como repetido
+            // e nunca mais receberia o aviso. É a mesma regra da dedupe em
+            // qa_vencimentos_alertas_enviados, que já usa data_referencia.
+            idempotencyKey: `qa-venc-${c.fonte}-${c.ref_id}-${c.marco}-${c.data_validade}`,
             templateData,
           });
           if (!res.ok) throw new Error(res.error);

@@ -24,6 +24,7 @@ import { template as novaContratacaoAdmin } from './nova-contratacao-admin.tsx'
 import { template as documentacaoCompleta } from './documentacao-completa.tsx'
 import { template as processoProntoProtocolar } from './processo-pronto-protocolar.tsx'
 import { template as vencimentoDocumento } from './vencimento-documento.tsx'
+import { template as documentoMudancaFaixa } from './documento-mudanca-faixa.tsx'
 import { template as prazoProcessual } from './prazo-processual.tsx'
 import { template as gteAlertaCliente } from './gte-alerta-cliente.tsx'
 import { template as gteAlertaEquipe } from './gte-alerta-equipe.tsx'
@@ -128,6 +129,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'documentacao-completa': documentacaoCompleta,
   // Alertas / vencimentos
   'vencimento-documento': vencimentoDocumento,
+  'documento-mudanca-faixa': documentoMudancaFaixa,
   'prazo-processual': prazoProcessual,
   'gte-alerta-cliente': gteAlertaCliente,
   'exame-vencimento': exameVencimento,
