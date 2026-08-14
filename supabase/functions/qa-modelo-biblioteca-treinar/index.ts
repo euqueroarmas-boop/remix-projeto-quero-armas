@@ -11,6 +11,7 @@
 //  5. Grava em qa_documentos_modelos_aprovados (tipo_documento = codigo)
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { gerarEmbedding, explicarFalhaEmbedding } from "../_shared/embedding.ts";
 // @ts-ignore esm.sh fornece tipos mínimos
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 
@@ -84,23 +85,6 @@ async function ocrImagem(bytes: Uint8Array, mime: string, key: string): Promise<
   }
 }
 
-async function gerarEmbedding(texto: string, key: string): Promise<number[] | null> {
-  try {
-    const trimmed = (texto || "").slice(0, 8000);
-    if (trimmed.length < 20) return null;
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-      body: JSON.stringify({ model: "google/text-embedding-004", input: trimmed }),
-    });
-    if (!resp.ok) return null;
-    const j = await resp.json();
-    const v = j?.data?.[0]?.embedding;
-    return Array.isArray(v) ? v : null;
-  } catch {
-    return null;
-  }
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -142,7 +126,11 @@ Deno.serve(async (req) => {
 
     const textoNorm = normalizar(texto).slice(0, 12000);
     const palavrasChave = topKeywords(textoNorm, 40);
-    const embedding = await gerarEmbedding(textoNorm, lovableKey);
+    // Embedding LOCAL. Falha nao e mais silenciosa: volta em `ia_aviso`.
+    const emb = await gerarEmbedding(textoNorm);
+    const embedding = emb.ok ? emb.vetor : null;
+    const embeddingAviso = emb.ok ? null : explicarFalhaEmbedding(emb.motivo);
+    if (!emb.ok) console.warn("[biblioteca-treinar] embedding falhou:", emb.motivo);
 
     const { data: novo, error: insErr } = await supabase
       .from("qa_documentos_modelos_aprovados")
@@ -167,6 +155,7 @@ Deno.serve(async (req) => {
       modelo_id: novo.id,
       deterministico: palavrasChave.length > 0,
       ia: !!embedding,
+      ia_aviso: embeddingAviso,
       palavras_chave: palavrasChave.length,
     });
   } catch (e) {

@@ -13,6 +13,7 @@
 //  7. Marca qa_processo_documentos.usado_como_modelo = true.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { gerarEmbedding, explicarFalhaEmbedding } from "../_shared/embedding.ts";
 // @ts-ignore esm.sh fornece tipos mínimos
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 
@@ -69,35 +70,12 @@ function topKeywords(texto: string, max = 30): string[] {
     .map(([k]) => k);
 }
 
-async function gerarEmbedding(texto: string, lovableKey: string): Promise<number[] | null> {
-  try {
-    const trimmed = (texto || "").slice(0, 8000);
-    if (trimmed.length < 20) return null;
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
-      body: JSON.stringify({ model: "google/text-embedding-004", input: trimmed }),
-    });
-    if (!resp.ok) {
-      console.warn("[modelo-aprovado] embedding falhou:", resp.status, await resp.text());
-      return null;
-    }
-    const j = await resp.json();
-    const v = j?.data?.[0]?.embedding;
-    return Array.isArray(v) ? v : null;
-  } catch (e) {
-    console.warn("[modelo-aprovado] embedding erro:", e);
-    return null;
-  }
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
     const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!lovableKey) return json({ error: "LOVABLE_API_KEY não configurada" }, 500);
 
     const guard = await (await import("../_shared/qaAuth.ts")).requireQAStaff(req);
     if (!guard.ok) return guard.response;
@@ -148,7 +126,12 @@ Deno.serve(async (req) => {
 
     const textoNorm = normalizar(texto).slice(0, 12000);
     const palavrasChave = topKeywords(textoNorm, 40);
-    const embedding = await gerarEmbedding(textoNorm, lovableKey);
+    // Embedding LOCAL. Se falhar, o modelo AINDA e gravado (o trabalho de
+    // aprovacao nao se perde), mas a falha volta para a tela em vez de sumir.
+    const emb = await gerarEmbedding(textoNorm);
+    const embedding = emb.ok ? emb.vetor : null;
+    const embeddingAviso = emb.ok ? null : explicarFalhaEmbedding(emb.motivo);
+    if (!emb.ok) console.warn("[modelo-aprovado] embedding falhou:", emb.motivo);
 
     // 2) Insere modelo
     const { data: novo, error: insErr } = await supabase
@@ -191,7 +174,7 @@ Deno.serve(async (req) => {
       ator: "equipe",
     }).then(() => {}, () => {}); // não bloqueia se evento falhar
 
-    return json({ ok: true, modelo_id: novo.id, com_embedding: !!embedding, palavras_chave: palavrasChave.length });
+    return json({ ok: true, modelo_id: novo.id, com_embedding: !!embedding, embedding_aviso: embeddingAviso, palavras_chave: palavrasChave.length });
   } catch (e) {
     console.error("[modelo-aprovado] erro:", e);
     return json({ error: e instanceof Error ? e.message : "Erro inesperado" }, 500);

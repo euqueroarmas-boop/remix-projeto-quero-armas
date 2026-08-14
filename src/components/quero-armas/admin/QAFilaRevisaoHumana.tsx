@@ -632,6 +632,7 @@ function ProcessosDeferidos() {
     setPromovendoId(proc.id);
     let ok = 0;
     let fail = 0;
+    let semIa = 0;
     for (const d of candidatos) {
       try {
         const { data, error } = await supabase.functions.invoke("qa-modelo-aprovado-criar", {
@@ -642,6 +643,7 @@ function ProcessosDeferidos() {
         });
         if (error) throw error;
         if ((data as any)?.error) throw new Error((data as any).error);
+        if ((data as any)?.com_embedding === false) semIa++;
         ok++;
       } catch (e) {
         console.warn("promoção falhou", d.id, e);
@@ -651,6 +653,9 @@ function ProcessosDeferidos() {
     setPromovendoId(null);
     if (ok > 0) toast.success(`${ok} documento(s) promovido(s) a modelo de treino.`);
     if (fail > 0) toast.error(`${fail} falha(s) ao promover.`);
+    // Promovido não significa treinado: sem a referência de IA o modelo não
+    // entra na comparação. Antes esse caso passava contado como sucesso puro.
+    if (semIa > 0) toast.warning(`${semIa} promovido(s) SEM referência de IA — não entram na comparação.`);
     await carregar();
   };
 

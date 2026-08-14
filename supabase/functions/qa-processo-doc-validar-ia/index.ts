@@ -8,6 +8,7 @@
 //  - NUNCA aprova por presunção.
 
 import { createClient } from "npm:@supabase/supabase-js@2.49.1";
+import { gerarEmbedding as gerarEmbeddingLocal } from "../_shared/embedding.ts";
 // `unpdf` é uma porta de pdfjs-dist sem dependências de canvas/Node,
 // pensada para edge runtimes (Deno/Workers/Bun). Usamos só `extractText`
 // para ler a camada de texto nativa de PDFs (Receita Federal, Detran,
@@ -42,27 +43,6 @@ function normalizarTexto(s: string): string {
     .replace(/\s+/g, " ").trim();
 }
 
-async function gerarEmbedding(texto: string, lovableKey: string): Promise<number[] | null> {
-  try {
-    const trimmed = (texto || "").slice(0, 8000);
-    if (trimmed.length < 20) return null;
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/embeddings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${lovableKey}` },
-      body: JSON.stringify({ model: "google/text-embedding-004", input: trimmed }),
-    });
-    if (!resp.ok) {
-      console.warn("[validar-ia] embedding falhou:", resp.status);
-      return null;
-    }
-    const j = await resp.json();
-    const v = j?.data?.[0]?.embedding;
-    return Array.isArray(v) ? v : null;
-  } catch (e) {
-    console.warn("[validar-ia] embedding erro:", e);
-    return null;
-  }
-}
 
 /**
  * Busca os top-3 modelos aprovados do mesmo tipo e retorna o melhor.
@@ -1328,7 +1308,13 @@ Deno.serve(async (req) => {
       } catch { textoParaModelo = ""; }
     }
     const textoNormParaModelo = normalizarTexto(textoParaModelo).slice(0, 12000);
-    const embeddingDoc = await gerarEmbedding(textoNormParaModelo, lovableKey);
+    const embResultado = await gerarEmbeddingLocal(textoNormParaModelo);
+    if (!embResultado.ok) {
+      // Sem embedding nao ha comparacao contra modelo. Registrar o motivo: o
+      // silencio aqui foi o que escondeu a falha por meses.
+      console.warn("[validar-ia] embedding falhou:", embResultado.motivo);
+    }
+    const embeddingDoc = embResultado.ok ? embResultado.vetor : null;
     const cfg = await carregarConfigTipo(supabase, doc.tipo_documento);
     const matchModelo = await compararContraModelos(
       supabase, embeddingDoc, textoNormParaModelo, doc.tipo_documento,

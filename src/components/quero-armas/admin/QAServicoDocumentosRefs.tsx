@@ -177,7 +177,16 @@ export default function QAServicoDocumentosRefs({ servicoId, tipoDocumento }: Pr
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
-      toast.success("MODELO TREINADO — IA ATUALIZADA");
+      // O modelo e gravado mesmo se a referencia de IA falhar. Antes a tela
+      // dizia "IA ATUALIZADA" de qualquer jeito e a falha sumia.
+      if ((data as any)?.com_embedding === false) {
+        toast.warning(
+          "MODELO SALVO, MAS SEM REFERÊNCIA DE IA — " +
+            String((data as any)?.embedding_aviso ?? "motivo não informado").toUpperCase(),
+        );
+      } else {
+        toast.success("MODELO TREINADO — IA ATUALIZADA");
+      }
       void load();
     } catch (e: any) {
       toast.error("FALHA NO TREINAMENTO — " + (e?.message ?? "ERRO").toUpperCase());
@@ -452,7 +461,14 @@ function ImportadorProcessoAprovado({
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
 
-      toast.success("MODELO IMPORTADO E TREINADO");
+      if ((data as any)?.com_embedding === false) {
+        toast.warning(
+          "MODELO IMPORTADO, MAS SEM REFERÊNCIA DE IA — " +
+            String((data as any)?.embedding_aviso ?? "motivo não informado").toUpperCase(),
+        );
+      } else {
+        toast.success("MODELO IMPORTADO E TREINADO");
+      }
       onImported();
     } catch (e: any) {
       toast.error("FALHA — " + (e?.message ?? "ERRO").toUpperCase());
