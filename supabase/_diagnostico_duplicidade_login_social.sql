@@ -463,3 +463,55 @@ LEFT JOIN public.qa_contracts ct ON ct.venda_id = v.id
 WHERE upper(coalesce(v.status, '')) = 'PAGO'
   AND v.cobranca_confirmada_em > TIMESTAMPTZ '2026-05-14 19:46:03-03'
 ORDER BY v.cobranca_confirmada_em DESC;
+
+
+-- ═════════════════════════════════════════════════════════════════════════════
+-- BLOCO 9 — Alerta levantado pelo bloco 8: cadê os contratos das vendas novas?
+--
+-- O bloco 8 provou que o portal está de pé: 12 vendas pagas depois de 14/05,
+-- 12 provisionadas, com 1 a 2 segundos entre o pagamento e o acesso, a mais
+-- recente em 10/08. Caminho novo funcionando.
+--
+-- SÓ QUE nenhuma dessas 12 trouxe `contract_number` — o LEFT JOIN por
+-- `ct.venda_id = v.id` não achou contrato nenhum. Em maio era o contrário:
+-- a venda 999902 tinha contrato e não tinha portal. Agora tem portal e não
+-- aparece contrato vinculado à venda.
+--
+-- CUIDADO COM A CONCLUSÃO
+--   "Não há contrato com esta venda_id" NÃO é o mesmo que "não há contrato".
+--   O contrato pode existir amarrado só ao cliente, ou ter sido gerado por
+--   outro caminho (pedido dentro do portal) sem gravar venda_id. Este bloco
+--   separa os dois casos antes de acusar qualquer coisa.
+--
+-- COMO LER
+--   contratos_do_cliente > 0 e contratos_desta_venda = 0
+--     → o contrato existe, só não está amarrado à venda. Questão de vínculo.
+--   contratos_do_cliente = 0
+--     → o cliente pagou e não tem contrato nenhum. Aí sim é o espelho do
+--       problema de maio, e o trigger do contrato merece a mesma investigação
+--       que o do portal recebeu.
+-- ═════════════════════════════════════════════════════════════════════════════
+SELECT
+  v.cliente_id,
+  c.nome_completo,
+  v.id                              AS venda_id,
+  v.cobranca_confirmada_em,
+  c.portal_provisionado_em,
+  (SELECT count(*) FROM public.qa_contracts x WHERE x.venda_id   = v.id)      AS contratos_desta_venda,
+  (SELECT count(*) FROM public.qa_contracts x WHERE x.cliente_id = v.cliente_id) AS contratos_do_cliente,
+  (SELECT max(x.issued_at) FROM public.qa_contracts x
+     WHERE x.cliente_id = v.cliente_id)                                       AS ultimo_contrato_emitido_em,
+  (SELECT string_agg(DISTINCT x.status, ', ') FROM public.qa_contracts x
+     WHERE x.cliente_id = v.cliente_id)                                       AS status_dos_contratos,
+  CASE
+    WHEN (SELECT count(*) FROM public.qa_contracts x WHERE x.cliente_id = v.cliente_id) = 0
+      THEN 'SEM CONTRATO NENHUM — investigar trigger do contrato'
+    WHEN (SELECT count(*) FROM public.qa_contracts x WHERE x.venda_id = v.id) = 0
+      THEN 'contrato existe mas sem venda_id — questao de vinculo'
+    ELSE 'ok'
+  END                               AS leitura
+FROM public.qa_vendas v
+JOIN public.qa_clientes c ON c.id = v.cliente_id
+WHERE upper(coalesce(v.status, '')) = 'PAGO'
+  AND v.cobranca_confirmada_em > TIMESTAMPTZ '2026-05-14 19:46:03-03'
+ORDER BY v.cobranca_confirmada_em DESC;
