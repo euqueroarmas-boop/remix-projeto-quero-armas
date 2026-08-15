@@ -139,11 +139,17 @@ async function motivoDoErro(error: unknown): Promise<string> {
  */
 /** Quantos modelos por chamada. Baixo porque o modelo de IA pesa na função. */
 const LOTE = 3;
+/** Descanso entre lotes. Sem isso o worker não recicla e estoura recursos. */
+const PAUSA_MS = 5000;
+/** Quantas vezes insistir quando o worker responde que está sem recursos. */
+const MAX_TENTATIVAS_RECURSO = 8;
+
+const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => void }) {
   const [pendentes, setPendentes] = useState<number | null>(null);
   const [gerando, setGerando] = useState(false);
-  const [progresso, setProgresso] = useState<{ feitos: number; restantes: number } | null>(null);
+  const [progresso, setProgresso] = useState<{ feitos: number; restantes: number; descansando: boolean } | null>(null);
 
   const contar = useCallback(async () => {
     const { count } = await supabase
@@ -172,17 +178,12 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
       let accessToken = sessaoAtual.session?.access_token;
       if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
 
-      const invocar = async () =>
-        supabase.functions.invoke("qa-modelo-aprovado-criar", {
-          body: { backfill: true, limite: LOTE },
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-
-      let totalGerados = 0;
-      const todasFalhas: Array<{ motivo: string }> = [];
-
-      // Teto de voltas: protege contra laço infinito se nada mais avançar.
-      for (let volta = 0; volta < 40; volta++) {
+      const chamarLote = async () => {
+        const invocar = () =>
+          supabase.functions.invoke("qa-modelo-aprovado-criar", {
+            body: { backfill: true, limite: LOTE },
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
         let { data, error } = await invocar();
         if (error && String((error as any)?.context?.status ?? "") === "401") {
           const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
@@ -192,19 +193,47 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         }
         if (error) throw new Error(await motivoDoErro(error));
         if ((data as any)?.error) throw new Error((data as any).error);
+        return data as { gerados?: number; restantes?: number; falhas?: Array<{ motivo: string }> };
+      };
 
-        const gerados = Number((data as any)?.gerados ?? 0);
-        const restantes = Number((data as any)?.restantes ?? 0);
-        const falhas = ((data as any)?.falhas ?? []) as Array<{ motivo: string }>;
+      let totalGerados = 0;
+      const todasFalhas: Array<{ motivo: string }> = [];
+      let semRecurso = 0;
+
+      for (let volta = 0; volta < 60; volta++) {
+        let resposta: Awaited<ReturnType<typeof chamarLote>>;
+        try {
+          resposta = await chamarLote();
+        } catch (e: any) {
+          const msg = String(e?.message ?? "");
+          // WORKER_RESOURCE_LIMIT não é defeito: o worker ainda está carregado
+          // do lote anterior. Descansar e insistir resolve — era o que o
+          // usuário fazia à mão, clicando de novo a cada poucos segundos.
+          if (msg.includes("WORKER_RESOURCE_LIMIT") && semRecurso < MAX_TENTATIVAS_RECURSO) {
+            semRecurso++;
+            setProgresso({ feitos: totalGerados, restantes: pendentes ?? 0, descansando: true });
+            await pausa(PAUSA_MS * 2);
+            continue;
+          }
+          throw e;
+        }
+
+        semRecurso = 0;
+        const gerados = Number(resposta?.gerados ?? 0);
+        const restantes = Number(resposta?.restantes ?? 0);
+        todasFalhas.push(...(resposta?.falhas ?? []));
         totalGerados += gerados;
-        todasFalhas.push(...falhas);
 
-        setProgresso({ feitos: totalGerados, restantes });
+        setProgresso({ feitos: totalGerados, restantes, descansando: false });
         await contar();
 
         if (restantes === 0) break;
-        // Nenhum avanço nesta volta: insistir só repetiria a mesma falha.
+        // Volta sem nenhum ganho e sem erro de recurso: insistir repetiria a
+        // mesma falha. Para e mostra o motivo.
         if (gerados === 0) break;
+
+        setProgresso({ feitos: totalGerados, restantes, descansando: true });
+        await pausa(PAUSA_MS);
       }
 
       if (totalGerados > 0) toast.success(`${totalGerados} referência(s) de IA gerada(s).`);
@@ -246,7 +275,9 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
         {gerando
           ? progresso
-            ? `Gerando… ${progresso.feitos} feitos, ${progresso.restantes} restantes`
+            ? progresso.descansando
+              ? `Aguardando… ${progresso.feitos} feitos, ${progresso.restantes} restantes`
+              : `Gerando… ${progresso.feitos} feitos, ${progresso.restantes} restantes`
             : "Gerando…"
           : "Gerar referências"}
       </Button>
