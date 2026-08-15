@@ -27,6 +27,8 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Arsenal weapon image policy](mem://features/quero-armas/arsenal-weapon-image-policy) — Regra absoluta de fundo transparente, limpeza de pixels residuais, gravações de fábrica e enquadramento por tipo de arma.
 - [QA Doc Center Baseline](mem://features/quero-armas/document-center-baseline) — CONGELADO: 8 certidões granulares, dispensado_grupo, validação IA, holerite atual/antigo, auditoria imutável. Não alterar sem autorização.- [P0 Senha GOV Postmortem](mem://tech/security/p0-incident-postmortem) — Reconciliação P0 + UNIQUE(cliente_ativo) + revelação manual obrigatória, sempre filtrar consolidado_em IS NULL
 
+- [Embedding local gte-small](mem://tech/quero-armas/embedding-local-gte-small) — Embedding roda LOCAL no runtime do Supabase (384 dim). Proibido /v1/embeddings do gateway (não existe) e proibido pedir vetor a modelo de chat. Falha nunca é silenciosa; backfill em lote de 3.
+
 - [Doc Approval Flow](mem://features/quero-armas/doc-approval-flow) — Fluxo bidirecional admin↔portal qa_documentos_cliente: status pendente/aprovado/reprovado, Realtime, soft-delete, query keys ['cliente-documentos', clienteId]
 - [QA Admin Premium Light Mandate](mem://style/quero-armas/admin-premium-light-mandate) — Padrão branco premium obrigatório em TODAS as telas internas/autenticadas (admin, operacional E portal do cliente); exceções APENAS para site público, landing e arsenal digital público
 - [QA Portal Light](mem://style/quero-armas/client-portal-light-mandate) — Portal do Cliente / Arsenal Inteligente é Premium Light. data-tactical-portal foi neutralizado em src/index.css; não recriar regras dark
