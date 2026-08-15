@@ -20,7 +20,7 @@ import {
 import { logSistema } from "@/lib/logSistema";
 import { HUB_CATEGORIAS, listTiposByCategoria } from "@/lib/quero-armas/documentosHubCatalogo";
 import {
-  montarLinhaEntrega, contarAnotacoes, type EntregaItem,
+  montarLinhaEntrega, contarAnotacoes, DOCS_CONTRATUAIS, type EntregaItem,
 } from "@/lib/quero-armas/hubEntregaAuditoria";
 import {
   posicaoProtocolo, compararProtocolo, nomeArquivoDossie, GRUPOS_PROTOCOLO,
@@ -193,20 +193,156 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     },
   });
 
-  // Exigências reais do cliente — base para auditar a ordem de entrega.
+  // Exigências reais do cliente — base para auditar a ordem de entrega e, desde
+  // a separação por serviço, também para descobrir QUAL processo consumiu cada
+  // documento do Hub (processo_id + metadados do reaproveitamento).
   const { data: exigencias = [] } = useQuery({
     queryKey: ["cliente-exigencias-entrega", clienteId],
     enabled: Boolean(clienteId),
     queryFn: async () => {
       const { data } = await supabase
         .from("qa_processo_documentos" as any)
-        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio, created_at")
+        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio, created_at, processo_id, metadados_documento_json")
         .eq("cliente_id", clienteId);
       return ((data as any[]) || []);
     },
   });
 
+  /**
+   * Serviços contratados — as abas do Hub. Um cliente pode ter mais de um
+   * serviço rodando ao mesmo tempo, e misturar os dossiês numa lista só faz a
+   * equipe conferir documento de um processo achando que é de outro.
+   *
+   * A aba nasce do PROCESSO (é o processo_id que os documentos referenciam).
+   * Serviço contratado que ainda não virou processo entra como aba vazia, para
+   * a equipe enxergar que ele existe e ainda não tem dossiê.
+   */
+  const { data: servicos = [] } = useQuery({
+    queryKey: ["cliente-hub-servicos", clienteId],
+    enabled: Boolean(clienteId),
+    queryFn: async () => {
+      const [{ data: procs }, { data: sols }] = await Promise.all([
+        supabase
+          .from("qa_processos" as any)
+          .select("id, servico_nome, status, venda_id, created_at")
+          .eq("cliente_id", clienteId)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("qa_solicitacoes_servico" as any)
+          .select("id, service_name, processo_id, venda_id, status_servico, arquivado, created_at")
+          .eq("cliente_id", clienteId)
+          .order("created_at", { ascending: true }),
+      ]);
+
+      const solicitacoes = ((sols as any[]) || []).filter((s) => !s.arquivado);
+      const abas = ((procs as any[]) || []).map((p) => {
+        const sol = solicitacoes.find((s) => s.processo_id === p.id);
+        return {
+          chave: String(p.id),
+          processoId: String(p.id),
+          nome: p.servico_nome || sol?.service_name || "Serviço sem nome",
+          status: p.status || sol?.status_servico || null,
+          vendaId: p.venda_id ?? sol?.venda_id ?? null,
+          semProcesso: false,
+        };
+      });
+
+      // Contratou, mas o processo ainda não foi gerado.
+      for (const s of solicitacoes) {
+        if (s.processo_id) continue;
+        abas.push({
+          chave: `solicitacao-${s.id}`,
+          processoId: "",
+          nome: s.service_name || "Serviço sem nome",
+          status: s.status_servico || null,
+          vendaId: s.venda_id ?? null,
+          semProcesso: true,
+        });
+      }
+      return abas;
+    },
+  });
+
+  /**
+   * Contratos assinados — card virtual da aba Contratual.
+   *
+   * Lidos direto de qa_contracts, sem virar linha em qa_documentos_cliente: o
+   * contrato é artefato da venda, não documento monitorado do checklist, e
+   * gravá-lo no Hub o exporia no portal do cliente. Como este componente só
+   * roda no painel, o contrato fica restrito à visão do admin.
+   */
+  const { data: contratos = [] } = useQuery({
+    queryKey: ["cliente-hub-contratos", clienteId],
+    enabled: Boolean(clienteId),
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("qa_contracts" as any)
+        .select("id, contract_number, status, validation_status, venda_id, customer_signed_pdf_path, customer_uploaded_at, customer_signature_validated_at, created_at")
+        .eq("cliente_id", clienteId)
+        .order("created_at", { ascending: false });
+      return ((data as any[]) || []).filter((c) => c.customer_signed_pdf_path);
+    },
+  });
+
+  /**
+   * Documento do Hub → processos que o consumiram.
+   *
+   * O vínculo não existe em qa_documentos_cliente (a tabela não tem
+   * processo_id); ele só aparece do lado do checklist, quando a exigência é
+   * satisfeita por um documento do Hub. Derivamos daí em vez de criar coluna
+   * nova — nada é gravado, e a conta se refaz sozinha a cada carregamento.
+   */
+  const consumoPorDoc = useMemo(() => {
+    const mapa = new Map<string, Set<string>>();
+    for (const ex of (exigencias as any[])) {
+      const meta = (ex?.metadados_documento_json && typeof ex.metadados_documento_json === "object")
+        ? ex.metadados_documento_json as Record<string, any>
+        : {};
+      const hubId = meta?.reaproveitamento?.documento_reaproveitado_id
+        ?? meta?.hub_documento_id
+        ?? meta?.documento_id
+        ?? null;
+      if (!hubId || !ex.processo_id) continue;
+      const chave = String(hubId);
+      if (!mapa.has(chave)) mapa.set(chave, new Set());
+      mapa.get(chave)!.add(String(ex.processo_id));
+    }
+    return mapa;
+  }, [exigencias]);
+
+  /**
+   * Aba de cada documento. Regras acordadas com a operação:
+   *   - peça contratual (contrato, procuração, comprovante de pagamento) →
+   *     "Contratual", porque pertence à venda e uma venda pode cobrir vários
+   *     serviços;
+   *   - reaproveitável/global, ou consumido por mais de um processo, ou ainda
+   *     não consumido por nenhum → "Gerais", aparecendo uma vez só;
+   *   - consumido por exatamente um processo → aba daquele serviço.
+   */
+  const abaDoDoc = useMemo(() => {
+    const mapa = new Map<string, string>();
+    for (const d of (docs as any[])) {
+      const tipo = String(d.tipo_documento || "").toLowerCase();
+      if (DOCS_CONTRATUAIS.has(tipo)) { mapa.set(d.id, "contratual"); continue; }
+      const ehGlobal = d.reaproveitavel_global === true
+        || String(d.escopo_documental || "").toLowerCase() === "global";
+      const processos = consumoPorDoc.get(String(d.id));
+      if (ehGlobal || !processos || processos.size !== 1) { mapa.set(d.id, "gerais"); continue; }
+      mapa.set(d.id, [...processos][0]);
+    }
+    return mapa;
+  }, [docs, consumoPorDoc]);
+
+  const [abaAtiva, setAbaAtiva] = useState<string>("todos");
   const [modo, setModo] = useState<"familia" | "entrega">("entrega");
+
+  const docsVisiveis = useMemo(() => {
+    if (abaAtiva === "todos") return docs as any[];
+    return (docs as any[]).filter((d) => abaDoDoc.get(d.id) === abaAtiva);
+  }, [docs, abaDoDoc, abaAtiva]);
+
+  const contarAba = (chave: string) =>
+    (docs as any[]).filter((d) => abaDoDoc.get(d.id) === chave).length;
 
   /**
    * Provas da EFETIVA NECESSIDADE (BO, inquérito, denúncia, medida protetiva,
@@ -248,16 +384,18 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     })),
     [provasCaso],
   );
+  // Linha do tempo e famílias respeitam a aba escolhida — conferir o dossiê de
+  // um serviço não pode trazer junto o documento de outro.
   const linhaEntrega = useMemo(
-    () => montarLinhaEntrega(docs as any[], exigencias as any[]),
-    [docs, exigencias],
+    () => montarLinhaEntrega(docsVisiveis, exigencias as any[]),
+    [docsVisiveis, exigencias],
   );
   const totalAnotacoes = useMemo(() => contarAnotacoes(linhaEntrega), [linhaEntrega]);
 
   // Agrupa por família documental (Bloco: empilhamento visual).
   const grupos = useMemo(
-    () => agruparDocumentosPorFamilia(docs as any[]),
-    [docs],
+    () => agruparDocumentosPorFamilia(docsVisiveis),
+    [docsVisiveis],
   );
 
   // Realtime: invalida cache quando documentos deste cliente mudam
@@ -422,6 +560,46 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     }
   };
 
+  /**
+   * Contrato assinado mora em `paid-contracts`, não em `qa-documentos` — o Hub
+   * inteiro assume o segundo bucket, então estas duas ações são separadas de
+   * propósito em vez de parametrizar as do documento comum.
+   */
+  const handleViewContrato = (ct: any) => {
+    const path = String(ct.customer_signed_pdf_path || "");
+    const fileName = `Contrato ${ct.contract_number || ""} - assinado.pdf`.replace(/\s+/g, " ").trim();
+    viewer.abrirStorage("paid-contracts", path, { fileName, title: fileName });
+    registrarAcesso("visualizado", {
+      id: ct.id,
+      tipo_documento: "contrato_assinado",
+      nome_documento: fileName,
+    });
+  };
+
+  const handleBaixarContrato = async (ct: any) => {
+    const path = String(ct.customer_signed_pdf_path || "");
+    if (!path) { toast.error("Contrato sem PDF assinado."); return; }
+    try {
+      const { data, error } = await supabase.storage.from("paid-contracts").download(path);
+      if (error || !data) throw error || new Error("Falha ao baixar");
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Contrato ${ct.contract_number || ct.id} - assinado.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      registrarAcesso("baixado", {
+        id: ct.id,
+        tipo_documento: "contrato_assinado",
+        nome_documento: `Contrato ${ct.contract_number || ct.id}`,
+      });
+    } catch (err: any) {
+      toast.error(err?.message || "Falha ao baixar o contrato.");
+    }
+  };
+
   /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
   const [baixandoZip, setBaixandoZip] = useState(false);
   const handleBaixarTudo = async () => {
@@ -544,7 +722,9 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     );
   }
 
-  if (docs.length === 0) {
+  // Cliente sem documento no Hub mas com contrato assinado não pode cair no
+  // estado vazio — é justamente o caso em que a aba Contratual tem conteúdo.
+  if (docs.length === 0 && contratos.length === 0) {
     if (!customerId) {
       return (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
@@ -578,7 +758,10 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           <span className="font-semibold text-slate-700">Hub do Cliente</span>
           <span className="text-slate-400">·</span>
           <span className="text-slate-500">
-            {grupos.length} família(s) · {docs.length} documento(s)
+            {grupos.length} família(s) ·{" "}
+            {abaAtiva === "todos"
+              ? `${docs.length} documento(s)`
+              : `${docsVisiveis.length} de ${docs.length} documento(s)`}
             {provasComoDocs.length > 0 && ` · ${provasComoDocs.length} prova(s) do caso`}
           </span>
         </div>
@@ -623,6 +806,120 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           )}
         </div>
       </div>
+
+      {/* Abas por serviço contratado. Um cliente pode ter dois processos
+          rodando ao mesmo tempo; sem isso os dois dossiês viram uma lista só. */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1.5">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 pr-1">
+          Serviço
+        </span>
+        {[
+          { chave: "todos", nome: "Todos", contagem: docs.length, extra: contratos.length },
+          { chave: "contratual", nome: "Contratual", contagem: contarAba("contratual"), extra: contratos.length },
+          ...(servicos as any[]).map((s) => ({
+            chave: s.chave,
+            nome: s.nome,
+            contagem: s.semProcesso ? 0 : contarAba(s.chave),
+            extra: 0,
+            semProcesso: s.semProcesso,
+          })),
+          { chave: "gerais", nome: "Gerais", contagem: contarAba("gerais"), extra: 0 },
+        ].map((aba: any) => {
+          const ativa = abaAtiva === aba.chave;
+          const total = aba.contagem + (aba.extra || 0);
+          return (
+            <button
+              key={aba.chave}
+              type="button"
+              onClick={() => setAbaAtiva(aba.chave)}
+              title={aba.semProcesso ? "Serviço contratado — processo ainda não gerado" : undefined}
+              className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                ativa
+                  ? "border-[#7A1F2B] bg-[#7A1F2B] text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+              }`}
+            >
+              {aba.nome}
+              <span className={ativa ? "text-white/80" : "text-slate-400"}>({total})</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {(abaAtiva === "todos" || abaAtiva === "contratual") && contratos.length > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+            Peças contratuais · contrato assinado ({contratos.length}) — visível apenas para a equipe
+          </div>
+          <ul className="space-y-1.5">
+            {(contratos as any[]).map((ct) => {
+              const validado = ct.status === "validated" || ct.validation_status === "valid";
+              const rejeitado = ct.status === "rejected" || ct.validation_status === "invalid";
+              const rotulo = validado ? "Validado" : rejeitado ? "Rejeitado" : "Em análise";
+              const cor = validado
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : rejeitado
+                  ? "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] text-[#7A1F2B]"
+                  : "border-amber-200 bg-amber-50 text-amber-700";
+              const quando = ct.customer_signature_validated_at || ct.customer_uploaded_at;
+              return (
+                <li key={ct.id} className="rounded-lg border border-slate-200 p-2.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800">
+                      Contrato assinado (Gov.br/ICP-Brasil)
+                    </span>
+                    <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${cor}`}>
+                      {rotulo}
+                    </span>
+                    {ct.contract_number && (
+                      <span className="text-[10px] text-slate-500">Nº {ct.contract_number}</span>
+                    )}
+                    {ct.venda_id && (
+                      <span className="text-[10px] text-slate-500">Venda {ct.venda_id}</span>
+                    )}
+                    {quando && (
+                      <span className="text-[10px] text-slate-500">
+                        {new Date(quando).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleViewContrato(ct)}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                    >
+                      <Eye className="h-3 w-3" /> Visualizar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleBaixarContrato(ct)}
+                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                    >
+                      <Download className="h-3 w-3" /> Baixar
+                    </button>
+                  </div>
+                  <p className="mt-1.5 rounded bg-slate-50 px-2 py-1 text-[10px] text-slate-500">
+                    <strong className="uppercase tracking-wider text-slate-600">Documento contratual</strong> — pertence à venda, não ao checklist do processo. Não aparece no portal do cliente.
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {abaAtiva !== "todos" && docsVisiveis.length === 0 && (
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center">
+          <FileText className="h-6 w-6 text-slate-300 mx-auto mb-1.5" />
+          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            Nenhum documento nesta aba
+          </div>
+          <p className="mt-1 text-[10px] text-slate-400">
+            Documentos reaproveitáveis e ainda não consumidos por um processo ficam em <strong>Gerais</strong>.
+          </p>
+        </div>
+      )}
 
       {modo === "entrega" && (
         <LinhaEntrega

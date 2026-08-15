@@ -53,8 +53,13 @@ export interface EntregaItem {
 const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 const ehCertidao = (t: string) => t.includes("certidao") || t.includes("antecedente");
 const ehPergunta = (t: string) => t.startsWith("pergunta_");
-/** Documentos que pertencem ao contrato, não ao checklist do processo. */
-const DOCS_CONTRATUAIS = new Set([
+/**
+ * Documentos que pertencem ao contrato, não ao checklist do processo.
+ *
+ * Exportado porque o Hub do admin usa a mesma lista para separar a aba
+ * "Contratual" — duas listas paralelas divergiriam no primeiro tipo novo.
+ */
+export const DOCS_CONTRATUAIS = new Set([
   "procuracao_assinada",
   "procuracao",
   "contrato_assinado",
