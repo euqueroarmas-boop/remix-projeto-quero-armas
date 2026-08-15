@@ -1,6 +1,13 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { valorAusente, normalizarAptidao } from "@/lib/quero-armas/valorAusente";
+import {
+  apagarArquivoRecusado,
+  checarArquivoRepetido,
+  mensagemArquivoRepetido,
+  registrarTentativaBloqueada,
+  type ArquivoRepetido,
+} from "@/lib/quero-armas/rastroTentativas";
 import { useCredenciadosPsico, type CredenciadoPsico } from "./AgendarExame/useCredenciadosPsico";
 import { toast } from "sonner";
 import {
@@ -1579,6 +1586,12 @@ export function ClienteDocsHubModal({
   const [comprovanteDocId, setComprovanteDocId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  /**
+   * Arquivo idêntico já existente no acervo deste cliente, detectado pelo eTag
+   * do Storage depois do upload. Quando preenchido, o documento NÃO é gravado:
+   * o arquivo recém-subido é apagado e a tentativa vai para a trilha.
+   */
+  const [arquivoRepetido, setArquivoRepetido] = useState<ArquivoRepetido | null>(null);
   /** true enquanto dispara o e-mail de recusa do botão "Enviar novamente". */
   const [enviandoNovamente, setEnviandoNovamente] = useState(false);
   /** Último motivo de rejeição já carimbado na tela (evita repetir o carimbo). */
@@ -1753,6 +1766,7 @@ export function ClienteDocsHubModal({
   // rejeição por duplicidade.
   useEffect(() => {
     docSalvoRef.current = false;
+    setArquivoRepetido(null);
   }, [file]);
 
   useEffect(() => {
@@ -4094,6 +4108,36 @@ export function ClienteDocsHubModal({
         storagePath = path;
         fileName = file.name;
         mime = file.type || null;
+
+        // ── ARQUIVO REPETIDO ────────────────────────────────────────────────
+        // A trava por TIPO não pega o mesmo PDF classificado sob tipos
+        // diferentes — foi assim que uma conta de consumo entrou como certidão
+        // militar e como comprovante de residência no mesmo dia (03/08/2026).
+        // A comparação aqui é do CONTEÚDO, pelo eTag que o Storage já guarda.
+        const repetido = await checarArquivoRepetido(path, qaClienteId ?? null, customerId ?? null);
+        if (repetido) {
+          const texto = mensagemArquivoRepetido(repetido, expectedTipoMeta?.label ?? null);
+          // Decisão do usuário: arquivo recusado é apagado na hora. A trilha
+          // guarda a identificação, não o conteúdo.
+          await apagarArquivoRecusado(path);
+          await registrarTentativaBloqueada({
+            qaClienteId: qaClienteId ?? null,
+            customerId: customerId ?? null,
+            codigo: "arquivo_repetido",
+            motivo: texto,
+            tipoPretendido: form.tipo_documento || null,
+            tipoLido: repetido.tipo_documento ?? null,
+            exigenciaAlvo: expectedTipoMeta?.value ?? null,
+            arquivoNome: file.name,
+            arquivoMime: file.type || null,
+            arquivoTamanho: file.size ?? null,
+            documentoAnteriorId: repetido.documento_id,
+            atorTipo: isStaff ? "admin" : "cliente",
+          });
+          setArquivoRepetido(repetido);
+          setSaving(false);
+          return;
+        }
       }
 
       /**
@@ -4925,6 +4969,16 @@ export function ClienteDocsHubModal({
                 <div>
                   <div className="font-bold uppercase tracking-[0.08em]">Etapa ainda bloqueada</div>
                   <div>{mensagemGrupoBloqueado}</div>
+                </div>
+              </div>
+            ) : arquivoRepetido ? (
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-red-600 bg-red-50 p-2 text-[10px] leading-snug text-red-900">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">
+                    Rejeitado · arquivo já enviado antes
+                  </div>
+                  <div>{mensagemArquivoRepetido(arquivoRepetido, expectedTipoMeta?.label ?? null)}</div>
                 </div>
               </div>
             ) : rejeitadoDuplicidade ? (
@@ -6075,6 +6129,7 @@ export function ClienteDocsHubModal({
           ) : (grupoBloqueadoTrava ||
               certidaoIncorreta ||
               rejeitadoDuplicidade ||
+              !!arquivoRepetido ||
               (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) ||
               notaTomadorParentesco) ? (
             <div className="flex gap-2.5">
