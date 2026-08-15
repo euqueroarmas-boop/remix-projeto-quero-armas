@@ -178,10 +178,15 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
       let accessToken = sessaoAtual.session?.access_token;
       if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
 
+      // IDs que falharam de forma definitiva. Vão junto a cada chamada para a
+      // função pular e o processo avançar, em vez de reencontrar sempre os
+      // mesmos e travar.
+      const idsFalhos = new Set<string>();
+
       const chamarLote = async () => {
         const invocar = () =>
           supabase.functions.invoke("qa-modelo-aprovado-criar", {
-            body: { backfill: true, limite: LOTE },
+            body: { backfill: true, limite: LOTE, excluir: [...idsFalhos] },
             headers: { Authorization: `Bearer ${accessToken}` },
           });
         let { data, error } = await invocar();
@@ -193,14 +198,19 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         }
         if (error) throw new Error(await motivoDoErro(error));
         if ((data as any)?.error) throw new Error((data as any).error);
-        return data as { gerados?: number; restantes?: number; falhas?: Array<{ motivo: string }> };
+        return data as {
+          gerados?: number;
+          restantes?: number;
+          falhas?: Array<{ id?: string; motivo: string }>;
+        };
       };
 
       let totalGerados = 0;
-      const todasFalhas: Array<{ motivo: string }> = [];
+      const todasFalhas: Array<{ id?: string; motivo: string }> = [];
       let semRecurso = 0;
 
-      for (let volta = 0; volta < 60; volta++) {
+      // 200 voltas x 3 por lote cobre com folga qualquer volume realista.
+      for (let volta = 0; volta < 200; volta++) {
         let resposta: Awaited<ReturnType<typeof chamarLote>>;
         try {
           resposta = await chamarLote();
@@ -221,16 +231,17 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         semRecurso = 0;
         const gerados = Number(resposta?.gerados ?? 0);
         const restantes = Number(resposta?.restantes ?? 0);
-        todasFalhas.push(...(resposta?.falhas ?? []));
+        const falhas = resposta?.falhas ?? [];
+        todasFalhas.push(...falhas);
         totalGerados += gerados;
+        // O que falhou sai da fila das próximas voltas — assim `restantes`
+        // sempre diminui e o laço termina sozinho.
+        for (const f of falhas) if (f.id) idsFalhos.add(f.id);
 
         setProgresso({ feitos: totalGerados, restantes, descansando: false });
         await contar();
 
         if (restantes === 0) break;
-        // Volta sem nenhum ganho e sem erro de recurso: insistir repetiria a
-        // mesma falha. Para e mostra o motivo.
-        if (gerados === 0) break;
 
         setProgresso({ feitos: totalGerados, restantes, descansando: true });
         await pausa(PAUSA_MS);

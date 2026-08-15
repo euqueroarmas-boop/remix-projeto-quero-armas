@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     const guard = await (await import("../_shared/qaAuth.ts")).requireQAStaff(req);
     if (!guard.ok) return guard.response;
 
-    const { documento_id, nome_modelo, observacoes, backfill, limite } = await req.json();
+    const { documento_id, nome_modelo, observacoes, backfill, limite, excluir } = await req.json();
 
     const supabase = createClient(url, service);
 
@@ -99,11 +99,27 @@ Deno.serve(async (req) => {
       // morreu depois de 2). Quem repete ate o fim e o cliente, chamando em
       // sequencia; aqui o teto e baixo por seguranca.
       const max = Math.min(Number(limite) || 3, 5);
-      const { data: pendentes, error: selErr } = await supabase
+
+      // IDs que ja falharam de forma definitiva (texto curto demais, por ex.).
+      // Sem isto a mesma leva voltaria a cada chamada e o processo nunca
+      // avancaria: era o motivo de eu ter de parar o laco quando um lote
+      // inteiro falhava.
+      const ignorar: string[] = Array.isArray(excluir)
+        ? excluir.filter((x: unknown) => typeof x === "string").slice(0, 500)
+        : [];
+      const listaIgnorar = ignorar.length
+        ? `(${ignorar.map((id) => `"${id}"`).join(",")})`
+        : null;
+
+      // `ativo = true` para bater com o que a comparacao realmente usa
+      // (match_qa_modelos_aprovados filtra ativo) e com a contagem da tela.
+      let consulta = supabase
         .from("qa_documentos_modelos_aprovados")
         .select("id, nome_modelo, texto_ocr_normalizado")
         .is("embedding_texto", null)
-        .limit(max);
+        .eq("ativo", true);
+      if (listaIgnorar) consulta = consulta.not("id", "in", listaIgnorar);
+      const { data: pendentes, error: selErr } = await consulta.limit(max);
       if (selErr) return json({ error: selErr.message }, 500);
 
       const alvos = pendentes ?? [];
@@ -127,10 +143,13 @@ Deno.serve(async (req) => {
         gerados++;
       }
 
-      const { count: restantes } = await supabase
+      let contagem = supabase
         .from("qa_documentos_modelos_aprovados")
         .select("id", { count: "exact", head: true })
-        .is("embedding_texto", null);
+        .is("embedding_texto", null)
+        .eq("ativo", true);
+      if (listaIgnorar) contagem = contagem.not("id", "in", listaIgnorar);
+      const { count: restantes } = await contagem;
 
       return json({
         ok: true,
