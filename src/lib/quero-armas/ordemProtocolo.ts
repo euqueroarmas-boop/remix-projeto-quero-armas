@@ -55,6 +55,22 @@ interface Regra {
   rotulo: string;
 }
 
+/**
+ * PENDÊNCIA — fase CAC (anotada em 15/08/2026).
+ *
+ * O escopo deste mapa hoje é DEFESA PESSOAL. Documentos de arma/acervo ainda
+ * não têm grupo e caem em "Grupo 9 — Outros" de propósito: `cr`, `craf`, `gt`,
+ * `gte`, `autorizacao_compra`, `nota_fiscal_arma` e as declarações de acervo
+ * CAC (guarda de acervo, DSA, endereço do acervo).
+ *
+ * "SINARM" é ambíguo e por isso não foi resolvido por conta própria: pode ser
+ * o SISTEMA da PF onde a arma é registrada, o SERVIÇO comprado pelo cliente
+ * (autorização de compra / posse, porte) ou o REGISTRO em si. O encadeamento
+ * real é autorização de compra → CRAF registrado no SINARM → GT para retirar a
+ * arma da loja. A entrada `sinarm` abaixo trata o tipo como requerimento, o que
+ * diverge do catálogo do Hub, onde `sinarm` é o CRAF da PF (`arma_acervo`).
+ * Decidir junto com a operação quando a fase CAC começar.
+ */
 const MAPA: Record<string, Regra> = {
   sinarm: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento do Sinarm" },
   requerimento_sinarm: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento do Sinarm" },
