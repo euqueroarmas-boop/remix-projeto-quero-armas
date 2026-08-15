@@ -76,6 +76,8 @@ const MAPA: Record<string, Regra> = {
   comprovante_efetiva_necessidade: { grupo: 1, ordem: 8, numero: "1.8", rotulo: "Comprovacao de efetiva necessidade" },
   documento_complementar_caso: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Documento complementar do caso" },
 
+  requerimento_de_posse_de_arma_de_fogo: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento de Posse de Arma de Fogo" },
+
   foto_3x4: { grupo: 2, ordem: 0, numero: "02", rotulo: "Foto 3x4" },
 
   cnh: { grupo: 3, ordem: 0, numero: "03", rotulo: "Documento de identidade" },
@@ -83,9 +85,16 @@ const MAPA: Record<string, Regra> = {
   rg: { grupo: 3, ordem: 0, numero: "03", rotulo: "Documento de identidade" },
   rg_com_cpf: { grupo: 3, ordem: 0, numero: "03", rotulo: "Documento de identidade" },
   identidade_funcional: { grupo: 3, ordem: 1, numero: "03", rotulo: "Identidade funcional" },
+  // Averbação de nome instrui a identificação civil — não é certidão de
+  // idoneidade, apesar do prefixo "certidao_" (que a regraIdoneidade pegaria).
+  certidao_alteracao_nome: { grupo: 3, ordem: 2, numero: "03", rotulo: "Certidao averbada de alteracao de nome" },
 
   comprovante_residencia: { grupo: 4, ordem: 0, numero: "04", rotulo: "Comprovante de residencia" },
   declaracao_residencia: { grupo: 4, ordem: 1, numero: "04", rotulo: "Declaracao de residencia" },
+  declaracao_responsavel_imovel: { grupo: 4, ordem: 2, numero: "04", rotulo: "Declaracao do responsavel pelo imovel" },
+  documento_identificacao_terceiro: { grupo: 4, ordem: 3, numero: "04", rotulo: "Identificacao do titular do comprovante" },
+
+  ctps: { grupo: 5, ordem: 0, numero: "05", rotulo: "Ocupacao licita - CTPS" },
 
   antecedentes_criminais: { grupo: 6, ordem: 0, numero: "06", rotulo: "AAC Policia Civil" },
   antecedentes_federal_trf3_regional: { grupo: 6, ordem: 1, numero: "07", rotulo: "Certidao Justica Federal TRF3" },
@@ -98,8 +107,13 @@ const MAPA: Record<string, Regra> = {
 
   laudo_psicologico: { grupo: 7, ordem: 0, numero: "13", rotulo: "Laudo psicologico" },
   exame_psicologico: { grupo: 7, ordem: 0, numero: "13", rotulo: "Laudo psicologico" },
+  atestado_aptidao_psicologica_instituicao: { grupo: 7, ordem: 0, numero: "13", rotulo: "Atestado de aptidao psicologica (instituicao)" },
   exame_tiro: { grupo: 7, ordem: 1, numero: "14", rotulo: "Exame de tiro" },
   laudo_tiro: { grupo: 7, ordem: 1, numero: "14", rotulo: "Exame de tiro" },
+  // Capacidade técnica É o exame de tiro (item 14 do dossiê). Sem estas duas
+  // linhas, o laudo caía em "Grupo 9 — Outros" na árvore e no ZIP.
+  laudo_capacidade_tecnica: { grupo: 7, ordem: 1, numero: "14", rotulo: "Atestado de capacidade tecnica" },
+  atestado_capacidade_tecnica_instituicao: { grupo: 7, ordem: 1, numero: "14", rotulo: "Atestado de capacidade tecnica (instituicao)" },
 
   contrato_assinado: { grupo: 8, ordem: 0, numero: "15", rotulo: "Contrato assinado" },
   procuracao_assinada: { grupo: 8, ordem: 1, numero: "16", rotulo: "Procuracao assinada" },
@@ -115,7 +129,7 @@ function regraOcupacao(tipo: string): Regra | null {
 
 /** Qualquer antecedente não mapeado ainda pertence à Idoneidade. */
 function regraIdoneidade(tipo: string): Regra | null {
-  if (!/^(antecedentes_|certidao_|declaracao_sem_inquerito|declaracao_idoneidade)/.test(tipo)) return null;
+  if (!/^(antecedentes_|certidao_|declaracao_sem_inquerito|declaracao_idoneidade|declaracao_homonimia)/.test(tipo)) return null;
   return { grupo: 6, ordem: 9, numero: "12", rotulo: tipo.replace(/_/g, " ") };
 }
 

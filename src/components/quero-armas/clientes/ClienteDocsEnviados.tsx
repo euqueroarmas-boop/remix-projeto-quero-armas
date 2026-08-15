@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ import {
 import {
   posicaoProtocolo, compararProtocolo, nomeArquivoDossie, GRUPOS_PROTOCOLO,
 } from "@/lib/quero-armas/ordemProtocolo";
+import {
+  montarArvoreExigencias, chaveExigencia, contarDocumentosArvore,
+  type NoExigencia, type NoGrupo, type SituacaoNo,
+} from "@/lib/quero-armas/arvoreExigencias";
 
 interface Props {
   cliente: any;
@@ -311,38 +315,70 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   }, [exigencias]);
 
   /**
-   * Aba de cada documento. Regras acordadas com a operação:
+   * Abas de cada documento — um documento pode pertencer a MAIS DE UMA.
+   *
+   * Regras acordadas com a operação:
    *   - peça contratual (contrato, procuração, comprovante de pagamento) →
    *     "Contratual", porque pertence à venda e uma venda pode cobrir vários
    *     serviços;
-   *   - reaproveitável/global, ou consumido por mais de um processo, ou ainda
-   *     não consumido por nenhum → "Gerais", aparecendo uma vez só;
-   *   - consumido por exatamente um processo → aba daquele serviço.
+   *   - documento consumido por um processo (vínculo gravado no checklist) →
+   *     aba daquele processo, e de todos os que o consumiram;
+   *   - sem vínculo gravado, mas o checklist de um processo EXIGE aquele tipo →
+   *     aba daquele processo. Sem esta regra o painel mentia: o motor de
+   *     reaproveitamento nem sempre grava `hub_documento_id`, e o dossiê inteiro
+   *     aparecia em "Gerais" com o serviço zerado.
+   *   - nenhum processo pede nem consumiu → "Gerais".
+   *
+   * `reaproveitavel_global` deixou de decidir a aba: a coluna nasce `true` por
+   * padrão (migration 20260617155836), então mandava TODO documento para
+   * "Gerais". Ela diz que o documento pode ser reusado em outro processo, não
+   * que ele deixou de pertencer ao processo que o exige.
    */
-  const abaDoDoc = useMemo(() => {
-    const mapa = new Map<string, string>();
+  const abasDoDoc = useMemo(() => {
+    // Slots exigidos por processo, na mesma chave canônica da árvore.
+    const slotsPorProcesso = new Map<string, Set<string>>();
+    for (const ex of (exigencias as any[])) {
+      if (!ex.processo_id) continue;
+      const pid = String(ex.processo_id);
+      if (!slotsPorProcesso.has(pid)) slotsPorProcesso.set(pid, new Set());
+      slotsPorProcesso.get(pid)!.add(chaveExigencia(ex.tipo_documento, ex.nome_documento));
+    }
+
+    const mapa = new Map<string, Set<string>>();
     for (const d of (docs as any[])) {
       const tipo = String(d.tipo_documento || "").toLowerCase();
-      if (DOCS_CONTRATUAIS.has(tipo)) { mapa.set(d.id, "contratual"); continue; }
-      const ehGlobal = d.reaproveitavel_global === true
-        || String(d.escopo_documental || "").toLowerCase() === "global";
-      const processos = consumoPorDoc.get(String(d.id));
-      if (ehGlobal || !processos || processos.size !== 1) { mapa.set(d.id, "gerais"); continue; }
-      mapa.set(d.id, [...processos][0]);
+      if (DOCS_CONTRATUAIS.has(tipo)) { mapa.set(d.id, new Set(["contratual"])); continue; }
+      const abas = new Set<string>(consumoPorDoc.get(String(d.id)) ?? []);
+      const chave = chaveExigencia(d.tipo_documento, d.nome_documento);
+      for (const [pid, slots] of slotsPorProcesso) {
+        if (slots.has(chave)) abas.add(pid);
+      }
+      mapa.set(d.id, abas.size > 0 ? abas : new Set(["gerais"]));
     }
     return mapa;
-  }, [docs, consumoPorDoc]);
+  }, [docs, consumoPorDoc, exigencias]);
 
   const [abaAtiva, setAbaAtiva] = useState<string>("todos");
-  const [modo, setModo] = useState<"familia" | "entrega">("entrega");
+  const [modo, setModo] = useState<"arvore" | "familia" | "entrega">("arvore");
 
   const docsVisiveis = useMemo(() => {
     if (abaAtiva === "todos") return docs as any[];
-    return (docs as any[]).filter((d) => abaDoDoc.get(d.id) === abaAtiva);
-  }, [docs, abaDoDoc, abaAtiva]);
+    return (docs as any[]).filter((d) => abasDoDoc.get(d.id)?.has(abaAtiva));
+  }, [docs, abasDoDoc, abaAtiva]);
 
   const contarAba = (chave: string) =>
-    (docs as any[]).filter((d) => abaDoDoc.get(d.id) === chave).length;
+    (docs as any[]).filter((d) => abasDoDoc.get(d.id)?.has(chave)).length;
+
+  /**
+   * Exigências do escopo aberto — a árvore de um serviço mostra o checklist
+   * DAQUELE processo. Em "Gerais" não há checklist: o que está lá é, por
+   * definição, o que nenhum processo pediu.
+   */
+  const exigenciasVisiveis = useMemo(() => {
+    if (abaAtiva === "todos") return exigencias as any[];
+    if (abaAtiva === "gerais" || abaAtiva === "contratual") return [];
+    return (exigencias as any[]).filter((ex) => String(ex.processo_id) === abaAtiva);
+  }, [exigencias, abaAtiva]);
 
   /**
    * Provas da EFETIVA NECESSIDADE (BO, inquérito, denúncia, medida protetiva,
@@ -391,6 +427,16 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     [docsVisiveis, exigencias],
   );
   const totalAnotacoes = useMemo(() => contarAnotacoes(linhaEntrega), [linhaEntrega]);
+
+  /**
+   * Árvore de exigências — a visão padrão. A raiz é o slot do checklist, não o
+   * arquivo: cada exigência aparece no seu grupo do protocolo, com o documento
+   * que a cumpre pendurado nela e os reenvios empilhados como histórico.
+   */
+  const arvore = useMemo(
+    () => montarArvoreExigencias(linhaEntrega, exigenciasVisiveis),
+    [linhaEntrega, exigenciasVisiveis],
+  );
 
   // Agrupa por família documental (Bloco: empilhamento visual).
   const grupos = useMemo(
@@ -710,7 +756,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       return;
     }
     if (abaAtiva === "contratual") {
-      const contratuais = pecasDoHub((docs as any[]).filter((d) => abaDoDoc.get(d.id) === "contratual"));
+      const contratuais = pecasDoHub((docs as any[]).filter((d) => abasDoDoc.get(d.id)?.has("contratual")));
       const assinados: PecaZip[] = (contratos as any[]).map((ct) => ({
         bucket: "paid-contracts",
         path: String(ct.customer_signed_pdf_path),
@@ -724,7 +770,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       return;
     }
     if (abaAtiva === "gerais") {
-      await zipDeItens(pecasDoHub((docs as any[]).filter((d) => abaDoDoc.get(d.id) === "gerais")), "Gerais");
+      await zipDeItens(pecasDoHub((docs as any[]).filter((d) => abasDoDoc.get(d.id)?.has("gerais"))), "Gerais");
       return;
     }
     const servico = (servicos as any[]).find((s) => s.chave === abaAtiva);
@@ -872,7 +918,16 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
             <button
               type="button"
+              onClick={() => setModo("arvore")}
+              title="Cada exigência do checklist no seu grupo do protocolo, com os reenvios empilhados"
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "arvore" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+            >
+              Árvore de exigências
+            </button>
+            <button
+              type="button"
               onClick={() => setModo("entrega")}
+              title="Ordem cronológica em que os arquivos chegaram"
               className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "entrega" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
             >
               Ordem de entrega
@@ -994,21 +1049,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                       </span>
                     )}
                   </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleViewContrato(ct)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                    >
-                      <Eye className="h-3 w-3" /> Visualizar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBaixarContrato(ct)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                    >
-                      <Download className="h-3 w-3" /> Baixar
-                    </button>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <Acao cor="ver" icon={<Eye className="h-3 w-3" />} onClick={() => handleViewContrato(ct)}>
+                      Visualizar
+                    </Acao>
+                    <SepAcao />
+                    <Acao cor="baixar" icon={<Download className="h-3 w-3" />} onClick={() => handleBaixarContrato(ct)}>
+                      Baixar
+                    </Acao>
                   </div>
                   <p className="mt-1.5 rounded bg-slate-50 px-2 py-1 text-[10px] text-slate-500">
                     <strong className="uppercase tracking-wider text-slate-600">Documento contratual</strong> — pertence à venda, não ao checklist do processo. Não aparece no portal do cliente.
@@ -1030,6 +1078,24 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             Documentos reaproveitáveis e ainda não consumidos por um processo ficam em <strong>Gerais</strong>.
           </p>
         </div>
+      )}
+
+      {modo === "arvore" && (
+        <ArvoreExigencias
+          grupos={arvore}
+          historicoReprovas={historicoReprovas as any}
+          onViewFile={handleViewFile}
+          onBaixar={handleBaixarDoc}
+          onAprovar={handleAprovar}
+          aprovandoId={aprovandoId}
+          onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
+          onDelete={handleDelete}
+          reprovandoId={reprovandoId}
+          motivoTmp={motivoTmp}
+          setMotivoTmp={setMotivoTmp}
+          confirmarReprovar={handleReprovar}
+          cancelarReprovar={() => setReprovandoId(null)}
+        />
       )}
 
       {modo === "entrega" && (
@@ -1102,21 +1168,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                       <span className="text-[10px] text-slate-500">{formatDate(p.data_fato)}</span>
                     )}
                   </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => handleViewFile(p.arquivo_storage_path, p)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                    >
-                      <Eye className="h-3 w-3" /> Visualizar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleBaixarDoc(p)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                    >
-                      <Download className="h-3 w-3" /> Baixar
-                    </button>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <Acao cor="ver" icon={<Eye className="h-3 w-3" />} onClick={() => handleViewFile(p.arquivo_storage_path, p)}>
+                      Visualizar
+                    </Acao>
+                    <SepAcao />
+                    <Acao cor="baixar" icon={<Download className="h-3 w-3" />} onClick={() => handleBaixarDoc(p)}>
+                      Baixar
+                    </Acao>
                   </div>
                 </li>
               );
@@ -1130,6 +1189,380 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
         source={viewer.source}
         title={viewer.title}
       />
+    </div>
+  );
+}
+
+// ============================================================================
+// Acao — ação em TEXTO clicável colorido.
+//
+// A fileira de botões em caixa competia com o conteúdo: cinco retângulos
+// cinzentos por documento, dezessete documentos na tela. Em texto, a cor passa
+// a ser o próprio significado da ação (ver, baixar, aprovar, rejeitar, excluir)
+// e a linha do documento volta a ser lida como informação, não como formulário.
+// ============================================================================
+const CORES_ACAO = {
+  ver: "text-sky-700 hover:text-sky-900",
+  baixar: "text-indigo-700 hover:text-indigo-900",
+  aprovar: "text-emerald-700 hover:text-emerald-900",
+  rejeitar: "text-amber-700 hover:text-amber-900",
+  excluir: "text-red-700 hover:text-red-900",
+  neutro: "text-slate-600 hover:text-slate-900",
+} as const;
+
+function Acao({
+  cor, onClick, disabled, title, icon, children,
+}: {
+  cor: keyof typeof CORES_ACAO;
+  onClick: () => void;
+  disabled?: boolean;
+  title?: string;
+  icon?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => { if (!disabled) onClick(); }}
+      disabled={disabled}
+      title={title}
+      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider underline-offset-2 transition ${
+        disabled
+          ? "text-slate-300 cursor-not-allowed"
+          : `${CORES_ACAO[cor]} hover:underline`
+      }`}
+    >
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+const SepAcao = () => <span className="text-slate-300 select-none">·</span>;
+
+// ============================================================================
+// ÁRVORE DE EXIGÊNCIAS — visão padrão do Hub
+// ============================================================================
+const SITUACAO_UI: Record<SituacaoNo, { label: string; chip: string; borda: string; ponto: string }> = {
+  aprovado: {
+    label: "Aprovado",
+    chip: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    borda: "border-emerald-300",
+    ponto: "bg-emerald-600",
+  },
+  em_analise: {
+    label: "Em análise",
+    chip: "border-amber-200 bg-amber-50 text-amber-700",
+    borda: "border-amber-300",
+    ponto: "bg-amber-500",
+  },
+  rejeitado: {
+    label: "Rejeitado",
+    chip: "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] text-[#7A1F2B]",
+    borda: "border-[#7A1F2B]/40",
+    ponto: "bg-[#7A1F2B]",
+  },
+  cumprida_no_processo: {
+    label: "Cumprida no processo",
+    chip: "border-sky-200 bg-sky-50 text-sky-700",
+    borda: "border-sky-300",
+    ponto: "bg-sky-600",
+  },
+  pendente: {
+    label: "Aguardando envio",
+    chip: "border-slate-200 bg-slate-50 text-slate-500",
+    borda: "border-slate-200 border-dashed",
+    ponto: "bg-slate-300",
+  },
+  fora_do_checklist: {
+    label: "Fora do checklist",
+    chip: "border-slate-200 bg-slate-50 text-slate-500",
+    borda: "border-slate-300",
+    ponto: "bg-slate-400",
+  },
+};
+
+interface AcoesDocProps {
+  historicoReprovas?: Record<string, { motivo: string | null; quando: string }[]>;
+  onViewFile: (path: string, doc?: any) => void;
+  onBaixar: (doc: any) => void;
+  onAprovar: (id: string) => void;
+  aprovandoId: string | null;
+  onReprovar: (id: string) => void;
+  onDelete: (id: string) => void;
+  reprovandoId: string | null;
+  motivoTmp: string;
+  setMotivoTmp: (v: string) => void;
+  confirmarReprovar: (id: string) => void;
+  cancelarReprovar: () => void;
+}
+
+interface ArvoreProps extends AcoesDocProps {
+  grupos: NoGrupo[];
+}
+
+function ArvoreExigencias({ grupos, ...acoes }: ArvoreProps) {
+  if (grupos.length === 0) return null;
+  const totalDocs = contarDocumentosArvore(grupos);
+  const totalPendentes = grupos.reduce((a, g) => a + g.pendentes, 0);
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+          Árvore de exigências · {totalDocs} documento(s)
+          {totalPendentes > 0 && ` · ${totalPendentes} exigência(s) em aberto`}
+        </span>
+        <span className="inline-flex flex-wrap items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Aprovado</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Em análise</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#7A1F2B]" /> Rejeitado</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-slate-300" /> Aguardando</span>
+        </span>
+      </div>
+      <div className="space-y-2">
+        {grupos.map((g) => <GrupoArvore key={g.grupo} grupo={g} {...acoes} />)}
+      </div>
+    </div>
+  );
+}
+
+function GrupoArvore({ grupo, ...acoes }: { grupo: NoGrupo } & AcoesDocProps) {
+  const [aberto, setAberto] = useState(true);
+  const total = grupo.entregues + grupo.pendentes;
+  return (
+    <div className="rounded-lg border border-slate-200 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setAberto((v) => !v)}
+        className="w-full flex items-center justify-between gap-2 bg-slate-50/80 px-2.5 py-1.5 hover:bg-slate-100 transition"
+      >
+        <span className="flex items-center gap-1.5 min-w-0">
+          {aberto
+            ? <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            : <ChevronRight className="h-3.5 w-3.5 text-slate-400 shrink-0" />}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700 truncate">
+            Grupo {grupo.grupo} — {grupo.grupoNome}
+          </span>
+        </span>
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
+          {grupo.entregues}/{total} entregue(s)
+          {grupo.pendentes > 0 && (
+            <span className="ml-1.5 text-amber-700">{grupo.pendentes} em aberto</span>
+          )}
+        </span>
+      </button>
+      {aberto && (
+        <ul className="p-2 space-y-1.5">
+          {grupo.nos.map((no) => <NoArvore key={no.chave} no={no} {...acoes} />)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function NoArvore({ no, ...acoes }: { no: NoExigencia } & AcoesDocProps) {
+  const [verHistorico, setVerHistorico] = useState(false);
+  const ui = SITUACAO_UI[no.situacao];
+  const critico = no.anotacoes.some((a) => a.severidade === "critico");
+  const atencao = no.anotacoes.some((a) => a.severidade === "atencao");
+  const fundo = critico ? "bg-red-50/40" : atencao ? "bg-amber-50/30" : "bg-white";
+
+  return (
+    <li className={`rounded-md border-l-2 ${ui.borda} ${fundo} pl-2.5 pr-2 py-1.5`}>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        <span className={`h-2 w-2 rounded-full shrink-0 ${ui.ponto}`} />
+        <span className="text-[9px] font-mono font-bold text-slate-400">{no.numero}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-slate-800">
+          {no.rotulo}
+        </span>
+        <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${ui.chip}`}>
+          {ui.label}
+        </span>
+        {no.obrigatorio && !no.principal && no.situacao === "pendente" && (
+          <span className="px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] font-bold uppercase text-amber-700">
+            Obrigatório
+          </span>
+        )}
+        {no.historico.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setVerHistorico((v) => !v)}
+            className="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500 hover:text-slate-800 hover:underline underline-offset-2"
+            title="Versões anteriores deste mesmo item — reenvios do cliente"
+          >
+            {verHistorico ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            {no.historico.length} versão(ões) anterior(es)
+          </button>
+        )}
+      </div>
+
+      {no.principal ? (
+        <VersaoDoc versao={no.principal} principal {...acoes} />
+      ) : (
+        <p className="mt-1 text-[10px] text-slate-500 pl-4">
+          {no.situacao === "cumprida_no_processo"
+            ? "Exigência fechada no checklist do processo — o arquivo foi enviado direto no processo, não pelo Hub."
+            : "Nenhum documento entregue para esta exigência."}
+        </p>
+      )}
+
+      {verHistorico && no.historico.length > 0 && (
+        <div className="mt-1.5 ml-4 border-l border-dashed border-slate-200 pl-2.5 space-y-1.5">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+            Histórico do item
+          </div>
+          {no.historico.map((v) => (
+            <VersaoDoc key={v.doc.id} versao={v} principal={false} {...acoes} />
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** Uma versão do documento: metadados, ações em texto e anotações da auditoria. */
+function VersaoDoc({
+  versao, principal, historicoReprovas = {}, onViewFile, onBaixar, onAprovar,
+  aprovandoId, onReprovar, onDelete, reprovandoId, motivoTmp, setMotivoTmp,
+  confirmarReprovar, cancelarReprovar,
+}: { versao: { doc: any; item: any }; principal: boolean } & AcoesDocProps) {
+  const d = versao.doc;
+  const item = versao.item;
+  const isAprovado = d.status === "aprovado";
+  const isReprovado = d.status === "reprovado" || d.status === "rejeitado";
+  const reprovas = historicoReprovas[d.id] || [];
+
+  return (
+    <div className={`mt-1 pl-4 ${principal ? "" : "opacity-90"}`}>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500">
+        <span className={`px-1 py-0.5 rounded text-[9px] font-bold uppercase ${item?.origemLabel === "VIA PORTAL" ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-600"}`}>
+          {item?.origemLabel ?? "—"}
+        </span>
+        <span>{item?.quando ? item.quando.toLocaleString("pt-BR") : "—"}</span>
+        {item?.sequencia != null && (
+          <span className="text-slate-400" title="Posição na ordem em que o cliente entregou">
+            #{item.sequencia} na entrega
+          </span>
+        )}
+        {d.arquivo_nome && <span className="truncate max-w-[220px] text-slate-400">{d.arquivo_nome}</span>}
+      </div>
+
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+        {d.arquivo_storage_path ? (
+          <>
+            <Acao cor="ver" icon={<Eye className="h-3 w-3" />} onClick={() => onViewFile(d.arquivo_storage_path, d)}>
+              Visualizar
+            </Acao>
+            <SepAcao />
+            <Acao cor="baixar" icon={<Download className="h-3 w-3" />} onClick={() => onBaixar(d)}>
+              Baixar
+            </Acao>
+            <SepAcao />
+          </>
+        ) : (
+          <>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Sem arquivo anexado
+            </span>
+            <SepAcao />
+          </>
+        )}
+        <Acao
+          cor="aprovar"
+          disabled={isAprovado || !d.arquivo_storage_path || aprovandoId === d.id}
+          onClick={() => onAprovar(d.id)}
+          title={
+            isAprovado
+              ? "Este documento já está aprovado."
+              : !d.arquivo_storage_path
+                ? "Sem arquivo anexado — não é possível aprovar."
+                : "Aprovar manualmente — conferido pela equipe"
+          }
+          icon={aprovandoId === d.id
+            ? <Loader2 className="h-3 w-3 animate-spin" />
+            : <CheckCircle2 className="h-3 w-3" />}
+        >
+          {isAprovado ? "Aprovado" : "Aprovar"}
+        </Acao>
+        <SepAcao />
+        <Acao
+          cor="rejeitar"
+          disabled={isReprovado}
+          onClick={() => onReprovar(d.id)}
+          title={isReprovado ? "Este documento já foi rejeitado." : "Rejeitar com motivo"}
+          icon={<XCircle className="h-3 w-3" />}
+        >
+          {isReprovado ? "Rejeitado" : "Rejeitar"}
+        </Acao>
+        <SepAcao />
+        <Acao cor="excluir" icon={<Trash2 className="h-3 w-3" />} onClick={() => onDelete(d.id)}>
+          Excluir
+        </Acao>
+      </div>
+
+      {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
+        <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+            Motivo da rejeição
+          </div>
+          <ul className="mt-0.5 space-y-0.5">
+            {(reprovas.length > 0
+              ? reprovas
+              : [{ motivo: d.motivo_reprovacao, quando: d.reprovado_em }]
+            ).map((r: any, i: number) => (
+              <li key={i} className="text-[10px] leading-snug text-[#7A1F2B]">
+                {r.quando && (
+                  <span className="font-bold">{new Date(r.quando).toLocaleString("pt-BR")} · </span>
+                )}
+                {r.motivo || "Motivo não informado."}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {reprovandoId === d.id && !isReprovado && (
+        <div className="mt-1.5 rounded border border-amber-200 bg-amber-50 p-2">
+          <textarea
+            value={motivoTmp}
+            onChange={(e) => setMotivoTmp(e.target.value)}
+            rows={2}
+            placeholder="POR QUE ESTÁ SENDO REJEITADO? O CLIENTE RECEBE ESTA EXPLICAÇÃO."
+            className="w-full rounded border border-amber-200 bg-white p-2 text-[11px] text-slate-800"
+          />
+          <div className="mt-1.5 flex items-center gap-2">
+            <Acao
+              cor="rejeitar"
+              disabled={motivoTmp.trim().length < 5}
+              onClick={() => confirmarReprovar(d.id)}
+              icon={<XCircle className="h-3 w-3" />}
+            >
+              Confirmar rejeição
+            </Acao>
+            <SepAcao />
+            <Acao cor="neutro" onClick={cancelarReprovar}>Cancelar</Acao>
+          </div>
+        </div>
+      )}
+
+      {(item?.anotacoes?.length ?? 0) > 0 && (
+        <ul className="mt-1.5 space-y-1">
+          {item.anotacoes.map((a: any, i: number) => (
+            <li
+              key={i}
+              className={`rounded border px-2 py-1 text-[10px] leading-snug ${
+                a.severidade === "critico"
+                  ? "border-red-200 bg-red-50 text-red-800"
+                  : a.severidade === "atencao"
+                    ? "border-amber-200 bg-amber-50 text-amber-800"
+                    : "border-slate-200 bg-slate-50 text-slate-600"
+              }`}
+            >
+              <strong className="uppercase tracking-wider">{a.titulo}</strong> — {a.detalhe}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -1226,33 +1659,30 @@ function LinhaEntrega({
                       {it.quando ? it.quando.toLocaleString("pt-BR") : "—"}
                     </span>
                   </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
                     {d.arquivo_storage_path ? (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => onViewFile(d.arquivo_storage_path, d)}
-                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                        >
-                          <Eye className="h-3 w-3" /> Visualizar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onBaixar(d)}
-                          className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
-                        >
-                          <Download className="h-3 w-3" /> Baixar
-                        </button>
+                        <Acao cor="ver" icon={<Eye className="h-3 w-3" />} onClick={() => onViewFile(d.arquivo_storage_path, d)}>
+                          Visualizar
+                        </Acao>
+                        <SepAcao />
+                        <Acao cor="baixar" icon={<Download className="h-3 w-3" />} onClick={() => onBaixar(d)}>
+                          Baixar
+                        </Acao>
+                        <SepAcao />
                       </>
                     ) : (
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                        Sem arquivo anexado
-                      </span>
+                      <>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Sem arquivo anexado
+                        </span>
+                        <SepAcao />
+                      </>
                     )}
-                    <button
-                      type="button"
+                    <Acao
+                      cor="aprovar"
                       disabled={isAprovado || !d.arquivo_storage_path || aprovandoId === d.id}
-                      onClick={() => { if (!isAprovado && d.arquivo_storage_path) onAprovar(d.id); }}
+                      onClick={() => onAprovar(d.id)}
                       title={
                         isAprovado
                           ? "Este documento já está aprovado."
@@ -1260,37 +1690,26 @@ function LinhaEntrega({
                             ? "Sem arquivo anexado — não é possível aprovar."
                             : "Aprovar manualmente — conferido pela equipe"
                       }
-                      className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
-                        isAprovado || !d.arquivo_storage_path
-                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed"
-                          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400"
-                      }`}
-                    >
-                      {aprovandoId === d.id
+                      icon={aprovandoId === d.id
                         ? <Loader2 className="h-3 w-3 animate-spin" />
                         : <CheckCircle2 className="h-3 w-3" />}
+                    >
                       {isAprovado ? "Aprovado" : "Aprovar"}
-                    </button>
-                    <button
-                      type="button"
+                    </Acao>
+                    <SepAcao />
+                    <Acao
+                      cor="rejeitar"
                       disabled={isReprovado}
-                      onClick={() => { if (!isReprovado) onReprovar(d.id); }}
+                      onClick={() => onReprovar(d.id)}
                       title={isReprovado ? "Este documento já foi rejeitado." : "Rejeitar com motivo"}
-                      className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
-                        isReprovado
-                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed"
-                          : "border-amber-200 bg-amber-50 text-amber-700"
-                      }`}
+                      icon={<XCircle className="h-3 w-3" />}
                     >
-                      <XCircle className="h-3 w-3" /> {isReprovado ? "Rejeitado" : "Rejeitar"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDelete(d.id)}
-                      className="inline-flex items-center gap-1 rounded border border-red-200 bg-red-50 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-red-700"
-                    >
-                      <Trash2 className="h-3 w-3" /> Excluir
-                    </button>
+                      {isReprovado ? "Rejeitado" : "Rejeitar"}
+                    </Acao>
+                    <SepAcao />
+                    <Acao cor="excluir" icon={<Trash2 className="h-3 w-3" />} onClick={() => onDelete(d.id)}>
+                      Excluir
+                    </Acao>
                   </div>
                   {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
                     <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
@@ -1324,21 +1743,16 @@ function LinhaEntrega({
                         className="w-full rounded border border-amber-200 bg-white p-2 text-[11px] text-slate-800"
                       />
                       <div className="mt-1.5 flex gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => confirmarReprovar(d.id)}
+                        <Acao
+                          cor="rejeitar"
                           disabled={motivoTmp.trim().length < 5}
-                          className="rounded bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-50"
+                          onClick={() => confirmarReprovar(d.id)}
+                          icon={<XCircle className="h-3 w-3" />}
                         >
                           Confirmar rejeição
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelarReprovar}
-                          className="rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-600"
-                        >
-                          Cancelar
-                        </button>
+                        </Acao>
+                        <SepAcao />
+                        <Acao cor="neutro" onClick={cancelarReprovar}>Cancelar</Acao>
                       </div>
                     </div>
                   )}
