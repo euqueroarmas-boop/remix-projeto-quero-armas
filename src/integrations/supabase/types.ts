@@ -13402,6 +13402,7 @@ export type Database = {
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
+          p_criar_se_nao_encontrar?: boolean
           p_email?: string
           p_nome?: string
           p_telefone?: string
@@ -13772,7 +13773,10 @@ export type Database = {
         Args: { p_catalogo_slug: string; p_cliente_id: number }
         Returns: Json
       }
-      qa_vincular_por_cpf: { Args: { _cpf: string }; Returns: Json }
+      qa_vincular_por_cpf: {
+        Args: { _cpf: string; _data_nascimento?: string }
+        Returns: Json
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
