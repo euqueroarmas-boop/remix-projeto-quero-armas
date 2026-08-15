@@ -127,33 +127,39 @@ const MAPA: Record<string, Regra> = {
   procuracao_assinada: { grupo: 8, ordem: 1, numero: "16", rotulo: "Procuracao assinada" },
   comprovante_pagamento: { grupo: 8, ordem: 2, numero: "17", rotulo: "Comprovante de pagamento do contrato" },
 
-  // ── ARMA / ACERVO — o CRAF e os dois sistemas ────────────────────────────
+  // ── ARMA / ACERVO — o CRAF é UM tipo só ──────────────────────────────────
   //
-  // O Brasil tem DOIS sistemas de registro de arma, e o documento que sai de
-  // ambos se chama CRAF. O que muda é o sistema em que a arma está registrada:
+  // Existe um único documento de registro de arma: o CRAF. O que varia não é o
+  // tipo, e sim dois ATRIBUTOS da arma, que já têm coluna própria no banco:
   //
-  //   SINARM — Polícia Federal. Defesa pessoal. Lei 10.826/2003 (Estatuto do
-  //            Desarmamento) e IN DG/PF 201/2021.
-  //   SIGMA  — Exército Brasileiro. Acervo CAC (caçador, atirador,
-  //            colecionador). Decreto 11.615/2023.
+  //   SISTEMA    → `qa_cliente_armas_manual.sistema` (CHECK 'SINARM' | 'SIGMA'),
+  //                com `numero_sinarm` / `numero_sigma`.
+  //                SINARM = Polícia Federal (Lei 10.826/2003, IN DG/PF 201/2021);
+  //                SIGMA  = Exército Brasileiro (Decreto 11.615/2023).
+  //   FINALIDADE → `qa_clientes.entrada_finalidade_arma`
+  //                (CHECK 'defesa_pessoal' | 'caca' | 'tiro_esportivo' |
+  //                'colecionamento').
   //
-  // COMO ESTÁ HOJE, na prática: a análise dos pedidos de CAC passou para a
-  // Polícia Federal, mas a EMISSÃO continua saindo em nome do Exército e o
-  // documento sai como SIGMA. Mudou a equipe que analisa, não o sistema que
-  // emite — por isso o CRAF de acervo continua sendo um documento SIGMA.
+  // Por isso `sinarm` e `craf` compartilham rótulo, grupo e ordem: são o MESMO
+  // documento. `sinarm` sobrevive só como grafia legada do tipo (a constraint
+  // `qa_doc_cliente_tipo_check` ainda aceita as duas), e o Arsenal já trata
+  // `["craf","sinarm"]` como equivalentes. Quem responde "qual sistema?" e
+  // "qual finalidade?" são os campos acima, nunca o tipo do documento.
   //
-  // "SINARM" também é usado como nome do SERVIÇO que o cliente compra
-  // (autorização de compra / posse, porte). Nada disso é o requerimento: ele
-  // tem os tipos próprios logo acima (`requerimento_sinarm`,
-  // `requerimento_de_posse_de_arma_de_fogo`).
+  // COMO ESTÁ HOJE: a análise dos pedidos de CAC passou para a Polícia Federal,
+  // mas a EMISSÃO continua saindo em nome do Exército e o documento sai como
+  // SIGMA. Mudou a equipe que analisa, não o sistema que emite.
   //
-  // POSIÇÃO NO DOSSIÊ: o CRAF é o produto final do SEGUNDO processo. O
-  // primeiro (autorização de compra / posse) se encerra com a autorização; só
-  // então abre o processo de registro, que termina com a emissão do CRAF. Ou
-  // seja, o CRAF é RESULTADO, não peça do dossiê de aquisição — por isso os
-  // dois ficam fora dos grupos 1..8.
-  sinarm: { grupo: 9, ordem: 0, numero: "99", rotulo: "CRAF SINARM (Policia Federal) - defesa pessoal" },
-  craf: { grupo: 9, ordem: 1, numero: "99", rotulo: "CRAF SIGMA (Exercito) - acervo CAC" },
+  // "SINARM" também nomeia o SERVIÇO que o cliente compra (autorização de
+  // compra / posse, porte) — e nunca o requerimento, que tem os tipos próprios
+  // logo acima (`requerimento_sinarm`, `requerimento_de_posse_de_arma_de_fogo`).
+  //
+  // POSIÇÃO NO DOSSIÊ: o CRAF é o produto final do SEGUNDO processo. O primeiro
+  // (autorização de compra / posse) encerra com a autorização; só então abre o
+  // processo de registro, que termina com a emissão do CRAF. É RESULTADO, não
+  // peça do dossiê de aquisição — por isso fica fora dos grupos 1..8.
+  craf: { grupo: 9, ordem: 0, numero: "99", rotulo: "CRAF - Certificado de Registro de Arma de Fogo" },
+  sinarm: { grupo: 9, ordem: 0, numero: "99", rotulo: "CRAF - Certificado de Registro de Arma de Fogo" },
 };
 
 /** Documentos de ocupação lícita são muitos e todos entram no grupo 5, item 05. */

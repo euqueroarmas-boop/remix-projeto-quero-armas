@@ -93,21 +93,23 @@ describe("Árvore de exigências do Hub", () => {
     expect(no.exigencias).toHaveLength(0);
   });
 
-  it("separa o CRAF pelos dois sistemas: SINARM (PF) e SIGMA (Exército)", () => {
-    // O documento é o CRAF nos dois casos; o que muda é o sistema de registro.
-    // O CAC hoje é analisado pela PF, mas emitido em nome do Exército — o
-    // documento continua saindo como SIGMA.
+  it("trata registro de arma como UM tipo: o CRAF", () => {
+    // Sistema (SINARM/PF x SIGMA/Exército) e finalidade (defesa pessoal, caça,
+    // tiro esportivo, colecionamento) são atributos da ARMA, com coluna própria
+    // no banco — não tipos de documento diferentes.
     const sinarm = posicaoProtocolo("sinarm");
     const craf = posicaoProtocolo("craf");
-    expect(sinarm.rotulo).toContain("SINARM");
-    expect(sinarm.rotulo).toContain("defesa pessoal");
-    expect(craf.rotulo).toContain("SIGMA");
-    expect(craf.rotulo).toContain("CAC");
-    expect(sinarm.rotulo).not.toBe(craf.rotulo);
+    expect(sinarm.rotulo).toBe(craf.rotulo);
+    expect(craf.rotulo).toContain("CRAF");
+    expect(sinarm.grupo).toBe(craf.grupo);
+    expect(sinarm.ordem).toBe(craf.ordem);
+
+    // Mesmo slot na árvore: `sinarm` é grafia legada do mesmo documento.
+    expect(chaveExigencia("sinarm")).toBe("craf");
+    expect(chaveExigencia("craf")).toBe("craf");
 
     // O CRAF é resultado do 2º processo (registro), não peça do dossiê de
     // aquisição — fica fora dos grupos 1..8.
-    expect(sinarm.grupo).toBe(9);
     expect(craf.grupo).toBe(9);
 
     // O requerimento nunca foi este tipo: tem os seus.

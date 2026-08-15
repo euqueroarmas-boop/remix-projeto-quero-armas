@@ -81,6 +81,17 @@ export function familiaDocumento(tipo?: string | null): FamiliaDocumento {
   if (raw === "comprovante_endereco" || raw === "comprovante_de_endereco") return "comprovante_residencia";
   if (raw === "comprovante_de_residencia") return "comprovante_residencia";
 
+  // Registro de arma é UM documento — o CRAF. O que varia são atributos da
+  // arma, com coluna própria: o SISTEMA (`qa_cliente_armas_manual.sistema`:
+  // SINARM/PF ou SIGMA/Exército) e a FINALIDADE
+  // (`qa_clientes.entrada_finalidade_arma`: defesa pessoal, caça, tiro
+  // esportivo, colecionamento). `sinarm` é grafia legada do mesmo tipo — o
+  // Arsenal já trata `["craf","sinarm"]` como equivalentes.
+  //
+  // O qualificador de arma (número de série) continua valendo logo abaixo, para
+  // que CRAFs de armas DIFERENTES não sejam empilhados como versões um do outro.
+  if (raw === "sinarm") return "craf";
+
   return raw;
 }
 
