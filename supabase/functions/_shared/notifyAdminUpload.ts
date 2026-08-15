@@ -10,6 +10,11 @@ export type AdminUploadTipo = "contrato" | "procuracao" | "documento_processo";
 
 export interface NotifyAdminUploadArgs {
   tipo: AdminUploadTipo;
+  /**
+   * id do cliente já resolvido pelo chamador. Aceita tanto qa_clientes.id
+   * quanto id_legado — normalizamos para o id canônico aqui dentro.
+   */
+  cliente_id?: number | string | null;
   cliente_nome?: string | null;
   cliente_email?: string | null;
   cliente_cpf?: string | null;
@@ -40,16 +45,49 @@ export async function notifyAdminUpload(args: NotifyAdminUploadArgs) {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Resolução do cliente — o histórico do admin filtra por qa_clientes.id,
+    // então uma notificação com cliente_id NULL fica órfã: aparece no sino
+    // geral e some da aba "Eventos de Documentos" do cliente.
+    //
+    // Duas armadilhas já vistas em produção, ambas tratadas aqui:
+    //   1) CPF gravado com máscara em qa_clientes ("459.305.848-18"). A busca
+    //      antiga usava só dígitos e não achava ninguém — TODA notificação de
+    //      contrato assinado nascia órfã.
+    //   2) Chamador que só tem id_legado em mãos (fluxo QA-puro). Convertemos
+    //      para o id canônico antes de gravar.
     let clienteId: number | null = null;
-    const cpf = (args.cliente_cpf || "").replace(/\D/g, "");
-    if (cpf.length === 11) {
+
+    const hint = Number(args.cliente_id ?? NaN);
+    if (Number.isFinite(hint)) {
       const { data } = await supabase
         .from("qa_clientes")
         .select("id")
-        .eq("cpf", cpf)
+        .or(`id.eq.${hint},id_legado.eq.${hint}`)
         .limit(1)
         .maybeSingle();
       clienteId = (data as { id?: number } | null)?.id ?? null;
+    }
+
+    if (!clienteId) {
+      const cpf = (args.cliente_cpf || "").replace(/\D/g, "");
+      if (cpf.length === 11) {
+        // Casa com as duas formas de gravação: só dígitos e mascarada.
+        const mascarado = `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9)}`;
+        const { data } = await supabase
+          .from("qa_clientes")
+          .select("id")
+          .or(`cpf.eq.${cpf},cpf.eq.${mascarado}`)
+          .limit(1)
+          .maybeSingle();
+        clienteId = (data as { id?: number } | null)?.id ?? null;
+      }
+    }
+
+    if (!clienteId) {
+      console.warn(
+        "[notifyAdminUpload] cliente não resolvido — notificação ficará fora do histórico do cliente",
+        { tipo: args.tipo, cliente_id: args.cliente_id ?? null, cpf: args.cliente_cpf ?? null },
+      );
     }
 
     const nome = args.cliente_nome || "Cliente";

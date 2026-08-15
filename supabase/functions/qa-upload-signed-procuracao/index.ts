@@ -245,13 +245,14 @@ Deno.serve(async (req) => {
     const clienteIdProc = Number((procuracao as { cliente_id?: number | string }).cliente_id);
     const { data: cli } = await sb
       .from("qa_clientes")
-      .select("nome_completo, email, cpf")
+      .select("id, nome_completo, email, cpf")
       .or(`id.eq.${clienteIdProc},id_legado.eq.${clienteIdProc}`)
       .limit(1)
       .maybeSingle();
     const { notifyAdminUpload } = await import("../_shared/notifyAdminUpload.ts");
     await notifyAdminUpload({
       tipo: "procuracao",
+      cliente_id: (cli as { id?: number } | null)?.id ?? clienteIdProc,
       cliente_nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? null,
       cliente_email: (cli as { email?: string } | null)?.email ?? null,
       cliente_cpf: (cli as { cpf?: string } | null)?.cpf ?? null,
