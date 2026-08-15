@@ -65,6 +65,12 @@ project_id = "ogkltfqvzweeqkfmrzts"
   # requireQAStaff. O gateway não deve rejeitar previamente os JWTs modernos.
   [functions.qa-modelo-biblioteca-treinar]
     verify_jwt = false
+  # O SOFER (agente local de protocolo) chama de fora do navegador, sem sessão
+  # de usuário — autentica só pelo header x-internal-token. Se o gateway exigir
+  # JWT, a requisição morre antes de chegar em requireAdminOrInternal, que é
+  # quem de fato valida (comparação timing-safe).
+  [functions.qa-sofer-dossie]
+    verify_jwt = false
 
 [functions.send-transactional-email]
 verify_jwt = true
