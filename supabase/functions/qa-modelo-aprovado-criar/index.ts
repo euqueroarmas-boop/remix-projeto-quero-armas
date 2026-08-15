@@ -80,10 +80,52 @@ Deno.serve(async (req) => {
     const guard = await (await import("../_shared/qaAuth.ts")).requireQAStaff(req);
     if (!guard.ok) return guard.response;
 
-    const { documento_id, nome_modelo, observacoes } = await req.json();
-    if (!documento_id) return json({ error: "documento_id obrigatório" }, 400);
+    const { documento_id, nome_modelo, observacoes, backfill, limite } = await req.json();
 
     const supabase = createClient(url, service);
+
+    // ─── MODO BACKFILL ──────────────────────────────────────────────────
+    // Preenche o embedding dos modelos que ficaram sem ele enquanto a geracao
+    // falhava em silencio (20 de 20 ate 14/08/2026).
+    //
+    // Mora AQUI, e nao numa funcao propria, de proposito: uma funcao nova nao
+    // sobe junto com o site no fluxo do Lovable, e a chamada morre com "Failed
+    // to send a request to the Edge Function". Esta funcao ja esta publicada ha
+    // meses, entao o modo novo viaja junto com o codigo dela.
+    if (backfill === true) {
+      const max = Math.min(Number(limite) || 50, 200);
+      const { data: pendentes, error: selErr } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .select("id, nome_modelo, texto_ocr_normalizado")
+        .is("embedding_texto", null)
+        .limit(max);
+      if (selErr) return json({ error: selErr.message }, 500);
+
+      const alvos = pendentes ?? [];
+      let gerados = 0;
+      const falhas: Array<{ id: string; nome: string | null; motivo: string }> = [];
+
+      for (const m of alvos) {
+        const emb = await gerarEmbedding(String(m.texto_ocr_normalizado ?? ""));
+        if (!emb.ok) {
+          falhas.push({ id: m.id, nome: m.nome_modelo, motivo: explicarFalhaEmbedding(emb.motivo) });
+          continue;
+        }
+        const { error: updErr } = await supabase
+          .from("qa_documentos_modelos_aprovados")
+          .update({ embedding_texto: emb.vetor as unknown as string })
+          .eq("id", m.id);
+        if (updErr) {
+          falhas.push({ id: m.id, nome: m.nome_modelo, motivo: updErr.message });
+          continue;
+        }
+        gerados++;
+      }
+
+      return json({ ok: true, backfill: true, pendentes: alvos.length, gerados, falhas });
+    }
+
+    if (!documento_id) return json({ error: "documento_id obrigatório" }, 400);
 
     const { data: doc, error: docErr } = await supabase
       .from("qa_processo_documentos")

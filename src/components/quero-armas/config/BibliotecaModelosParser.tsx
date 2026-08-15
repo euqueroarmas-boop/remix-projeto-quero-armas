@@ -154,8 +154,11 @@ export default function BibliotecaModelosParser({
     setGerandoIa(true);
     try {
       const invocar = async (accessToken: string) =>
-        supabase.functions.invoke("qa-modelos-embedding-backfill", {
-          body: { limite: 200 },
+        // Vai em `qa-modelo-aprovado-criar` (publicada há meses) e não numa
+        // função nova: função nova não sobe junto com o site no Lovable, e a
+        // chamada morre com "Failed to send a request to the Edge Function".
+        supabase.functions.invoke("qa-modelo-aprovado-criar", {
+          body: { backfill: true, limite: 200 },
           headers: { Authorization: `Bearer ${accessToken}` },
         });
       const { data: sessaoAtual } = await supabase.auth.getSession();
@@ -292,13 +295,15 @@ export default function BibliotecaModelosParser({
           {modelos.map((m) => (
             <div
               key={m.id}
-              className="flex items-center gap-2 rounded-md border px-2 py-1.5"
+              // No celular os selos descem para a linha de baixo: lado a lado
+              // eles consumiam a largura toda e sobrava ~20px para o nome.
+              className="flex flex-wrap items-center gap-2 rounded-md border px-2 py-1.5"
               style={{ borderColor: "hsl(220 15% 92%)" }}
             >
               <FileCheck2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#059669" }} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-medium truncate text-slate-700">{m.nome_modelo}</p>
-                <p className="text-[10px] text-slate-400">
+              <div className="min-w-0 flex-1 basis-[60%] sm:basis-auto">
+                <p className="truncate text-[11px] font-medium text-slate-700">{m.nome_modelo}</p>
+                <p className="truncate text-[10px] text-slate-400">
                   {new Date(m.created_at).toLocaleDateString("pt-BR")}
                 </p>
               </div>
