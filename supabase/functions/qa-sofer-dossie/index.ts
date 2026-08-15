@@ -12,9 +12,16 @@
 //     1. JSON estruturado com os campos do formulário da PF
 //     2. Signed URLs de curta duração para baixar os documentos
 //
-// Autenticação: `requireAdminOrInternal` — mesmo padrão de
-// qa-processo-doc-validar-ia e outras. O SOFER manda o header
-// `x-internal-token`.
+// Autenticação: token DEDICADO (`SOFER_TOKEN`, header `x-sofer-token`).
+//
+// Deliberadamente NÃO reusamos INTERNAL_FUNCTION_TOKEN aqui. Aquele secret dá
+// acesso a 10 funções internas, incluindo o pipeline pós-pagamento
+// (_shared/qaPosPagamento.ts). O SOFER roda numa máquina pessoal, mais exposta
+// que o servidor — se o token dele vazar, o estrago tem que ficar limitado a
+// esta única função de LEITURA, não ao fluxo de pagamento.
+//
+// Admin logado também passa (via requireAdminOrInternal), para dar para testar
+// pelo painel sem precisar do token.
 //
 // IMPORTANTE — precedência de endereço NÃO é decidida aqui.
 // Quando `endereco_em_nome_de_terceiro` é true, existem dois endereços
@@ -29,10 +36,17 @@ const BUCKET_PADRAO = "qa-processo-docs";
 const BUCKET_FALLBACK = "qa-documentos";
 const SIGNED_URL_TTL_S = 600; // 10 min — tempo de baixar, não de guardar.
 
+// Herda o CORS compartilhado e libera o header próprio do SOFER.
+const corsHeaders = {
+  ...internalCorsHeaders,
+  "Access-Control-Allow-Headers":
+    `${internalCorsHeaders["Access-Control-Allow-Headers"]}, x-sofer-token`,
+};
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...internalCorsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
 
@@ -74,11 +88,36 @@ function blocoEndereco(c: Record<string, unknown>, p: "" | "2" | "responsavel_en
   };
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: internalCorsHeaders });
+/** Comparação em tempo constante — não vaza o token por timing. */
+function tokensIguais(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
-  const guard = await requireAdminOrInternal(req);
-  if (!guard.ok) return guard.response;
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // 1) Token dedicado do SOFER.
+  const esperado = Deno.env.get("SOFER_TOKEN");
+  const recebido = req.headers.get("x-sofer-token");
+  let via = "";
+
+  if (esperado && recebido && tokensIguais(esperado, recebido)) {
+    via = "sofer";
+  } else {
+    // 2) Admin logado — permite testar pelo painel sem o token.
+    const guard = await requireAdminOrInternal(req);
+    if (!guard.ok) {
+      return json(
+        { error: "Não autorizado. Envie x-sofer-token válido ou autentique como admin." },
+        401,
+      );
+    }
+    via = guard.via;
+  }
+  const guard = { via };
 
   let corpo: Record<string, unknown>;
   try {
