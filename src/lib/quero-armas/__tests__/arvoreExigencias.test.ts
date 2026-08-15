@@ -23,6 +23,9 @@ const exigencias = [
   { tipo_documento: "laudo_capacidade_tecnica", nome_documento: "Atestado de capacidade técnica", status: "em_analise", ordem: 14, obrigatorio: true, processo_id: "p1" },
   { tipo_documento: "comprovante_residencia", nome_documento: "Comprovante de residência", status: "pendente", ordem: 4, obrigatorio: true, processo_id: "p1" },
   { tipo_documento: "pergunta_possui_cr", nome_documento: "Possui CR?", status: "pendente", ordem: 1, processo_id: "p1" },
+  // Seletor de condição profissional fechado como `dispensado_grupo` sem que
+  // ninguém tenha escolhido a condição (caso Mizael, processo de 01/08/2026).
+  { tipo_documento: "renda_definir_condicao", nome_documento: "Defina sua condição profissional — COORDENADOR DE PRODUÇÃO", status: "dispensado_grupo", ordem: 20, obrigatorio: true, processo_id: "p1" },
 ];
 
 const arvore = montarArvoreExigencias(montarLinhaEntrega(docs, exigencias), exigencias);
@@ -110,6 +113,21 @@ describe("Árvore de exigências do Hub", () => {
     // O requerimento nunca foi este tipo: tem os seus.
     expect(posicaoProtocolo("requerimento_sinarm").grupo).toBe(1);
     expect(posicaoProtocolo("requerimento_de_posse_de_arma_de_fogo").grupo).toBe(1);
+  });
+
+  it("não deixa o seletor de condição profissional passar por exigência cumprida", () => {
+    // `dispensado_grupo` é status de cumprido no checklist, mas este item não é
+    // documento: enquanto ele existe, a condição não foi definida e nenhum
+    // comprovante de renda foi pedido. Grupo 5 tem que ficar em aberto.
+    const no = acharNo("renda_definir_condicao")!;
+    expect(no.itemDeFluxo).toBe(true);
+    expect(no.principal).toBeNull();
+    expect(no.situacao).toBe("pendente");
+
+    const grupo5 = arvore.find((g) => g.grupo === 5)!;
+    expect(grupo5.entregues).toBe(0);
+    expect(grupo5.pendentes).toBe(1);
+    expect(resumoSituacoes(grupo5.nos)).toEqual([{ situacao: "pendente", qtd: 1 }]);
   });
 
   it("resume as situações do grupo na ordem da legenda, sem zerados", () => {

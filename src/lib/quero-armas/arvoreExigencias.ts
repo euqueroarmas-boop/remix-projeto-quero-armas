@@ -36,6 +36,32 @@ const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
 const ehPergunta = (t: string) => t.startsWith("pergunta_");
 
 /**
+ * Itens de FLUXO: entram no checklist como se fossem documento, mas não têm
+ * arquivo nenhum para entregar — são o passo que LIBERA os documentos de
+ * verdade.
+ *
+ * `renda_definir_condicao` é o seletor de condição profissional. Ao escolher
+ * CLT / autônomo / empresário / aposentado / servidor, a edge function
+ * `qa-processo-set-condicao` APAGA este item e cria os comprovantes de renda
+ * daquela condição. Ou seja: se ele ainda está no checklist, a ocupação lícita
+ * está em aberto — não importa que status ele tenha no banco.
+ *
+ * Sem esta regra, o item marcado `dispensado_grupo` era lido como exigência
+ * cumprida e o grupo 5 aparecia "1/1 entregue" sem um único comprovante de
+ * renda no dossiê (caso Mizael, processo de 01/08/2026).
+ */
+const TIPOS_ITEM_FLUXO: Record<string, string> = {
+  renda_definir_condicao:
+    "Condição profissional ainda não definida no checklist do processo — enquanto ela não for escolhida, os comprovantes de renda (holerite, CTPS, funcional, CNPJ, extrato INSS) não chegam a ser pedidos ao cliente.",
+};
+
+export const ehItemDeFluxo = (tipo?: string | null) => norm(tipo) in TIPOS_ITEM_FLUXO;
+
+/** Por que este passo de fluxo segura o grupo — texto mostrado no nó. */
+export const explicacaoItemFluxo = (tipo?: string | null): string | null =>
+  TIPOS_ITEM_FLUXO[norm(tipo)] ?? null;
+
+/**
  * Chave que casa exigência e documento.
  *
  * Colapsa o que o checklist trata como UM slot:
@@ -88,6 +114,8 @@ export interface NoExigencia {
   exigencias: ExigenciaLike[];
   /** Processos que pedem este item. */
   processos: string[];
+  /** Passo de fluxo (seletor), não documento — ver TIPOS_ITEM_FLUXO. */
+  itemDeFluxo: boolean;
   principal: VersaoDocumento | null;
   historico: VersaoDocumento[];
   situacao: SituacaoNo;
@@ -131,6 +159,7 @@ function ordenarVersoes(versoes: VersaoDocumento[]): VersaoDocumento[] {
 function situacaoDoNo(
   principal: VersaoDocumento | null,
   exigencias: ExigenciaLike[],
+  itemDeFluxo: boolean,
 ): SituacaoNo {
   if (principal) {
     if (ehAprovado(principal.doc)) return "aprovado";
@@ -138,6 +167,9 @@ function situacaoDoNo(
     return "em_analise";
   }
   if (exigencias.length === 0) return "fora_do_checklist";
+  // Item de fluxo sem arquivo nunca é entrega: enquanto ele está no checklist,
+  // o grupo continua em aberto.
+  if (itemDeFluxo) return "pendente";
   if (exigencias.some((e) => isChecklistCumprido(e.status))) return "cumprida_no_processo";
   if (exigencias.some((e) => isChecklistEmAnalise(e.status))) return "em_analise";
   return "pendente";
@@ -202,6 +234,8 @@ export function montarArvoreExigencias(
       ?? exigenciasDoNo.find((e) => e.nome_documento)?.nome_documento
       ?? null;
     const pos = posicaoProtocolo(refTipo, refNome);
+    const itemDeFluxo =
+      !principal && exigenciasDoNo.some((e) => ehItemDeFluxo(e.tipo_documento));
 
     nos.push({
       chave,
@@ -214,9 +248,10 @@ export function montarArvoreExigencias(
       processos: [...new Set(
         exigenciasDoNo.map((e) => String((e as any).processo_id ?? "")).filter(Boolean),
       )],
+      itemDeFluxo,
       principal,
       historico,
-      situacao: situacaoDoNo(principal, exigenciasDoNo),
+      situacao: situacaoDoNo(principal, exigenciasDoNo, itemDeFluxo),
       anotacoes: principal?.item.anotacoes ?? [],
     });
   }

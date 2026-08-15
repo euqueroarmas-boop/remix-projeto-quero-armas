@@ -27,7 +27,7 @@ import {
 } from "@/lib/quero-armas/ordemProtocolo";
 import {
   montarArvoreExigencias, chaveExigencia, contarDocumentosArvore,
-  resumoSituacoes, ORDEM_SITUACAO,
+  resumoSituacoes, ORDEM_SITUACAO, explicacaoItemFluxo,
   type NoExigencia, type NoGrupo, type SituacaoNo,
 } from "@/lib/quero-armas/arvoreExigencias";
 
@@ -1385,6 +1385,12 @@ function GrupoArvore({ grupo, ...acoes }: { grupo: NoGrupo } & AcoesDocProps) {
 function NoArvore({ no, ...acoes }: { no: NoExigencia } & AcoesDocProps) {
   const [verHistorico, setVerHistorico] = useState(false);
   const ui = SITUACAO_UI[no.situacao];
+  // Passo de fluxo (seletor de condição profissional) não entrega arquivo: o
+  // chip "aguardando envio" mentiria — não há envio a fazer, há escolha.
+  const explicacaoFluxo = no.itemDeFluxo
+    ? explicacaoItemFluxo(no.exigencias.find((e) => e.tipo_documento)?.tipo_documento)
+    : null;
+  const rotuloSituacao = no.itemDeFluxo ? "Não definido" : ui.label;
   const critico = no.anotacoes.some((a) => a.severidade === "critico");
   const atencao = no.anotacoes.some((a) => a.severidade === "atencao");
   const fundo = critico ? "bg-red-50/40" : atencao ? "bg-amber-50/30" : "bg-white";
@@ -1398,7 +1404,7 @@ function NoArvore({ no, ...acoes }: { no: NoExigencia } & AcoesDocProps) {
           {no.rotulo}
         </span>
         <span className={`px-1.5 py-0.5 rounded border text-[9px] font-bold uppercase ${ui.chip}`}>
-          {ui.label}
+          {rotuloSituacao}
         </span>
         {no.obrigatorio && !no.principal && no.situacao === "pendente" && (
           <span className="px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-[9px] font-bold uppercase text-amber-700">
@@ -1422,9 +1428,10 @@ function NoArvore({ no, ...acoes }: { no: NoExigencia } & AcoesDocProps) {
         <VersaoDoc versao={no.principal} principal {...acoes} />
       ) : (
         <p className="mt-1 text-[10px] text-slate-500 pl-4">
-          {no.situacao === "cumprida_no_processo"
-            ? "Exigência fechada no checklist do processo — o arquivo foi enviado direto no processo, não pelo Hub."
-            : "Nenhum documento entregue para esta exigência."}
+          {explicacaoFluxo
+            ?? (no.situacao === "cumprida_no_processo"
+              ? "Exigência fechada no checklist do processo — o arquivo foi enviado direto no processo, não pelo Hub."
+              : "Nenhum documento entregue para esta exigência.")}
         </p>
       )}
 
