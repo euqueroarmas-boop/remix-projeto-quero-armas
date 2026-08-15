@@ -90,17 +90,26 @@ describe("Árvore de exigências do Hub", () => {
     expect(no.exigencias).toHaveLength(0);
   });
 
-  it("trata `sinarm` como registro da arma (CRAF), não como requerimento", () => {
-    // SINARM é o sistema onde a arma é registrada; o tipo_documento homônimo é
-    // o certificado emitido nele. O requerimento tem tipos próprios.
+  it("separa o CRAF pelos dois sistemas: SINARM (PF) e SIGMA (Exército)", () => {
+    // O documento é o CRAF nos dois casos; o que muda é o sistema de registro.
+    // O CAC hoje é analisado pela PF, mas emitido em nome do Exército — o
+    // documento continua saindo como SIGMA.
     const sinarm = posicaoProtocolo("sinarm");
-    expect(sinarm.grupo).toBe(9);
-    expect(sinarm.rotulo).toContain("Registro de Arma de Fogo");
+    const craf = posicaoProtocolo("craf");
+    expect(sinarm.rotulo).toContain("SINARM");
+    expect(sinarm.rotulo).toContain("defesa pessoal");
+    expect(craf.rotulo).toContain("SIGMA");
+    expect(craf.rotulo).toContain("CAC");
+    expect(sinarm.rotulo).not.toBe(craf.rotulo);
 
+    // O CRAF é resultado do 2º processo (registro), não peça do dossiê de
+    // aquisição — fica fora dos grupos 1..8.
+    expect(sinarm.grupo).toBe(9);
+    expect(craf.grupo).toBe(9);
+
+    // O requerimento nunca foi este tipo: tem os seus.
     expect(posicaoProtocolo("requerimento_sinarm").grupo).toBe(1);
     expect(posicaoProtocolo("requerimento_de_posse_de_arma_de_fogo").grupo).toBe(1);
-    // Acompanha o CRAF até a fase CAC definir o grupo dos documentos de arma.
-    expect(sinarm.grupo).toBe(posicaoProtocolo("craf").grupo);
   });
 
   it("resume as situações do grupo na ordem da legenda, sem zerados", () => {
