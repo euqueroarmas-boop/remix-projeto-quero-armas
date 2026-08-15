@@ -19,6 +19,10 @@
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import {
+  ehProtocoloDeCertidao,
+  mensagemProtocoloCertidao,
+} from "@/lib/quero-armas/protocoloCertidao";
 import { conferirCertidao, type CadastroConferencia } from "@/lib/quero-armas/conferenciaCertidao";
 import {
   STATUS_CHECKLIST_CUMPRIDO,
@@ -861,6 +865,18 @@ export async function lerDocumentoLocalmente(
   if (file.type !== "application/pdf") return { reconhecido: false, aprovado: false };
   try {
     const texto = await extrairTextoPdf(file);
+    // PROTOCOLO ≠ CERTIDÃO: o comprovante de pedido do portal do tribunal não
+    // é reconhecido por nenhum parser e, sem esta trava, seguia para a IA —
+    // que o classificava como a própria certidão (caso Mizael, 15/08/2026).
+    // Reconhecido e reprovado: não sobe, e o cliente recebe o motivo na hora.
+    if (ehProtocoloDeCertidao(texto)) {
+      return {
+        reconhecido: true,
+        aprovado: false,
+        tipoLido: "protocolo_processo",
+        motivo: mensagemProtocoloCertidao(texto),
+      };
+    }
     const doc = parseCertidao(texto);
     if (!doc) return { reconhecido: false, aprovado: false };
     const conf = conferirCertidao(doc, cadastro, texto);

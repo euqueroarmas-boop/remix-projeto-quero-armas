@@ -19,6 +19,11 @@ import { gerarEmbedding as gerarEmbeddingLocal } from "../_shared/embedding.ts";
 // @ts-ignore esm.sh fornece tipos mínimos
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 import { parseDanf3e, formatarContextoDanf3e, type DanF3eExtraido } from "../_shared/danf3eParser.ts";
+import {
+  detectarProtocoloCertidao,
+  mensagemProtocoloCertidao,
+  type ProtocoloCertidao,
+} from "../_shared/protocoloCertidao.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -695,6 +700,70 @@ Deno.serve(async (req) => {
       pdfTexto = await extractPdfText(supabase, path, paginasMaximas);
     }
     const usandoTextoPdf = isPdf && pdfTexto.length >= 40;
+
+    // ===== TRAVA DE PROTOCOLO: PEDIDO de certidão ≠ CERTIDÃO =====
+    // O comprovante de pedido do portal do tribunal traz o mesmo título, o
+    // mesmo órgão e a mesma qualificação da certidão — e a IA o aprovava como
+    // se fosse a certidão (caso Mizael, 15/08/2026). Decisão determinística,
+    // antes de gastar IA: protocolo NUNCA cumpre exigência de certidão.
+    const protocolo: ProtocoloCertidao = usandoTextoPdf
+      ? detectarProtocoloCertidao(pdfTexto)
+      : { ehProtocolo: false, marcadores: [] };
+    if (protocolo.ehProtocolo) {
+      const motivo = mensagemProtocoloCertidao(pdfTexto);
+      await supabase.from("qa_processo_documentos")
+        .update({
+          status: "invalido",
+          motivo_rejeicao: motivo,
+          validacao_ia_status: "bloqueado_pre_ia",
+          validacao_ia_erro: "protocolo_nao_certidao",
+          decisao_ia: "rejeitado_auto",
+          data_validacao: new Date().toISOString(),
+          dados_extraidos_json: {
+            documento_e_protocolo: true,
+            numero_pedido: protocolo.numero_pedido ?? null,
+            data_pedido: protocolo.data_pedido ?? null,
+            modelo_solicitado: protocolo.modelo_solicitado ?? null,
+            marcadores_protocolo: protocolo.marcadores,
+            lido_por: "parser",
+          },
+        })
+        .eq("id", documento_id);
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id, documento_id,
+        tipo_evento: "documento_rejeitado",
+        descricao: `${doc.nome_documento}: enviado o comprovante do PEDIDO da certidão, não a certidão emitida.`,
+        dados_json: {
+          motivo_codigo: "protocolo_nao_certidao",
+          numero_pedido: protocolo.numero_pedido ?? null,
+          marcadores: protocolo.marcadores,
+          tipo_documento: doc.tipo_documento,
+        },
+        ator: "sistema",
+      } as any);
+      try {
+        const ehCertidao =
+          String(doc.tipo_documento || "").startsWith("certidao_") ||
+          String(doc.tipo_documento || "").startsWith("antecedentes");
+        await supabase.functions.invoke("qa-processo-notificar", {
+          body: {
+            processo_id,
+            documento_id,
+            evento: ehCertidao ? "certidao_invalida" : "documento_invalido",
+            motivo,
+          },
+        });
+      } catch (e) { console.warn("[validar-ia] notificação protocolo falhou:", e); }
+      return json({
+        success: true,
+        status: "invalido",
+        aceito: false,
+        motivo_rejeicao: motivo,
+        erros: ["protocolo_nao_certidao"],
+        campos_extraidos: {},
+      });
+    }
+
     const modelo = isPdf ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
     const prefixoPagina1 = paginasMaximas === 1
       ? "ATENÇÃO: Este texto é extraído SOMENTE DA PÁGINA 1 do PDF (as demais páginas foram descartadas por conter apenas histórico de consumo).\n"

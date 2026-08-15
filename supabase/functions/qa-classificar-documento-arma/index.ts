@@ -25,6 +25,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 // @ts-ignore esm.sh fornece tipos mínimos para Deno Edge
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1?target=denonext";
 import { detectarEscopoCertidao } from "../_shared/escopoCertidao.ts";
+import {
+  detectarProtocoloCertidao,
+  mensagemProtocoloCertidao,
+} from "../_shared/protocoloCertidao.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -310,8 +314,16 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, orgao_emissor (federação/clube), data_emissao.",
   "",
   "=== DOCUMENTOS PROCESSUAIS ===",
-  "• PROTOCOLO_PROCESSO: protocolo de processo administrativo.",
-  "  Extrair: numero_documento (nº protocolo/processo), orgao_emissor, nome_completo (requerente), data_emissao.",
+  "• PROTOCOLO_PROCESSO: protocolo de processo administrativo OU comprovante de PEDIDO de certidão.",
+  "  Extrair: numero_documento (nº protocolo/pedido/processo), orgao_emissor, nome_completo (requerente), data_emissao.",
+  "  REGRA CRÍTICA — PEDIDO DE CERTIDÃO NÃO É CERTIDÃO: a tela/PDF que o portal do tribunal devolve ao",
+  "  cadastrar o pedido ('Cadastro de Pedido de Certidão', 'Número do Pedido', 'Data do Pedido',",
+  "  'Resumo do Pedido', 'Modelo: CERTIDÃO DE ...', 'seu pedido foi cadastrado com sucesso', 'prazo para",
+  "  liberação da certidão') é PROTOCOLO_PROCESSO — NUNCA ANTECEDENTES_* nem qualquer tipo de certidão,",
+  "  mesmo trazendo o nome do tribunal, o modelo da certidão pedida e a qualificação completa do",
+  "  requerente. A certidão emitida é outro documento: ela CERTIFICA (‘certifico’, ‘certificamos’, ‘dá",
+  "  fé’), informa o resultado da busca ('NADA CONSTA' / 'CONSTA') e traz número de certidão e código de",
+  "  autenticidade. Sem esses sinais, é pedido — classifique como PROTOCOLO_PROCESSO com confiança alta.",
   "• OFICIO: ofício administrativo emitido por órgão público.",
   "  Extrair: numero_documento (nº do ofício), orgao_emissor, data_emissao.",
   "• DESPACHO: despacho ou movimentação processual.",
@@ -931,6 +943,35 @@ Deno.serve(async (req) => {
     }
 
     const textoPdfNativo = await extractPdfTextFromDataUrl(imageDataUrl);
+
+    // ── TRAVA DE PROTOCOLO · PEDIDO de certidão ≠ CERTIDÃO (15/08/2026) ────
+    // Espelha src/lib/quero-armas/protocoloCertidao.ts. O comprovante de
+    // pedido do e-SAJ traz tribunal, "Modelo: CERTIDÃO DE EXECUÇÃO CRIMINAL" e
+    // a qualificação completa do requerente — sinais que levavam a IA a
+    // classificá-lo como a própria certidão, com confiança alta. Decisão
+    // determinística, antes da IA: protocolo é protocolo.
+    if (textoPdfNativo && textoPdfNativo.trim().length >= 40) {
+      const protocolo = detectarProtocoloCertidao(textoPdfNativo);
+      if (protocolo.ehProtocolo) {
+        return json({
+          tipoDetectado: "PROTOCOLO_PROCESSO",
+          confianca: 0,
+          camposExtraidos: {
+            numero_documento: protocolo.numero_pedido ?? "",
+            data_emissao: protocolo.data_pedido ?? "",
+            nome_documento: "Comprovante de pedido de certidão (protocolo)",
+          },
+          justificativa: mensagemProtocoloCertidao(textoPdfNativo),
+          divergenciaComSelecaoManual: true,
+          tipoSelecionadoNormalizado: normalizeTipoSelecionado(tipoSelecionado),
+          recomendacao: "rejeitar",
+          revisao_obrigatoria: true,
+          documento_e_protocolo: true,
+          marcadores_protocolo: protocolo.marcadores,
+          origemClassificacao: "trava_protocolo_certidao",
+        });
+      }
+    }
 
     // ── TRAVA DE ESCOPO · certidão CÍVEL (regra global, 10/08/2026) ─────────
     // Espelha src/lib/quero-armas/escopoCertidao.ts. Certidão cível não instrui

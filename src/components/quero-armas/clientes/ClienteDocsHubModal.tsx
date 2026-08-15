@@ -35,6 +35,7 @@ import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal
 import ConfrontoCpfComprovanteModal from "./ConfrontoCpfComprovanteModal";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { detectarEscopoCertidao, mensagemCertidaoCivel } from "@/lib/quero-armas/escopoCertidao";
+import { detectarProtocoloCertidao, mensagemProtocoloCertidao } from "@/lib/quero-armas/protocoloCertidao";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
@@ -308,6 +309,10 @@ const TIPOS_CERTIDAO = new Set([
   "antecedentes_estadual_distribuicao",
   "antecedentes_estadual_execucoes",
   "antecedentes_militar",
+  // Faltava aqui: sem `antecedentes_militar_estadual` no conjunto, a certidão
+  // do TJM não registrava `resultado_certidao` nem acionava a trava de
+  // apontamento/homonímia — o mesmo tipo de buraco do protocolo (15/08/2026).
+  "antecedentes_militar_estadual",
   "antecedentes_eleitoral",
 ]);
 
@@ -2544,6 +2549,32 @@ export function ClienteDocsHubModal({
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/\s+/g, " ")
           .trim();
+        // ── TRAVA DE PROTOCOLO · PEDIDO de certidão ≠ CERTIDÃO ─────────────
+        // Vem antes de tudo: o comprovante de pedido do e-SAJ traz o mesmo
+        // título, o mesmo tribunal e a mesma qualificação da certidão, e por
+        // isso a leitura probabilística o classificava como a própria certidão
+        // (caso Mizael, 15/08/2026). Protocolo não certifica nada — não é
+        // salvo, não vai para a IA e não ocupa slot nenhum do Hub.
+        if (limpo.length >= 40 && detectarProtocoloCertidao(textoNativo).ehProtocolo) {
+          const msg = mensagemProtocoloCertidao(textoNativo);
+          setResultadoCarimbo({ tipo: "reprovado", mensagem: msg });
+          setExtracting(false);
+          if (qaClienteId) {
+            supabase.functions.invoke("qa-notify-event", {
+              body: {
+                evento: "documento_rejeitado",
+                somente_admin: true,
+                cliente_id: qaClienteId,
+                motivo_rejeicao: msg,
+                motivo_codigo: "protocolo_nao_certidao",
+                documento: expectedTipoMeta?.label || "Certidão",
+                arquivo: target.name || "",
+                referencia_id: `protocolo-certidao-${Date.now()}`,
+              },
+            }).catch(() => {});
+          }
+          return;
+        }
         // ── TRAVA DE ESCOPO · certidão CÍVEL (regra global) ────────────────
         // Antes de qualquer leitura ou classificação: certidão cível não
         // instrui processo de arma de fogo. Não é salva, não vai para a IA e
@@ -2601,6 +2632,30 @@ export function ClienteDocsHubModal({
         60000,
       );
       if (clsErr) throw clsErr;
+
+      // Protocolo detectado no servidor (caminho de imagem / PDF digitalizado,
+      // onde não há texto nativo para a trava local ler). Mesma decisão: o
+      // comprovante de pedido não vira documento do Hub.
+      if ((cls as any)?.documento_e_protocolo === true) {
+        const msg = String((cls as any)?.justificativa || "").trim() ||
+          "Você enviou o comprovante do PEDIDO da certidão, não a certidão emitida.";
+        setResultadoCarimbo({ tipo: "reprovado", mensagem: msg });
+        if (qaClienteId) {
+          supabase.functions.invoke("qa-notify-event", {
+            body: {
+              evento: "documento_rejeitado",
+              somente_admin: true,
+              cliente_id: qaClienteId,
+              motivo_rejeicao: msg,
+              motivo_codigo: "protocolo_nao_certidao",
+              documento: expectedTipoMeta?.label || "Certidão",
+              arquivo: target.name || "",
+              referencia_id: `protocolo-certidao-${Date.now()}`,
+            },
+          }).catch(() => {});
+        }
+        return;
+      }
 
       const iaBruta = (cls || {}) as IAClass;
       const ccmeiContextual =
