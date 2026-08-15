@@ -100,6 +100,95 @@ export function SeloModeloParser({
   );
 }
 
+/**
+ * Aviso GLOBAL de modelos sem referência de IA, com o botão para gerar.
+ *
+ * Fica no topo da Biblioteca de Documentos, e não dentro de cada documento.
+ * A primeira versão vivia só no painel de cada documento — mas a ação é
+ * global (processa todos os modelos de uma vez), e o aviso só aparecia nos
+ * poucos documentos que por acaso tinham modelo pendente. Com dezenas de
+ * documentos na lista, encontrar o botão virava caçada. Ação global merece
+ * lugar fixo.
+ */
+export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => void }) {
+  const [pendentes, setPendentes] = useState<number | null>(null);
+  const [gerando, setGerando] = useState(false);
+
+  const contar = useCallback(async () => {
+    const { count } = await supabase
+      .from("qa_documentos_modelos_aprovados" as any)
+      .select("id", { count: "exact", head: true })
+      .is("embedding_texto", null)
+      .eq("ativo", true);
+    setPendentes(count ?? 0);
+  }, []);
+
+  useEffect(() => { void contar(); }, [contar]);
+
+  const gerar = async () => {
+    setGerando(true);
+    try {
+      const invocar = async (accessToken: string) =>
+        supabase.functions.invoke("qa-modelo-aprovado-criar", {
+          body: { backfill: true, limite: 200 },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+      const { data: sessaoAtual } = await supabase.auth.getSession();
+      let accessToken = sessaoAtual.session?.access_token;
+      if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+      let { data, error } = await invocar(accessToken);
+      if (error && String((error as any)?.context?.status ?? "") === "401") {
+        const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
+        accessToken = renovada.session?.access_token;
+        if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+        ({ data, error } = await invocar(accessToken));
+      }
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+
+      const gerados = Number((data as any)?.gerados ?? 0);
+      const falhas = ((data as any)?.falhas ?? []) as Array<{ motivo: string }>;
+      if (gerados > 0) toast.success(`${gerados} referência(s) de IA gerada(s).`);
+      if (falhas.length > 0) toast.error(`${falhas.length} falha(s) — ${falhas[0]?.motivo ?? "motivo não informado"}`);
+      if (gerados === 0 && falhas.length === 0) toast.info("Nenhum modelo pendente de referência.");
+      await contar();
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha ao gerar referências de IA.");
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  if (pendentes === null || pendentes === 0) return null;
+
+  return (
+    <div
+      className="mb-3 flex flex-col gap-2 rounded-lg border px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+      style={{ borderColor: "#FDE68A", background: "#FFFBEB" }}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold text-amber-900 sm:text-[12px]">
+          {pendentes} modelo(s) sem referência de IA
+        </p>
+        <p className="text-[12px] leading-snug text-amber-800 sm:text-[11px]">
+          Eles não entram na comparação automática de documentos. Gere as referências uma vez.
+        </p>
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-9 w-full shrink-0 gap-1.5 text-xs sm:h-8 sm:w-auto"
+        disabled={gerando}
+        onClick={() => void gerar()}
+      >
+        {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        {gerando ? "Gerando…" : "Gerar referências"}
+      </Button>
+    </div>
+  );
+}
+
 /** Painel de gestão dos modelos de referência do parser para um documento da biblioteca. */
 export default function BibliotecaModelosParser({
   codigo,

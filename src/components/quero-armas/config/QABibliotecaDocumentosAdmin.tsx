@@ -8,6 +8,7 @@ import {
   ChevronDown, ChevronUp, Archive, X, Upload, Copy, HelpCircle,
 } from "lucide-react";
 import BibliotecaModelosParser, {
+  AvisoReferenciasIaPendentes,
   SeloModeloParser, carregarResumoModelos, treinarModeloArquivo,
 } from "./BibliotecaModelosParser";
 type ResumoModelos = Map<string, { total: number; deterministico: number; ia: number }>;
@@ -356,6 +357,10 @@ export default function QABibliotecaDocumentosAdmin() {
         outro lugar para editar esse texto. Ao criar um serviço novo, você não escreve nada de novo, só marca
         quais documentos da biblioteca esse serviço consome.
       </p>
+
+      {/* Ação global: gerar as referências de IA que faltam. Fica aqui no topo
+          justamente por ser global — dentro de cada documento ela sumia. */}
+      <AvisoReferenciasIaPendentes onChanged={recarregarResumo} />
 
       {/* Toolbar de busca */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
