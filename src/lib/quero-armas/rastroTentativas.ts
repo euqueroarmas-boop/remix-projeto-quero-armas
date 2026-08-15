@@ -50,6 +50,12 @@ export interface TentativaBloqueada {
   arquivoTamanho?: number | null;
   documentoAnteriorId?: string | null;
   atorTipo?: "cliente" | "admin";
+  /**
+   * O arquivo chegou a subir e foi apagado? Só é `true` no bloqueio por arquivo
+   * repetido, detectado depois do upload. As demais recusas acontecem durante a
+   * leitura, antes de qualquer envio ao bucket — não há arquivo para apagar.
+   */
+  arquivoApagado?: boolean;
 }
 
 const dataBr = (iso?: string | null) => {
@@ -187,7 +193,7 @@ export async function registrarTentativaBloqueada(t: TentativaBloqueada): Promis
           arquivo_mime: t.arquivoMime ?? null,
           arquivo_tamanho: t.arquivoTamanho ?? null,
           documento_anterior_id: t.documentoAnteriorId ?? null,
-          arquivo_apagado: true,
+          arquivo_apagado: t.arquivoApagado ?? false,
         },
       });
     if (error) throw error;

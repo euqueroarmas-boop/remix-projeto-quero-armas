@@ -88,6 +88,25 @@ nasceu partido em dois trilhos (documento da equipe só com `qa_cliente_id`, doc
 portal só com `customer_id`), e qualquer consulta que use um lado só perde metade da
 história.
 
+## Estado da implementação
+
+As cinco recusas do modal do Hub gravam na trilha (15/08/2026):
+
+| recusa | código na trilha | arquivo chegou a subir? |
+|---|---|---|
+| arquivo repetido (mesmo eTag) | `arquivo_repetido` | sim — e é apagado |
+| documento em duplicidade de tipo | `duplicidade_tipo` | não |
+| certidão incorreta para o slot | `certidao_incorreta` | não |
+| titular divergente / parentesco | `titular_divergente` | não |
+| grupo do checklist bloqueado | `grupo_bloqueado` | não |
+
+Só a primeira acontece **depois** do upload: ela compara o conteúdo do arquivo,
+o que exige o arquivo no bucket. As outras quatro são decididas durante a
+leitura, antes de qualquer envio — por isso `arquivo_apagado: false` nelas.
+
+Motor: `src/lib/quero-armas/rastroTentativas.ts`, ligado em
+`ClienteDocsHubModal.tsx`.
+
 ## Obstáculos atuais
 
 A regra **não é cumprível hoje** sem estas três mudanças de estrutura em

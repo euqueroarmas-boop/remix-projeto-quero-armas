@@ -7,6 +7,7 @@ import {
   mensagemArquivoRepetido,
   registrarTentativaBloqueada,
   type ArquivoRepetido,
+  type TentativaBloqueada,
 } from "@/lib/quero-armas/rastroTentativas";
 import { useCredenciadosPsico, type CredenciadoPsico } from "./AgendarExame/useCredenciadosPsico";
 import { toast } from "sonner";
@@ -2097,6 +2098,39 @@ export function ClienteDocsHubModal({
     if (motivoCarimbadoRef.current === motivoRejeicao) return;
     motivoCarimbadoRef.current = motivoRejeicao;
 
+    // ── TRILHA ────────────────────────────────────────────────────────────
+    // Regra canônica (docs/RASTRO-DOCUMENTAL.md): toda tentativa recusada gera
+    // histórico, mesmo quando nada chega a ser gravado no acervo. Sem isto, o
+    // cliente afirma que enviou, a equipe não acha registro, e falso positivo
+    // do sistema não deixa sintoma para ninguém corrigir.
+    //
+    // O arquivo não subiu nestes casos: a recusa é decidida durante a leitura,
+    // antes do upload. Por isso `arquivoApagado: false`.
+    const CODIGO_TRILHA: Record<string, TentativaBloqueada["codigo"]> = {
+      titular: "titular_divergente",
+      parentesco: "titular_divergente",
+      duplicidade: "duplicidade_tipo",
+      tipo: "certidao_incorreta",
+    };
+    void registrarTentativaBloqueada({
+      qaClienteId: qaClienteId ?? null,
+      customerId: customerId ?? null,
+      codigo: CODIGO_TRILHA[motivoRejeicao] ?? "certidao_incorreta",
+      // Mesmo texto que apareceu na tela — a spec proíbe divergência entre o
+      // que o usuário leu e o que a trilha registra.
+      motivo: motivoRejeicao === "duplicidade"
+        ? `${duplicidadeLabelCurto || "Documento"} já aprovado no Hub · exigência atendida`
+        : motivoRejeicaoDetalhado,
+      tipoPretendido: form.tipo_documento || null,
+      tipoLido: classificacao?.tipoDetectado ?? null,
+      exigenciaAlvo: expectedTipoMeta?.value ?? null,
+      arquivoNome: file?.name ?? null,
+      arquivoMime: file?.type ?? null,
+      arquivoTamanho: file?.size ?? null,
+      atorTipo: isStaff ? "admin" : "cliente",
+      arquivoApagado: false,
+    });
+
     // Duplicidade: Hub já tem este documento aprovado. Em vez de REPROVADO,
     // dispensamos a exigência do processo e mostramos sucesso — o cliente
     // não precisa fazer nada, o documento já está válido no Hub.
@@ -2129,6 +2163,39 @@ export function ClienteDocsHubModal({
       }).catch(() => {});
     }
   }, [motivoRejeicao]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Grupo do checklist ainda bloqueado — quinta recusa da regra canônica.
+   *
+   * Fica num efeito próprio porque não passa por `motivoRejeicao`: é uma trava
+   * de ORDEM (o cliente tentou adiantar uma etapa), não um problema com o
+   * documento. Dedupe por arquivo + grupo, para trocar o anexo gerar registro
+   * novo e re-render não gerar nenhum.
+   */
+  const grupoBloqueadoRegistradoRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!grupoBloqueadoTrava) {
+      grupoBloqueadoRegistradoRef.current = null;
+      return;
+    }
+    const chave = `${file?.name || "sem-arquivo"}::${grupoDoDocumento || "?"}`;
+    if (grupoBloqueadoRegistradoRef.current === chave) return;
+    grupoBloqueadoRegistradoRef.current = chave;
+    void registrarTentativaBloqueada({
+      qaClienteId: qaClienteId ?? null,
+      customerId: customerId ?? null,
+      codigo: "grupo_bloqueado",
+      motivo: mensagemGrupoBloqueado,
+      tipoPretendido: form.tipo_documento || null,
+      tipoLido: classificacao?.tipoDetectado ?? null,
+      exigenciaAlvo: expectedTipoMeta?.value ?? null,
+      arquivoNome: file?.name ?? null,
+      arquivoMime: file?.type ?? null,
+      arquivoTamanho: file?.size ?? null,
+      atorTipo: isStaff ? "admin" : "cliente",
+      arquivoApagado: false,
+    });
+  }, [grupoBloqueadoTrava, file, grupoDoDocumento]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── GOLDEN RECORD · QSA herda a emissão do Cartão CNPJ ──────────────────
   // O Quadro de Sócios e Administradores não imprime data de emissão. Regra
@@ -4133,6 +4200,7 @@ export function ClienteDocsHubModal({
             arquivoTamanho: file.size ?? null,
             documentoAnteriorId: repetido.documento_id,
             atorTipo: isStaff ? "admin" : "cliente",
+            arquivoApagado: true,
           });
           setArquivoRepetido(repetido);
           setSaving(false);
