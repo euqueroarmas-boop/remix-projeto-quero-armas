@@ -137,9 +137,13 @@ async function motivoDoErro(error: unknown): Promise<string> {
  * documentos na lista, encontrar o botão virava caçada. Ação global merece
  * lugar fixo.
  */
+/** Quantos modelos por chamada. Baixo porque o modelo de IA pesa na função. */
+const LOTE = 3;
+
 export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => void }) {
   const [pendentes, setPendentes] = useState<number | null>(null);
   const [gerando, setGerando] = useState(false);
+  const [progresso, setProgresso] = useState<{ feitos: number; restantes: number } | null>(null);
 
   const contar = useCallback(async () => {
     const { count } = await supabase
@@ -152,38 +156,68 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
 
   useEffect(() => { void contar(); }, [contar]);
 
+  /**
+   * Gera em LOTES PEQUENOS, repetindo até acabar.
+   *
+   * O modelo de IA roda dentro da edge function e ocupa memória; pedir 20 de
+   * uma vez estoura o limite de recursos do worker (WORKER_RESOURCE_LIMIT —
+   * medido em 14/08/2026, morreu depois de 2). Então o cliente é quem repete:
+   * três por chamada, até `restantes` chegar a zero.
+   */
   const gerar = async () => {
     setGerando(true);
+    setProgresso(null);
     try {
-      const invocar = async (accessToken: string) =>
-        supabase.functions.invoke("qa-modelo-aprovado-criar", {
-          body: { backfill: true, limite: 200 },
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
       const { data: sessaoAtual } = await supabase.auth.getSession();
       let accessToken = sessaoAtual.session?.access_token;
       if (!accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
-      let { data, error } = await invocar(accessToken);
-      if (error && String((error as any)?.context?.status ?? "") === "401") {
-        const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
-        accessToken = renovada.session?.access_token;
-        if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
-        ({ data, error } = await invocar(accessToken));
-      }
-      if (error) throw new Error(await motivoDoErro(error));
-      if ((data as any)?.error) throw new Error((data as any).error);
 
-      const gerados = Number((data as any)?.gerados ?? 0);
-      const falhas = ((data as any)?.falhas ?? []) as Array<{ motivo: string }>;
-      if (gerados > 0) toast.success(`${gerados} referência(s) de IA gerada(s).`);
-      if (falhas.length > 0) toast.error(`${falhas.length} falha(s) — ${falhas[0]?.motivo ?? "motivo não informado"}`);
-      if (gerados === 0 && falhas.length === 0) toast.info("Nenhum modelo pendente de referência.");
-      await contar();
+      const invocar = async () =>
+        supabase.functions.invoke("qa-modelo-aprovado-criar", {
+          body: { backfill: true, limite: LOTE },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+      let totalGerados = 0;
+      const todasFalhas: Array<{ motivo: string }> = [];
+
+      // Teto de voltas: protege contra laço infinito se nada mais avançar.
+      for (let volta = 0; volta < 40; volta++) {
+        let { data, error } = await invocar();
+        if (error && String((error as any)?.context?.status ?? "") === "401") {
+          const { data: renovada, error: refreshError } = await supabase.auth.refreshSession();
+          accessToken = renovada.session?.access_token;
+          if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
+          ({ data, error } = await invocar());
+        }
+        if (error) throw new Error(await motivoDoErro(error));
+        if ((data as any)?.error) throw new Error((data as any).error);
+
+        const gerados = Number((data as any)?.gerados ?? 0);
+        const restantes = Number((data as any)?.restantes ?? 0);
+        const falhas = ((data as any)?.falhas ?? []) as Array<{ motivo: string }>;
+        totalGerados += gerados;
+        todasFalhas.push(...falhas);
+
+        setProgresso({ feitos: totalGerados, restantes });
+        await contar();
+
+        if (restantes === 0) break;
+        // Nenhum avanço nesta volta: insistir só repetiria a mesma falha.
+        if (gerados === 0) break;
+      }
+
+      if (totalGerados > 0) toast.success(`${totalGerados} referência(s) de IA gerada(s).`);
+      if (todasFalhas.length > 0) {
+        toast.error(`${todasFalhas.length} falha(s) — ${todasFalhas[0]?.motivo ?? "motivo não informado"}`);
+      }
+      if (totalGerados === 0 && todasFalhas.length === 0) toast.info("Nenhum modelo pendente de referência.");
       onChanged?.();
     } catch (e: any) {
       toast.error(e?.message ?? "Falha ao gerar referências de IA.");
     } finally {
       setGerando(false);
+      setProgresso(null);
     }
   };
 
@@ -210,7 +244,11 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         onClick={() => void gerar()}
       >
         {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-        {gerando ? "Gerando…" : "Gerar referências"}
+        {gerando
+          ? progresso
+            ? `Gerando… ${progresso.feitos} feitos, ${progresso.restantes} restantes`
+            : "Gerando…"
+          : "Gerar referências"}
       </Button>
     </div>
   );

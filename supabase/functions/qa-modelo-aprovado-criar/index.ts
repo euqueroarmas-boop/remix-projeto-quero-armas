@@ -93,7 +93,12 @@ Deno.serve(async (req) => {
     // to send a request to the Edge Function". Esta funcao ja esta publicada ha
     // meses, entao o modo novo viaja junto com o codigo dela.
     if (backfill === true) {
-      const max = Math.min(Number(limite) || 50, 200);
+      // LOTE PEQUENO, DE PROPOSITO. O modelo gte-small carrega na memoria da
+      // funcao; processar 20 documentos numa invocacao estoura o limite de
+      // recursos do worker (WORKER_RESOURCE_LIMIT, medido em 14/08/2026 —
+      // morreu depois de 2). Quem repete ate o fim e o cliente, chamando em
+      // sequencia; aqui o teto e baixo por seguranca.
+      const max = Math.min(Number(limite) || 3, 5);
       const { data: pendentes, error: selErr } = await supabase
         .from("qa_documentos_modelos_aprovados")
         .select("id, nome_modelo, texto_ocr_normalizado")
@@ -122,7 +127,19 @@ Deno.serve(async (req) => {
         gerados++;
       }
 
-      return json({ ok: true, backfill: true, pendentes: alvos.length, gerados, falhas });
+      const { count: restantes } = await supabase
+        .from("qa_documentos_modelos_aprovados")
+        .select("id", { count: "exact", head: true })
+        .is("embedding_texto", null);
+
+      return json({
+        ok: true,
+        backfill: true,
+        pendentes: alvos.length,
+        gerados,
+        falhas,
+        restantes: restantes ?? 0,
+      });
     }
 
     if (!documento_id) return json({ error: "documento_id obrigatório" }, 400);
