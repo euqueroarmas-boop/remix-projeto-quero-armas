@@ -1002,9 +1002,26 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const responderPergunta = async (doc: DocRow, valor: string) => {
     if (!processo) return;
+    // CONDIÇÃO PROFISSIONAL nunca vai pelo caminho genérico da pergunta.
+    // Aqui só se grava a resposta e se marca `dispensado_grupo`; quem injeta os
+    // comprovantes de renda (holerite, CTPS, funcional, CNPJ, INSS) é a edge
+    // qa-processo-set-condicao. Foi por este furo que o processo do Mizael
+    // (01/08/2026) ficou com a ocupação lícita fechada e vazia.
+    const chaveDoc = (doc.regra_validacao as any)?.chave as string | undefined;
+    if (chaveDoc === "condicao_profissional" || doc.tipo_documento === "renda_definir_condicao") {
+      const opcao = CONDICAO_OPCOES.find((o) => o.id === valor);
+      if (!opcao) {
+        toast.error(
+          `Condição profissional inválida: "${valor}". Use o seletor de condição profissional deste item.`,
+        );
+        return;
+      }
+      await setCondicao(opcao.id);
+      return;
+    }
     setRespondendoPerguntaId(doc.id);
     try {
-      const chave = (doc.regra_validacao as any)?.chave as string;
+      const chave = chaveDoc;
       if (!chave) throw new Error("Pergunta sem chave configurada");
       const novasRespostas = { ...respostas, [chave]: valor };
       const { error: upErr } = await supabase

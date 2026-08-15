@@ -58,16 +58,12 @@ Deno.serve(async (req) => {
     // TRAVA: a condição profissional define QUAIS exigências de ocupação lícita
     // o cliente precisa entregar. Responder por aqui apenas "dispensava" o grupo
     // sem injetar nada — furo que fechava a ocupação lícita vazia.
-    if (chave === "condicao_profissional") {
-      return json(
-        {
-          error: "use_set_condicao",
-          detail:
-            "Condição profissional deve ser gravada via qa-processo-set-condicao para injetar as exigências corretas.",
-        },
-        409,
-      );
-    }
+    const USE_SET_CONDICAO = {
+      error: "use_set_condicao",
+      detail:
+        "Condição profissional deve ser gravada via qa-processo-set-condicao para injetar as exigências corretas.",
+    };
+    if (chave === "condicao_profissional") return json(USE_SET_CONDICAO, 409);
 
     const admin = createClient(url, service);
 
@@ -100,6 +96,15 @@ Deno.serve(async (req) => {
     if (docErr) return json({ error: docErr.message }, 500);
     if (!doc || doc.processo_id !== processo_id) {
       return json({ error: "documento_not_found" }, 404);
+    }
+
+    // A trava acima olha só a CHAVE. O processo do cliente #Mizael (01/08/2026)
+    // mostrou que o mesmo item chega com chaves diferentes conforme a época em
+    // que o checklist foi montado — então o TIPO também tranca. Sem isto, o
+    // item era marcado `dispensado_grupo` e o grupo 5 fechava sem um único
+    // comprovante de renda.
+    if (String(doc.tipo_documento || "").toLowerCase() === "renda_definir_condicao") {
+      return json(USE_SET_CONDICAO, 409);
     }
 
     // 1) Grava a resposta no questionário (trigger SQL exige chave antes do doc).

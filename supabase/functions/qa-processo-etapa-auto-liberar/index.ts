@@ -67,6 +67,22 @@ function isPergunta(d: any): boolean {
   return String(d?.tipo_documento || "").toLowerCase().startsWith("pergunta_");
 }
 
+/**
+ * Seletor de condição profissional.
+ *
+ * Ele chega ao checklist ora como `seletor_condicao_profissional`, ora como
+ * pergunta comum com a chave `condicao_profissional` — depende de quando o
+ * checklist do serviço foi montado. Nos dois casos vale a mesma verdade: só
+ * `qa-processo-set-condicao` resolve o item, e ela o APAGA do checklist ao
+ * criar os comprovantes de renda da condição escolhida.
+ */
+function ehCondicaoProfissional(d: any): boolean {
+  return (
+    d?.regra_validacao?.chave === "condicao_profissional" ||
+    String(d?.tipo_documento || "").toLowerCase() === "renda_definir_condicao"
+  );
+}
+
 // Item oculto por condição não satisfeita. Mantém paridade com
 // src/lib/quero-armas/itemBloqueanteEtapa.ts.
 function ocultoPorCondicao(d: any, respostas: Record<string, any>): boolean {
@@ -163,10 +179,20 @@ Deno.serve(async (req) => {
     // dessincronizado de processos antigos.
     // ----------------------------------------------------------------------
     const reconciliados: string[] = [];
+    let condicaoProfissionalPendente = false;
     for (const d of lista) {
       if (!isPergunta(d)) continue;
       const chave = d?.regra_validacao?.chave;
       if (!chave) continue;
+      // A condição profissional NÃO se reconcilia sozinha. Marcar
+      // `dispensado_grupo` aqui fecha a ocupação lícita sem criar nenhum
+      // comprovante de renda — quem cria é qa-processo-set-condicao, e ela
+      // apaga este item ao rodar. Enquanto o item existir, o grupo continua em
+      // aberto.
+      if (ehCondicaoProfissional(d)) {
+        condicaoProfissionalPendente = true;
+        continue;
+      }
       const v = respostas[chave];
       if (v === undefined || v === null || v === "") continue;
       if (CUMPRIDO.has(String(d.status || "").toLowerCase())) continue;
@@ -222,6 +248,21 @@ Deno.serve(async (req) => {
         //   (b) regra_validacao.depende_de / exige_quando / dispensa_quando (objeto — shared)
         if (ocultoPorCondicao(d, respostas) || !itemVisivelGuia(d, respostas)) continue;
 
+        // Condição profissional em aberto segura a etapa: ter a resposta
+        // gravada no questionário não basta, porque são os comprovantes de
+        // renda criados por qa-processo-set-condicao que cumprem o grupo 5.
+        // Item já fechado em processo antigo não é reaberto aqui — esses casos
+        // saem no diagnóstico e são corrigidos com a condição, não travando o
+        // cliente de repente.
+        if (ehCondicaoProfissional(d)) {
+          if (CUMPRIDO.has(String(d.status || "").toLowerCase())) continue;
+          return json({
+            liberada: false,
+            motivo: "condicao_profissional_pendente",
+            etapa_atual: etapaAtual,
+          });
+        }
+
         if (isPergunta(d)) {
           const chave = d?.regra_validacao?.chave;
           const v = chave ? respostas[chave] : undefined;
@@ -276,6 +317,9 @@ Deno.serve(async (req) => {
       etapa_anterior: etapaAtual,
       etapa_nova: proximaEtapa,
       reconciliados: reconciliados.length,
+      // Sinaliza processo legado: o seletor continua no checklist já fechado,
+      // então a ocupação lícita está vazia mesmo com a etapa avançando.
+      condicao_profissional_pendente: condicaoProfissionalPendente,
     });
   } catch (err: any) {
     console.error("qa-processo-etapa-auto-liberar:", err);
