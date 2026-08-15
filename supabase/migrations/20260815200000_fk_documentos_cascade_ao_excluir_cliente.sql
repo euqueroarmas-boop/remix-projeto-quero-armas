@@ -14,12 +14,22 @@
 -- de cada documento sobrevivem à remoção — que é exatamente o que a regra
 -- canônica de docs/RASTRO-DOCUMENTAL.md exige.
 --
--- ── Por que o LOOP ───────────────────────────────────────────────────────────
--- A primeira versão desta migration falhou com 42710 (constraint já existe):
--- a coluna carrega MAIS DE UMA chave estrangeira para qa_clientes, criadas por
--- migrations diferentes ao longo do tempo. Pegar só a primeira e recriar com o
--- nome canônico colidia com a que sobrou. Aqui removemos todas as que ligam
--- qa_cliente_id a qa_clientes e deixamos exatamente uma no lugar.
+-- ── A CAUSA REAL DOS ÓRFÃOS (diagnosticada em 15/08/2026) ────────────────────
+-- A coluna carregava DUAS chaves estrangeiras para qa_clientes, com regras
+-- opostas:
+--
+--   fk_qa_doc_cliente__qa_cliente             → ON DELETE CASCADE
+--   qa_documentos_cliente_qa_cliente_id_fkey  → ON DELETE SET NULL
+--
+-- Apagar um cliente dispara as duas. A SET NULL nasceu junto com a tabela
+-- (20260423052012, nome automático) e roda primeiro: zera o qa_cliente_id.
+-- Quando a CASCADE executa em seguida, procura linhas com aquele id e não acha
+-- mais nenhuma — o vínculo acabou de ser apagado. O CASCADE que alguém já quis
+-- ter aqui NUNCA funcionou; a SET NULL vencia a corrida, em silêncio.
+--
+-- Por isso o LOOP: a primeira versão desta migration pegava só a primeira FK e
+-- recriava com o nome canônico, colidindo com a que sobrava (erro 42710).
+-- Removemos as duas e deixamos exatamente uma.
 --
 -- ATENÇÃO ao efeito em cadeia: apagar documento dispara
 -- trg_qa_doc_removido_reabre_exigencia, que reabre exigências de processos EM
