@@ -136,9 +136,23 @@ Deno.serve(async (req) => {
   const db = svc();
 
   // ── 1. Cliente ─────────────────────────────────────────────────────────
-  let q = db.from("qa_clientes").select("*").eq("excluido", false).limit(2);
-  if (cliente_id) q = q.eq("id", cliente_id);
-  else if (cpf) q = q.eq("cpf", soDigitos(cpf));
+  //
+  // `excluido` é boolean|null. `.eq("excluido", false)` NÃO traz linhas com
+  // null — que é o caso da maioria dos cadastros antigos. Usamos `is not true`.
+  let q = db.from("qa_clientes").select("*").not("excluido", "is", true).limit(2);
+
+  if (cliente_id) {
+    q = q.eq("id", cliente_id);
+  } else if (cpf) {
+    // O CPF é gravado de forma inconsistente: parte dos registros tem máscara
+    // ("303.727.088-89") e parte só dígitos. Por isso as migrations comparam
+    // com regexp_replace. Aqui testamos os dois formatos — PostgREST não
+    // aplica função na coluna, mas o `.or` cobre os dois e usa índice.
+    const d = soDigitos(cpf);
+    if (d.length !== 11) return json({ error: `CPF inválido: "${cpf}"` }, 400);
+    const mascarado = `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
+    q = q.or(`cpf.eq.${d},cpf.eq.${mascarado}`);
+  }
   else {
     const { data: proc } = await db
       .from("qa_processos").select("customer_id").eq("id", processo_id!).maybeSingle();
@@ -148,7 +162,23 @@ Deno.serve(async (req) => {
 
   const { data: clientes, error: errCli } = await q;
   if (errCli) return json({ error: `Falha ao buscar cliente: ${errCli.message}` }, 500);
-  if (!clientes?.length) return json({ error: "Cliente não encontrado." }, 404);
+
+  if (!clientes?.length) {
+    // Diagnóstico: sem isto, "não encontrado" não distingue CPF errado de
+    // formato de gravação diferente do esperado.
+    let dica = "Verifique se o CPF está correto.";
+    if (cpf) {
+      const d = soDigitos(cpf);
+      const { count } = await db
+        .from("qa_clientes")
+        .select("id", { count: "exact", head: true })
+        .ilike("cpf", `%${d.slice(0, 3)}%${d.slice(3, 6)}%`);
+      if (count) {
+        dica = `Existe(m) ${count} cadastro(s) com CPF parecido, mas gravado em outro formato. Me avise para eu ajustar a busca.`;
+      }
+    }
+    return json({ error: "Cliente não encontrado.", buscado_por: cpf ? "cpf" : cliente_id ? "id" : "processo", dica }, 404);
+  }
   if (clientes.length > 1) {
     return json({ error: "Mais de um cliente para o mesmo critério.", ids: clientes.map((c) => c.id) }, 409);
   }
