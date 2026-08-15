@@ -232,10 +232,10 @@ export default function BibliotecaModelosParser({
           o título colapsava para uma letra por linha. */}
       <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          <p className="text-[12px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[10px]">
             Modelos de referência do parser
           </p>
-          <p className="text-[10px] text-slate-400">
+          <p className="text-[11px] leading-snug text-slate-400 sm:text-[10px]">
             Envie 2 ou mais exemplos reais deste documento. Cada arquivo gera análise determinística
             (texto + palavras-chave) e análise por IA (embedding) para comparação futura.
           </p>
@@ -265,7 +265,7 @@ export default function BibliotecaModelosParser({
           className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-md border px-2 py-1.5"
           style={{ borderColor: "#FDE68A", background: "#FFFBEB" }}
         >
-          <p className="min-w-0 flex-1 text-[10px] text-amber-800">
+          <p className="min-w-0 flex-1 text-[11px] leading-snug text-amber-800 sm:text-[10px]">
             <strong>{faltamIa}</strong> modelo(s) sem referência de IA — não entram na comparação
             automática.
           </p>
@@ -283,11 +283,11 @@ export default function BibliotecaModelosParser({
       )}
 
       {carregando ? (
-        <div className="flex items-center gap-2 text-[11px] text-slate-400 py-2">
+        <div className="flex items-center gap-2 py-2 text-[12px] text-slate-400 sm:text-[11px]">
           <Loader2 className="w-3 h-3 animate-spin" /> Carregando modelos…
         </div>
       ) : modelos.length === 0 ? (
-        <p className="text-[11px] italic text-slate-400 py-1">
+        <p className="py-1 text-[12px] italic text-slate-400 sm:text-[11px]">
           Nenhum modelo salvo ainda — o parser está sem base de comparação para este documento.
         </p>
       ) : (
@@ -302,13 +302,13 @@ export default function BibliotecaModelosParser({
             >
               <FileCheck2 className="w-3.5 h-3.5 shrink-0" style={{ color: "#059669" }} />
               <div className="min-w-0 flex-1 basis-[60%] sm:basis-auto">
-                <p className="truncate text-[11px] font-medium text-slate-700">{m.nome_modelo}</p>
-                <p className="truncate text-[10px] text-slate-400">
+                <p className="truncate text-[12px] font-medium text-slate-700 sm:text-[11px]">{m.nome_modelo}</p>
+                <p className="truncate text-[11px] text-slate-400 sm:text-[10px]">
                   {new Date(m.created_at).toLocaleDateString("pt-BR")}
                 </p>
               </div>
               <span
-                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase"
+                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase sm:text-[9px]"
                 style={
                   m.tem_deterministico
                     ? { color: "#065F46", borderColor: "#A7F3D0", background: "#ECFDF5" }
@@ -319,7 +319,7 @@ export default function BibliotecaModelosParser({
                 <ScanLine className="w-2.5 h-2.5" /> det
               </span>
               <span
-                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-semibold uppercase"
+                className="inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase sm:text-[9px]"
                 style={
                   m.tem_ia
                     ? { color: "#1D4ED8", borderColor: "#BFDBFE", background: "#EFF6FF" }
@@ -331,7 +331,7 @@ export default function BibliotecaModelosParser({
               </span>
               <button
                 onClick={() => void remover(m)}
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-slate-400 hover:bg-red-50 hover:text-red-600 sm:h-6 sm:w-6"
                 title="Remover modelo"
               >
                 <Trash2 className="w-3 h-3" />
