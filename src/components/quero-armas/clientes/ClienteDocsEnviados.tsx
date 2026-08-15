@@ -27,6 +27,7 @@ import {
 } from "@/lib/quero-armas/ordemProtocolo";
 import {
   montarArvoreExigencias, chaveExigencia, contarDocumentosArvore,
+  resumoSituacoes, ORDEM_SITUACAO,
   type NoExigencia, type NoGrupo, type SituacaoNo,
 } from "@/lib/quero-armas/arvoreExigencias";
 
@@ -1312,11 +1313,15 @@ function ArvoreExigencias({ grupos, ...acoes }: ArvoreProps) {
           Árvore de exigências · {totalDocs} documento(s)
           {totalPendentes > 0 && ` · ${totalPendentes} exigência(s) em aberto`}
         </span>
+        {/* Legenda tirada do próprio SITUACAO_UI — a cor da bolinha do grupo, do
+            nó e da legenda tem que ser a mesma, sem tabela paralela. */}
         <span className="inline-flex flex-wrap items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Aprovado</span>
-          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Em análise</span>
-          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#7A1F2B]" /> Rejeitado</span>
-          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-slate-300" /> Aguardando</span>
+          {ORDEM_SITUACAO.map((s) => (
+            <span key={s} className="inline-flex items-center gap-1">
+              <i className={`h-2.5 w-2.5 rounded-full ${SITUACAO_UI[s].ponto}`} />
+              {SITUACAO_UI[s].label}
+            </span>
+          ))}
         </span>
       </div>
       <div className="space-y-2">
@@ -1329,6 +1334,9 @@ function ArvoreExigencias({ grupos, ...acoes }: ArvoreProps) {
 function GrupoArvore({ grupo, ...acoes }: { grupo: NoGrupo } & AcoesDocProps) {
   const [aberto, setAberto] = useState(true);
   const total = grupo.entregues + grupo.pendentes;
+  // Placar de situações no cabeçalho: com o grupo fechado, "2/2 entregue(s)"
+  // não diz se os dois estão aprovados ou parados em análise.
+  const resumo = useMemo(() => resumoSituacoes(grupo.nos), [grupo.nos]);
   return (
     <div className="rounded-lg border border-slate-200 overflow-hidden">
       <button
@@ -1344,11 +1352,25 @@ function GrupoArvore({ grupo, ...acoes }: { grupo: NoGrupo } & AcoesDocProps) {
             Grupo {grupo.grupo} — {grupo.grupoNome}
           </span>
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 shrink-0">
-          {grupo.entregues}/{total} entregue(s)
-          {grupo.pendentes > 0 && (
-            <span className="ml-1.5 text-amber-700">{grupo.pendentes} em aberto</span>
-          )}
+        <span className="flex items-center gap-2 shrink-0">
+          <span className="inline-flex items-center gap-1.5">
+            {resumo.map(({ situacao, qtd }) => (
+              <span
+                key={situacao}
+                title={`${qtd} ${SITUACAO_UI[situacao].label.toLowerCase()}`}
+                className="inline-flex items-center gap-0.5 text-[9px] font-bold text-slate-500 tabular-nums"
+              >
+                <i className={`h-2.5 w-2.5 rounded-full ${SITUACAO_UI[situacao].ponto}`} />
+                {qtd}
+              </span>
+            ))}
+          </span>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            {grupo.entregues}/{total} entregue(s)
+            {grupo.pendentes > 0 && (
+              <span className="ml-1.5 text-amber-700">{grupo.pendentes} em aberto</span>
+            )}
+          </span>
         </span>
       </button>
       {aberto && (

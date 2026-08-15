@@ -249,6 +249,32 @@ export function montarArvoreExigencias(
   return grupos.filter((g) => g.nos.length > 0);
 }
 
+/**
+ * Ordem de leitura das situações — a mesma da legenda da árvore: primeiro o que
+ * já está de pé, depois o que ainda cobra alguma coisa da equipe ou do cliente.
+ */
+export const ORDEM_SITUACAO: SituacaoNo[] = [
+  "aprovado",
+  "em_analise",
+  "rejeitado",
+  "cumprida_no_processo",
+  "fora_do_checklist",
+  "pendente",
+];
+
+/**
+ * Placar de situações de um grupo — o que o cabeçalho mostra com o grupo
+ * fechado. "2/2 entregue(s)" não diz se os dois estão aprovados ou parados em
+ * análise; a contagem por situação diz, sem precisar abrir o grupo.
+ */
+export function resumoSituacoes(nos: NoExigencia[]): { situacao: SituacaoNo; qtd: number }[] {
+  const contagem = new Map<SituacaoNo, number>();
+  for (const no of nos) contagem.set(no.situacao, (contagem.get(no.situacao) ?? 0) + 1);
+  return ORDEM_SITUACAO
+    .map((situacao) => ({ situacao, qtd: contagem.get(situacao) ?? 0 }))
+    .filter((s) => s.qtd > 0);
+}
+
 /** Total de documentos representados na árvore (principal + histórico). */
 export function contarDocumentosArvore(grupos: NoGrupo[]): number {
   return grupos.reduce(

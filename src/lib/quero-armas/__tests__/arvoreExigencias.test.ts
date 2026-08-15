@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { montarLinhaEntrega } from "../hubEntregaAuditoria";
-import { montarArvoreExigencias, chaveExigencia } from "../arvoreExigencias";
+import { montarArvoreExigencias, chaveExigencia, resumoSituacoes } from "../arvoreExigencias";
 import { posicaoProtocolo } from "../ordemProtocolo";
 
 /**
@@ -101,6 +101,19 @@ describe("Árvore de exigências do Hub", () => {
     expect(posicaoProtocolo("requerimento_de_posse_de_arma_de_fogo").grupo).toBe(1);
     // Acompanha o CRAF até a fase CAC definir o grupo dos documentos de arma.
     expect(sinarm.grupo).toBe(posicaoProtocolo("craf").grupo);
+  });
+
+  it("resume as situações do grupo na ordem da legenda, sem zerados", () => {
+    // Grupo 6: militar estadual aprovado + SJSP/JEF reenviado (em análise).
+    const grupo6 = arvore.find((g) => g.grupo === 6)!;
+    expect(resumoSituacoes(grupo6.nos)).toEqual([
+      { situacao: "aprovado", qtd: 1 },
+      { situacao: "em_analise", qtd: 1 },
+    ]);
+    // Grupo 4: só o comprovante de residência, ainda sem envio.
+    const grupo4 = arvore.find((g) => g.grupo === 4)!;
+    expect(resumoSituacoes(grupo4.nos)).toEqual([{ situacao: "pendente", qtd: 1 }]);
+    expect(resumoSituacoes([])).toEqual([]);
   });
 
   it("conta entregues e pendentes por grupo", () => {
