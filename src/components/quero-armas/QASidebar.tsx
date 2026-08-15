@@ -5,7 +5,7 @@ import {
   BookOpen, FileBox, Settings, LogOut, Shield, Users, BarChart3, DollarSign, ShieldCheck,
   PanelLeftOpen, Home, Crosshair, FileStack, Activity,
   ClipboardList, Tags, GraduationCap,
-  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit, PlusCircle,
+  History, LifeBuoy, FileSignature, AlertTriangle, BrainCircuit, PlusCircle, X,
 } from "lucide-react";
 import { QALogo } from "./QALogo";
 import { supabase } from "@/integrations/supabase/client";
@@ -79,11 +79,20 @@ const NAV_GROUPS = [
   },
 ];
 
-interface Props { perfil: string; nome: string; signOut: () => Promise<void> }
+interface Props {
+  perfil: string;
+  nome: string;
+  signOut: () => Promise<void>;
+  /** Celular: a sidebar vira gaveta. Controlada pelo QALayout. */
+  mobileAberto?: boolean;
+  onFecharMobile?: () => void;
+}
 
-export function QASidebar({ perfil, nome, signOut }: Props) {
+export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecharMobile }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const collapsed = !expanded;
+  // Na gaveta do celular nunca faz sentido o modo "só ícones": há largura de
+  // sobra e o usuário abriu justamente para ler os nomes.
+  const collapsed = mobileAberto ? false : !expanded;
   const location = useLocation();
   const toggleSidebar = () => setExpanded(v => !v);
 
@@ -135,9 +144,18 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
          renderizar nas cores declaradas. Sem isso não existe branco — branco
          invertido é preto. Tokens em index.css ([data-qa-sidebar]). */
       data-nao-inverter
-      className="shrink-0 overflow-x-hidden border-r flex flex-col transition-[width] duration-200"
+      className={[
+        "flex flex-col overflow-x-hidden overflow-y-auto border-r",
+        // CELULAR: fora do fluxo, deslizando pela esquerda. Não rouba largura
+        // do conteúdo — antes o trilho de ícones comia 68px de uma tela de 390.
+        "fixed left-0 top-0 z-50 h-dvh w-[17rem] transition-transform duration-200",
+        mobileAberto ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+        // DESKTOP: volta a ser a coluna do grid, exatamente como era.
+        "md:sticky md:z-auto md:h-screen md:w-[var(--qa-sb-w)] md:shrink-0",
+        "md:translate-x-0 md:self-start md:shadow-none md:transition-[width]",
+      ].join(" ")}
       style={{
-        width: collapsed ? "4.25rem" : "16rem",
+        ["--qa-sb-w" as string]: collapsed ? "4.25rem" : "16rem",
         /* Altura presa à tela, não ao conteúdo do menu.
            O grid do QALayout usa `items-stretch`: com altura natural, o menu
            (~16 itens) ficava mais alto que a tela e passava a ditar a altura da
@@ -146,11 +164,6 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
            `align-self: start` sozinho não resolve: a linha continua dimensionada
            pela altura natural da sidebar. O que resolve é limitá-la a 100vh e
            dar rolagem própria. O sticky mantém o menu visível em telas longas. */
-        height: "100vh",
-        position: "sticky",
-        top: 0,
-        alignSelf: "start",
-        overflowY: "auto",
         background: "var(--qa-sb-bg)",
         borderColor: "var(--qa-sb-border)",
       }}
@@ -160,7 +173,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
         {collapsed ? (
           <button
             onClick={toggleSidebar}
-            className="flex items-center justify-center mx-auto mb-3 w-9 h-9 rounded-lg transition-colors"
+            className="mx-auto mb-3 hidden h-9 w-9 items-center justify-center rounded-lg transition-colors md:flex"
             style={{ color: "var(--qa-sb-toggle)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -179,7 +192,7 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
             </div>
             <button
               onClick={toggleSidebar}
-              className="h-7 w-7 rounded-md flex items-center justify-center transition-colors shrink-0"
+              className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors md:flex"
               style={{ color: "var(--qa-sb-toggle)" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -187,6 +200,15 @@ export function QASidebar({ perfil, nome, signOut }: Props) {
               aria-label="Recolher menu"
             >
               <PanelLeftOpen className="h-4 w-4 rotate-180" />
+            </button>
+            {/* Fechar a gaveta — só existe no celular. */}
+            <button
+              onClick={onFecharMobile}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors md:hidden"
+              style={{ color: "var(--qa-sb-toggle)" }}
+              aria-label="Fechar menu"
+            >
+              <X className="h-5 w-5" />
             </button>
           </div>
         )}

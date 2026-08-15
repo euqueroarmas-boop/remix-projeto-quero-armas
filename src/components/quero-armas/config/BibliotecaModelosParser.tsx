@@ -79,7 +79,7 @@ export function SeloModeloParser({
   if (!resumo || resumo.total === 0) {
     return (
       <span
-        className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border font-semibold uppercase tracking-wide text-slate-400 border-slate-200 bg-slate-50"
+        className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-400 sm:text-[9px]"
         title="Nenhum modelo de referência salvo para o parser"
       >
         <ScanLine className="w-2.5 h-2.5" /> sem modelo
@@ -88,7 +88,7 @@ export function SeloModeloParser({
   }
   return (
     <span
-      className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border font-semibold uppercase tracking-wide"
+      className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide sm:text-[9px]"
       style={{ color: "#065F46", borderColor: "#A7F3D0", background: "#ECFDF5" }}
       title={`${resumo.total} modelo(s) salvo(s) · ${resumo.deterministico} com análise determinística · ${resumo.ia} com análise por IA`}
     >

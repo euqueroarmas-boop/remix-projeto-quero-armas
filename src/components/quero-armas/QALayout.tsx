@@ -4,7 +4,8 @@ import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { QATemaProvider } from "./QATemaContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Menu } from "lucide-react";
 
 const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
 const AdminNotificacoesOverlay = lazy(() => import("./notificacoes/AdminNotificacoesOverlay"));
@@ -34,6 +35,10 @@ function canAccessRoute(perfil: string, pathname: string): boolean {
 function QALayoutInner() {
   const { user, profile, loading, signOut } = useQAAuthContext();
   const location = useLocation();
+  const [menuMobile, setMenuMobile] = useState(false);
+
+  // Navegou? A gaveta fecha sozinha — senão ela fica por cima da tela nova.
+  useEffect(() => { setMenuMobile(false); }, [location.pathname]);
 
   if (loading) {
     return (
@@ -56,9 +61,50 @@ function QALayoutInner() {
   }
 
   return (
-    <div className="qa-scope min-h-screen w-full grid grid-cols-[auto_minmax(0,1fr)] items-stretch overflow-x-hidden" style={{ background: "var(--qa-app)" }}>
-      <QASidebar perfil={profile.perfil} nome={profile.nome} signOut={signOut} />
-      <main className="min-w-0 min-h-screen flex flex-col" style={{ background: "var(--qa-app)" }}>
+    <div
+      /* Celular: uma coluna só. A sidebar sai do fluxo (vira gaveta), então o
+         conteúdo ocupa a largura inteira — antes o trilho de ícones tomava 68px
+         de uma tela de 390 e espremia tudo. Desktop segue com as duas colunas. */
+      className="qa-scope grid min-h-screen w-full grid-cols-1 items-stretch overflow-x-hidden md:grid-cols-[auto_minmax(0,1fr)]"
+      style={{ background: "var(--qa-app)" }}
+    >
+      <QASidebar
+        perfil={profile.perfil}
+        nome={profile.nome}
+        signOut={signOut}
+        mobileAberto={menuMobile}
+        onFecharMobile={() => setMenuMobile(false)}
+      />
+
+      {/* Fundo escurecido da gaveta. Toque fora fecha. */}
+      {menuMobile && (
+        <button
+          type="button"
+          aria-label="Fechar menu"
+          onClick={() => setMenuMobile(false)}
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+        />
+      )}
+
+      <main className="flex min-h-screen min-w-0 flex-col" style={{ background: "var(--qa-app)" }}>
+        {/* Barra superior do celular: o único lugar de onde a gaveta abre. */}
+        <div
+          className="sticky top-0 z-30 flex items-center gap-2 border-b px-3 py-2 md:hidden"
+          style={{ background: "var(--qa-app)", borderColor: "var(--qa-sb-border)" }}
+        >
+          <button
+            type="button"
+            onClick={() => setMenuMobile(true)}
+            aria-label="Abrir menu"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border"
+            style={{ borderColor: "var(--qa-sb-border)", color: "var(--qa-sb-text)" }}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <span className="truncate text-[13px] font-semibold tracking-wide" style={{ color: "var(--qa-sb-name)" }}>
+            {profile.nome}
+          </span>
+        </div>
         <QABreadcrumb />
         <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />

@@ -601,8 +601,8 @@ function ItemBiblioteca({
         className="w-full flex items-center justify-between px-3 py-2 hover:bg-slate-50 transition-colors text-left gap-2"
       >
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-xs font-medium truncate" style={{ color: "hsl(220 20% 25%)" }}>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="min-w-0 flex-1 basis-full truncate text-[13px] font-medium sm:basis-auto sm:text-xs" style={{ color: "hsl(220 20% 25%)" }}>
               {item.nome}
             </p>
             {!item.ativo && (
@@ -612,7 +612,7 @@ function ItemBiblioteca({
             )}
             <SeloModeloParser resumo={resumoModelos} />
           </div>
-          <p className="text-[10px] font-mono truncate mt-0.5" style={{ color: "hsl(220 10% 60%)" }}>
+          <p className="mt-0.5 truncate font-mono text-[11px] sm:text-[10px]" style={{ color: "hsl(220 10% 60%)" }}>
             {item.codigo} · {labelCategoria(item.categoria)} · {labelValidade(item.validade_dias)} · {usoLabel}
           </p>
         </div>

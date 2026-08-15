@@ -487,9 +487,28 @@ html.qa-noite [data-qa-sidebar] :where(img, video, canvas, iframe, svg image) {
 .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
 
+/* O Safari do iPhone infla texto pequeno por conta propria, e faz isso bloco a
+   bloco: um rotulo de 10px virava tres linhas enquanto o vizinho ficava
+   minusculo. Desligar o inflador devolve o controle ao projeto; os pisos de
+   tamanho para celular ficam logo abaixo, explicitos. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @media (max-width: 767px) {
   /* Nada dentro do admin pode estourar a largura da tela */
   .qa-scope { overflow-x: hidden; }
+
+  /* O admin foi desenhado para desktop, com tipos de 9 a 12px. No celular isso
+     e ilegivel. Piso previsivel, so dentro do admin e so em tela pequena — o
+     desktop continua exatamente como foi desenhado. */
+  .qa-scope .text-\[9px\]  { font-size: 10.5px; line-height: 1.35; }
+  .qa-scope .text-\[10px\] { font-size: 11.5px; line-height: 1.4; }
+  .qa-scope .text-\[11px\] { font-size: 12.5px; line-height: 1.4; }
+  .qa-scope .text-\[12px\] { font-size: 13px;   line-height: 1.4; }
+  .qa-scope .text-xs        { font-size: 13px;   line-height: 1.4; }
+
   .qa-scope img, .qa-scope video, .qa-scope canvas { max-width: 100%; height: auto; }
   /* Palavras longas (e-mails, CPFs, protocolos) quebram em vez de empurrar o layout */
   .qa-scope p, .qa-scope span, .qa-scope h1, .qa-scope h2,
