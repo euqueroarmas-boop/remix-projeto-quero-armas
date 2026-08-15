@@ -58,21 +58,13 @@ interface Regra {
 /**
  * PENDÊNCIA — fase CAC (anotada em 15/08/2026).
  *
- * O escopo deste mapa hoje é DEFESA PESSOAL. Documentos de arma/acervo ainda
- * não têm grupo e caem em "Grupo 9 — Outros" de propósito: `cr`, `craf`, `gt`,
- * `gte`, `autorizacao_compra`, `nota_fiscal_arma` e as declarações de acervo
- * CAC (guarda de acervo, DSA, endereço do acervo).
- *
- * "SINARM" é ambíguo e por isso não foi resolvido por conta própria: pode ser
- * o SISTEMA da PF onde a arma é registrada, o SERVIÇO comprado pelo cliente
- * (autorização de compra / posse, porte) ou o REGISTRO em si. O encadeamento
- * real é autorização de compra → CRAF registrado no SINARM → GT para retirar a
- * arma da loja. A entrada `sinarm` abaixo trata o tipo como requerimento, o que
- * diverge do catálogo do Hub, onde `sinarm` é o CRAF da PF (`arma_acervo`).
- * Decidir junto com a operação quando a fase CAC começar.
+ * O escopo deste mapa hoje é DEFESA PESSOAL. Os demais documentos de
+ * arma/acervo seguem sem grupo próprio, caindo em "Grupo 9 — Outros" de
+ * propósito: `cr`, `craf`, `gt`, `gte`, `autorizacao_compra`,
+ * `nota_fiscal_arma` e as declarações de acervo CAC (guarda de acervo, DSA,
+ * endereço do acervo). Definir o grupo deles quando a fase CAC começar.
  */
 const MAPA: Record<string, Regra> = {
-  sinarm: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento do Sinarm" },
   requerimento_sinarm: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento do Sinarm" },
   gru: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "GRU paga" },
   gru_paga: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "GRU paga" },
@@ -134,6 +126,27 @@ const MAPA: Record<string, Regra> = {
   contrato_assinado: { grupo: 8, ordem: 0, numero: "15", rotulo: "Contrato assinado" },
   procuracao_assinada: { grupo: 8, ordem: 1, numero: "16", rotulo: "Procuracao assinada" },
   comprovante_pagamento: { grupo: 8, ordem: 2, numero: "17", rotulo: "Comprovante de pagamento do contrato" },
+
+  // ── ARMA / ACERVO ────────────────────────────────────────────────────────
+  // "SINARM" tem três sentidos no negócio: o SISTEMA da PF onde a arma fica
+  // registrada, o SERVIÇO que o cliente compra (autorização de compra / posse,
+  // porte) e o REGISTRO em si. O tipo_documento `sinarm` é o terceiro — o
+  // certificado de registro emitido no sistema, ou seja, o CRAF.
+  //
+  // Encadeamento: autorização de compra → arma autorizada pelo SINARM → a
+  // autorização vinculada ao cliente registra a arma (CRAF) no SINARM → sai a
+  // GT para retirar a arma da loja e levá-la embora.
+  //
+  // O REQUERIMENTO nunca foi este tipo: ele tem os seus, logo acima
+  // (`requerimento_sinarm`, `requerimento_de_posse_de_arma_de_fogo`). Este mapa
+  // era o único ponto do sistema que chamava `sinarm` de requerimento — no
+  // Arsenal `["craf","sinarm"]` já são equivalentes, a taxonomia dá a ele
+  // escopo "arma" e o catálogo do Hub o classifica em `arma_acervo`.
+  //
+  // Em defesa pessoal o registro é RESULTADO do processo, não peça do dossiê de
+  // aquisição — por isso acompanha o CRAF em "Outros" até a fase CAC definir o
+  // grupo dos documentos de arma.
+  sinarm: { grupo: 9, ordem: 0, numero: "99", rotulo: "Certificado de Registro de Arma de Fogo (SINARM/PF)" },
 };
 
 /** Documentos de ocupação lícita são muitos e todos entram no grupo 5, item 05. */

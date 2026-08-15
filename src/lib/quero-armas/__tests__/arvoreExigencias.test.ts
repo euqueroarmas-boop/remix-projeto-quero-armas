@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { montarLinhaEntrega } from "../hubEntregaAuditoria";
 import { montarArvoreExigencias, chaveExigencia } from "../arvoreExigencias";
+import { posicaoProtocolo } from "../ordemProtocolo";
 
 /**
  * Caso real que originou a árvore (cliente #0048, 15/08/2026):
@@ -87,6 +88,19 @@ describe("Árvore de exigências do Hub", () => {
     expect(no.grupo).toBe(6);
     expect(no.situacao).toBe("aprovado");
     expect(no.exigencias).toHaveLength(0);
+  });
+
+  it("trata `sinarm` como registro da arma (CRAF), não como requerimento", () => {
+    // SINARM é o sistema onde a arma é registrada; o tipo_documento homônimo é
+    // o certificado emitido nele. O requerimento tem tipos próprios.
+    const sinarm = posicaoProtocolo("sinarm");
+    expect(sinarm.grupo).toBe(9);
+    expect(sinarm.rotulo).toContain("Registro de Arma de Fogo");
+
+    expect(posicaoProtocolo("requerimento_sinarm").grupo).toBe(1);
+    expect(posicaoProtocolo("requerimento_de_posse_de_arma_de_fogo").grupo).toBe(1);
+    // Acompanha o CRAF até a fase CAC definir o grupo dos documentos de arma.
+    expect(sinarm.grupo).toBe(posicaoProtocolo("craf").grupo);
   });
 
   it("conta entregues e pendentes por grupo", () => {
