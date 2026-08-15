@@ -34,6 +34,13 @@ export type ArquivoUpload = {
   /** Indica que a Central aplicou o tipo sugerido pela IA antes de gravar no Hub. */
   tipo_aplicado_por_ia?: boolean;
   /**
+   * A IA discordou do tipo que o operador informou, e o tipo do operador foi
+   * mantido. Existe para a divergência ficar VISÍVEL: até 15/08/2026 a IA
+   * sobrescrevia o tipo informado, e foi assim que uma conta de luz entrou no
+   * Hub como certidão militar e uma CNH como comprovante de residência.
+   */
+  tipo_ia_divergente?: string;
+  /**
    * Data de emissão lida pela IA na classificação (ISO AAAA-MM-DD).
    * A Etapa 4 grava esse valor e calcula a validade pela regra do tipo — sem
    * ele, todo documento da Central de Adesão entrava no Hub "SEM DATA" e os

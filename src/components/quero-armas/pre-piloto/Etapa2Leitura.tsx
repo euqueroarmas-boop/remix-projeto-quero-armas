@@ -28,7 +28,10 @@ const TIPOS_CANONICOS_HUB = new Set([
   "gov_br", "outro",
 ]);
 
-const CONFIANCA_MINIMA_TIPO_IA = 0.75;
+// Limiar para a IA DEFINIR o tipo de um arquivo que chegou sem classificação.
+// Não existe mais limiar para sobrescrever tipo informado: a IA não sobrescreve
+// em hipótese alguma — a classificação que trocou conta de luz por certidão
+// militar veio com confiança 1,0, então confiança nunca foi a proteção certa.
 const CONFIANCA_MINIMA_TIPO_IA_OUTRO = 0.6;
 
 async function fileToBase64(file: File): Promise<string> {
@@ -214,9 +217,26 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
       }> = Array.isArray((fields as any).arquivos_classificados) ? (fields as any).arquivos_classificados : [];
       if (arquivosClassificados.length > 0 && setArquivos) {
         const atualizados = arquivos.map((arq, i) => {
-          const sug = arquivosClassificados.find(
-            (s) => s.indice === i || s.nome_arquivo === arq.file.name,
+          // O NOME é a chave de casamento; o índice só vale quando a resposta
+          // não trouxe nome nenhum.
+          //
+          // Antes era `s.indice === i || s.nome_arquivo === arq.file.name`, com
+          // o índice testado primeiro. O modelo devolve índices deslocados, o
+          // find casava pela posição errada e o nome nunca chegava a ser
+          // consultado — as classificações trocavam de arquivo entre si. Foi
+          // assim que a justificativa "fatura de energia da EDP" foi carimbada
+          // na CNH e "certidão do TJM" na conta de luz (03/08/2026), gravando
+          // os dois documentos do cliente sob o tipo um do outro.
+          const porNome = arquivosClassificados.find(
+            (s) => !!s.nome_arquivo && s.nome_arquivo === arq.file.name,
           );
+          const porIndice = arquivosClassificados.find((s) => s.indice === i);
+          const sug = porNome ?? (porIndice && !porIndice.nome_arquivo ? porIndice : undefined);
+          if (!sug && porIndice?.nome_arquivo) {
+            warnings.push(
+              `Classificação ignorada: a leitura devolveu "${porIndice.nome_arquivo}" na posição de "${arq.file.name}" — respostas fora de ordem.`,
+            );
+          }
           if (!sug || !sug.tipo_sugerido) return arq;
           const tipoIA = sug.tipo_sugerido.trim().toLowerCase();
           if (!tipoIA) return arq;
@@ -230,8 +250,22 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
             return { ...arq, ...meta } as ArquivoUpload;
           }
           if (tipoIA !== arq.tipo) {
-            if (confianca >= CONFIANCA_MINIMA_TIPO_IA || (arq.tipo === "outro" && confianca >= CONFIANCA_MINIMA_TIPO_IA_OUTRO)) {
-              warnings.push(`Classificação aplicada: "${arq.file.name}" foi ajustado de "${arq.tipo}" para "${tipoIA}" antes de gravar no Hub Documental.`);
+            // A IA NUNCA sobrescreve um tipo que alguém informou (regra do
+            // usuário, 15/08/2026). Ela define o tipo apenas quando o arquivo
+            // chegou sem classificação; discordando de um tipo explícito,
+            // apenas sinaliza a divergência para conferência humana.
+            //
+            // A trava por confiança não bastava: a classificação que trocou
+            // conta de luz por certidão militar veio com confiança 1,0.
+            const tipoFoiInformado = !!arq.tipo && arq.tipo !== "outro";
+            if (tipoFoiInformado) {
+              warnings.push(
+                `Divergência de tipo: "${arq.file.name}" foi informado como "${arq.tipo}" e a leitura sugeriu "${tipoIA}". Mantivemos o tipo informado — confira o arquivo antes de gravar.`,
+              );
+              return { ...arq, ...meta, tipo_ia_divergente: tipoIA } as ArquivoUpload;
+            }
+            if (confianca >= CONFIANCA_MINIMA_TIPO_IA_OUTRO) {
+              warnings.push(`Classificação aplicada: "${arq.file.name}" estava sem tipo e foi definido como "${tipoIA}" antes de gravar no Hub Documental.`);
               return {
                 ...arq,
                 ...meta,
