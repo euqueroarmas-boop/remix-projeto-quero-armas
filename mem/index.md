@@ -27,6 +27,7 @@ Base de Conhecimento QA: NUNCA gerar passo a passo antes de auditar checklist + 
 - [Arsenal weapon image policy](mem://features/quero-armas/arsenal-weapon-image-policy) — Regra absoluta de fundo transparente, limpeza de pixels residuais, gravações de fábrica e enquadramento por tipo de arma.
 - [QA Doc Center Baseline](mem://features/quero-armas/document-center-baseline) — CONGELADO: 8 certidões granulares, dispensado_grupo, validação IA, holerite atual/antigo, auditoria imutável. Não alterar sem autorização.- [P0 Senha GOV Postmortem](mem://tech/security/p0-incident-postmortem) — Reconciliação P0 + UNIQUE(cliente_ativo) + revelação manual obrigatória, sempre filtrar consolidado_em IS NULL
 
+- [Pendências do treinamento da IA](mem://tech/quero-armas/pendencias-treinamento-ia) — ABERTO: (1) processo deferido deve promover os documentos a modelo automaticamente — a promoção em lote já existe em QAFilaRevisaoHumana, falta o gatilho; (2) refazer os vetores de qa_kb_artigos, hoje gerados pelo improviso do chat
 - [Embedding local gte-small](mem://tech/quero-armas/embedding-local-gte-small) — Embedding roda LOCAL no runtime do Supabase (384 dim). Proibido /v1/embeddings do gateway (não existe) e proibido pedir vetor a modelo de chat. Falha nunca é silenciosa; backfill em lote de 3.
 
 - [Doc Approval Flow](mem://features/quero-armas/doc-approval-flow) — Fluxo bidirecional admin↔portal qa_documentos_cliente: status pendente/aprovado/reprovado, Realtime, soft-delete, query keys ['cliente-documentos', clienteId]
