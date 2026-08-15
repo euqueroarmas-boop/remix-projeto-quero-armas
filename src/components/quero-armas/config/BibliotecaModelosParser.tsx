@@ -100,6 +100,33 @@ export function SeloModeloParser({
   );
 }
 
+
+/**
+ * Extrai o MOTIVO real de uma falha de edge function.
+ *
+ * `supabase.functions.invoke` devolve "Edge Function returned a non-2xx status
+ * code" e guarda a resposta de verdade em `error.context`. Sem abrir esse
+ * corpo, a tela mostra uma frase que não ajuda ninguém a agir — o mesmo vício
+ * que escondeu a falha do embedding por meses.
+ */
+async function motivoDoErro(error: unknown): Promise<string> {
+  const ctx = (error as { context?: Response })?.context;
+  if (ctx && typeof (ctx as Response).clone === "function") {
+    try {
+      const corpo = await (ctx as Response).clone().json();
+      if (corpo?.error) return String(corpo.error);
+      if (corpo) return JSON.stringify(corpo).slice(0, 300);
+    } catch {
+      try {
+        const texto = await (ctx as Response).clone().text();
+        if (texto) return texto.slice(0, 300);
+      } catch { /* corpo já consumido */ }
+    }
+    if ((ctx as Response).status) return `HTTP ${(ctx as Response).status}`;
+  }
+  return (error as { message?: string })?.message ?? "erro desconhecido";
+}
+
 /**
  * Aviso GLOBAL de modelos sem referência de IA, com o botão para gerar.
  *
@@ -143,7 +170,7 @@ export function AvisoReferenciasIaPendentes({ onChanged }: { onChanged?: () => v
         if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
         ({ data, error } = await invocar(accessToken));
       }
-      if (error) throw error;
+      if (error) throw new Error(await motivoDoErro(error));
       if ((data as any)?.error) throw new Error((data as any).error);
 
       const gerados = Number((data as any)?.gerados ?? 0);
@@ -260,7 +287,7 @@ export default function BibliotecaModelosParser({
         if (refreshError || !accessToken) throw new Error("Sua sessão administrativa expirou. Entre novamente.");
         ({ data, error } = await invocar(accessToken));
       }
-      if (error) throw error;
+      if (error) throw new Error(await motivoDoErro(error));
       if ((data as any)?.error) throw new Error((data as any).error);
 
       const gerados = Number((data as any)?.gerados ?? 0);
