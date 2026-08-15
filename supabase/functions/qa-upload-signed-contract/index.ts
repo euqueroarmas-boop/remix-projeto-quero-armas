@@ -177,29 +177,14 @@ Deno.serve(async (req) => {
   // Mantemos o PDF em qa_contracts + qa_contract_events para download e
   // validação, sem criar linha em qa_documentos_cliente.
 
-  // Notifica admin (eu@queroarmas.com.br) que o cliente subiu o contrato assinado.
-  try {
-    const { data: cli } = await sb
-      .from("qa_clientes")
-      .select("id, nome_completo, email, cpf")
-      .or(`id.eq.${clienteId},id_legado.eq.${clienteId}`)
-      .limit(1)
-      .maybeSingle();
-    const { notifyAdminUpload } = await import("../_shared/notifyAdminUpload.ts");
-    await notifyAdminUpload({
-      tipo: "contrato",
-      cliente_id: (cli as { id?: number } | null)?.id ?? clienteId,
-      cliente_nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? null,
-      cliente_email: (cli as { email?: string } | null)?.email ?? null,
-      cliente_cpf: (cli as { cpf?: string } | null)?.cpf ?? null,
-      documento_nome: "Contrato assinado (Gov.br/ICP-Brasil)",
-      exigencia: "Assinatura do contrato de prestação de serviços",
-      contract_id: contractId,
-      extras: { Venda: String((contract as { venda_id?: number | string }).venda_id ?? "—"), SHA256: sig },
-    });
-  } catch (e) {
-    console.error("[qa-upload-signed-contract] admin notify falhou", (e as Error).message);
-  }
+  // A notificação para a equipe NÃO sai mais daqui. Quem registra o evento é o
+  // gatilho trg_qa_admin_notif_contrato (motor QAAdminNotifContrato), disparado
+  // pelo próprio UPDATE de status logo acima. Motivo da mudança: resolvendo o
+  // cliente pela FK, o evento deixa de depender do formato do CPF — a busca por
+  // CPF só-dígitos falhava em todo cadastro mascarado e gravava cliente_id NULL,
+  // o que sumia com o contrato da aba "Eventos de Documentos". De quebra, o
+  // gatilho cobre o upload staff-assistido e o ciclo completo do contrato
+  // (recebido → validado / rejeitado / revisão manual), que antes não aparecia.
 
   // Dispara validação automaticamente (best-effort, não bloqueia retorno).
   try {
