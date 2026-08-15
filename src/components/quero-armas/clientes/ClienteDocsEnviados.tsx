@@ -202,7 +202,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     queryFn: async () => {
       const { data } = await supabase
         .from("qa_processo_documentos" as any)
-        .select("tipo_documento, nome_documento, status, etapa, ordem, obrigatorio, created_at, processo_id, metadados_documento_json")
+        .select("id, tipo_documento, nome_documento, status, etapa, ordem, obrigatorio, created_at, processo_id, metadados_documento_json, arquivo_storage_key")
         .eq("cliente_id", clienteId);
       return ((data as any[]) || []);
     },
@@ -602,13 +602,20 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
 
   /** Dossiê completo em ZIP, numerado e separado por grupo do protocolo. */
   const [baixandoZip, setBaixandoZip] = useState(false);
-  const handleBaixarTudo = async () => {
-    // Documentos rejeitados foram tirados do processo — nunca entram no dossiê.
-    const comArquivo = [...(docs as any[]), ...provasComoDocs]
-      .filter((d) => d.arquivo_storage_path)
-      .filter((d) => d.status !== "reprovado" && d.status !== "excluido");
-    if (comArquivo.length === 0) {
-      toast.error("Nenhum documento válido para o dossiê — os enviados estão rejeitados ou sem arquivo.");
+  /**
+   * Peça do ZIP: o arquivo pode vir de três lugares diferentes, e cada um mora
+   * num bucket próprio — documento do Hub em `qa-documentos`, item do checklist
+   * em `qa-processo-docs`, contrato assinado em `paid-contracts`.
+   */
+  interface PecaZip {
+    bucket: string;
+    path: string;
+    doc: { tipo_documento?: string | null; nome_documento?: string | null; arquivo_nome?: string | null };
+  }
+
+  const zipDeItens = async (pecas: PecaZip[], sufixoNome: string) => {
+    if (pecas.length === 0) {
+      toast.error("Nenhum documento válido para este dossiê — os enviados estão rejeitados ou sem arquivo.");
       return;
     }
     setBaixandoZip(true);
@@ -616,19 +623,18 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
       const usados = new Map<string, number>();
-      const ordenados = [...comArquivo].sort(compararProtocolo);
+      const ordenados = [...pecas].sort((a, b) => compararProtocolo(a.doc, b.doc));
       let ok = 0;
-      for (const doc of ordenados) {
-        const { data, error } = await supabase.storage
-          .from("qa-documentos").download(doc.arquivo_storage_path);
+      for (const peca of ordenados) {
+        const { data, error } = await supabase.storage.from(peca.bucket).download(peca.path);
         if (error || !data) continue;
-        const pos = posicaoProtocolo(doc.tipo_documento, doc.nome_documento);
+        const pos = posicaoProtocolo(peca.doc.tipo_documento, peca.doc.nome_documento);
         const pasta = `${pos.grupo}. ${pos.grupoNome}`;
-        let nome = nomeArquivoDossie(doc);
+        let nome = nomeArquivoDossie(peca.doc);
         const chave = `${pasta}/${nome}`;
         const n = usados.get(chave) ?? 0;
         usados.set(chave, n + 1);
-        if (n > 0) nome = nomeArquivoDossie(doc, n + 1);
+        if (n > 0) nome = nomeArquivoDossie(peca.doc, n + 1);
         zip.folder(pasta)!.file(nome, data);
         ok += 1;
       }
@@ -637,14 +643,15 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       const url = URL.createObjectURL(blob);
       const nomeCliente = String(cliente?.nome_completo || cliente?.nome || "cliente")
         .replace(/[\\/:*?"<>|]/g, "-").trim();
+      const sufixo = sufixoNome ? ` - ${sufixoNome.replace(/[\\/:*?"<>|]/g, "-").trim()}` : "";
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Dossie - ${nomeCliente}.zip`;
+      a.download = `Dossie - ${nomeCliente}${sufixo}.zip`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 6000);
-      registrarAcesso("baixado_lote", undefined, { quantidade: ok });
+      registrarAcesso("baixado_lote", undefined, { quantidade: ok, escopo: sufixoNome || "completo" });
       toast.success(`Dossiê com ${ok} documento(s) baixado na ordem do protocolo.`);
     } catch (err: any) {
       toast.error(err?.message || "Falha ao gerar o dossiê.");
@@ -652,6 +659,88 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
       setBaixandoZip(false);
     }
   };
+
+  const utilParaDossie = (d: any) =>
+    d.status !== "reprovado" && d.status !== "excluido" && d.status !== "rejeitado";
+
+  /**
+   * ZIP do serviço = a JUNTADA daquele processo.
+   *
+   * Cada serviço tem exigências próprias, então a fonte é o checklist do
+   * processo, não o acervo do cliente. O documento reaproveitado entra no ZIP
+   * de todo serviço que o utilizou — o arquivo é o mesmo, mas cada juntada
+   * precisa da sua cópia. O bucket muda conforme a origem: item reaproveitado
+   * do Hub aponta para `qa-documentos`; o enviado no checklist, para
+   * `qa-processo-docs`.
+   */
+  const pecasDoServico = (processoId: string): PecaZip[] =>
+    (exigencias as any[])
+      .filter((ex) => String(ex.processo_id) === processoId)
+      .filter((ex) => ex.arquivo_storage_key)
+      .filter(utilParaDossie)
+      .map((ex) => {
+        const meta = (ex?.metadados_documento_json && typeof ex.metadados_documento_json === "object")
+          ? ex.metadados_documento_json as Record<string, any>
+          : {};
+        const reaproveitado = ex.status === "dispensado_por_reaproveitamento"
+          || meta.reutilizado_do_hub === true
+          || meta.reaproveitado_da_central === true
+          || Boolean(meta?.reaproveitamento);
+        return {
+          bucket: reaproveitado ? "qa-documentos" : "qa-processo-docs",
+          path: String(ex.arquivo_storage_key),
+          doc: {
+            tipo_documento: ex.tipo_documento,
+            nome_documento: ex.nome_documento,
+            arquivo_nome: meta?.arquivo_nome_origem ?? null,
+          },
+        };
+      });
+
+  const pecasDoHub = (lista: any[]): PecaZip[] =>
+    lista
+      .filter((d) => d.arquivo_storage_path)
+      .filter(utilParaDossie)
+      .map((d) => ({ bucket: "qa-documentos", path: String(d.arquivo_storage_path), doc: d }));
+
+  /** Dossiê do escopo aberto: completo em "Todos", da juntada nas demais abas. */
+  const handleBaixarTudo = async () => {
+    if (abaAtiva === "todos") {
+      await zipDeItens(pecasDoHub([...(docs as any[]), ...provasComoDocs]), "");
+      return;
+    }
+    if (abaAtiva === "contratual") {
+      const contratuais = pecasDoHub((docs as any[]).filter((d) => abaDoDoc.get(d.id) === "contratual"));
+      const assinados: PecaZip[] = (contratos as any[]).map((ct) => ({
+        bucket: "paid-contracts",
+        path: String(ct.customer_signed_pdf_path),
+        doc: {
+          tipo_documento: "contrato_assinado",
+          nome_documento: `Contrato ${ct.contract_number || ""}`.trim(),
+          arquivo_nome: "contrato.pdf",
+        },
+      }));
+      await zipDeItens([...contratuais, ...assinados], "Contratual");
+      return;
+    }
+    if (abaAtiva === "gerais") {
+      await zipDeItens(pecasDoHub((docs as any[]).filter((d) => abaDoDoc.get(d.id) === "gerais")), "Gerais");
+      return;
+    }
+    const servico = (servicos as any[]).find((s) => s.chave === abaAtiva);
+    if (!servico) return;
+    if (servico.semProcesso) {
+      toast.error("Serviço ainda sem processo gerado — não há juntada para montar o dossiê.");
+      return;
+    }
+    await zipDeItens(pecasDoServico(servico.processoId), servico.nome);
+  };
+
+  // Precisa ficar depois de pecasDoServico — const não sofre hoisting.
+  const servicoAtivo = (servicos as any[]).find((s) => s.chave === abaAtiva) ?? null;
+  const pecasJuntada = servicoAtivo && !servicoAtivo.semProcesso
+    ? pecasDoServico(servicoAtivo.processoId).length
+    : 0;
 
   /**
    * Motivos prontos para a exclusão.
@@ -770,10 +859,15 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
             type="button"
             onClick={handleBaixarTudo}
             disabled={baixandoZip}
+            title={
+              abaAtiva === "todos"
+                ? "Acervo completo do cliente, na ordem do protocolo"
+                : "Somente as peças desta aba — cada serviço tem a sua juntada"
+            }
             className="inline-flex items-center gap-1 rounded-md border border-[#7A1F2B] bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {baixandoZip ? <Loader2 className="h-3 w-3 animate-spin" /> : <Archive className="h-3 w-3" />}
-            Baixar tudo (ZIP)
+            {abaAtiva === "todos" ? "Baixar tudo (ZIP)" : "ZIP desta aba"}
           </button>
           <div className="inline-flex rounded-md border border-slate-200 overflow-hidden">
             <button
@@ -845,6 +939,23 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           );
         })}
       </div>
+
+      {servicoAtivo && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] leading-relaxed text-slate-600">
+          {servicoAtivo.semProcesso ? (
+            <>
+              <strong className="uppercase tracking-wider">{servicoAtivo.nome}</strong> — serviço contratado, processo ainda não gerado. Sem checklist, não há juntada para montar o dossiê.
+            </>
+          ) : (
+            <>
+              <strong className="uppercase tracking-wider">{servicoAtivo.nome}</strong> — juntada com {pecasJuntada} arquivo(s) no checklist deste processo.{" "}
+              <span className="text-slate-500">
+                O ZIP desta aba monta essa juntada, incluindo documentos reaproveitados de outro serviço; a lista abaixo mostra os documentos do acervo do Hub vinculados a ele.
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {(abaAtiva === "todos" || abaAtiva === "contratual") && contratos.length > 0 && (
         <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
