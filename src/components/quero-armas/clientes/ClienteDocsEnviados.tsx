@@ -106,6 +106,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   const queryClient = useQueryClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [reprovandoId, setReprovandoId] = useState<string | null>(null);
+  const [aprovandoId, setAprovandoId] = useState<string | null>(null);
   const [motivoTmp, setMotivoTmp] = useState("");
   const [reclassificandoId, setReclassificandoId] = useState<string | null>(null);
   const [novoTipoTmp, setNovoTipoTmp] = useState("");
@@ -280,11 +281,18 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
   }, [clienteId, customerId, queryClient, queryKey]);
 
   const handleAprovar = async (docId: string) => {
+    setAprovandoId(docId);
     try {
       await aprovarDocumento(docId);
-      toast.success("Documento aprovado.");
+      toast.success("Documento aprovado — conferido pela equipe. Cliente foi notificado no portal.");
       queryClient.invalidateQueries({ queryKey });
+      // Aprovar no Hub fecha o slot correspondente do checklist (trigger
+      // qa_doc_hub_satisfaz_exigencias_processo). A linha do tempo lê as
+      // exigências por uma query própria — sem invalidá-la, a anotação
+      // "sem exigência correspondente" continua na tela depois da aprovação.
+      queryClient.invalidateQueries({ queryKey: ["cliente-exigencias-entrega", clienteId] });
     } catch (err: any) { toast.error(err?.message || "Falha ao aprovar."); }
+    finally { setAprovandoId(null); }
   };
 
   const handleReprovar = async (docId: string) => {
@@ -622,6 +630,8 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
           historicoReprovas={historicoReprovas as any}
           onViewFile={handleViewFile}
           onBaixar={handleBaixarDoc}
+          onAprovar={handleAprovar}
+          aprovandoId={aprovandoId}
           onReprovar={(id) => { setReprovandoId(id); setMotivoTmp(""); }}
           onDelete={handleDelete}
           reprovandoId={reprovandoId}
@@ -724,6 +734,8 @@ interface LinhaEntregaProps {
   historicoReprovas?: Record<string, { motivo: string | null; quando: string }[]>;
   onViewFile: (path: string, doc?: any) => void;
   onBaixar: (doc: any) => void;
+  onAprovar: (id: string) => void;
+  aprovandoId: string | null;
   onReprovar: (id: string) => void;
   onDelete: (id: string) => void;
   reprovandoId: string | null;
@@ -734,7 +746,8 @@ interface LinhaEntregaProps {
 }
 
 function LinhaEntrega({
-  itens, historicoReprovas = {}, onViewFile, onBaixar, onReprovar, onDelete,
+  itens, historicoReprovas = {}, onViewFile, onBaixar, onAprovar, aprovandoId,
+  onReprovar, onDelete,
   reprovandoId, motivoTmp, setMotivoTmp, confirmarReprovar, cancelarReprovar,
 }: LinhaEntregaProps) {
   if (itens.length === 0) return null;
@@ -828,6 +841,28 @@ function LinhaEntrega({
                         Sem arquivo anexado
                       </span>
                     )}
+                    <button
+                      type="button"
+                      disabled={isAprovado || !d.arquivo_storage_path || aprovandoId === d.id}
+                      onClick={() => { if (!isAprovado && d.arquivo_storage_path) onAprovar(d.id); }}
+                      title={
+                        isAprovado
+                          ? "Este documento já está aprovado."
+                          : !d.arquivo_storage_path
+                            ? "Sem arquivo anexado — não é possível aprovar."
+                            : "Aprovar manualmente — conferido pela equipe"
+                      }
+                      className={`inline-flex items-center gap-1 rounded border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
+                        isAprovado || !d.arquivo_storage_path
+                          ? "border-slate-200 bg-slate-50 text-slate-400 opacity-60 cursor-not-allowed"
+                          : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400"
+                      }`}
+                    >
+                      {aprovandoId === d.id
+                        ? <Loader2 className="h-3 w-3 animate-spin" />
+                        : <CheckCircle2 className="h-3 w-3" />}
+                      {isAprovado ? "Aprovado" : "Aprovar"}
+                    </button>
                     <button
                       type="button"
                       disabled={isReprovado}
