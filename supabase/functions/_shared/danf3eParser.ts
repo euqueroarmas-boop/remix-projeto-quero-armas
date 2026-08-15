@@ -66,7 +66,14 @@ function parseLinhaLogradouro(linha: string): {
   if (!linha) return {};
   // Número pode ser: "180 C" / "123" / "100-A" / "S/N"
   const m = linha.match(
-    /^([\p{L}\d\s.,'-]{3,60?}?)\s+(\d+(?:\s*[A-Za-z]|\s*-?\s*[A-Za-z])?)\s*([\s\S]*)$/u,
+    // `{3,60}?` = entre 3 e 60 caracteres, preguiçoso (para o grupo do número
+    // conseguir capturar os dígitos). Estava escrito `{3,60?}?`, que com a flag
+    // `u` é erro de sintaxe — e derrubava a função inteira no boot.
+    // `(?![A-Za-z])` impede o número de engolir a primeira letra da palavra
+    // seguinte: "RUA CUMBICA 126 JARDIM…" virava número "126 J" e complemento
+    // "ARDIM…". A letra solta ainda é aceita quando é mesmo do número
+    // ("180 C", "100-A"), porque aí vem espaço ou fim logo depois.
+    /^([\p{L}\d\s.,'-]{3,60}?)\s+(\d+(?:\s*-?\s*[A-Za-z])?)(?![A-Za-z])\s*([\s\S]*)$/u,
   );
   if (!m) return { logradouro: linha };
   return {
