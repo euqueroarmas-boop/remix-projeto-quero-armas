@@ -32,6 +32,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { requireAdminOrInternal, internalCorsHeaders } from "../_shared/internalAuth.ts";
 
+// Carimbo de versão: aparece em TODA resposta, inclusive nos erros. Serve para
+// saber na hora se o Publish do Lovable subiu a versão que você espera —
+// sem isso, "não encontrado" de código velho é indistinguível de código novo.
+const VERSAO = "2026-08-15.3-cpf-mascarado";
+
 const BUCKET_PADRAO = "qa-processo-docs";
 const BUCKET_FALLBACK = "qa-documentos";
 const SIGNED_URL_TTL_S = 600; // 10 min — tempo de baixar, não de guardar.
@@ -44,7 +49,8 @@ const corsHeaders = {
 };
 
 function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+  const comVersao = body && typeof body === "object" ? { versao: VERSAO, ...body } : body;
+  return new Response(JSON.stringify(comVersao), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
