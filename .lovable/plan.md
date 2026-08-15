@@ -1,41 +1,24 @@
-# Correção definitiva da falsa validade do CCMEI
+# Deploy de Edge Functions — Modelos de IA
 
-## Diagnóstico confirmado
+## Objetivo
+Publicar no backend as edge functions já corrigidas no repositório, sem nenhuma alteração de código ou lógica.
 
-O CCMEI do Fábio está sendo reconhecido corretamente pelo parser local e atende à regra de aprovação por nome, CPF e situação cadastral ATIVA.
+## Funções a publicar
+- `qa-modelo-aprovado-criar`
+- `qa-modelo-biblioteca-treinar`
+- `qa-processo-doc-validar-ia`
 
-A reprovação atual não vem da classificação nem do banco. Ela ocorre no formulário, antes de salvar:
+## Arquivo compartilhado a acompanhar
+- `supabase/functions/_shared/embedding.ts` (novo módulo de embedding local via `Supabase.ai.Session` / `gte-small`, 384 dimensões)
 
-- ao trocar/anexar um arquivo, o estado anterior de `data_emissao` e `data_validade` não é zerado;
-- o bloco específico do CCMEI atualiza tipo, CNPJ e dados empresariais, mas mantém os demais valores anteriores com `...prev`;
-- a trava genérica `docExpirado` considera qualquer `form.data_validade`, mesmo quando o tipo é um documento constitutivo sem vencimento;
-- por isso a data residual **09/08/2026** produz o carimbo “REPROVADO — VENCIDO”, embora CCMEI não tenha validade;
-- nenhum CCMEI foi gravado para o Fábio, confirmando que a rejeição ocorreu antes da persistência.
+## Contexto
+Essas três funções passaram a usar o modelo de embedding embutido no runtime do Supabase, substituindo chamadas ao endpoint inexistente `https://ai.gateway.lovable.dev/v1/embeddings`. O deploy deve subir exatamente o código que veio da branch `main`.
 
-## Correção
+## Passos
+1. Executar deploy das três edge functions via `supabase--deploy_edge_functions`.
+2. Aguardar conclusão e confirmar quais funções foram efetivamente publicadas.
 
-1. **Limpar estado residual ao anexar outro documento**
-   - Zerar datas e demais campos específicos do arquivo anterior no início de uma nova leitura.
-   - Preservar apenas o contexto necessário do slot/checklist aberto.
-
-2. **Blindagem explícita do CCMEI**
-   - No resultado do parser CCMEI, definir `data_emissao` e `data_validade` como vazias, sem herdar `prev`.
-   - Tratar CCMEI, contrato social e requerimento/ficha da Junta como sem datas em qualquer caminho de leitura, inclusive fallback de IA.
-
-3. **Corrigir a trava de vencimento**
-   - `docExpirado` só poderá ser verdadeiro para tipos que realmente exigem validade.
-   - Documentos constitutivos nunca exibirão alerta/carimbo de vencimento, mesmo se algum estado ou dado legado trouxer uma data.
-
-4. **Persistência segura**
-   - Ao salvar documento constitutivo, enviar `data_emissao = null` e `data_validade = null`.
-   - Manter a gravação já preparada de nome, CPF, situação, CNPJ, razão social, CNAE e ocupação principal.
-
-5. **Regressão e validação**
-   - Testar troca de um documento vencido para um CCMEI dentro do mesmo modal.
-   - Confirmar que o CCMEI do Fábio recebe aprovação por nome + CPF + ATIVA e é salvo sem datas.
-   - Confirmar que Cartão CNPJ e QSA continuam com 30 dias e que documentos realmente vencidos continuam sendo rejeitados.
-   - Validar no fluxo móvel do Hub Documental e conferir o registro persistido no banco.
-
-## Escopo técnico
-
-Ajuste focado no estado, cálculo de vencimento e payload de `ClienteDocsHubModal.tsx`, com testes de regressão das regras de ocupação lícita. Nenhuma tabela nova e nenhuma alteração nas regras estáveis de outros documentos.
+## Não será feito
+- Nenhuma edição, correção ou reescrita do código das funções.
+- Nenhuma alteração em `supabase/config.toml`.
+- Nenhuma mudança de schema ou migration.
