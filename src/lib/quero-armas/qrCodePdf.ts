@@ -17,6 +17,10 @@ export interface ResultadoQrPdf {
   conteudo?: string;
   /** QR aponta para um domínio oficial (gov.br / serpro / denatran). */
   oficial: boolean;
+  /** QR legível, porém de conteúdo binário (sem texto) — caso da CNH-e. */
+  binario: boolean;
+  /** Bytes do payload, quando o QR é binário. */
+  bytes?: number;
 }
 
 const DOMINIOS_OFICIAIS = [
@@ -55,18 +59,26 @@ export async function lerQrCodeDoPdf(file: File, maxPaginas = 3): Promise<Result
 
       const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "attemptBoth" });
-      if (code?.data) {
-        const alvo = code.data.toLowerCase();
+      // ATENÇÃO: nem todo QR carrega texto. O da CNH-e é modo BYTE — ~530
+      // bytes de assinatura digital do Serpro — e o jsQR devolve `data` como
+      // string VAZIA, com o payload em `binaryData`. Testar só `code.data`
+      // (falsy quando vazio) fazia a CNH-e original ser dada como "sem QR".
+      const conteudo = code?.data ?? "";
+      const bytes = code?.binaryData?.length ?? 0;
+      if (conteudo || bytes > 0) {
+        const alvo = conteudo.toLowerCase();
         return {
           encontrado: true,
-          conteudo: code.data,
-          oficial: DOMINIOS_OFICIAIS.some((d) => alvo.includes(d)),
+          conteudo: conteudo || undefined,
+          oficial: Boolean(conteudo) && DOMINIOS_OFICIAIS.some((d) => alvo.includes(d)),
+          binario: !conteudo,
+          bytes,
         };
       }
     }
-    return { encontrado: false, oficial: false };
+    return { encontrado: false, oficial: false, binario: false };
   } catch (e) {
     console.warn("[qrCodePdf] falha ao procurar QR Code:", e);
-    return { encontrado: false, oficial: false };
+    return { encontrado: false, oficial: false, binario: false };
   }
 }

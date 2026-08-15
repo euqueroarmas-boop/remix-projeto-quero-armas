@@ -39,6 +39,7 @@ import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
   avaliarPdfIdentidade,
+  avaliarQrVisualIdentidade,
   MSG_IDENTIDADE_SOMENTE_PDF,
 } from "@/lib/quero-armas/identidadePdfQrCode";
 import {
@@ -3626,11 +3627,13 @@ export function ClienteDocsHubModal({
       if (!veredicto.ok) {
         // A CNH digital (CNH-e) e parte das CIN do gov.br saem como PDF de
         // imagem, sem camada de texto. Antes de recusar, procuramos o QR Code
-        // de autenticidade no próprio pixel do documento.
+        // de autenticidade no próprio pixel do documento. O QR da CNH-e não é
+        // uma URL: é binário assinado — quem decide o aceite é o veredicto
+        // canônico, não a presença de "gov.br" no conteúdo.
         setExtracting(true);
         try {
           const qr = await lerQrCodeDoPdf(f);
-          aprovadoPorQrVisual = qr.encontrado && qr.oficial;
+          aprovadoPorQrVisual = avaliarQrVisualIdentidade(qr, textoIdentidade);
         } finally {
           setExtracting(false);
         }
