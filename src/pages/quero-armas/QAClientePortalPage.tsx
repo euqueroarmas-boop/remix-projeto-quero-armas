@@ -3865,7 +3865,7 @@ export default function QAClientePortalPage() {
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <style>{`
-        /* `overscroll-behavior: none` (os dois eixos) prende o gesto ao
+        /* overscroll-behavior: none (os dois eixos) prende o gesto ao
            portal: nada de repique elástico no fim da lista nem de "puxar
            para recarregar" derrubando o que o cliente está preenchendo. */
         .qa-portal-main { touch-action: pan-y; overflow-x: clip; overscroll-behavior: none; }
