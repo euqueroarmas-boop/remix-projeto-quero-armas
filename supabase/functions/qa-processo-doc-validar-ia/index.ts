@@ -55,6 +55,14 @@ const REQUERIMENTO_SINARM_TIPOS = new Set([
   "requerimento_sinarm",
 ]);
 
+/**
+ * Feito o requerimento, a documentação completa tem 15 dias corridos para
+ * chegar à PF — depois disso o pedido é marcado como EXPIRADO. Não confundir
+ * com a "Data de Vencimento" impressa no documento, que fica ~30 dias à frente
+ * e mede outra coisa (a validade do requerimento em si).
+ */
+const PRAZO_ENTREGA_DOCUMENTACAO_DIAS = 15;
+
 // ===== APRENDIZADO SUPERVISIONADO — utilitários =====
 function normalizarTexto(s: string): string {
   return (s || "")
@@ -1466,19 +1474,37 @@ Deno.serve(async (req) => {
         camposExtraidosFinal.numero_requerimento = numero;
       }
 
+      // A "Data de Vencimento" impressa fica ~30 dias à frente e é a validade
+      // do requerimento em si. Guardamos como informação, mas ela NÃO é o
+      // prazo que a operação persegue — ver o bloco abaixo.
       const vencBR =
         fonteTexto.match(/(\d{2}\/\d{2}\/\d{4})\s*Data\s+de\s+Vencimento/i)?.[1] ??
         fonteTexto.match(/Data\s+de\s+Vencimento[:\s]*(\d{2}\/\d{2}\/\d{4})/i)?.[1] ??
         null;
-      if (vencBR) {
-        if (!camposExtraidosFinal.data_vencimento_requerimento) {
-          camposExtraidosFinal.data_vencimento_requerimento = vencBR;
+      if (vencBR && !camposExtraidosFinal.data_vencimento_requerimento) {
+        camposExtraidosFinal.data_vencimento_requerimento = vencBR;
+      }
+
+      // PRAZO QUE VALE: 15 dias corridos da emissão para a documentação
+      // completa chegar à PF. Passado isso o requerimento é marcado como
+      // EXPIRADO, mesmo com a data impressa ainda no futuro — são dois
+      // relógios diferentes, e é este que a equipe persegue.
+      //
+      // A emissão sai dos 8 primeiros dígitos do próprio número
+      // (AAAAMMDDHHMMSSNNNN), que é a fonte mais confiável: não depende de OCR
+      // de rótulo nem de o cliente informar nada.
+      const numeroParaData = camposExtraidosFinal.numero_requerimento ?? numero;
+      const digitos = String(numeroParaData ?? "").replace(/\D/g, "");
+      if (/^20\d{16}$/.test(digitos)) {
+        const emissaoISO = `${digitos.slice(0, 4)}-${digitos.slice(4, 6)}-${digitos.slice(6, 8)}`;
+        const emissao = new Date(`${emissaoISO}T00:00:00Z`);
+        // Descarta dígitos que passam no formato mas não são data real.
+        if (!isNaN(emissao.getTime()) && emissao.toISOString().slice(0, 10) === emissaoISO) {
+          camposExtraidosFinal.data_emissao_requerimento = emissaoISO;
+          const limite = new Date(emissao);
+          limite.setUTCDate(limite.getUTCDate() + PRAZO_ENTREGA_DOCUMENTACAO_DIAS);
+          dataValidade = limite.toISOString().slice(0, 10);
         }
-        const [dd, mm, aaaa] = vencBR.split("/");
-        const vencISO = `${aaaa}-${mm}-${dd}`;
-        // A data impressa pela própria PF substitui a validade calculada:
-        // é ela que o cliente vê no documento e que a delegacia cobra.
-        if (!isNaN(new Date(vencISO).getTime())) dataValidade = vencISO;
       }
     }
 

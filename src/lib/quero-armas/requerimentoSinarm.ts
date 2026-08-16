@@ -69,6 +69,92 @@ export function extrairVencimentoRequerimento(texto: unknown): string | null {
  * Extrai o número a partir do `dados_extraidos_json` de um documento.
  * Aceita as chaves que a IA e o extrator usam, na ordem de confiança.
  */
+/** Códigos com que a exigência do requerimento aparece no catálogo. */
+export const REQUERIMENTO_SINARM_TIPOS = new Set<string>([
+  "requerimento_de_posse_de_arma_de_fogo",
+  "requerimento_posse_arma_fogo",
+  "requerimento_posse",
+  "requerimento_sinarm",
+]);
+
+export function ehRequerimentoSinarm(tipo: unknown): boolean {
+  return REQUERIMENTO_SINARM_TIPOS.has(String(tipo ?? "").trim().toLowerCase());
+}
+
+/**
+ * Prazo de entrega da documentação: 15 dias corridos a partir do requerimento.
+ *
+ * NÃO confundir com a "Data de Vencimento" impressa no documento, que fica ~30
+ * dias à frente. São dois relógios: o impresso é a validade do requerimento em
+ * si; este é o prazo operacional para instruir o processo. Passados os 15 dias
+ * sem a documentação completa, a Polícia Federal marca o requerimento como
+ * EXPIRADO — e é esse o prazo que a equipe persegue.
+ */
+export const PRAZO_ENTREGA_DOCUMENTACAO_DIAS = 15;
+
+/**
+ * Data de emissão a partir do próprio número do requerimento.
+ *
+ * Os 18 dígitos são AAAAMMDDHHMMSSNNNN — os 8 primeiros são a data em que o
+ * requerimento foi gerado no SINARM. Ler daí é mais confiável que qualquer
+ * outra fonte: não depende de OCR de rótulo nem de o cliente informar nada,
+ * e o número já é validado pelo formato.
+ */
+export function dataEmissaoDoNumero(numero: unknown): string | null {
+  const n = normalizarNumeroRequerimento(numero);
+  if (!n) return null;
+  const iso = `${n.slice(0, 4)}-${n.slice(4, 6)}-${n.slice(6, 8)}`;
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return null;
+  // Guarda contra dígitos que passam no formato mas não são data real
+  // (ex.: mês 13, dia 32 — o Date "corrige" e muda o valor).
+  return d.toISOString().slice(0, 10) === iso ? iso : null;
+}
+
+export type FaixaPrazoRequerimento = "ok" | "warn" | "bad" | "expirado";
+
+export interface PrazoRequerimento {
+  /** Último dia para entregar a documentação completa (ISO). */
+  dataLimite: string;
+  /** Dias corridos restantes; negativo quando já passou. */
+  diasRestantes: number;
+  /**
+   * Faixa da badge, na régua acordada com a equipe:
+   *   15–10 verde · 9–5 amarelo · 4–0 vermelho · negativo expirado.
+   * É a mesma régua de ciclo curto de `validadeDocumento` (crítico 4,
+   * atenção 9), de propósito: um documento, uma cor, em toda tela.
+   */
+  faixa: FaixaPrazoRequerimento;
+}
+
+function somarDiasISO(iso: string, dias: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + dias);
+  return d.toISOString().slice(0, 10);
+}
+
+function diffDiasISO(de: string, ate: string): number {
+  const a = new Date(`${de}T00:00:00Z`).getTime();
+  const b = new Date(`${ate}T00:00:00Z`).getTime();
+  return Math.round((b - a) / 86_400_000);
+}
+
+/**
+ * Prazo de entrega a partir da data de emissão do requerimento.
+ * `hojeISO` é injetável para o cálculo ser testável e não depender do relógio.
+ */
+export function prazoEntregaRequerimento(
+  emissaoISO: string | null | undefined,
+  hojeISO: string,
+): PrazoRequerimento | null {
+  if (!emissaoISO || !/^\d{4}-\d{2}-\d{2}$/.test(emissaoISO)) return null;
+  const dataLimite = somarDiasISO(emissaoISO, PRAZO_ENTREGA_DOCUMENTACAO_DIAS);
+  const diasRestantes = diffDiasISO(hojeISO, dataLimite);
+  const faixa: FaixaPrazoRequerimento =
+    diasRestantes < 0 ? "expirado" : diasRestantes <= 4 ? "bad" : diasRestantes <= 9 ? "warn" : "ok";
+  return { dataLimite, diasRestantes, faixa };
+}
+
 export function numeroRequerimentoDeDadosExtraidos(
   dados: unknown,
 ): string | null {

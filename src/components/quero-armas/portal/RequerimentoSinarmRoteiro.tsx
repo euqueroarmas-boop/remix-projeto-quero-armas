@@ -25,7 +25,13 @@
 // ============================================================================
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, Check, Copy, ExternalLink } from "lucide-react";
+import { AlertTriangle, Check, Clock, Copy, ExternalLink } from "lucide-react";
+import { hojeISOBRT } from "@/lib/quero-armas/validadeDocumento";
+import {
+  dataEmissaoDoNumero,
+  prazoEntregaRequerimento,
+  PRAZO_ENTREGA_DOCUMENTACAO_DIAS,
+} from "@/lib/quero-armas/requerimentoSinarm";
 
 /** Endereço oficial de entrada dos serviços de arma da PF. */
 const URL_PF_ARMAS = "https://www.gov.br/pf/pt-br/assuntos/armas";
@@ -456,6 +462,12 @@ export default function RequerimentoSinarmRoteiro({
   onEntregar,
 }: RequerimentoSinarmRoteiroProps) {
   const numero = String(numeroRequerimento ?? "").trim();
+  // O relógio de 15 dias sai do próprio número: os 8 primeiros dígitos são a
+  // data em que o requerimento foi gerado no SINARM.
+  const prazo = useMemo(
+    () => (numero ? prazoEntregaRequerimento(dataEmissaoDoNumero(numero), hojeISOBRT()) : null),
+    [numero],
+  );
   const status = String(statusDocumento ?? "").trim().toLowerCase();
   /** Requerimento já saiu das nossas mãos e está sendo conferido. */
   const emConferencia = ["enviado", "em_analise", "revisao_humana"].includes(status);
@@ -561,6 +573,67 @@ export default function RequerimentoSinarmRoteiro({
       {secoes.map((secao) => (
         <Secao key={secao.titulo} secao={secao} />
       ))}
+
+      {/*
+        RELÓGIO DE 15 DIAS — só aparece depois que o requerimento existe.
+        Feito o requerimento, a documentação completa tem 15 dias corridos para
+        chegar à PF; passado o prazo o pedido é marcado como EXPIRADO e tudo
+        recomeça. A data de emissão sai do próprio número do requerimento.
+      */}
+      {prazo && (
+        <div
+          className={[
+            "rounded-lg border-2 p-3",
+            prazo.faixa === "ok"
+              ? "border-emerald-300 bg-emerald-50"
+              : prazo.faixa === "warn"
+                ? "border-amber-400 bg-amber-50"
+                : "border-red-400 bg-red-50",
+          ].join(" ")}
+        >
+          <p
+            className={[
+              "flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em]",
+              prazo.faixa === "ok"
+                ? "text-emerald-900"
+                : prazo.faixa === "warn"
+                  ? "text-amber-900"
+                  : "text-red-800",
+            ].join(" ")}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            {prazo.faixa === "expirado"
+              ? `Prazo vencido há ${Math.abs(prazo.diasRestantes)} dia(s)`
+              : prazo.diasRestantes === 0
+                ? "Último dia para entregar a documentação"
+                : `Faltam ${prazo.diasRestantes} dia(s) para entregar a documentação`}
+          </p>
+          <p
+            className={[
+              "mt-1 text-[11px] leading-snug",
+              prazo.faixa === "ok"
+                ? "text-emerald-900"
+                : prazo.faixa === "warn"
+                  ? "text-amber-900"
+                  : "text-red-900",
+            ].join(" ")}
+          >
+            {prazo.faixa === "expirado" ? (
+              <>
+                A Polícia Federal marca como expirado o requerimento que passa de{" "}
+                {PRAZO_ENTREGA_DOCUMENTACAO_DIAS} dias sem a documentação completa. Fale com a
+                nossa equipe para saber se ainda dá para aproveitar ou se será preciso refazer.
+              </>
+            ) : (
+              <>
+                Prazo até {fmtData(prazo.dataLimite)}. Contado do dia em que você gerou o
+                requerimento: são {PRAZO_ENTREGA_DOCUMENTACAO_DIAS} dias para a documentação
+                completa chegar à Polícia Federal, senão o pedido expira e recomeça do zero.
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* ── ETAPA 1: gerar e mandar conferir ───────────────────────────── */}
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">

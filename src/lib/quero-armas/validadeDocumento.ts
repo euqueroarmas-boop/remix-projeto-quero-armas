@@ -16,6 +16,8 @@
  * fim em `data_validade`.
  */
 
+import { ehRequerimentoSinarm } from "@/lib/quero-armas/requerimentoSinarm";
+
 // ─── FUSO CANÔNICO: America/Sao_Paulo ────────────────────────────────────────
 // Toda contagem de prazo da plataforma usa o "hoje" de Brasília. Usar UTC fazia
 // o resumo virar o dia às 21h (BRT) e mostrar 1 dia a menos que o banco.
@@ -595,7 +597,13 @@ export function isVencimentoCicloCurto(tipo?: string | null): boolean {
   const t = String(tipo ?? "").trim().toLowerCase();
   if (!t) return false;
   if (isTipoSemVencimento(t)) return false;
-  const curtoPorNatureza = isComprovanteEndereco(t) || t.startsWith("antecedentes_");
+  // O requerimento do SINARM entra aqui por decisão da equipe (16/08/2026):
+  // feito o requerimento, a documentação completa tem 15 dias para chegar à
+  // PF, senão o pedido é marcado como EXPIRADO. A régua de ciclo curto
+  // (crítico ≤4, atenção ≤9) é exatamente a faixa combinada para a badge —
+  // 15–10 verde, 9–5 amarelo, 4–0 vermelho.
+  const curtoPorNatureza =
+    isComprovanteEndereco(t) || t.startsWith("antecedentes_") || ehRequerimentoSinarm(t);
   if (!curtoPorNatureza) return false;
   const regra = getRegraValidade(t);
   if (regra) {

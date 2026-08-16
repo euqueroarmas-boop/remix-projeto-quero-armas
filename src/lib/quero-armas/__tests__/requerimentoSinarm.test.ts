@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  dataEmissaoDoNumero,
+  ehRequerimentoSinarm,
   extrairNumeroRequerimento,
   extrairVencimentoRequerimento,
   normalizarNumeroRequerimento,
   numeroRequerimentoDeDadosExtraidos,
+  prazoEntregaRequerimento,
 } from "@/lib/quero-armas/requerimentoSinarm";
 
 // Números reais de requerimentos conferidos (clientes anonimizados no restante).
@@ -96,5 +99,72 @@ describe("numeroRequerimentoDeDadosExtraidos", () => {
   it("aguenta json vazio ou nulo", () => {
     expect(numeroRequerimentoDeDadosExtraidos(null)).toBeNull();
     expect(numeroRequerimentoDeDadosExtraidos({})).toBeNull();
+  });
+});
+
+describe("dataEmissaoDoNumero", () => {
+  it.each([
+    ["202509251233571981", "2025-09-25"],
+    ["202512241149324512", "2025-12-24"],
+    ["202601121214505266", "2026-01-12"],
+  ])("lê a emissão de %s", (numero, esperado) => {
+    expect(dataEmissaoDoNumero(numero)).toBe(esperado);
+  });
+
+  it("recusa número com data impossível (mês 13)", () => {
+    expect(dataEmissaoDoNumero("202513011233571981")).toBeNull();
+  });
+
+  it("recusa número fora do formato", () => {
+    expect(dataEmissaoDoNumero("12345")).toBeNull();
+    expect(dataEmissaoDoNumero(null)).toBeNull();
+  });
+});
+
+describe("prazoEntregaRequerimento", () => {
+  // Régua acordada com a equipe: 15–10 verde · 9–5 amarelo · 4–0 vermelho.
+  // Requerimento emitido em 01/09 vence a entrega em 16/09.
+  const EMISSAO = "2025-09-01";
+
+  it("calcula o limite somando 15 dias à emissão", () => {
+    expect(prazoEntregaRequerimento(EMISSAO, "2025-09-01")?.dataLimite).toBe("2025-09-16");
+  });
+
+  it.each([
+    ["2025-09-01", 15, "ok"],
+    ["2025-09-06", 10, "ok"],
+    ["2025-09-07", 9, "warn"],
+    ["2025-09-11", 5, "warn"],
+    ["2025-09-12", 4, "bad"],
+    ["2025-09-16", 0, "bad"],
+    ["2025-09-17", -1, "expirado"],
+  ])("em %s restam %i dias e a faixa é %s", (hoje, dias, faixa) => {
+    const p = prazoEntregaRequerimento(EMISSAO, hoje as string);
+    expect(p?.diasRestantes).toBe(dias);
+    expect(p?.faixa).toBe(faixa);
+  });
+
+  it("atravessa a virada de mês sem erro", () => {
+    const p = prazoEntregaRequerimento("2025-12-24", "2026-01-05");
+    expect(p?.dataLimite).toBe("2026-01-08");
+    expect(p?.diasRestantes).toBe(3);
+    expect(p?.faixa).toBe("bad");
+  });
+
+  it("devolve null sem emissão válida", () => {
+    expect(prazoEntregaRequerimento(null, "2025-09-01")).toBeNull();
+    expect(prazoEntregaRequerimento("25/09/2025", "2025-09-01")).toBeNull();
+  });
+});
+
+describe("ehRequerimentoSinarm", () => {
+  it("aceita os códigos do requerimento da PF", () => {
+    expect(ehRequerimentoSinarm("requerimento_de_posse_de_arma_de_fogo")).toBe(true);
+    expect(ehRequerimentoSinarm("REQUERIMENTO_SINARM")).toBe(true);
+  });
+
+  it("recusa o requerimento de empresário da Junta Comercial", () => {
+    expect(ehRequerimentoSinarm("renda_requerimento_empresario")).toBe(false);
+    expect(ehRequerimentoSinarm("renda_contrato_social")).toBe(false);
   });
 });
