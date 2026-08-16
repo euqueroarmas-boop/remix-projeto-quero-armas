@@ -1587,6 +1587,15 @@ export function ClienteDocsHubModal({
   const [comprovanteDocId, setComprovanteDocId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Quem está operando o Hub: usado só para carimbar a trilha (admin/cliente).
+  const [atorEhStaff, setAtorEhStaff] = useState(false);
+  useEffect(() => {
+    let cancelado = false;
+    isCurrentUserStaff()
+      .then((v) => { if (!cancelado) setAtorEhStaff(Boolean(v)); })
+      .catch(() => {});
+    return () => { cancelado = true; };
+  }, []);
   /**
    * Arquivo idêntico já existente no acervo deste cliente, detectado pelo eTag
    * do Storage depois do upload. Quando preenchido, o documento NÃO é gravado:
