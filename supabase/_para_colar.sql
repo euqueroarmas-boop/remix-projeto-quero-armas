@@ -1,39 +1,36 @@
 -- ============================================================================
--- LEVANTAMENTO — REQUERIMENTO GERADO PELO PRÓPRIO CLIENTE
+-- LEVANTAMENTO FINAL — REQUERIMENTO, PROTOCOLO E LINHA DO TEMPO DA PF
 -- ----------------------------------------------------------------------------
 -- Bloco 100% de LEITURA (só SELECT). Não altera nada, pode rodar em produção.
--- Rode as 6 consultas de uma vez e me mande os 6 resultados.
+-- É o último levantamento: com estes 6 resultados eu fecho o diagnóstico e
+-- começo a construir. Rode tudo de uma vez e me mande os 6 resultados.
 -- ============================================================================
 
--- 1) A exigência do requerimento já tem modelo preenchível (template_key)?
---    É isso que faz o botão "gerar preenchido" existir. Sem template_key,
---    o cliente só recebe um PDF em branco.
+-- 1) A exigência do requerimento: em quais serviços ela existe e o que o
+--    cliente lê hoje no portal (instrução, observação, link de emissão).
+--    Confirma se está mesmo só em Posse e Porte.
 SELECT sd.servico_id,
        s.nome_servico,
-       sd.id,
        sd.tipo_documento,
        sd.nome_documento,
        sd.etapa,
+       sd.ordem,
        sd.obrigatorio,
        sd.ativo,
-       sd.modelo_url,
-       sd.exemplo_url,
        sd.link_emissao,
-       sd.regra_validacao,
-       sd.regra_validacao ->> 'template_key'  AS template_key,
-       sd.regra_validacao -> 'template_quando' AS template_quando,
+       sd.modelo_url,
        sd.instrucoes,
-       sd.observacoes_cliente
+       sd.observacoes_cliente,
+       sd.regra_validacao
   FROM public.qa_servicos_documentos sd
   LEFT JOIN public.qa_servicos s ON s.id = sd.servico_id
  WHERE sd.tipo_documento ILIKE '%requerimento%'
     OR lower(sd.nome_documento) LIKE '%requerimento%'
  ORDER BY sd.servico_id, sd.etapa, sd.ordem;
 
--- 2) O que a Biblioteca de documentos diz sobre o requerimento
---    (é daqui que sai o texto "como enviar" que o cliente lê no portal).
-SELECT id,
-       codigo,
+-- 2) O texto da Biblioteca de documentos para o requerimento
+--    (é o "como enviar" que aparece no pop-up guiado).
+SELECT codigo,
        nome,
        categoria,
        ativo,
@@ -50,30 +47,38 @@ SELECT id,
     OR lower(nome) LIKE '%requerimento%'
  ORDER BY ativo DESC, nome;
 
--- 3) Quais modelos .docx preenchíveis já existem no storage
---    (é a lista de chaves que a geração automática consegue usar hoje).
-SELECT name AS caminho,
-       round((metadata ->> 'size')::numeric / 1024, 1) AS kb,
-       created_at,
-       updated_at
-  FROM storage.objects
- WHERE bucket_id = 'qa-templates'
- ORDER BY name;
+-- 3) Quais status estão REALMENTE em uso hoje nas duas tabelas.
+--    A linha do tempo nova (protocolado → em análise PF → notificado →
+--    em análise → deferido/indeferido) tem que caber nestes valores.
+SELECT 'qa_processos'   AS tabela, coalesce(status, '(nulo)') AS status, count(*) AS qtd
+  FROM public.qa_processos
+ GROUP BY status
+UNION ALL
+SELECT 'qa_itens_venda' AS tabela, coalesce(status, '(nulo)') AS status, count(*) AS qtd
+  FROM public.qa_itens_venda
+ GROUP BY status
+ ORDER BY 1, 3 DESC;
 
--- 4) Todas as exigências que JÁ usam modelo preenchível hoje
---    (serve de espelho: é a configuração que o requerimento precisa copiar).
-SELECT sd.servico_id,
-       sd.tipo_documento,
-       sd.nome_documento,
-       sd.regra_validacao ->> 'template_key' AS template_key,
-       sd.regra_validacao -> 'template_quando' AS template_quando
-  FROM public.qa_servicos_documentos sd
- WHERE sd.ativo
-   AND sd.regra_validacao IS NOT NULL
-   AND (sd.regra_validacao ? 'template_key' OR sd.regra_validacao ? 'template_quando')
- ORDER BY sd.servico_id, sd.tipo_documento;
+-- 4) A PONTE. Este é o resultado mais importante do bloco.
+--    As datas da PF (protocolo, notificação, indeferimento, deferimento) e o
+--    contador de prazos vivem em qa_itens_venda. O portal do cliente mostra
+--    qa_processos. Se não houver ligação entre os dois, a linha do tempo não
+--    tem como aparecer para o cliente sem eu criar essa ligação antes.
+SELECT count(*)                                             AS processos,
+       count(*) FILTER (WHERE p.venda_id IS NOT NULL)       AS com_venda,
+       count(iv.id)                                         AS com_item_correspondente,
+       count(*) FILTER (WHERE iv.data_protocolo      IS NOT NULL) AS ja_protocolados,
+       count(*) FILTER (WHERE iv.data_notificacao    IS NOT NULL) AS com_notificacao,
+       count(*) FILTER (WHERE iv.data_indeferimento  IS NOT NULL) AS com_indeferimento,
+       count(*) FILTER (WHERE iv.data_deferimento    IS NOT NULL) AS com_deferimento
+  FROM public.qa_processos p
+  LEFT JOIN public.qa_vendas v
+         ON v.id = p.venda_id
+  LEFT JOIN public.qa_itens_venda iv
+         ON iv.venda_id = v.id_legado
+        AND iv.servico_id = p.servico_id;
 
--- 5) Tamanho do problema: quantos requerimentos estão pendentes/entregues hoje
+-- 5) Onde estão os requerimentos hoje: quantos pendentes, quantos entregues.
 SELECT tipo_documento,
        status,
        count(*) AS qtd,
@@ -84,17 +89,12 @@ SELECT tipo_documento,
  GROUP BY tipo_documento, status
  ORDER BY tipo_documento, qtd DESC;
 
--- 6) Quão preenchido está o cadastro dos clientes ativos — se faltar dado,
---    o requerimento sai com buraco e o cliente vai ter que responder wizard.
-SELECT count(*)                                                   AS clientes,
-       count(*) FILTER (WHERE nome_completo   IS NOT NULL AND nome_completo   <> '') AS com_nome,
-       count(*) FILTER (WHERE cpf             IS NOT NULL AND cpf             <> '') AS com_cpf,
-       count(*) FILTER (WHERE rg              IS NOT NULL AND rg              <> '') AS com_rg,
-       count(*) FILTER (WHERE data_nascimento IS NOT NULL)                           AS com_nascimento,
-       count(*) FILTER (WHERE nome_mae        IS NOT NULL AND nome_mae        <> '') AS com_nome_mae,
-       count(*) FILTER (WHERE endereco        IS NOT NULL AND endereco        <> '') AS com_endereco,
-       count(*) FILTER (WHERE cep             IS NOT NULL AND cep             <> '') AS com_cep,
-       count(*) FILTER (WHERE profissao       IS NOT NULL AND profissao       <> '') AS com_profissao
-  FROM public.qa_clientes
- WHERE NOT coalesce(excluido, false)
-   AND NOT coalesce(arquivado, false);
+-- 6) Confirmação de que NÃO existe hoje campo para colar o texto do delegado
+--    (a justificativa do indeferimento). Se vier vazio, eu crio a coluna.
+SELECT table_name, column_name, data_type
+  FROM information_schema.columns
+ WHERE table_schema = 'public'
+   AND (column_name ILIKE '%indeferi%' OR column_name ILIKE '%justificativa%'
+        OR column_name ILIKE '%delegado%' OR column_name ILIKE '%decisao%'
+        OR column_name ILIKE '%motivo%')
+ ORDER BY table_name, column_name;
