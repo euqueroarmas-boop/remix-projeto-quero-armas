@@ -6572,13 +6572,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_qa_doc_cliente__qa_cliente"
-            columns: ["qa_cliente_id"]
-            isOneToOne: false
-            referencedRelation: "qa_clientes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "qa_documentos_cliente_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -6617,7 +6610,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           detalhes: Json | null
-          documento_id: string
+          documento_id: string | null
           id: string
           ip_origem: string | null
           qa_cliente_id: number | null
@@ -6631,7 +6624,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           detalhes?: Json | null
-          documento_id: string
+          documento_id?: string | null
           id?: string
           ip_origem?: string | null
           qa_cliente_id?: number | null
@@ -6645,7 +6638,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           detalhes?: Json | null
-          documento_id?: string
+          documento_id?: string | null
           id?: string
           ip_origem?: string | null
           qa_cliente_id?: number | null
@@ -6653,7 +6646,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "qa_documentos_cliente_eventos_documento_id_fkey"
+            foreignKeyName: "qa_docs_eventos_documento_fk"
             columns: ["documento_id"]
             isOneToOne: false
             referencedRelation: "qa_documentos_cliente"
@@ -6914,6 +6907,7 @@ export type Database = {
           aprovado_por: string | null
           aprovado_por_nome: string | null
           bo_pendente_registro: boolean
+          bo_registro_confirmado_em: string | null
           cliente_id: number
           contexto_risco: string | null
           created_at: string
@@ -6951,6 +6945,7 @@ export type Database = {
           aprovado_por?: string | null
           aprovado_por_nome?: string | null
           bo_pendente_registro?: boolean
+          bo_registro_confirmado_em?: string | null
           cliente_id: number
           contexto_risco?: string | null
           created_at?: string
@@ -6988,6 +6983,7 @@ export type Database = {
           aprovado_por?: string | null
           aprovado_por_nome?: string | null
           bo_pendente_registro?: boolean
+          bo_registro_confirmado_em?: string | null
           cliente_id?: number
           contexto_risco?: string | null
           created_at?: string
@@ -13330,6 +13326,23 @@ export type Database = {
         Args: { _categoria: string; _tipo: string }
         Returns: boolean
       }
+      qa_documento_duplicado_por_arquivo: {
+        Args: {
+          p_customer_id?: string
+          p_qa_cliente_id?: number
+          p_storage_path: string
+        }
+        Returns: {
+          aprovado_em: string
+          arquivo_nome: string
+          documento_id: string
+          enviado_em: string
+          motivo_reprovacao: string
+          nome_documento: string
+          status: string
+          tipo_documento: string
+        }[]
+      }
       qa_email_disparos_resumo: {
         Args: never
         Returns: {
@@ -13670,7 +13683,10 @@ export type Database = {
           validade_label: string
         }[]
       }
-      qa_reabrir_exigencias_documento_invalido: { Args: never; Returns: number }
+      qa_reabrir_exigencias_documento_invalido: {
+        Args: { p_storage_path?: string }
+        Returns: number
+      }
       qa_reaproveitar_documentos_hub_processo: {
         Args: { p_origem?: string; p_processo_id: string }
         Returns: {

@@ -1587,6 +1587,15 @@ export function ClienteDocsHubModal({
   const [comprovanteDocId, setComprovanteDocId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Quem está operando o Hub: usado só para carimbar a trilha (admin/cliente).
+  const [atorEhStaff, setAtorEhStaff] = useState(false);
+  useEffect(() => {
+    let cancelado = false;
+    isCurrentUserStaff()
+      .then((v) => { if (!cancelado) setAtorEhStaff(Boolean(v)); })
+      .catch(() => {});
+    return () => { cancelado = true; };
+  }, []);
   /**
    * Arquivo idêntico já existente no acervo deste cliente, detectado pelo eTag
    * do Storage depois do upload. Quando preenchido, o documento NÃO é gravado:
@@ -2127,7 +2136,7 @@ export function ClienteDocsHubModal({
       arquivoNome: file?.name ?? null,
       arquivoMime: file?.type ?? null,
       arquivoTamanho: file?.size ?? null,
-      atorTipo: isStaff ? "admin" : "cliente",
+      atorTipo: atorEhStaff ? "admin" : "cliente",
       arquivoApagado: false,
     });
 
@@ -2192,7 +2201,7 @@ export function ClienteDocsHubModal({
       arquivoNome: file?.name ?? null,
       arquivoMime: file?.type ?? null,
       arquivoTamanho: file?.size ?? null,
-      atorTipo: isStaff ? "admin" : "cliente",
+      atorTipo: atorEhStaff ? "admin" : "cliente",
       arquivoApagado: false,
     });
   }, [grupoBloqueadoTrava, file, grupoDoDocumento]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -4199,7 +4208,7 @@ export function ClienteDocsHubModal({
             arquivoMime: file.type || null,
             arquivoTamanho: file.size ?? null,
             documentoAnteriorId: repetido.documento_id,
-            atorTipo: isStaff ? "admin" : "cliente",
+            atorTipo: atorEhStaff ? "admin" : "cliente",
             arquivoApagado: true,
           });
           setArquivoRepetido(repetido);
