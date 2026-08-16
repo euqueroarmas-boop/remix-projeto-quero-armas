@@ -2136,7 +2136,7 @@ export function ClienteDocsHubModal({
       arquivoNome: file?.name ?? null,
       arquivoMime: file?.type ?? null,
       arquivoTamanho: file?.size ?? null,
-      atorTipo: isStaff ? "admin" : "cliente",
+      atorTipo: atorEhStaff ? "admin" : "cliente",
       arquivoApagado: false,
     });
 
@@ -2201,7 +2201,7 @@ export function ClienteDocsHubModal({
       arquivoNome: file?.name ?? null,
       arquivoMime: file?.type ?? null,
       arquivoTamanho: file?.size ?? null,
-      atorTipo: isStaff ? "admin" : "cliente",
+      atorTipo: atorEhStaff ? "admin" : "cliente",
       arquivoApagado: false,
     });
   }, [grupoBloqueadoTrava, file, grupoDoDocumento]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -4208,7 +4208,7 @@ export function ClienteDocsHubModal({
             arquivoMime: file.type || null,
             arquivoTamanho: file.size ?? null,
             documentoAnteriorId: repetido.documento_id,
-            atorTipo: isStaff ? "admin" : "cliente",
+            atorTipo: atorEhStaff ? "admin" : "cliente",
             arquivoApagado: true,
           });
           setArquivoRepetido(repetido);
