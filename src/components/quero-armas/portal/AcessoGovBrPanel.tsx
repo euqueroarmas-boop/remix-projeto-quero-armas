@@ -127,12 +127,13 @@ export default function AcessoGovBrPanel({ onConcluido }: AcessoGovBrPanelProps)
       <div className="rounded-lg border border-[#E5C2C6] bg-[#FBF3F4] p-3">
         <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-[#7A1F2B]">
           <Lock className="h-3.5 w-3.5" />
-          Por que precisamos do seu gov.br
+          Chegou o momento de entregar à delegacia
         </p>
         <p className="mt-1 text-[12px] leading-snug text-[#7A1F2B]">
-          O protocolo na Polícia Federal é feito na sua conta — não existe acesso de despachante.
-          Para entregar o seu dossiê e acompanhar o andamento, a nossa equipe precisa entrar como
-          você. Você autoriza, a gente protocola.
+          A sua documentação está completa e a petição está pronta. Agora falta liberar o acesso
+          para a nossa equipe fazer a última conferência e enviar os seus documentos à Polícia
+          Federal. O protocolo é feito na sua conta gov.br — não existe acesso de despachante.
+          Você autoriza, a gente protocola.
         </p>
       </div>
 
@@ -232,9 +233,9 @@ export default function AcessoGovBrPanel({ onConcluido }: AcessoGovBrPanelProps)
             Parte 2 · O código de acesso, uma vez só
           </h4>
           <p className="mt-1 text-[11px] leading-snug text-slate-600">
-            Se a sua conta tem verificação em duas etapas, o gov.br vai pedir um código quando a
-            nossa equipe entrar. Esse código não dá para guardar: ele nasce no seu celular e vale
-            por instantes.
+            Gere o código agora, no seu celular, para a nossa equipe fazer a última conferência e
+            enviar os seus documentos. Não adianta gerar antes: ele vale por poucos minutos e
+            nasce no seu aparelho, então tem que ser no momento em que a equipe estiver entrando.
           </p>
         </header>
 

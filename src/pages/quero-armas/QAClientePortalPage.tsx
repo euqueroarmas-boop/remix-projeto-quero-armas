@@ -2085,6 +2085,23 @@ export default function QAClientePortalPage() {
       // vira um passo próprio no popup.
       const dedupKey = `${doc?.processo_id ?? "_"}::${rawTipo}`;
       if (jaAdicionados.has(dedupKey)) return;
+
+      // ── EXIGÊNCIAS DE ETAPA FINAL ────────────────────────────────────────
+      // Alguns passos só fazem sentido no dia do protocolo: liberar o acesso
+      // ao gov.br e assinar a juntada. Pedir isso enquanto o cliente ainda
+      // está juntando certidão é ruído — e, no caso do código de duas etapas,
+      // é inútil: ele expira em minutos. A exigência existe desde o começo no
+      // catálogo (para contar no total do processo), mas só entra na FILA
+      // quando a equipe marca o processo como pronto para protocolar.
+      const statusProcessoDoc = String(
+        procById.get(String(doc?.processo_id))?.status ?? "",
+      ).toLowerCase();
+      const ehEtapaFinal = (doc as any)?.regra_validacao?.etapa_final === true;
+      const protocoloLiberado = ["pronto_para_protocolar", "protocolado", "em_analise_orgao"].includes(
+        statusProcessoDoc,
+      );
+      if (ehEtapaFinal && !protocoloLiberado) return;
+
       jaAdicionados.add(dedupKey);
       const nomeFallback = doc?.nome_documento
         ? String(doc.nome_documento)
