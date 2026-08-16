@@ -41,6 +41,16 @@ const BTN_VERDE = "bg-emerald-700 text-white hover:bg-emerald-800";
 /** Tipografia dos botões menores (voltar, navegação, atalhos). */
 const BTN_LABEL_MINI = "text-[9.5px] font-bold uppercase tracking-[0.1em]";
 
+// ─── Badges do header — uma linha só (usuário, 16/08/2026) ────────────────
+// Medido em navegador com a Oswald real: os três badges antigos somavam
+// 511px de conteúdo para 290px de espaço no celular, então quebravam em
+// duas linhas e comiam a altura útil do pop-up. O que dá a linha única:
+// espaçamento de letra menor (.22em → .06em), padding menor, "GRUPO 5 DE 7"
+// virando "5/7" e o recuo de 36px do bloco saindo. Com isso o caso comum
+// mede 244px e o pior grupo do sistema ("Identificação residencial") 293px.
+const CHIP =
+  "qa-eyebrow inline-flex items-center whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] tracking-[0.06em]";
+
 export interface PendenciaItem {
   id: string;
   kind: PendenciaKind;
@@ -441,6 +451,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         ? "Pergunta rápida"
         : "Exigência pendente");
 
+  /**
+   * O chip de contexto só entra quando diz algo que os outros não dizem.
+   * "Exigência do processo" / "Exigência pendente" repetem o grupo e o
+   * título — e eram justamente eles que empurravam a linha para baixo.
+   */
+  const mostrarContexto =
+    !!headerContexto && !/^exig(ê|e)ncia/i.test(String(headerContexto).trim());
+
   const [respondendo, setRespondendo] = useState<string | null>(null);
   useEffect(() => {
     setRespondendo(null);
@@ -656,32 +674,47 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
         {/* Header */}
         <div className={asPage ? "px-0 pt-2 pb-4 shrink-0 sm:pt-2" : "px-5 pt-1.5 pb-2 shrink-0 sm:px-6"}>
-          <div className={asPage ? "flex items-center gap-2 flex-wrap" : "pl-[36px] flex items-center gap-1.5 flex-wrap"}>
+          {/* UMA LINHA SÓ. `flex-wrap` saiu de propósito: o que não couber
+              encolhe com reticências, não desce para a segunda linha. */}
+          {/* Sem o recuo de 36px que alinhava com o H1: são 36px de linha, e é
+              exatamente o que faltava para os badges caberem lado a lado. */}
+          <div className="flex min-w-0 items-center gap-1 overflow-hidden">
             {/* O badge mostra o GRUPO do processo — Identificação, Antecedentes
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
                 cliente em que parte do processo ele estava. */}
-            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2 py-0.5 text-[9px] tracking-[0.14em]" style={{ color: "#7A1F2B" }}>
-              {activeGrupo}
+            <span className={`${CHIP} min-w-0 border border-[#8A1224]/20 bg-[#FFF7F8]`} style={{ color: "#7A1F2B" }}>
+              {/* Quem encolhe é o NOME do grupo; o "5/7" nunca some, senão o
+                  cliente perde a noção de onde está no processo. */}
+              <span className="min-w-0 truncate">{activeGrupo}</span>
               {/* Onde este grupo fica no processo inteiro. Sem isto o cliente
                   via só o nome do grupo e não tinha ideia de quantas frentes
                   ainda existem — "Antecedentes" podia ser a única ou a
-                  segunda de seis. */}
+                  segunda de seis. Escrito "5/7" e não "GRUPO 5 DE 7": a
+                  palavra inteira sozinha custava 55px da linha. */}
               {grupoNoProcesso ? (
-                <span className="ml-1.5 font-bold text-[#8A1224]/70">
-                  · GRUPO {grupoNoProcesso.posicao} DE {grupoNoProcesso.totalGrupos}
+                <span className="ml-1 shrink-0 font-bold text-[#8A1224]/70">
+                  · {grupoNoProcesso.posicao}/{grupoNoProcesso.totalGrupos}
                 </span>
               ) : null}
             </span>
             {/* NÃO reintroduzir "N de M no grupo": quando a fila tem um grupo
                 só — que é o caso comum — ele repete exatamente os números do
                 "Passo N de M" ao lado, e o cliente lê a mesma informação duas
-                vezes com nomes diferentes. */}
-            <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2 py-0.5 text-[9px] tracking-[0.14em]">
-              {headerContexto}
-            </span>
+                vezes com nomes diferentes.
+                O contexto genérico ("Exigência do processo"/"Exigência
+                pendente") também não entra: só repete o nome do grupo e o
+                título logo abaixo, e era ele que estourava a linha. Contexto
+                que informa de verdade (protocolo, "Pergunta rápida",
+                "Dispensado por lei") continua aparecendo — e é o primeiro a
+                encolher quando o espaço aperta. */}
+            {mostrarContexto ? (
+              <span className={`${CHIP} min-w-0 shrink-[20] truncate border border-[#E4E4E4] bg-white`}>
+                {headerContexto}
+              </span>
+            ) : null}
             {pendenciasGrupo > 0 ? (
-              <span className="qa-eyebrow inline-flex items-center rounded-full border border-[#E4E4E4] bg-[#FAFAFA] px-2 py-0.5 text-[9px] tracking-[0.14em]">
+              <span className={`${CHIP} shrink-0 border border-[#E4E4E4] bg-[#FAFAFA]`}>
                 {pendenciasGrupoLabel}
               </span>
             ) : null}
