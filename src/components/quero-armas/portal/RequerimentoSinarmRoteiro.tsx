@@ -99,7 +99,26 @@ interface SecaoSinarm {
   titulo: string;
   descricao?: string;
   campos: CampoSinarm[];
+  /** Renderiza um bloco fixo extra dentro da seção (ver AvisoCalibre). */
+  destaque?: "calibre";
 }
+
+// ---------------------------------------------------------------------------
+// CALIBRE — a única escolha do formulário que reprova o pedido sozinha
+// ---------------------------------------------------------------------------
+// Calibre restrito só pode ser vendido a segurança pública. Se o cliente
+// escolher um na lista do SINARM, o requerimento é indeferido DE OFÍCIO: a
+// Polícia Federal nem abre a documentação. Todo o dossiê — certidões, laudos,
+// exame de tiro, petição — vira lixo por um item de menu escolhido errado.
+//
+// É o erro mais caro possível neste passo, e o único que nenhuma conferência
+// nossa pega depois: quando o requerimento chega aqui, a escolha já foi feita.
+// Por isso o aviso é antecipado e não fica escondido no meio dos campos.
+const CALIBRES_PERMITIDOS: Array<{ especie: string; calibres: string[] }> = [
+  { especie: "Pistola", calibres: [".22 Long Rifle (.22 LR)", ".380 ACP", ".38 TPC"] },
+  { especie: "Revólver", calibres: [".38 SPL"] },
+  { especie: "Escopeta", calibres: ["12 GA"] },
+];
 
 export interface RequerimentoSinarmRoteiroProps {
   /** Linha de `qa_clientes` (o portal já carrega com `select("*")`). */
@@ -225,10 +244,12 @@ function montarSecoes(
     },
     {
       titulo: "Dados da arma",
-      descricao: "O que você pretende adquirir. Se ainda não decidiu, fale com a nossa equipe antes de preencher.",
+      descricao:
+        "Depois dos seus dados, o site pede a espécie e o calibre. É a parte mais perigosa do formulário — leia o aviso abaixo antes de escolher.",
+      destaque: "calibre",
       campos: [
-        { label: "Espécie", valor: titulo(especieArma), obrigatorio: true, fixo: true },
-        { label: "Calibre", valor: titulo(calibreArma), obrigatorio: true, fixo: true },
+        { label: "Espécie", valor: titulo(especieArma), fixo: true },
+        { label: "Calibre", valor: titulo(calibreArma), fixo: true },
       ],
     },
     {
@@ -340,6 +361,39 @@ function LinhaCampo({ campo }: { campo: CampoSinarm }) {
   );
 }
 
+function AvisoCalibre() {
+  return (
+    <div className="border-b border-slate-100 bg-red-50 px-3 py-2.5">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-red-800">
+        <AlertTriangle className="h-3.5 w-3.5" />
+        Escolher calibre restrito reprova o pedido na hora
+      </p>
+      <p className="mt-1 text-[12px] font-semibold leading-snug text-red-900">
+        Calibre restrito só pode ser vendido a segurança pública. Se você escolher um na lista,
+        a Polícia Federal indefere <span className="underline">de ofício</span> — sem abrir a sua
+        documentação. Certidões, laudos, exame de tiro e petição são perdidos por causa de um item
+        de menu, e o processo recomeça do zero.
+      </p>
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-red-800">
+        Escolha um destes
+      </p>
+      <ul className="mt-1 space-y-1">
+        {CALIBRES_PERMITIDOS.map((g) => (
+          <li key={g.especie} className="text-[12px] leading-snug text-red-900">
+            <span className="font-bold">{g.especie}:</span>{" "}
+            {g.calibres.join(" · ")}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-2 text-[11px] leading-snug text-red-900">
+        São os permitidos mais vendidos. Se a arma que você quer não estiver aqui, fale com a
+        nossa equipe <span className="font-bold">antes</span> de escolher no site — depois de
+        enviado não dá para corrigir.
+      </p>
+    </div>
+  );
+}
+
 function Secao({ secao }: { secao: SecaoSinarm }) {
   const preenchidos = secao.campos.filter((c) => c.valor).length;
 
@@ -375,6 +429,7 @@ function Secao({ secao }: { secao: SecaoSinarm }) {
         )}
       </header>
       <div>
+        {secao.destaque === "calibre" && <AvisoCalibre />}
         {secao.campos.map((campo) => (
           <LinhaCampo key={`${secao.titulo}:${campo.label}`} campo={campo} />
         ))}
@@ -387,6 +442,7 @@ const PASSOS: string[] = [
   "Abra o site de armas da Polícia Federal e entre com o seu gov.br. É a sua conta, no seu nome — nós não preenchemos por você.",
   'Escolha "Requerimento de Aquisição de Arma de Fogo".',
   "Preencha o formulário com os dados desta tela. Cada campo abaixo tem um botão de copiar, e estão na mesma ordem em que aparecem no site da PF.",
+  "Depois dos seus dados o site pede a espécie e o CALIBRE da arma. Calibre restrito é indeferido de ofício, sem ninguém olhar a sua documentação — use só os permitidos, listados no bloco \"Dados da arma\" aqui embaixo.",
   "Ao terminar, clique em Imprimir Requerimento e baixe o arquivo. São 3 páginas — a via da Polícia Federal. É esse arquivo que você envia aqui.",
   "PARE aqui. Não pague a taxa ainda. A nossa equipe confere o que você digitou contra o seu cadastro e libera o pagamento.",
 ];
