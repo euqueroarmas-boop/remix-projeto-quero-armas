@@ -332,6 +332,12 @@ Deno.serve(async (req) => {
       : textoBoAnterior;
     const textoBoNovo = Boolean(textoBoBruto) && textoBoBruto !== textoBoAnterior;
     const agora = new Date().toISOString();
+    /* Só avança quando o texto REALMENTE muda. É esta data que o portal
+     * confronta com o "Já registrei o boletim": mudou depois da declaração do
+     * cliente, o passo do registro reabre e o trigger grava o rastro. */
+    const textoBoGeradoEm = textoBo
+      ? (textoBoNovo || !reg.texto_bo_gerado_em ? agora : reg.texto_bo_gerado_em)
+      : null;
 
     const { error: erroUpdate } = await sb
       .from("qa_efetiva_necessidade")
@@ -344,9 +350,7 @@ Deno.serve(async (req) => {
         narrativa_final: null,
         narrativa_editada_pelo_cliente: false,
         texto_bo: textoBo || null,
-        texto_bo_gerado_em: textoBo
-          ? (textoBoNovo || !reg.texto_bo_gerado_em ? agora : reg.texto_bo_gerado_em)
-          : null,
+        texto_bo_gerado_em: textoBoGeradoEm,
         texto_bo_editado_pelo_cliente: textoBoNovo ? false : Boolean(reg.texto_bo_editado_pelo_cliente),
         // Quem manda aqui é a REGRA, não o sucesso da IA.
         bo_pendente_registro: precisaNovoBo,
@@ -367,7 +371,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    return json({ ok: true, narrativa, texto_bo: textoBo, narrativa_gerada_em: agora });
+    return json({
+      ok: true,
+      narrativa,
+      texto_bo: textoBo,
+      narrativa_gerada_em: agora,
+      texto_bo_gerado_em: textoBoGeradoEm,
+    });
   } catch (e) {
     console.error("[qa-efetiva-narrativa]", e);
     return json({ error: e instanceof Error ? e.message : "Erro inesperado" }, 500);

@@ -93,6 +93,8 @@ export interface EfetivaRegistroLike {
   bo_pendente_registro?: boolean | null;
   /** Carimbo do "Já registrei o boletim" — o clique agora fica no banco. */
   bo_registro_confirmado_em?: string | null;
+  /** Quando o texto do BO mudou pela última vez (só muda quando o texto muda). */
+  texto_bo_gerado_em?: string | null;
   aprovado_cliente?: boolean | null;
   aprovado_cliente_em?: string | null;
   /** `rascunho` | `em_revisao` | `aprovado` | `devolvido` (qa_efetiva_necessidade.status). */
@@ -118,6 +120,29 @@ export function narrativaRefeitaAposAprovacao(
   const geradaEm = Date.parse(String(registro?.narrativa_gerada_em ?? ""));
   if (!Number.isFinite(aprovadoEm) || !Number.isFinite(geradaEm)) return false;
   return geradaEm > aprovadoEm;
+}
+
+/**
+ * O texto do BO mudou DEPOIS de o cliente dizer que já registrou o boletim?
+ *
+ * Regra do usuário (16/08/2026): o carimbo `bo_registro_confirmado_em` NUNCA é
+ * apagado — ele é a prova de que o cliente declarou o registro naquela data.
+ * O que reabre o passo é o confronto de datas: se o texto que vai para a
+ * delegacia mudou depois da declaração dele, o boletim registrado não cobre
+ * mais o texto atual e ele precisa aditar. A mudança partiu do cliente, e o
+ * rastro na auditoria mostra isso — a culpa não é nossa.
+ *
+ * `texto_bo_gerado_em` só avança quando o texto REALMENTE muda (a edge function
+ * qa-efetiva-narrativa preserva o carimbo antigo quando a rodada não trouxe
+ * texto novo), então regerar sem mudar nada não reabre o passo à toa.
+ */
+export function textoBoRefeitoAposRegistro(
+  registro: EfetivaRegistroLike | null | undefined,
+): boolean {
+  const registradoEm = Date.parse(String(registro?.bo_registro_confirmado_em ?? ""));
+  const textoEm = Date.parse(String(registro?.texto_bo_gerado_em ?? ""));
+  if (!Number.isFinite(registradoEm) || !Number.isFinite(textoEm)) return false;
+  return textoEm > registradoEm;
 }
 
 /**
@@ -309,7 +334,16 @@ export function calcularPassosEfetiva(
       case "registrar_bo":
         // O "Já registrei o boletim" agora é persistido — antes era estado
         // local do componente e o checklist nunca ficava sabendo.
-        return boEntregue || !!String(reg.bo_registro_confirmado_em ?? "").trim();
+        //
+        // O documento anexado encerra o passo de vez. Já a DECLARAÇÃO do
+        // cliente vale enquanto o texto que ele levou à delegacia continuar
+        // sendo o texto atual: acrescentou fato novo e mandou refazer, o
+        // boletim registrado ficou defasado e o passo reabre para ele aditar.
+        if (boEntregue) return true;
+        return (
+          !!String(reg.bo_registro_confirmado_em ?? "").trim() &&
+          !textoBoRefeitoAposRegistro(reg)
+        );
       case "enviar_bo":
         return boEntregue;
       case "defesa_final":

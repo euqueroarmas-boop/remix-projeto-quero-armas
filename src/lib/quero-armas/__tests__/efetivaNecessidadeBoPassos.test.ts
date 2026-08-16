@@ -6,6 +6,7 @@ import {
   calcularPassosEfetiva,
   narrativaRefeitaAposAprovacao,
   temFatoNovoForaDoTexto,
+  textoBoRefeitoAposRegistro,
 } from "../efetivaNecessidadePassos";
 
 const r = (p: string) => readFileSync(resolve(process.cwd(), p), "utf-8");
@@ -72,6 +73,76 @@ describe("passos da efetiva necessidade — lista única", () => {
     expect(passos.find((p) => p.id === "registrar_bo")?.concluido).toBe(true);
     // Declarar não substitui o documento: enviar continua pendente.
     expect(passos.find((p) => p.id === "enviar_bo")?.concluido).toBe(false);
+  });
+});
+
+/**
+ * Regra do usuário (15/08/2026): o carimbo do "Já registrei o boletim" NUNCA é
+ * apagado — ele é a prova da declaração do cliente. O que reabre o passo é o
+ * confronto de datas com o texto do BO. Se amanhã ele disser que não mudou
+ * nada, o carimbo e o rastro na auditoria mostram que a mudança foi dele.
+ */
+describe("mudar o texto do BO depois de declarar o registro", () => {
+  const DECLAROU = {
+    ...REGISTRO_SEM_BO,
+    texto_bo: "Texto para levar à delegacia.",
+    bo_registro_confirmado_em: "2026-08-16T01:00:00.000Z",
+    texto_bo_gerado_em: "2026-08-16T00:30:00.000Z",
+  };
+
+  it("texto antigo: a declaração continua valendo e o passo fica concluído", () => {
+    expect(textoBoRefeitoAposRegistro(DECLAROU)).toBe(false);
+    expect(
+      calcularPassosEfetiva(DECLAROU, [], true).find((p) => p.id === "registrar_bo")?.concluido,
+    ).toBe(true);
+  });
+
+  it("texto refeito depois da declaração reabre o passo do registro", () => {
+    const mudou = { ...DECLAROU, texto_bo_gerado_em: "2026-08-16T03:00:00.000Z" };
+    expect(textoBoRefeitoAposRegistro(mudou)).toBe(true);
+    expect(
+      calcularPassosEfetiva(mudou, [], true).find((p) => p.id === "registrar_bo")?.concluido,
+    ).toBe(false);
+    // O carimbo do cliente continua lá — reabrir não apaga a declaração dele.
+    expect(mudou.bo_registro_confirmado_em).toBe("2026-08-16T01:00:00.000Z");
+  });
+
+  it("regerar sem mudar o texto não reabre o passo à toa", () => {
+    // qa-efetiva-narrativa preserva `texto_bo_gerado_em` quando o texto não
+    // mudou, então uma regeração inócua não vira exigência nova.
+    const src = r("supabase/functions/qa-efetiva-narrativa/index.ts");
+    expect(src).toMatch(/textoBoNovo \|\| !reg\.texto_bo_gerado_em \? agora : reg\.texto_bo_gerado_em/);
+    expect(src).toMatch(/texto_bo_gerado_em: textoBoGeradoEm/);
+  });
+
+  it("o documento anexado encerra o passo mesmo com texto novo", () => {
+    const comDoc = { ...DECLAROU, texto_bo_gerado_em: "2026-08-16T03:00:00.000Z" };
+    const provas = [{ tipo: "boletim_ocorrencia", created_at: "2026-08-16T04:00:00.000Z" }];
+    expect(
+      calcularPassosEfetiva(comDoc, provas as never, true).find((p) => p.id === "registrar_bo")
+        ?.concluido,
+    ).toBe(true);
+  });
+
+  it("a tela avisa que a mudança partiu do cliente e pede aditamento", () => {
+    const src = r("src/components/quero-armas/portal/EfetivaNecessidadeModal.tsx");
+    expect(src).toMatch(/O texto do boletim mudou/);
+    expect(src).toMatch(/você acrescentou fato novo/);
+    expect(src).toMatch(/aditamento/);
+    expect(src).toMatch(/nada foi apagado/);
+    // Reconfirmar atualiza o carimbo; em nenhum lugar ele é zerado.
+    expect(src).not.toMatch(/bo_registro_confirmado_em:\s*null/);
+  });
+
+  it("o rastro dos dois eventos vai para a auditoria que já existe", () => {
+    const sql = r(
+      "supabase/migrations/20260815234500_efetiva_rastro_bo_alterado_apos_registro.sql",
+    );
+    expect(sql).toMatch(/qa_efetiva_necessidade_auditoria/);
+    expect(sql).toMatch(/'bo_registro_declarado'/);
+    expect(sql).toMatch(/'bo_texto_alterado_apos_registro'/);
+    expect(sql).toMatch(/AFTER UPDATE ON public\.qa_efetiva_necessidade/);
+    expect(sql).toMatch(/REVOKE ALL ON FUNCTION public\.qa_efetiva_rastro_bo\(\) FROM PUBLIC/);
   });
 });
 

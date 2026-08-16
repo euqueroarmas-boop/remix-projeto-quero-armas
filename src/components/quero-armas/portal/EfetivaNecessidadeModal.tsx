@@ -38,6 +38,7 @@ import {
   avaliarSuficienciaBo,
   efetivaFoiDevolvida,
   temFatoNovoForaDoTexto,
+  textoBoRefeitoAposRegistro,
 } from "@/lib/quero-armas/efetivaNecessidadePassos";
 
 interface Props {
@@ -292,6 +293,10 @@ export default function EfetivaNecessidadeModal({
   /** BO ainda por registrar na delegacia (coluna `bo_pendente_registro`). */
   const [boPendenteRegistro, setBoPendenteRegistro] = useState(false);
   const [boRegistradoConfirmado, setBoRegistradoConfirmado] = useState(false);
+  /* As duas datas do boletim. O carimbo da declaração NUNCA é apagado — quem
+   * decide se o passo reabre é o confronto entre elas. */
+  const [boRegistradoEm, setBoRegistradoEm] = useState<string | null>(null);
+  const [textoBoGeradoEm, setTextoBoGeradoEm] = useState<string | null>(null);
   const [textoBoTocado, setTextoBoTocado] = useState(false);
   const [editandoBo, setEditandoBo] = useState(false);
   const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
@@ -364,6 +369,8 @@ export default function EfetivaNecessidadeModal({
         setTextoBo(reg.texto_bo ?? "");
         setBoPendenteRegistro(Boolean(reg.bo_pendente_registro));
         setBoRegistradoConfirmado(Boolean(reg.bo_registro_confirmado_em));
+        setBoRegistradoEm(reg.bo_registro_confirmado_em ?? null);
+        setTextoBoGeradoEm(reg.texto_bo_gerado_em ?? null);
         setNarrativaGeradaEm(reg.narrativa_gerada_em ?? null);
         if (reg.narrativa_final || reg.narrativa_gerada) {
           setPassoIndex(PASSO_REVISAO);
@@ -505,6 +512,11 @@ export default function EfetivaNecessidadeModal({
       // texto novo, o que já estava na tela continua valendo.
       setTextoBo((atual) => String(data.texto_bo ?? "").trim() || atual);
       setNarrativaGeradaEm(String(data.narrativa_gerada_em ?? new Date().toISOString()));
+      // A data do texto do BO só avança quando o texto muda de verdade. É ela
+      // que reabre o passo do registro se o cliente já tinha declarado o BO.
+      if (data.texto_bo_gerado_em !== undefined) {
+        setTextoBoGeradoEm(data.texto_bo_gerado_em ? String(data.texto_bo_gerado_em) : null);
+      }
       setRefazerDispensado(false);
       setTextoBoTocado(false);
       setEditandoBo(false);
@@ -746,6 +758,24 @@ export default function EfetivaNecessidadeModal({
   const boEntregue =
     provasBo.length > 0 && (!suficienciaBo.exigeNovoBo || !boPendenteRegistro);
 
+  /**
+   * O cliente mexeu no texto do boletim DEPOIS de dizer que já tinha
+   * registrado? Então o BO que ele registrou não cobre mais o texto atual, e o
+   * passo do registro reabre para aditamento. O carimbo da declaração dele
+   * continua gravado — o que muda é só a exigência.
+   */
+  const boTextoMudouAposRegistro = useMemo(
+    () =>
+      textoBoRefeitoAposRegistro({
+        bo_registro_confirmado_em: boRegistradoEm,
+        texto_bo_gerado_em: textoBoGeradoEm,
+      }),
+    [boRegistradoEm, textoBoGeradoEm],
+  );
+
+  /** A declaração do cliente só vale enquanto o texto dela continuar valendo. */
+  const registroBoValido = boEntregue || (boRegistradoConfirmado && !boTextoMudouAposRegistro);
+
   const passo = passos[Math.min(passoIndex, passos.length - 1)];
   const perguntaAtual = passo?.campo
     ? PERGUNTAS.find((q) => q.campo === passo.campo) ?? null
@@ -760,10 +790,10 @@ export default function EfetivaNecessidadeModal({
     if (p.tipo === "contexto") return contexto.trim().length > 0;
     if (p.tipo === "revisao") return narrativa.trim().length > 0;
     if (p.tipo === "entender_bo") return cienciaBoAceita;
-    if (p.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
+    if (p.tipo === "registrar_bo") return registroBoValido;
     if (p.tipo === "enviar_bo") return boEntregue;
     return false;
-  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
+  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita, registroBoValido, boEntregue]);
 
   /** O "Próximo" só trava onde a regra de negócio já travava antes. */
   const podeAvancar = useMemo(() => {
@@ -773,11 +803,11 @@ export default function EfetivaNecessidadeModal({
     if (passo.tipo === "revisao") return narrativa.trim().length > 0;
     // Trava dura: sem a ciência marcada, não se manda ninguém à delegacia.
     if (passo.tipo === "entender_bo") return cienciaBoAceita;
-    if (passo.tipo === "registrar_bo") return boRegistradoConfirmado || boEntregue;
+    if (passo.tipo === "registrar_bo") return registroBoValido;
     // Trava dura: sem o boletim registrado em mãos, a defesa final não abre.
     if (passo.tipo === "enviar_bo") return boEntregue;
     return true;
-  }, [passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, boRegistradoConfirmado, boEntregue]);
+  }, [passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, registroBoValido, boEntregue]);
 
   const irPara = useCallback((i: number) => {
     const destino = Math.max(0, Math.min(passos.length - 1, i));
@@ -832,13 +862,18 @@ export default function EfetivaNecessidadeModal({
    * sempre porque ninguém tinha contado nada ao banco.
    */
   const confirmarRegistroBo = useCallback(async () => {
+    const agora = new Date().toISOString();
     setBoRegistradoConfirmado(true);
+    setBoRegistradoEm(agora);
     if (registroId) {
       const { error } = await supabase
         .from("qa_efetiva_necessidade" as any)
         .update({
-          bo_registro_confirmado_em: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
+          // Reconfirmar depois de mudar o texto ATUALIZA o carimbo — nunca o
+          // apaga. Cada declaração vira uma linha na auditoria (trigger
+          // trg_qa_efetiva_rastro_bo), então o histórico completo fica de pé.
+          bo_registro_confirmado_em: agora,
+          updated_at: agora,
         })
         .eq("id", registroId);
       if (error) console.error("[efetiva necessidade] confirmar registro BO:", error);
@@ -1268,6 +1303,39 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {/* ── O cliente mudou o texto depois de declarar o registro ──────
+             * O carimbo da declaração dele continua gravado. O que se diz aqui
+             * é o fato: ele acrescentou o fato novo DEPOIS, e o boletim que ele
+             * registrou não cobre mais o texto atual. Quem precisa voltar à
+             * delegacia é ele, e o histórico mostra por quê.              */}
+            {passo?.tipo === "registrar_bo" && boTextoMudouAposRegistro && (
+              <div className="rounded-lg border border-[#7A1F2B] bg-[#FDF6F7] p-3">
+                <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  <ShieldAlert className="h-3.5 w-3.5" /> O texto do boletim mudou
+                </p>
+                <p className="mt-2 text-[12px] leading-relaxed text-zinc-700">
+                  {boRegistradoEm && (
+                    <>
+                      Em <strong>{new Date(boRegistradoEm).toLocaleString("pt-BR")}</strong> você
+                      informou que já tinha registrado o boletim.{" "}
+                    </>
+                  )}
+                  Depois disso <strong>você acrescentou fato novo</strong> e pediu para refazer o
+                  texto. O boletim que você registrou não fala desse fato — ou seja, ele já não
+                  corresponde ao texto que está aqui embaixo.
+                </p>
+                <p className="mt-2 text-[12px] leading-relaxed text-zinc-700">
+                  <strong>O que fazer:</strong> volte à delegacia (ou à delegacia eletrônica) e faça
+                  um <strong>aditamento</strong> ao boletim já registrado com o texto novo. Não
+                  precisa abrir outro boletim do zero. Depois, confirme aqui de novo.
+                </p>
+                <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">
+                  A sua declaração anterior continua registrada no seu histórico, com data e hora —
+                  nada foi apagado.
+                </p>
+              </div>
+            )}
+
             {/* Como abrir o BO — passo a passo, no padrão do pop-up guiado */}
             {passo?.tipo === "registrar_bo" && (
                 <div className="rounded-lg border border-zinc-200 bg-white p-3">
@@ -1333,7 +1401,10 @@ export default function EfetivaNecessidadeModal({
                       onClick={confirmarRegistroBo}
                       className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f]"
                     >
-                      <Check className="h-3.5 w-3.5" /> Já registrei o boletim
+                      <Check className="h-3.5 w-3.5" />
+                      {boTextoMudouAposRegistro
+                        ? "Já levei o texto novo à delegacia"
+                        : "Já registrei o boletim"}
                     </button>
                   </>
                 ) : (
