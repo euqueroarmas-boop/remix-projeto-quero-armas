@@ -3865,16 +3865,25 @@ export default function QAClientePortalPage() {
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <style>{`
-        .qa-portal-main { touch-action: pan-y; overflow-x: clip; overscroll-behavior-x: none; }
+        /* `overscroll-behavior: none` (os dois eixos) prende o gesto ao
+           portal: nada de repique elástico no fim da lista nem de "puxar
+           para recarregar" derrubando o que o cliente está preenchendo. */
+        .qa-portal-main { touch-action: pan-y; overflow-x: clip; overscroll-behavior: none; }
         /* Enquadramento canônico (referência: aba Contratos) */
         .qa-portal-main {
           padding-left: calc(1rem + env(safe-area-inset-left));
           padding-right: calc(1rem + env(safe-area-inset-right));
+          /* Quanto uma barra grudada no rodapé precisa avançar para o FUNDO
+             dela encostar nas laterais da tela, enquanto os botões continuam
+             alinhados com o texto. Sem o termo da safe-area de propósito: em
+             telas com entalhe a barra para na borda segura, que é o certo. */
+          --qa-bleed-pagina: 1rem;
         }
         @media (min-width: 1024px) {
           .qa-portal-main {
             padding-left: calc(2rem + env(safe-area-inset-left));
             padding-right: calc(2rem + env(safe-area-inset-right));
+            --qa-bleed-pagina: 2rem;
           }
         }
         .qa-portal-main * { touch-action: pan-y; }

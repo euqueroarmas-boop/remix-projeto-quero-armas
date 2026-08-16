@@ -720,8 +720,24 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
           </div>
         </div>
 
-        {/* Scrollable body */}
-        <div className={asPage ? "no-scrollbar flex-1 overflow-y-auto px-0 pb-2" : "no-scrollbar flex-1 overflow-y-auto px-6 pt-3 pb-2"}>
+        {/* Scrollable body
+            `--qa-bleed` diz ao conteúdo embutido (wizard da efetiva
+            necessidade) quanto ele precisa recuar para uma barra grudada no
+            rodapé encostar nas laterais. Quem conhece o padding é este
+            container — o filho não adivinha mais.
+            `overscroll-contain` impede que o balanço do fim da lista arraste
+            a página inteira junto. */}
+        <div
+          className={asPage
+            ? "no-scrollbar flex-1 overflow-y-auto overscroll-contain px-0 pb-2"
+            : "no-scrollbar flex-1 overflow-y-auto overscroll-contain px-6 pt-3 pb-2"}
+          style={{
+            // Modo página: o recuo é o padding do próprio portal, então o
+            // fundo da barra alcança a lateral da tela. Modo pop-up: os 24px
+            // deste container, para a barra encostar na borda do cartão.
+            "--qa-bleed": asPage ? "var(--qa-bleed-pagina, 1rem)" : "1.5rem",
+          } as React.CSSProperties}
+        >
 
 
           {exameModal ? (

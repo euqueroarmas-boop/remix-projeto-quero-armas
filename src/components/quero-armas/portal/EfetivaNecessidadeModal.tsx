@@ -945,6 +945,17 @@ export default function EfetivaNecessidadeModal({
   /** Último passo do caminho — é onde a aprovação acontece. */
   const passoFinal = passoIndex === passos.length - 1;
 
+  /**
+   * Botão principal da barra de ação. `flex-1` + `min-w-0` fazem ele tomar o
+   * espaço que sobra ao lado do "Anterior", e `whitespace-nowrap` impede a
+   * quebra feia do rótulo em duas linhas nas telas estreitas.
+   */
+  const acaoPrincipalClasse = `inline-flex min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap bg-[#7A1F2B] font-bold uppercase text-white transition-colors hover:bg-[#63161f] disabled:opacity-40 ${
+    embedded
+      ? "h-12 rounded-xl px-4 text-[11px] tracking-[0.1em] sm:text-[12px] sm:tracking-[0.14em]"
+      : "rounded-lg px-5 py-2.5 text-[12px] tracking-[0.14em]"
+  }`;
+
   const conteudo = (
       <div
         className={
@@ -1643,27 +1654,50 @@ export default function EfetivaNecessidadeModal({
           </div>
         )}
 
-        <div className={embedded
-          ? "sticky bottom-0 z-30 -mx-6 mt-4 flex items-center justify-between gap-3 border-t border-zinc-200 bg-white px-6 pb-3 pt-3 shadow-[0_-8px_12px_-8px_rgba(0,0,0,0.12)]"
-          : "shrink-0 flex items-center justify-between gap-3 border-t border-zinc-200 px-6 py-4"}>
-          <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              disabled={passoIndex === 0}
-              onClick={() => irPara(passoIndex - 1)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-zinc-300 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-30"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" /> Anterior
-            </button>
-          </div>
+        {/* ── Barra de ação ────────────────────────────────────────────────
+         * Ela é grudada no rodapé e precisa encostar nas bordas da área em
+         * que vive. Antes usava `-mx-6` fixo, chutando que o pai tinha 24px
+         * de padding: dentro do pop-up era verdade, mas no modo página o pai
+         * tem padding ZERO, então a barra saía 24px para fora dos dois lados,
+         * empurrava a largura da tela e aparecia cortada — a faixa branca
+         * solta que não alcançava as laterais.
+         *
+         * Agora quem tem o padding é quem informa o quanto recuar, pela
+         * variável --qa-bleed. Sem variável, recuo zero: a barra ocupa
+         * exatamente a largura do pai e nunca estoura o eixo horizontal. */}
+        <div
+          className={embedded
+            ? "sticky bottom-0 z-30 mt-5 flex items-stretch gap-2 border-t border-zinc-200/80 bg-white/95 pt-3 backdrop-blur-sm supports-[backdrop-filter]:bg-white/85"
+            : "shrink-0 flex items-stretch gap-2 border-t border-zinc-200 px-6 py-4"}
+          style={embedded ? {
+            marginInline: "calc(var(--qa-bleed, 0px) * -1)",
+            paddingInline: "var(--qa-bleed, 0px)",
+            // Respira acima da barra de gestos do iPhone.
+            paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+            boxShadow: "0 -12px 18px -14px rgba(0,0,0,0.22)",
+          } : undefined}
+        >
+          <button
+            type="button"
+            disabled={passoIndex === 0}
+            onClick={() => irPara(passoIndex - 1)}
+            className={`inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-zinc-300 bg-white font-semibold uppercase tracking-[0.1em] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-30 ${
+              embedded ? "h-12 px-4 text-[11px]" : "px-3 py-2 text-[11px]"
+            }`}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+          </button>
+          {/* O botão principal ocupa o resto da linha: em tela estreita o
+              rótulo cabia em uma linha só quando havia espaço, e antes
+              quebrava em duas ("CONCORDO E / APROVO"). */}
           {passoFinal && narrativa ? (
             <button
               type="button"
               disabled={aprovando || narrativa.trim().length < 200}
               onClick={() => void aprovarNarrativa()}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+              className={acaoPrincipalClasse}
             >
-              {aprovando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+              {aprovando ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" /> : <ShieldCheck className="h-3.5 w-3.5 shrink-0" />}
               Concordo e aprovo
             </button>
           ) : passo?.tipo === "revisao" && !narrativa ? (
@@ -1671,11 +1705,11 @@ export default function EfetivaNecessidadeModal({
               type="button"
               disabled={!podeConcluir || salvando || gerando}
               onClick={() => void gerarNarrativa()}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+              className={acaoPrincipalClasse}
             >
-              {gerando || salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                : podeConcluir ? <Check className="h-3.5 w-3.5" />
-                : <ArrowRight className="h-3.5 w-3.5" />}
+              {gerando || salvando ? <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                : podeConcluir ? <Check className="h-3.5 w-3.5 shrink-0" />
+                : <ArrowRight className="h-3.5 w-3.5 shrink-0" />}
               {gerando ? "Montando seu relato…" : "Gerar meu relato"}
             </button>
           ) : (
@@ -1683,9 +1717,9 @@ export default function EfetivaNecessidadeModal({
               type="button"
               disabled={!podeAvancar}
               onClick={avancar}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-5 py-2.5 text-[12px] font-bold uppercase tracking-[0.14em] text-white transition-colors hover:bg-[#63161f] disabled:opacity-40"
+              className={acaoPrincipalClasse}
             >
-              Próximo <ChevronRight className="h-3.5 w-3.5" />
+              Próximo <ChevronRight className="h-3.5 w-3.5 shrink-0" />
             </button>
           )}
         </div>
