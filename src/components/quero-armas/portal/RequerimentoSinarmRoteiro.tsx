@@ -117,6 +117,16 @@ export interface RequerimentoSinarmRoteiroProps {
    * é refeito do zero.
    */
   statusDocumento?: string | null;
+  /**
+   * Número do requerimento (`qa_documentos_cliente.numero_documento`) — os 18
+   * dígitos impressos no topo da via da PF, os mesmos do código de barras.
+   *
+   * É por ele que o cliente reencontra o requerimento no site da PF para gerar
+   * e pagar o boleto. Sem isso ele precisa caçar no meio do PDF, e digitar 18
+   * dígitos errado leva a lugar nenhum. Aparece só quando já temos o número
+   * registrado na conferência.
+   */
+  numeroRequerimento?: string | null;
   /** Abre o envio do PDF assinado — mesmo caminho de qualquer documento. */
   onEntregar?: () => void;
 }
@@ -386,8 +396,10 @@ export default function RequerimentoSinarmRoteiro({
   especieArma,
   calibreArma,
   statusDocumento,
+  numeroRequerimento,
   onEntregar,
 }: RequerimentoSinarmRoteiroProps) {
+  const numero = String(numeroRequerimento ?? "").trim();
   const status = String(statusDocumento ?? "").trim().toLowerCase();
   /** Requerimento já saiu das nossas mãos e está sendo conferido. */
   const emConferencia = ["enviado", "em_analise", "revisao_humana"].includes(status);
@@ -553,6 +565,22 @@ export default function RequerimentoSinarmRoteiro({
               o boleto da GRU e pague. Depois envie aqui a página do boleto junto com o
               comprovante de pagamento.
             </p>
+            {numero && (
+              <div className="mt-2 flex items-center gap-2 rounded-md border border-emerald-200 bg-white px-2 py-1.5">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                    Número do seu requerimento
+                  </p>
+                  <p className="break-all font-mono text-[13px] font-semibold text-slate-900">
+                    {numero}
+                  </p>
+                  <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                    Use este número no site da PF para reabrir o requerimento e emitir o boleto.
+                  </p>
+                </div>
+                <BotaoCopiar valor={numero} rotulo="número do requerimento" />
+              </div>
+            )}
             {onEntregar && (
               <button
                 type="button"

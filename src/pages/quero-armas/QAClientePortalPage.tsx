@@ -2198,6 +2198,7 @@ export default function QAClientePortalPage() {
             <RequerimentoSinarmRoteiro
               cliente={cliente}
               statusDocumento={doc?.status ?? null}
+              numeroRequerimento={numeroRequerimentoDoDoc(doc)}
               onEntregar={() => {
                 setEditDocTipo(hubTipo);
                 setShowAddDoc(true);
@@ -2246,6 +2247,34 @@ export default function QAClientePortalPage() {
         "requerimento_posse",
         "requerimento_sinarm",
       ].includes(String(rawTipo ?? "").trim().toLowerCase());
+
+    /**
+     * Número do requerimento do SINARM extraído do documento que o cliente
+     * enviou. É o mesmo número do código de barras impresso na via da PF, e é
+     * por ele que o cliente reabre o requerimento no site para emitir o boleto.
+     *
+     * Exigimos EXATAMENTE 18 dígitos começando em 20 (o formato é
+     * AAAAMMDDHHMMSSNNNN — conferido em cinco requerimentos reais). Número
+     * errado na tela é pior que número nenhum: manda o cliente para um
+     * requerimento que não é o dele.
+     */
+    const numeroRequerimentoDoDoc = (
+      d: { dados_extraidos_json?: unknown } | null | undefined,
+    ): string | null => {
+      const src = (d?.dados_extraidos_json ?? {}) as Record<string, unknown>;
+      const candidatos = [
+        src.numero_requerimento,
+        src.numero_processo,
+        src.numero_protocolo,
+        src.protocolo,
+        src.numero,
+      ];
+      for (const v of candidatos) {
+        const digitos = String(v ?? "").replace(/\D/g, "");
+        if (/^20\d{16}$/.test(digitos)) return digitos;
+      }
+      return null;
+    };
 
     const ehDocDeTitularTerceiro = (rawTipo: string) => {
       const t = rawTipo.toLowerCase();
