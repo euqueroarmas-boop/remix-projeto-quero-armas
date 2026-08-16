@@ -40,6 +40,7 @@ import {
   ehTipoEfetivaNecessidade,
   type EfetivaPasso,
 } from "@/lib/quero-armas/efetivaNecessidadePassos";
+import { TERMO_BO_CODIGO, TERMO_BO_VERSAO } from "@/lib/quero-armas/boExplicacao";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
@@ -2857,7 +2858,11 @@ export default function QAClientePortalPage() {
           .from("qa_cliente_ciencias" as any)
           .select("id")
           .eq("cliente_id", cliente.id)
-          .eq("termo_codigo", "bo_efetiva_necessidade")
+          .eq("termo_codigo", TERMO_BO_CODIGO)
+          // Mesma versão que o wizard exige. Sem isto, subir a redação do
+          // termo faria o checklist dar o passo por cumprido enquanto a tela
+          // pedia a ciência de novo.
+          .eq("termo_versao", TERMO_BO_VERSAO)
           .limit(1);
         cienciaBo = ((ci as any[]) ?? []).length > 0;
       }
@@ -2872,7 +2877,9 @@ export default function QAClientePortalPage() {
           if ((reg as any)?.id) {
             const { data: pv } = await supabase
               .from("qa_efetiva_necessidade_provas" as any)
-              .select("tipo")
+              // data_fato/created_at entram na conta da suficiência do BO
+              // (boletim recente sustenta sozinho; antigo prova reiteração).
+              .select("tipo, data_fato, created_at")
               .eq("efetiva_necessidade_id", (reg as any).id);
             provas = (pv as any[]) ?? [];
           }

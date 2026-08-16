@@ -33,7 +33,12 @@ import {
   TERMO_BO_VERSAO,
   montarTextoTermoBo,
 } from "@/lib/quero-armas/boExplicacao";
-import { avaliarSuficienciaBo, efetivaFoiDevolvida } from "@/lib/quero-armas/efetivaNecessidadePassos";
+import {
+  EFETIVA_PASSOS_IDS,
+  avaliarSuficienciaBo,
+  efetivaFoiDevolvida,
+  temFatoNovoForaDoTexto,
+} from "@/lib/quero-armas/efetivaNecessidadePassos";
 
 interface Props {
   open: boolean;
@@ -181,9 +186,9 @@ const PASSOS_BASE: Passo[] = [
 ];
 
 /**
- * Passos que só existem quando a IA concluiu que há fatos fora de qualquer
- * boletim: o cliente precisa registrar o BO, trazer o documento e só então a
- * defesa final é fechada com esse fato dentro.
+ * Passos do boletim. Eles existem SEMPRE — quem diz se estão cumpridos é a
+ * regra de negócio (`avaliarSuficienciaBo`), não a IA. Amarrá-los ao texto
+ * gerado pela IA foi o que prendeu o cliente num círculo em 15/08/2026.
  */
 const PASSOS_BO: Passo[] = [
   { id: "entender_bo", tipo: "entender_bo", titulo: "Antes de ir à delegacia, entenda o boletim" },
@@ -279,7 +284,6 @@ export default function EfetivaNecessidadeModal({
   const [provas, setProvas] = useState<Prova[]>([]);
   const [enviandoTipo, setEnviandoTipo] = useState<TipoProva | null>(null);
   /* Parte B — o relato que a IA monta e o cliente lê, ajusta e aprova. */
-  const [etapa, setEtapa] = useState<"provas" | "narrativa">("provas");
   const [passoIndex, setPassoIndex] = useState(0);
   const [maxVisitado, setMaxVisitado] = useState(0);
   const [avisoAnexo, setAvisoAnexo] = useState<string | null>(null);
@@ -291,6 +295,10 @@ export default function EfetivaNecessidadeModal({
   const [textoBoTocado, setTextoBoTocado] = useState(false);
   const [editandoBo, setEditandoBo] = useState(false);
   const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
+  /** Quando o texto atual foi montado — base da pergunta "quer refazer?". */
+  const [narrativaGeradaEm, setNarrativaGeradaEm] = useState<string | null>(null);
+  /** O cliente respondeu "agora não" à pergunta de refazer, nesta sessão. */
+  const [refazerDispensado, setRefazerDispensado] = useState(false);
   const [novoAcrescimo, setNovoAcrescimo] = useState("");
   const [campoAcrescimoAberto, setCampoAcrescimoAberto] = useState(false);
   const [salvandoAcrescimo, setSalvandoAcrescimo] = useState(false);
@@ -355,8 +363,9 @@ export default function EfetivaNecessidadeModal({
         );
         setTextoBo(reg.texto_bo ?? "");
         setBoPendenteRegistro(Boolean(reg.bo_pendente_registro));
+        setBoRegistradoConfirmado(Boolean(reg.bo_registro_confirmado_em));
+        setNarrativaGeradaEm(reg.narrativa_gerada_em ?? null);
         if (reg.narrativa_final || reg.narrativa_gerada) {
-          setEtapa("narrativa");
           setPassoIndex(PASSO_REVISAO);
           setMaxVisitado(PASSO_REVISAO);
         } else {
@@ -492,14 +501,17 @@ export default function EfetivaNecessidadeModal({
       });
       if (error || !data?.narrativa) throw new Error(data?.error || error?.message || "Falha ao montar o relato");
       setNarrativa(String(data.narrativa));
-      setTextoBo(String(data.texto_bo ?? ""));
+      // Texto de BO NUNCA é apagado por uma regeração: se a rodada não trouxe
+      // texto novo, o que já estava na tela continua valendo.
+      setTextoBo((atual) => String(data.texto_bo ?? "").trim() || atual);
+      setNarrativaGeradaEm(String(data.narrativa_gerada_em ?? new Date().toISOString()));
+      setRefazerDispensado(false);
       setTextoBoTocado(false);
       setEditandoBo(false);
       setCampoAcrescimoAberto(false);
       setNovoAcrescimo("");
       setNarrativaTocada(false);
       setEditandoNarrativa(false);
-      setEtapa("narrativa");
     } catch (e) {
       console.error("[efetiva necessidade] narrativa:", e);
       toast.error(e instanceof Error ? e.message : "Não foi possível montar o relato agora.");
@@ -528,7 +540,10 @@ export default function EfetivaNecessidadeModal({
       setAcrescimos((p) => [...p, data as unknown as Acrescimo]);
       setNovoAcrescimo("");
       setCampoAcrescimoAberto(false);
-      toast.success("Fato registrado. Agora refaça o relato para ele entrar no texto.");
+      // A pergunta "quer refazer?" nasce agora, na tela, em vez de depender de
+      // o cliente achar um botão perdido no fim da página.
+      setRefazerDispensado(false);
+      toast.success("Fato guardado. Responda logo acima se quer refazer o seu texto com ele.");
     } catch (e) {
       console.error("[efetiva necessidade] acréscimo:", e);
       toast.error("Não foi possível salvar este fato. Tente novamente.");
@@ -548,6 +563,21 @@ export default function EfetivaNecessidadeModal({
 
   const aprovarNarrativa = useCallback(async () => {
     if (!registroId || narrativa.trim().length < 200) return;
+    /* ── Trava dura, agora também AQUI ────────────────────────────────────
+     * A fila do pop-up guiado transforma cada passo num item independente, e
+     * o item "Defesa final" abria direto — furando as travas do "Próximo".
+     * Foi assim que um cliente fechou a efetiva necessidade em 13/08/2026 sem
+     * um único boletim no processo. A trava passa a valer no próprio botão.  */
+    const suf = avaliarSuficienciaBo(provas, relato);
+    const boEmMaos =
+      provas.some((p) => p.tipo === "boletim_ocorrencia") &&
+      (!suf.exigeNovoBo || !boPendenteRegistro);
+    if (!boEmMaos) {
+      toast.error(
+        "Antes de aprovar, conclua o passo do boletim de ocorrência: registre o boletim e anexe o documento aqui.",
+      );
+      return;
+    }
     setAprovando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-efetiva-aprovar", {
@@ -571,7 +601,10 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setAprovando(false);
     }
-  }, [registroId, narrativa, narrativaTocada, textoBo, textoBoTocado, onConcluido, onClose]);
+  }, [
+    registroId, narrativa, narrativaTocada, textoBo, textoBoTocado,
+    provas, relato, boPendenteRegistro, onConcluido, onClose,
+  ]);
 
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
   const receberArquivo = useCallback(async (file: File) => {
@@ -683,14 +716,20 @@ export default function EfetivaNecessidadeModal({
   const podeConcluir = todasRespondidas && (provas.length > 0 || relato.trim().length >= RELATO_MINIMO);
 
   /**
-   * A fila viva de passos. Quando a IA devolve um texto de BO, o caminho ganha
-   * três itens — registrar, enviar e fechar a defesa — e eles passam a contar
-   * como itens do grupo, exatamente como qualquer outra exigência do checklist.
+   * A fila de passos — 11, sempre, na ORDEM CANÔNICA da lib.
+   *
+   * Antes esta lista era montada a partir do `texto_bo`: sem texto, 7 passos.
+   * Como o checklist sempre contou 11, o item "Registrar o boletim" da fila
+   * caía num índice inexistente e renderizava a tela de Revisão, onde o botão
+   * virava "Concordo e aprovo". O cliente aprovava, nada mudava, e a exigência
+   * reabria — círculo fechado. Uma lista só, vinda de um lugar só.
    */
-  const passos = useMemo<Passo[]>(
-    () => (textoBo.trim() ? [...PASSOS_BASE, ...PASSOS_BO] : PASSOS_BASE),
-    [textoBo],
-  );
+  const passos = useMemo<Passo[]>(() => {
+    const porId = new Map<string, Passo>(
+      [...PASSOS_BASE, ...PASSOS_BO].map((p) => [p.id, p]),
+    );
+    return EFETIVA_PASSOS_IDS.map((id) => porId.get(id)).filter(Boolean) as Passo[];
+  }, []);
 
   const provasBo = useMemo(
     () => provas.filter((p) => p.tipo === "boletim_ocorrencia"),
@@ -787,11 +826,42 @@ export default function EfetivaNecessidadeModal({
     irPara(passoIndex + 1);
   }, [passos, passoIndex, perguntaAtual, respostas, provas, avisoAnexo, irPara]);
 
-  /** "Já registrei o boletim" — some da tela e libera o envio do documento. */
-  const confirmarRegistroBo = useCallback(() => {
+  /**
+   * "Já registrei o boletim" — agora fica GRAVADO. Antes era estado local: o
+   * cliente clicava, avançava, e o checklist continuava cobrando o passo para
+   * sempre porque ninguém tinha contado nada ao banco.
+   */
+  const confirmarRegistroBo = useCallback(async () => {
     setBoRegistradoConfirmado(true);
+    if (registroId) {
+      const { error } = await supabase
+        .from("qa_efetiva_necessidade" as any)
+        .update({
+          bo_registro_confirmado_em: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", registroId);
+      if (error) console.error("[efetiva necessidade] confirmar registro BO:", error);
+      else onPassoConcluido?.();
+    }
     irPara(passoIndex + 1);
-  }, [irPara, passoIndex]);
+  }, [registroId, irPara, passoIndex, onPassoConcluido]);
+
+  /**
+   * Há fato acrescentado que ainda não entrou no texto? É o que faz nascer a
+   * pergunta de autorização. O texto que o CLIENTE digitou nunca é tocado —
+   * o que se refaz é só o texto montado pela IA, e só se ele mandar.
+   */
+  const temFatoNovoPendente = useMemo(
+    () => temFatoNovoForaDoTexto({ narrativa_gerada_em: narrativaGeradaEm }, acrescimos),
+    [narrativaGeradaEm, acrescimos],
+  );
+
+  const qtdFatosNovos = useMemo(() => {
+    const t = Date.parse(String(narrativaGeradaEm ?? ""));
+    if (!Number.isFinite(t)) return acrescimos.length;
+    return acrescimos.filter((a) => Date.parse(String(a.created_at ?? "")) > t).length;
+  }, [acrescimos, narrativaGeradaEm]);
 
   /* ── Ciência do BO ───────────────────────────────────────────────────────
    * O aceite é permanente: fica no cadastro do cliente com o texto integral
@@ -865,8 +935,12 @@ export default function EfetivaNecessidadeModal({
 
   if (!open) return null;
 
+  // `registrar_bo` entra AQUI sempre — mesmo sem narrativa montada. Antes,
+  // sem narrativa, esse passo caía no ramo de baixo, que não tem nada para
+  // ele: tela em branco no meio do caminho da delegacia.
   const narrativaNaTela =
-    !!narrativa && (passo?.tipo === "revisao" || passo?.tipo === "defesa_final" || passo?.tipo === "registrar_bo");
+    (!!narrativa && (passo?.tipo === "revisao" || passo?.tipo === "defesa_final")) ||
+    passo?.tipo === "registrar_bo";
 
   /** Último passo do caminho — é onde a aprovação acontece. */
   const passoFinal = passoIndex === passos.length - 1;
@@ -939,6 +1013,47 @@ export default function EfetivaNecessidadeModal({
                 </p>
               </div>
             )}
+            {/* ── A pergunta de autorização para refazer ────────────────────
+              * Regra do usuário (15/08/2026): o texto que o CLIENTE digitou
+              * nunca é refeito — só ele apaga ou edita. O texto montado pela
+              * IA só é refeito se ele autorizar, respondendo aqui. Antes isso
+              * dependia de o cliente achar um botão no fim da página, e o fato
+              * novo simplesmente nunca entrava na defesa dele.              */}
+            {temFatoNovoPendente && !refazerDispensado && passo?.tipo !== "registrar_bo" && (
+              <div className="rounded-lg border border-[#7A1F2B]/40 bg-[#7A1F2B]/[0.05] p-4">
+                <p className="text-[12px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  {qtdFatosNovos === 1 ? "Você acrescentou um fato novo" : `Você acrescentou ${qtdFatosNovos} fatos novos`}
+                </p>
+                <p className="mt-1.5 text-[13px] font-semibold leading-relaxed text-zinc-900">
+                  Deseja refazer o seu texto de defesa com os novos fatos?
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                  O que você mesmo escreveu não é alterado — só você edita o seu texto. Refazemos
+                  apenas o texto que montamos para você, em primeira pessoa, somando o fato novo ao
+                  que já estava lá. O texto para a delegacia é refeito junto.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={gerando}
+                    onClick={() => void gerarNarrativa()}
+                    className="inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-50"
+                  >
+                    {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    {gerando ? "Refazendo…" : "Sim, refazer com os novos fatos"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={gerando}
+                    onClick={() => setRefazerDispensado(true)}
+                    className="rounded-lg border border-zinc-300 px-4 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  >
+                    Agora não
+                  </button>
+                </div>
+              </div>
+            )}
+
             {passo?.tipo === "registrar_bo" ? null : (
             <>
             <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
@@ -986,9 +1101,12 @@ export default function EfetivaNecessidadeModal({
                 {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refazer o relato
               </button>
+              {/* Botão morto até 15/08/2026: chamava `setEtapa("provas")`, e
+                  `etapa` não é lido em lugar nenhum da renderização — a tela
+                  vem de `passo.tipo`. Agora ele volta de fato ao começo. */}
               <button
                 type="button"
-                onClick={() => setEtapa("provas")}
+                onClick={() => irPara(0)}
                 className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 Voltar e corrigir provas
@@ -1000,7 +1118,8 @@ export default function EfetivaNecessidadeModal({
               <p className="text-[12px] font-semibold text-zinc-900">Aconteceu mais alguma coisa?</p>
               <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
                 Se você lembrou de outro fato, ou algo novo aconteceu depois, escreva aqui. Nada do
-                que você já contou é apagado: o relato é reescrito somando o fato novo.
+                que você já contou é apagado. Depois de guardar, nós perguntamos se você quer
+                refazer o seu texto de defesa incluindo ele — a decisão é sua.
               </p>
 
               {acrescimos.length > 0 && (
@@ -1110,8 +1229,37 @@ export default function EfetivaNecessidadeModal({
                   </button>
                 </div>
 
-                {/* Como abrir o BO — passo a passo, no padrão do pop-up guiado */}
-                <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-3">
+              </div>
+            )}
+
+            {/* ── Sem o texto da IA, o passo do boletim NÃO some ────────────
+              * A orientação de como registrar não depende de IA nenhuma. Se o
+              * texto não veio, o cliente vê o motivo e um botão para montá-lo
+              * — nunca uma tela vazia e, muito menos, a tela errada.        */}
+            {passo?.tipo === "registrar_bo" && !textoBo && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+                <p className="text-[12px] font-semibold text-amber-900">
+                  O texto sugerido para a delegacia ainda não está pronto
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-amber-900">
+                  Você pode registrar o boletim com as suas próprias palavras agora mesmo, seguindo
+                  o passo a passo abaixo. Se preferir, monte o texto sugerido em um clique.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void gerarNarrativa()}
+                  disabled={gerando}
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[12px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-50"
+                >
+                  {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  {gerando ? "Montando o texto…" : "Gerar o meu texto agora"}
+                </button>
+              </div>
+            )}
+
+            {/* Como abrir o BO — passo a passo, no padrão do pop-up guiado */}
+            {passo?.tipo === "registrar_bo" && (
+                <div className="rounded-lg border border-zinc-200 bg-white p-3">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
                     Como registrar o seu boletim
                   </p>
@@ -1158,7 +1306,6 @@ export default function EfetivaNecessidadeModal({
                     <li><strong>5.</strong> Quando o boletim sair, volte aqui e anexe o PDF como nova prova.</li>
                   </ol>
                 </div>
-              </div>
             )}
 
             {passo?.tipo === "registrar_bo" ? (

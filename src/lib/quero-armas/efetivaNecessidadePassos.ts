@@ -45,7 +45,7 @@ export const EFETIVA_PASSO_ROTULO: Record<EfetivaPassoId, string> = {
   defesa_final: "Defesa final e aprovação",
 };
 
-const PASSOS_BASE: EfetivaPassoId[] = [
+export const PASSOS_BASE: EfetivaPassoId[] = [
   "tem_bo",
   "tem_inquerito",
   "tem_acao_criminal",
@@ -55,12 +55,26 @@ const PASSOS_BASE: EfetivaPassoId[] = [
   "revisao",
 ];
 
-const PASSOS_BO: EfetivaPassoId[] = [
+export const PASSOS_BO: EfetivaPassoId[] = [
   "entender_bo",
   "registrar_bo",
   "enviar_bo",
   "defesa_final",
 ];
+
+/**
+ * A ORDEM CANÔNICA dos passos — 11, sempre, para todo mundo.
+ *
+ * Furo real (15/08/2026, cliente Mizael): existiam DUAS listas de passos. O
+ * checklist usava esta (11 itens) e o wizard montava a dele a partir do
+ * `texto_bo` (7 itens quando o texto estava vazio). Aí o item "Registrar o
+ * boletim" da fila renderizava a tela de Revisão, o botão virava "Concordo e
+ * aprovo" e o cliente ficava preso num círculo: aprovava, nada mudava, o
+ * checklist reabria a exigência pelos passos pendentes e tudo recomeçava.
+ *
+ * Lista única, aqui. Quem renderiza consome DAQUI — nunca monta a sua.
+ */
+export const EFETIVA_PASSOS_IDS: EfetivaPassoId[] = [...PASSOS_BASE, ...PASSOS_BO];
 
 /** Mesmo mínimo aplicado no wizard quando não há nenhuma prova documental. */
 export const EFETIVA_RELATO_MINIMO = 1000;
@@ -74,12 +88,56 @@ export interface EfetivaRegistroLike {
   contexto_risco?: string | null;
   narrativa_gerada?: string | null;
   narrativa_final?: string | null;
+  narrativa_gerada_em?: string | null;
   texto_bo?: string | null;
   bo_pendente_registro?: boolean | null;
+  /** Carimbo do "Já registrei o boletim" — o clique agora fica no banco. */
+  bo_registro_confirmado_em?: string | null;
   aprovado_cliente?: boolean | null;
+  aprovado_cliente_em?: string | null;
   /** `rascunho` | `em_revisao` | `aprovado` | `devolvido` (qa_efetiva_necessidade.status). */
   status?: string | null;
   devolucao_motivo?: string | null;
+}
+
+export interface EfetivaAcrescimoLike {
+  created_at?: string | null;
+}
+
+/**
+ * O relato foi refeito DEPOIS da aprovação do cliente?
+ *
+ * O aceite (`aprovado_cliente`) é prova de sessão e nunca é apagado — mas ele
+ * cobre o texto que estava na tela naquele instante. Refez o texto, o aceite
+ * anterior não vale para o texto novo: a defesa final volta a ser pendência.
+ */
+export function narrativaRefeitaAposAprovacao(
+  registro: EfetivaRegistroLike | null | undefined,
+): boolean {
+  const aprovadoEm = Date.parse(String(registro?.aprovado_cliente_em ?? ""));
+  const geradaEm = Date.parse(String(registro?.narrativa_gerada_em ?? ""));
+  if (!Number.isFinite(aprovadoEm) || !Number.isFinite(geradaEm)) return false;
+  return geradaEm > aprovadoEm;
+}
+
+/**
+ * Há fato acrescentado pelo cliente que ainda NÃO entrou no texto?
+ *
+ * É o gatilho da pergunta "quer refazer o seu texto de defesa incluindo este
+ * fato novo?". Regra do usuário (15/08/2026): o texto da IA só é refeito com
+ * autorização explícita dele — nunca sozinho, e nunca por cima do texto que o
+ * próprio cliente digitou.
+ */
+export function temFatoNovoForaDoTexto(
+  registro: EfetivaRegistroLike | null | undefined,
+  acrescimos: EfetivaAcrescimoLike[] = [],
+): boolean {
+  const geradaEm = Date.parse(String(registro?.narrativa_gerada_em ?? ""));
+  if (!Number.isFinite(geradaEm)) return (acrescimos?.length ?? 0) > 0;
+  return (acrescimos ?? []).some((a) => {
+    const t = Date.parse(String(a?.created_at ?? ""));
+    return Number.isFinite(t) && t > geradaEm;
+  });
 }
 
 /**
@@ -212,7 +270,7 @@ export function calcularPassosEfetiva(
   cienciaBoAceita = false,
 ): EfetivaPasso[] {
   const reg = registro ?? {};
-  const ids = [...PASSOS_BASE, ...PASSOS_BO];
+  const ids = EFETIVA_PASSOS_IDS;
 
   const relato = String(reg.relato_cliente ?? "").trim();
   const contexto = String(reg.contexto_risco ?? "").trim();
@@ -249,11 +307,17 @@ export function calcularPassosEfetiva(
       case "entender_bo":
         return cienciaBoAceita || boEntregue;
       case "registrar_bo":
-        return boEntregue;
+        // O "Já registrei o boletim" agora é persistido — antes era estado
+        // local do componente e o checklist nunca ficava sabendo.
+        return boEntregue || !!String(reg.bo_registro_confirmado_em ?? "").trim();
       case "enviar_bo":
         return boEntregue;
       case "defesa_final":
-        return !devolvida && reg.aprovado_cliente === true;
+        return (
+          !devolvida &&
+          reg.aprovado_cliente === true &&
+          !narrativaRefeitaAposAprovacao(reg)
+        );
       default:
         return false;
     }

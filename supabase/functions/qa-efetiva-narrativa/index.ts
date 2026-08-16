@@ -129,8 +129,36 @@ function separarBlocos(bruto: string): { narrativa: string; textoBo: string } {
   if (m) {
     return { narrativa: m[1].trim(), textoBo: limitarBo(m[2]) };
   }
-  // Sem marcadores: tudo vira relato e o texto de BO fica para a próxima rodada.
+  // Sem marcadores. NÃO é "fica para a próxima rodada": não existe próxima
+  // rodada automática. Quem chama trata a ausência — com nova tentativa e,
+  // se ainda assim faltar, com o texto de reserva montado aqui no servidor.
   return { narrativa: bruto.replace(/^===\s*RELATO\s*===/i, "").trim(), textoBo: "" };
+}
+
+/**
+ * Texto de reserva para o boletim, montado SEM IA.
+ *
+ * Furo real (15/08/2026): quando a IA não devolvia o bloco ===BO===, o cliente
+ * ficava sem o texto e — pior — o texto que já existia era sobrescrito com
+ * null. Aqui o pior caso passa a ser um texto simples com as palavras do
+ * próprio cliente, que ele lê e ajusta na tela antes de usar.
+ */
+function textoBoDeReserva(
+  relato: string | null | undefined,
+  acrescimos: Array<{ texto?: string | null }> = [],
+): string {
+  const ultimo = [...(acrescimos ?? [])].reverse().find((a) => String(a?.texto ?? "").trim());
+  const base = String(ultimo?.texto ?? relato ?? "").replace(/\s+/g, " ").trim();
+  if (!base) return "";
+  const fecho =
+    " Temo pela minha integridade e pela da minha família e comunico o fato à autoridade policial para as providências cabíveis.";
+  const espaco = LIMITE_BO - fecho.length;
+  const corpo = base.length <= espaco ? base : (() => {
+    const corte = base.slice(0, espaco);
+    const ponto = Math.max(corte.lastIndexOf("."), corte.lastIndexOf("!"), corte.lastIndexOf("?"));
+    return ponto > 120 ? corte.slice(0, ponto + 1) : `${corte.trim()}.`;
+  })();
+  return `${corpo.trim()}${fecho}`.trim();
 }
 
 Deno.serve(async (req) => {
@@ -232,18 +260,28 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) return json({ error: "IA indisponível no momento." }, 500);
 
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: "google/gemini-3.6-flash",
-        stream: false,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: contextoUsuario },
-        ],
-      }),
-    });
+    const chamarIa = async (reforco?: string) => {
+      const mensagens = [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: contextoUsuario },
+      ];
+      if (reforco) mensagens.push({ role: "user", content: reforco });
+      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body: JSON.stringify({
+          model: "google/gemini-3.6-flash",
+          stream: false,
+          // Sem teto explícito a resposta podia truncar, e o bloco ===BO===
+          // vem DEPOIS do relato: era sempre ele o primeiro a morrer.
+          max_tokens: 8000,
+          messages: mensagens,
+        }),
+      });
+      return resp;
+    };
+
+    let aiResp = await chamarIa();
 
     if (aiResp.status === 429) return json({ error: "Muitas solicitações agora. Tente em instantes." }, 429);
     if (aiResp.status === 402) return json({ error: "Créditos de IA esgotados." }, 402);
@@ -253,29 +291,68 @@ Deno.serve(async (req) => {
       return json({ error: "Não foi possível montar o relato agora." }, 502);
     }
 
-    const payload = await aiResp.json();
-    const bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
+    let payload = await aiResp.json();
+    let bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
     if (!bruto) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
-    const { narrativa, textoBo: textoBoBruto } = separarBlocos(bruto);
+    let { narrativa, textoBo: textoBoBruto } = separarBlocos(bruto);
+
     // Boletim antigo vale como reiteração: só entregamos texto para registrar
     // um BO novo quando a regra realmente exige.
     const precisaNovoBo = exigeNovoBo(provas ?? [], reg.relato_cliente, Date.now());
-    const textoBo = precisaNovoBo ? textoBoBruto : "";
+
+    /* ── Faltou o bloco ===BO===? Tenta de novo, uma vez ───────────────────
+     * Antes isto passava batido: a função gravava texto_bo = null e seguia em
+     * frente. O cliente perdia o texto (às vezes um texto que já existia e
+     * estava certo) e ficava sem como registrar o boletim.                 */
+    if (precisaNovoBo && !textoBoBruto) {
+      console.warn("[qa-efetiva-narrativa] sem bloco ===BO=== na 1a tentativa; repetindo");
+      const retry = await chamarIa(
+        "A sua resposta anterior veio SEM o bloco ===BO===. Reescreva a resposta INTEIRA, " +
+          "obrigatoriamente com os dois marcadores literais ===RELATO=== e ===BO===, cada um em " +
+          "linha própria, e com o texto do boletim em no máximo 500 caracteres.",
+      );
+      if (retry.ok) {
+        payload = await retry.json();
+        bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
+        const segundo = separarBlocos(bruto);
+        if (segundo.narrativa) narrativa = segundo.narrativa;
+        if (segundo.textoBo) textoBoBruto = segundo.textoBo;
+      }
+    }
+
     if (!narrativa) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
+
+    /* ── O texto do BO nunca fica vazio, e NUNCA apaga o que já existia ──
+     * Ordem de preferência: o que a IA acabou de produzir → o que já estava
+     * gravado → um texto de reserva montado com as palavras do cliente.    */
+    const textoBoAnterior = String(reg.texto_bo ?? "").trim();
+    const textoBo = precisaNovoBo
+      ? (textoBoBruto || textoBoAnterior || limitarBo(textoBoDeReserva(reg.relato_cliente, acrescimos ?? [])))
+      : textoBoAnterior;
+    const textoBoNovo = Boolean(textoBoBruto) && textoBoBruto !== textoBoAnterior;
+    const agora = new Date().toISOString();
 
     const { error: erroUpdate } = await sb
       .from("qa_efetiva_necessidade")
       .update({
         narrativa_gerada: narrativa,
-        narrativa_gerada_em: new Date().toISOString(),
+        narrativa_gerada_em: agora,
+        // Refez o texto? O texto final anterior não vale mais para o texto
+        // novo — o cliente precisa ler e aprovar de novo. O aceite anterior
+        // continua guardado na auditoria e no dossiê já emitido.
+        narrativa_final: null,
+        narrativa_editada_pelo_cliente: false,
         texto_bo: textoBo || null,
-        texto_bo_gerado_em: textoBo ? new Date().toISOString() : null,
-        texto_bo_editado_pelo_cliente: false,
-        bo_pendente_registro: Boolean(textoBo),
+        texto_bo_gerado_em: textoBo
+          ? (textoBoNovo || !reg.texto_bo_gerado_em ? agora : reg.texto_bo_gerado_em)
+          : null,
+        texto_bo_editado_pelo_cliente: textoBoNovo ? false : Boolean(reg.texto_bo_editado_pelo_cliente),
+        // Quem manda aqui é a REGRA, não o sucesso da IA.
+        bo_pendente_registro: precisaNovoBo,
         versao: Number(reg.versao ?? 1) + ((acrescimos ?? []).length ? 1 : 0),
         status: "aguardando_aprovacao",
-        updated_at: new Date().toISOString(),
+        updated_at: agora,
       })
       .eq("id", registro_id);
     if (erroUpdate) {
@@ -283,7 +360,14 @@ Deno.serve(async (req) => {
       return json({ error: "Não foi possível salvar o relato gerado." }, 500);
     }
 
-    return json({ ok: true, narrativa, texto_bo: textoBo });
+    if (precisaNovoBo && !textoBoBruto) {
+      console.error("[qa-efetiva-narrativa] IA nao devolveu ===BO===; usando texto de reserva", {
+        registro_id,
+        usou_anterior: Boolean(textoBoAnterior),
+      });
+    }
+
+    return json({ ok: true, narrativa, texto_bo: textoBo, narrativa_gerada_em: agora });
   } catch (e) {
     console.error("[qa-efetiva-narrativa]", e);
     return json({ error: e instanceof Error ? e.message : "Erro inesperado" }, 500);

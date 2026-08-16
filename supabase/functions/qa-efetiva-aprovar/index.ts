@@ -133,6 +133,21 @@ Deno.serve(async (req) => {
       .eq("efetiva_necessidade_id", registroId)
       .order("ordem");
 
+    /* ── 0) Trava do boletim, no SERVIDOR ───────────────────────────────
+     * A fila do pop-up guiado abre cada passo como item independente, então
+     * o item "Defesa final" podia ser aberto direto, pulando "registrar" e
+     * "enviar" o boletim. Foi assim que um cliente fechou a efetiva
+     * necessidade em 13/08/2026 sem nenhum boletim no processo. A trava do
+     * botão não basta: ela tem de existir aqui, onde ninguém desvia.      */
+    const boletins = (provas ?? []).filter((p: any) => p?.tipo === "boletim_ocorrencia");
+    const boEmMaos = boletins.length > 0 && !reg.bo_pendente_registro;
+    if (!boEmMaos) {
+      return json({
+        error:
+          "Antes de aprovar, conclua o passo do boletim de ocorrência: registre o boletim e anexe o documento.",
+      }, 409);
+    }
+
     /* ── 1) Carimbo da conexão ─────────────────────────────────────────── */
     const agora = new Date();
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
@@ -303,9 +318,14 @@ Deno.serve(async (req) => {
     await sb.from("qa_efetiva_necessidade").update({
       narrativa_final: textoFinal,
       narrativa_editada_pelo_cliente: editado,
-      texto_bo: textoBo || null,
-      texto_bo_editado_pelo_cliente: textoBoEditado,
-      bo_pendente_registro: Boolean(textoBo),
+      // NUNCA apagar o texto do boletim. Até 15/08/2026 esta linha era
+      // `texto_bo: textoBo || null` e o corpo vinha da tela: aprovar de uma
+      // tela que não era a do boletim zerava o texto no banco, e com ele
+      // sumiam os passos do boletim inteiros.
+      texto_bo: textoBo || reg.texto_bo || null,
+      texto_bo_editado_pelo_cliente: textoBo ? textoBoEditado : Boolean(reg.texto_bo_editado_pelo_cliente),
+      // O boletim já está em mãos (a trava acima garantiu): nada pendente.
+      bo_pendente_registro: false,
       aprovado_cliente: true,
       aprovado_cliente_em: agora.toISOString(),
       aprovacao_ip: ip,
