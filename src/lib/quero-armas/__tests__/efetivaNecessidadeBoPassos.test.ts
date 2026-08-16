@@ -112,8 +112,10 @@ describe("refazer o texto exige autorização do cliente", () => {
 describe("o texto do boletim nunca é apagado", () => {
   it("a geração preserva o texto anterior e não depende do sucesso da IA", () => {
     const src = r("supabase/functions/qa-efetiva-narrativa/index.ts");
-    expect(src).not.toMatch(/texto_bo:\s*textoBo\s*\|\|\s*null,/);
-    expect(src).toMatch(/textoBoAnterior/);
+    // O que vai para o banco passa pela cadeia de reserva — o que a IA acabou
+    // de devolver, o que já estava gravado, e por último um texto montado sem
+    // IA. Nunca o resultado cru da IA sozinho, que é como o texto sumia.
+    expect(src).toMatch(/textoBoBruto\s*\|\|\s*textoBoAnterior\s*\|\|/);
     expect(src).toMatch(/textoBoDeReserva/);
     // Quem decide a pendência do BO é a regra, não a IA ter respondido.
     expect(src).toMatch(/bo_pendente_registro:\s*precisaNovoBo/);
