@@ -747,9 +747,16 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             `overscroll-contain` impede que o balanço do fim da lista arraste
             a página inteira junto. */}
         <div
-          className={asPage
-            ? "no-scrollbar flex-1 overflow-y-auto overscroll-contain px-0 pb-2"
-            : "no-scrollbar flex-1 overflow-y-auto overscroll-contain px-6 pt-3 pb-2"}
+          className={`no-scrollbar flex-1 overflow-y-auto overscroll-contain ${
+            asPage ? "px-0" : "px-6 pt-3"
+          } ${
+            // Sem folga embaixo quando o passo traz a própria barra grudada
+            // (efetiva necessidade). A barra é `sticky bottom-0` e para na
+            // borda do CONTEÚDO, não do padding: com `pb-2` sobravam 8px de
+            // área rolável por baixo dela, e o texto aparecia escapando
+            // debaixo dos botões. Sem padding, a barra encosta no fim.
+            active.corpo ? "pb-0" : "pb-2"
+          }`}
           style={{
             // Modo página: o recuo é o padding do próprio portal, então o
             // fundo da barra alcança a lateral da tela. Modo pop-up: os 24px
