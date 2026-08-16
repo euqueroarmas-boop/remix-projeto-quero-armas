@@ -1,4 +1,17 @@
 -- =============================================================================
+-- ⚠️  MIGRATION SUPERADA — NÃO COLAR NO BANCO.
+--
+-- Nunca foi aplicada em produção. Medindo o banco em 16/08/2026, ela está
+-- PARCIALMENTE ERRADA para os dados de hoje: reescreve também as políticas de
+-- qa_processos, qa_processo_documentos e qa_processo_eventos para id_legado,
+-- mas qa_processos.cliente_id guarda o id REAL (28 de 28 linhas). Aplicá-la
+-- cegaria os 6 clientes com id_legado <> id do outro lado.
+--
+-- Substituída por 20260816230000_fix_rls_dono_id_legado_mirado.sql, que corrige
+-- só o que está quebrado (vendas, itens de venda e contratos).
+-- =============================================================================
+
+-- =============================================================================
 -- FIX RLS — políticas de dono das tabelas encadeadas por id_legado
 -- -----------------------------------------------------------------------------
 -- Convenção canônica (src/components/quero-armas/clientes/clientFK.ts):
