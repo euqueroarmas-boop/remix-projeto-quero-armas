@@ -19,7 +19,7 @@
 // arquivamento. Cliente que só olha o portal perde prazo.
 // ============================================================================
 
-import { AlertTriangle, CheckCircle2, Clock, Mail, MapPin } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, FileText, Mail, MapPin } from "lucide-react";
 
 /** Etapas do processo na Polícia Federal, na ordem em que acontecem. */
 const REGUA: Array<{ chave: string; titulo: string; descricao: string }> = [
@@ -47,6 +47,34 @@ const REGUA: Array<{ chave: string; titulo: string; descricao: string }> = [
   },
 ];
 
+/** O que a Polícia Federal escreveu, copiado do SINARM pela equipe. */
+export interface ManifestacaoPF {
+  tipo?: string | null;
+  texto: string;
+  delegado_nome?: string | null;
+  delegado_cargo?: string | null;
+  unidade_pf?: string | null;
+  data_documento?: string | null;
+  prazo_dias?: number | null;
+  prazo_limite?: string | null;
+  canal_resposta?: string | null;
+  contato?: string | null;
+  created_at?: string | null;
+}
+
+const TIPO_ROTULO: Record<string, string> = {
+  notificacao: "Notificação da Polícia Federal",
+  parecer: "Parecer do delegado",
+  manifestacao: "Manifestação da Polícia Federal",
+  decisao: "Decisão da Polícia Federal",
+};
+
+const CANAL_ROTULO: Record<string, string> = {
+  sistema: "pelo próprio site da Polícia Federal",
+  email: "por e-mail para a delegacia",
+  presencial: "presencialmente, na delegacia",
+};
+
 export interface ProtocoloStatusPanelProps {
   numeroProtocolo?: string | null;
   dataProtocolo?: string | null;
@@ -54,6 +82,11 @@ export interface ProtocoloStatusPanelProps {
   delegacia?: string | null;
   /** Status atual do processo, no vocabulário do sistema. */
   status?: string | null;
+  /**
+   * Textos da PF, do mais recente para o mais antigo. Vêm do SINARM, copiados
+   * pela equipe com o acesso do próprio cliente.
+   */
+  manifestacoes?: ManifestacaoPF[];
 }
 
 function fmtData(v?: string | null): string {
@@ -89,8 +122,10 @@ export default function ProtocoloStatusPanel({
   dataProtocolo,
   delegacia,
   status,
+  manifestacoes = [],
 }: ProtocoloStatusPanelProps) {
   const atual = etapaAtual(status);
+  const ultima = manifestacoes[0] ?? null;
 
   return (
     <div className="space-y-3">
@@ -101,10 +136,72 @@ export default function ProtocoloStatusPanel({
           {rotuloStatus(status)}
         </p>
         <p className="mt-1 text-[12px] leading-snug text-sky-900">
-          O seu processo já está na Polícia Federal. Não há nada pendente com você agora — a
-          análise é deles.
+          {ultima
+            ? "A Polícia Federal se manifestou no seu processo. O texto dela está logo abaixo, na íntegra."
+            : "O seu processo já está na Polícia Federal. Não há nada pendente com você agora — a análise é deles."}
         </p>
       </div>
+
+      {/*
+        O QUE A PF ESCREVEU — só aparece quando a equipe já copiou do SINARM.
+        Vem antes de tudo porque, existindo, é a informação que importa: é o
+        texto do delegado, palavra por palavra, e é dele que sai o prazo.
+      */}
+      {ultima && (
+        <section className="overflow-hidden rounded-lg border-2 border-[#8A1224] bg-white">
+          <header className="border-b border-[#E5C2C6] bg-[#FBF3F4] px-3 py-2">
+            <h4 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#7A1F2B]">
+              <FileText className="h-3.5 w-3.5" />
+              {TIPO_ROTULO[String(ultima.tipo ?? "").toLowerCase()] ?? "Documento da Polícia Federal"}
+            </h4>
+            <p className="mt-0.5 text-[10px] text-[#7A1F2B]">
+              {ultima.data_documento ? `Emitido em ${fmtData(ultima.data_documento)}. ` : ""}
+              Copiado do sistema da Polícia Federal pela nossa equipe.
+            </p>
+          </header>
+
+          {(ultima.prazo_limite || ultima.prazo_dias) && (
+            <div className="border-b border-slate-100 bg-amber-50 px-3 py-2">
+              <p className="text-[11px] font-bold leading-snug text-amber-900">
+                Prazo para responder
+                {ultima.prazo_dias ? `: ${ultima.prazo_dias} dias` : ""}
+                {ultima.prazo_limite ? ` — até ${fmtData(ultima.prazo_limite)}` : ""}
+                {ultima.canal_resposta
+                  ? `, ${CANAL_ROTULO[String(ultima.canal_resposta).toLowerCase()] ?? String(ultima.canal_resposta)}`
+                  : ""}
+                .
+              </p>
+              <p className="mt-0.5 text-[11px] leading-snug text-amber-900">
+                Não precisa fazer nada sozinho — nós preparamos a resposta. Perder este prazo faz
+                o requerimento ser arquivado.
+              </p>
+            </div>
+          )}
+
+          {/*
+            `whitespace-pre-wrap` de propósito: o texto é colado como veio do
+            SINARM, com as quebras de linha do delegado. Reformatar mudaria a
+            leitura de um documento que é prova.
+          */}
+          <p className="whitespace-pre-wrap px-3 py-2.5 text-[12px] leading-relaxed text-slate-800">
+            {ultima.texto}
+          </p>
+
+          {(ultima.delegado_nome || ultima.unidade_pf) && (
+            <p className="border-t border-slate-100 px-3 py-2 text-[10px] leading-snug text-slate-500">
+              {ultima.delegado_nome}
+              {ultima.delegado_cargo ? ` · ${ultima.delegado_cargo}` : ""}
+              {ultima.unidade_pf ? ` · ${ultima.unidade_pf}` : ""}
+            </p>
+          )}
+
+          {manifestacoes.length > 1 && (
+            <p className="border-t border-slate-100 bg-slate-50 px-3 py-1.5 text-[10px] text-slate-500">
+              Há {manifestacoes.length - 1} documento(s) anterior(es) neste processo.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* Os três dados que ele procura */}
       <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">

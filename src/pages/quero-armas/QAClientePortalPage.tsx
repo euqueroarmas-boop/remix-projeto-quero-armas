@@ -37,7 +37,7 @@ import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-a
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/RequerimentoSinarmRoteiro";
 import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
-import ProtocoloStatusPanel from "@/components/quero-armas/portal/ProtocoloStatusPanel";
+import ProtocoloStatusPanel, { type ManifestacaoPF } from "@/components/quero-armas/portal/ProtocoloStatusPanel";
 import { useCircunscricaoPF, rotuloCircunscricao } from "@/hooks/useCircunscricaoPF";
 import { numeroRequerimentoDeDadosExtraidos } from "@/lib/quero-armas/requerimentoSinarm";
 import {
@@ -363,6 +363,29 @@ export default function QAClientePortalPage() {
   // Unidade da PF que atende o endereço do cliente — usada no painel do
   // protocolo para dizer QUAL delegacia, em vez do genérico "Polícia Federal".
   const circunscricaoCliente = useCircunscricaoPF(cliente?.cidade, cliente?.estado);
+  /**
+   * O que a PF escreveu no processo, copiado do SINARM pela equipe.
+   * Carregado sob demanda: só quando o cliente abre o painel do protocolo.
+   */
+  const [manifestacoesPF, setManifestacoesPF] = useState<ManifestacaoPF[]>([]);
+  useEffect(() => {
+    if (!protocoloAberto) {
+      setManifestacoesPF([]);
+      return;
+    }
+    let vivo = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_processo_manifestacoes_pf" as never)
+        .select(
+          "tipo, texto, delegado_nome, delegado_cargo, unidade_pf, data_documento, prazo_dias, prazo_limite, canal_resposta, contato, created_at",
+        )
+        .eq("processo_id", protocoloAberto)
+        .order("created_at", { ascending: false });
+      if (vivo) setManifestacoesPF((data as unknown as ManifestacaoPF[]) ?? []);
+    })();
+    return () => { vivo = false; };
+  }, [protocoloAberto]);
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
   // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
@@ -4259,6 +4282,7 @@ export default function QAClientePortalPage() {
                     "Polícia Federal"
                   }
                   status={proc?.status ?? null}
+                  manifestacoes={manifestacoesPF}
                 />
               </div>
             </div>

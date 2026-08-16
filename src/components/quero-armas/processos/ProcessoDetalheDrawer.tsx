@@ -8,6 +8,7 @@ import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-arm
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
 import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
+import ColarManifestacaoPFModal from "@/components/quero-armas/processos/ColarManifestacaoPFModal";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 import { limparDivergenciasVazias } from "@/lib/quero-armas/divergenciasUtils";
@@ -791,6 +792,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
    * primeiro. Mostramos a lista para a equipe saber o que cobrar.
    */
   const [montandoJuntada, setMontandoJuntada] = useState(false);
+  /** Caixa onde a equipe cola o que a PF escreveu no SINARM. */
+  const [manifestacaoAberta, setManifestacaoAberta] = useState(false);
 
   const montarJuntada = async () => {
     if (!processo?.id) return;
@@ -1435,6 +1438,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
+                {equipeMode && ["protocolado", "em_analise_orgao", "notificado", "indeferido", "recurso_administrativo"].includes(String(processo?.status ?? "").toLowerCase()) && (
+                  <button
+                    onClick={() => setManifestacaoAberta(true)}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700"
+                    title="Cole aqui o texto que a PF publicou no SINARM — o cliente passa a ver no portal"
+                  >
+                    <FileSignature className="h-3 w-3" />
+                    REGISTRAR MANIFESTAÇÃO DA PF
+                  </button>
+                )}
                 {equipeMode && processo?.status === "pronto_para_protocolar" && (
                   <button
                     onClick={montarJuntada}
@@ -2895,6 +2908,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         </div>
       )}
 
+      {processo?.id && (
+        <ColarManifestacaoPFModal
+          open={manifestacaoAberta}
+          processoId={String(processo.id)}
+          onClose={() => setManifestacaoAberta(false)}
+          onSalvo={() => { void carregar(); onUpdated?.(); }}
+        />
+      )}
       <TemplateDataConfirmationModal
         open={confirmacaoTpl.open}
         onOpenChange={(n) => !n && setConfirmacaoTpl({ open: false, doc: null, templateKey: null })}
