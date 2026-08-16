@@ -19,6 +19,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { itemContaParaConclusao } from "../_shared/checklistVisibility.ts";
+import { estaVencido, hojeISOBRT, validadeVigente } from "../_shared/vigenciaDossie.ts";
 import { mesclarRespostasCadastro } from "../_shared/respostasCadastro.ts";
 
 const corsHeaders = {
@@ -153,7 +154,7 @@ Deno.serve(async (req) => {
 
     const { data: docs } = await admin
       .from("qa_processo_documentos")
-      .select("id, status, obrigatorio, tipo_documento, regra_validacao")
+      .select("id, status, obrigatorio, tipo_documento, regra_validacao, data_validade, data_validade_efetiva")
       .eq("processo_id", processoId);
     const lista = (docs || []) as any[];
     // Filtra usando a regra compartilhada com o front (itemVisivelGuia +
@@ -181,6 +182,21 @@ Deno.serve(async (req) => {
       const st = String(d.status || "").toLowerCase();
       if (EM_ANALISE.has(st)) return json({ pronto: false, motivo: "documento_em_analise" });
       if (!CUMPRIDO.has(st)) return json({ pronto: false, motivo: "documento_pendente", status_doc: st });
+
+      // VIGÊNCIA (regra da equipe, 16/08/2026): documento aprovado mas VENCIDO
+      // não deixa o processo ficar pronto. Certidão e comprovante de residência
+      // vivem ~30 dias; um processo que demorou juntando laudo chega ao
+      // protocolo com metade da papelada fora do prazo. Deixar passar aqui é
+      // empurrar o problema para a delegacia, onde ele vira exigência e mais
+      // 10 dias de prazo.
+      if (estaVencido(d, hojeISOBRT())) {
+        return json({
+          pronto: false,
+          motivo: "documento_vencido",
+          tipo_documento: d.tipo_documento,
+          venceu_em: validadeVigente(d),
+        });
+      }
     }
 
     const agora = new Date().toISOString();

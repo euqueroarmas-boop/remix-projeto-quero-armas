@@ -12,9 +12,14 @@
 // do ZIP de referência da equipe — 1.0 requerimento, 1.1 GRU, 1.2 petição,
 // 2 foto, 3 identidade, 4 residência, 5 ocupação, 6-12 idoneidade, 13-14 laudos.
 //
-// REGRA DE OURO: só entra documento APROVADO. A juntada é o que vai para a
-// delegacia; documento em análise ou reprovado dentro dela é exigência na
-// certa.
+// DUAS REGRAS DE OURO:
+//   1. Só entra documento APROVADO.
+//   2. Só entra documento VIGENTE. Achou vencido, nada é montado: as linhas
+//      voltam a ser pendência e o cliente reenvia antes de qualquer coisa
+//      seguir. Certidão e comprovante de residência vivem ~30 dias, e um
+//      processo que demorou juntando laudo chega ao protocolo com metade da
+//      papelada fora do prazo. Entregar assim não economiza tempo — vira
+//      exigência, mais 10 dias e o dossiê refeito.
 //
 // Entrada (POST, staff): { processo_id }
 // Saída: { ok, storage_path, paginas, itens: [...], ignorados: [...] }
@@ -24,6 +29,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { PDFDocument } from "npm:pdf-lib@1.17.1";
 import { requireQAStaff, qaAuthCors } from "../_shared/qaAuth.ts";
 import { compararProtocolo, posicaoProtocolo } from "../_shared/ordemProtocolo.ts";
+import { estaVencido, hojeISOBRT, validadeVigente } from "../_shared/vigenciaDossie.ts";
 
 const corsHeaders = qaAuthCors;
 
@@ -51,6 +57,9 @@ function json(body: Record<string, unknown>, status = 200) {
 }
 
 interface ItemJuntada {
+  /** id da linha de origem — usado para reabrir a pendência quando vencido. */
+  origem_id: string;
+  origem_tabela: "qa_processo_documentos" | "qa_documentos_cliente";
   tipo_documento: string;
   nome_documento: string | null;
   storage_path: string;
@@ -86,7 +95,7 @@ Deno.serve(async (req) => {
     // ── 1) Documentos do processo ────────────────────────────────────────
     const { data: docsProcesso } = await admin
       .from("qa_processo_documentos")
-      .select("id, tipo_documento, nome_documento, status, arquivo_storage_key")
+      .select("id, tipo_documento, nome_documento, status, arquivo_storage_key, data_validade, data_validade_efetiva")
       .eq("processo_id", processoId);
 
     // ── 2) Documentos do Hub do cliente (identidade, certidões, laudos) ──
@@ -94,12 +103,15 @@ Deno.serve(async (req) => {
     //     documento vive no Hub e a linha do processo só aponta para ele.
     const { data: docsHub } = await admin
       .from("qa_documentos_cliente")
-      .select("id, tipo_documento, nome_documento, status, arquivo_storage_path")
+      .select("id, tipo_documento, nome_documento, status, arquivo_storage_path, data_validade")
       .eq("qa_cliente_id", processo.cliente_id);
 
     const itens: ItemJuntada[] = [];
     const ignorados: Array<{ tipo: string; motivo: string }> = [];
     const jaVisto = new Set<string>();
+
+    const vencidos: Array<{ tipo: string; nome: string | null; venceu_em: string | null }> = [];
+    const hoje = hojeISOBRT();
 
     const considerar = (
       tipo: string,
@@ -107,6 +119,9 @@ Deno.serve(async (req) => {
       status: string,
       caminho: string | null,
       bucket: string,
+      origemId: string,
+      origemTabela: "qa_processo_documentos" | "qa_documentos_cliente",
+      validade: { data_validade?: string | null; data_validade_efetiva?: string | null },
     ) => {
       const t = String(tipo || "").toLowerCase().trim();
       if (!t) return;
@@ -125,8 +140,18 @@ Deno.serve(async (req) => {
       // mesmo documento, e duplicar página no dossiê confunde o analista.
       if (jaVisto.has(t)) return;
       jaVisto.add(t);
+
+      // VENCIDO NÃO ENTRA. O dossiê inteiro é barrado até o cliente reenviar —
+      // documento fora do prazo dentro da juntada é exigência garantida.
+      if (estaVencido(validade, hoje)) {
+        vencidos.push({ tipo: t, nome, venceu_em: validadeVigente(validade) });
+        return;
+      }
+
       const pos = posicaoProtocolo(t, nome);
       itens.push({
+        origem_id: origemId,
+        origem_tabela: origemTabela,
         tipo_documento: t,
         nome_documento: nome,
         storage_path: caminho,
@@ -138,22 +163,63 @@ Deno.serve(async (req) => {
     };
 
     for (const d of docsProcesso ?? []) {
+      const r = d as Record<string, string | null>;
       considerar(
-        (d as Record<string, string>).tipo_documento,
-        (d as Record<string, string | null>).nome_documento,
-        (d as Record<string, string>).status,
-        (d as Record<string, string | null>).arquivo_storage_key,
+        String(r.tipo_documento ?? ""),
+        r.nome_documento,
+        String(r.status ?? ""),
+        r.arquivo_storage_key,
         BUCKET_PROCESSO,
+        String(r.id ?? ""),
+        "qa_processo_documentos",
+        { data_validade: r.data_validade, data_validade_efetiva: r.data_validade_efetiva },
       );
     }
     for (const d of docsHub ?? []) {
+      const r = d as Record<string, string | null>;
       considerar(
-        (d as Record<string, string>).tipo_documento,
-        (d as Record<string, string | null>).nome_documento,
-        (d as Record<string, string>).status,
-        (d as Record<string, string | null>).arquivo_storage_path,
+        String(r.tipo_documento ?? ""),
+        r.nome_documento,
+        String(r.status ?? ""),
+        r.arquivo_storage_path,
         BUCKET_HUB,
+        String(r.id ?? ""),
+        "qa_documentos_cliente",
+        { data_validade: r.data_validade },
       );
+    }
+
+    // ── TRAVA DE VIGÊNCIA ────────────────────────────────────────────────
+    // Achou vencido: nada é montado. As linhas do processo voltam a ser
+    // pendência para o cliente reenviar — o pop-up guiado já as reapresenta na
+    // ordem dos grupos, então basta devolvê-las ao estado pendente.
+    if (vencidos.length > 0) {
+      const tiposVencidos = vencidos.map((v) => v.tipo);
+      await admin
+        .from("qa_processo_documentos")
+        .update({
+          status: "pendente",
+          motivo_rejeicao:
+            "Documento vencido antes do protocolo. Envie uma versão vigente — a Polícia Federal "
+            + "não aceita documento fora do prazo no dossiê.",
+          data_validacao: null,
+        })
+        .eq("processo_id", processoId)
+        .in("tipo_documento", tiposVencidos);
+
+      await admin.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        tipo_evento: "juntada_bloqueada_vencidos",
+        descricao: `JUNTADA BLOQUEADA — ${vencidos.length} documento(s) vencido(s) reabertos para reenvio`,
+        ator: "sistema",
+        dados_json: { vencidos },
+      });
+
+      return json({
+        error: "Há documentos vencidos. O cliente precisa reenviar antes de montar a juntada.",
+        vencidos,
+        reabertos: tiposVencidos.length,
+      }, 409);
     }
 
     if (itens.length === 0) {
