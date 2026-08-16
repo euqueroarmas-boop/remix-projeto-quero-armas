@@ -37,6 +37,8 @@ import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-a
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/RequerimentoSinarmRoteiro";
 import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
+import ProtocoloStatusPanel from "@/components/quero-armas/portal/ProtocoloStatusPanel";
+import { useCircunscricaoPF, rotuloCircunscricao } from "@/hooks/useCircunscricaoPF";
 import { numeroRequerimentoDeDadosExtraidos } from "@/lib/quero-armas/requerimentoSinarm";
 import {
   calcularPassosEfetiva,
@@ -356,6 +358,11 @@ export default function QAClientePortalPage() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [meusDocs, setMeusDocs] = useState<any[]>([]);
   const [showAddDoc, setShowAddDoc] = useState(false);
+  /** Processo cujo painel "onde está o meu protocolo" está aberto. */
+  const [protocoloAberto, setProtocoloAberto] = useState<string | null>(null);
+  // Unidade da PF que atende o endereço do cliente — usada no painel do
+  // protocolo para dizer QUAL delegacia, em vez do genérico "Polícia Federal".
+  const circunscricaoCliente = useCircunscricaoPF(cliente?.cidade, cliente?.estado);
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
   // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
@@ -4204,6 +4211,7 @@ export default function QAClientePortalPage() {
           onOpenCadastro={() => setShowCadastroModal(true)}
           onOpenComprar={() => { setShowCadastroModal(false); setActiveSection("novo_servico" as any); }}
           onOpenChecklist={() => abrirPendenciasGuiadas()}
+          onOpenProtocolo={(pid) => setProtocoloAberto(pid)}
           onOpenDocsHub={() => setShowAddDoc(true)}
           onLogout={handleLogout}
           onOpenKlal={() => setActiveSection("mensagens" as any)}
@@ -4211,6 +4219,51 @@ export default function QAClientePortalPage() {
           avatarInitials={userName ? userName.split(" ").map((w: string) => w[0]).slice(0, 2).join("").toUpperCase() : "QA"}
           lockPageScroll
         />
+        {protocoloAberto && (() => {
+          const proc = processos.find((p) => String(p?.id) === protocoloAberto);
+          const protocolo =
+            (proc?.respostas_questionario_json as Record<string, Record<string, string>> | null)
+              ?.protocolo ?? {};
+          return (
+            <div
+              className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+              onClick={() => setProtocoloAberto(null)}
+            >
+              <div
+                className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#7A1F2B]">
+                    O seu processo na Polícia Federal
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setProtocoloAberto(null)}
+                    aria-label="Fechar"
+                    className="shrink-0 rounded-md px-2 py-1 text-[16px] leading-none text-[#8A1224]"
+                  >
+                    ×
+                  </button>
+                </div>
+                <ProtocoloStatusPanel
+                  numeroProtocolo={protocolo?.numero_protocolo ?? null}
+                  dataProtocolo={protocolo?.data_protocolo ?? null}
+                  delegacia={
+                    // O admin grava só `orgao: "POLICIA_FEDERAL"` — genérico
+                    // demais para responder "em qual delegacia está o meu
+                    // processo". A unidade real é a circunscrição do endereço
+                    // do cliente, a mesma que ele selecionou no SINARM.
+                    protocolo?.unidade_pf ??
+                    rotuloCircunscricao(circunscricaoCliente) ??
+                    "Polícia Federal"
+                  }
+                  status={proc?.status ?? null}
+                />
+              </div>
+            </div>
+          );
+        })()}
         {false && (() => {
           const cadastroIncompleto = cadastroEstaIncompleto(cliente);
           const docsAprovados   = meusDocs.filter((d: any) => d.status === "aprovado").length;

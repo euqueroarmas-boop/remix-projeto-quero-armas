@@ -30,9 +30,9 @@
 // Efetiva Necessidade: nada de segundo pop-up por cima do guiado.
 // ============================================================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Copy, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCircunscricaoPF, type CircunscricaoPF } from "@/hooks/useCircunscricaoPF";
 import { hojeISOBRT } from "@/lib/quero-armas/validadeDocumento";
 import {
   dataEmissaoDoNumero,
@@ -157,54 +157,6 @@ const CALIBRES_PARECIDOS: string[] = [
   ".38 e .38 Super Auto não são .38 SPL nem .38 TPC",
   ".22 e .22 MAGNUM não são .22 LR",
 ];
-
-/**
- * Unidade da Polícia Federal que atende o endereço do cliente.
- *
- * A última aba do requerimento pede UF / Município / Unidade de Atendimento, e
- * é essa escolha que define QUAL delegacia analisa o processo — e onde o
- * cliente teria que comparecer se for notificado a levar originais. Fazer o
- * cliente adivinhar em três listas é pedir para o processo cair na cidade
- * errada; o sistema já sabe a resposta (`qa_resolver_circunscricao_pf`), então
- * entregamos pronta.
- */
-interface CircunscricaoPF {
-  unidade_pf?: string | null;
-  sigla_unidade?: string | null;
-  tipo_unidade?: string | null;
-  municipio_sede?: string | null;
-  uf?: string | null;
-}
-
-function useCircunscricaoPF(cidade: string, uf: string): CircunscricaoPF | null {
-  const [circ, setCirc] = useState<CircunscricaoPF | null>(null);
-  useEffect(() => {
-    if (!cidade || !uf) {
-      setCirc(null);
-      return;
-    }
-    let vivo = true;
-    void (async () => {
-      try {
-        const { data } = await supabase.rpc("qa_resolver_circunscricao_pf" as never, {
-          p_municipio: cidade,
-          p_uf: uf,
-        } as never);
-        if (!vivo) return;
-        const linha = Array.isArray(data) ? (data[0] as CircunscricaoPF) : null;
-        setCirc(linha ?? null);
-      } catch {
-        // Sem circunscrição a tela cai no texto genérico ("escolha a mais
-        // próxima da sua casa") — nunca fica sem instrução.
-        if (vivo) setCirc(null);
-      }
-    })();
-    return () => {
-      vivo = false;
-    };
-  }, [cidade, uf]);
-  return circ;
-}
 
 export interface RequerimentoSinarmRoteiroProps {
   /** Linha de `qa_clientes` (o portal já carrega com `select("*")`). */
@@ -696,8 +648,8 @@ export default function RequerimentoSinarmRoteiro({
   /** Reprovado: tem erro, e pagar agora seria jogar a taxa fora. */
   const reprovado = ["invalido", "divergente"].includes(status);
   const circ = useCircunscricaoPF(
-    String((cliente as Record<string, unknown>)?.cidade ?? "").trim(),
-    String((cliente as Record<string, unknown>)?.estado ?? "").trim().toUpperCase(),
+    String((cliente as Record<string, unknown>)?.cidade ?? ""),
+    String((cliente as Record<string, unknown>)?.estado ?? ""),
   );
 
   const secoes = useMemo(

@@ -47,6 +47,8 @@ interface Props {
   onNavigate: (tab: string) => void;
   onOpenCadastro?: () => void;
   onOpenChecklist?: () => void;
+  /** Abre o painel "onde está o meu protocolo" para o processo clicado. */
+  onOpenProtocolo?: (processoId: string) => void;
   onOpenComprar?: () => void;
   onOpenDocsHub?: () => void;
   onOpenKlal?: () => void;
@@ -287,6 +289,7 @@ export default function ClienteResumoKanban({
   onNavigate,
   onOpenCadastro,
   onOpenChecklist,
+  onOpenProtocolo,
   onOpenComprar,
   onOpenDocsHub,
   onOpenKlal,
@@ -499,7 +502,8 @@ export default function ClienteResumoKanban({
           label: nomeProcesso,
           status: "Protocolado",
           tone: "ok" as const,
-          onClick: () => onOpenChecklist?.(),
+          onClick: () =>
+            item?.id ? onOpenProtocolo?.(String(item.id)) : onOpenChecklist?.(),
         };
       }
 
