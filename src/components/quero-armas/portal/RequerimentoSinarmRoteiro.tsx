@@ -20,6 +20,12 @@
 // dado que vai para a PF é o MESMO que está no documento — não tem como
 // divergir.
 //
+// A ORDEM E OS RÓTULOS SAEM DO FORMULÁRIO REAL, não do PDF impresso: os prints
+// do SINARM (16/08/2026) mostraram que a tela tem 4 abas, que UF e Município de
+// Nascimento só aparecem depois de escolher "Brasil", que CPF/Nome/E-mail já
+// vêm preenchidos do gov.br, e que Profissão é lista fechada — nada disso dá
+// para deduzir do requerimento impresso.
+//
 // Renderizada como `corpo` de uma pendência do PendenciasGuiadasPopup, igual à
 // Efetiva Necessidade: nada de segundo pop-up por cima do guiado.
 // ============================================================================
@@ -33,8 +39,12 @@ import {
   PRAZO_ENTREGA_DOCUMENTACAO_DIAS,
 } from "@/lib/quero-armas/requerimentoSinarm";
 
-/** Endereço oficial de entrada dos serviços de arma da PF. */
-const URL_PF_ARMAS = "https://www.gov.br/pf/pt-br/assuntos/armas";
+/**
+ * Entrada oficial do serviço, com o botão verde "Iniciar" que leva ao login
+ * gov.br. Apontar para a página geral de armas da PF obrigava o cliente a
+ * caçar o link no meio da página.
+ */
+const URL_PF_ARMAS = "https://www.gov.br/pt-br/servicos/adquirir-arma-de-fogo";
 
 // ---------------------------------------------------------------------------
 // Formatação — o valor tem que sair daqui do jeito que o campo da PF espera,
@@ -99,14 +109,19 @@ interface CampoSinarm {
   ajuda?: string;
   /** Valor fixo do formulário (o cliente escolhe numa lista, não digita). */
   fixo?: boolean;
+  /**
+   * O SINARM já traz o campo preenchido a partir do gov.br (aparece cinza,
+   * bloqueado). Botão de copiar aqui é ruído: o cliente não digita nada.
+   */
+  govbr?: boolean;
 }
 
 interface SecaoSinarm {
   titulo: string;
   descricao?: string;
   campos: CampoSinarm[];
-  /** Renderiza um bloco fixo extra dentro da seção (ver AvisoCalibre). */
-  destaque?: "calibre";
+  /** Renderiza um bloco fixo extra dentro da seção. */
+  destaque?: "calibre" | "cpf_divergente" | "unidade_atendimento";
 }
 
 // ---------------------------------------------------------------------------
@@ -120,10 +135,26 @@ interface SecaoSinarm {
 // É o erro mais caro possível neste passo, e o único que nenhuma conferência
 // nossa pega depois: quando o requerimento chega aqui, a escolha já foi feita.
 // Por isso o aviso é antecipado e não fica escondido no meio dos campos.
+// Os rótulos abaixo são EXATAMENTE como aparecem na lista do SINARM
+// (conferidos nos prints de 16/08/2026). Escrever ".22 Long Rifle" quando a
+// lista diz ".22 LR" faz o cliente procurar e não achar.
 const CALIBRES_PERMITIDOS: Array<{ especie: string; calibres: string[] }> = [
-  { especie: "Pistola", calibres: [".22 Long Rifle (.22 LR)", ".380 ACP", ".38 TPC"] },
-  { especie: "Revólver", calibres: [".38 SPL"] },
+  { especie: "Pistola", calibres: [".22 LR", ".380 ACP", ".38 TPC"] },
+  { especie: "Revolver", calibres: [".38 SPL"] },
   { especie: "Escopeta", calibres: ["12 GA"] },
+];
+
+/**
+ * Entradas vizinhas na lista que parecem a certa e não são.
+ *
+ * A lista da PF tem `.380`, `.380 ACP` e `.380 WIN` em sequência, e `.38`,
+ * `.38 SPL`, `.38 Super Auto`, `.38 TPC` coladas. Errar aqui não dá aviso
+ * nenhum no site: o requerimento sai emitido e o indeferimento vem depois.
+ */
+const CALIBRES_PARECIDOS: string[] = [
+  ".380 e .380 WIN não são .380 ACP",
+  ".38 e .38 Super Auto não são .38 SPL nem .38 TPC",
+  ".22 e .22 MAGNUM não são .22 LR",
 ];
 
 export interface RequerimentoSinarmRoteiroProps {
@@ -169,107 +200,147 @@ function montarSecoes(
   const numeroIdentidade = titulo(c.rg) || titulo(c.numero_documento_identidade);
 
   return [
+    // ── ABA 1 ────────────────────────────────────────────────────────────
     {
-      titulo: "Identificação",
+      titulo: "Aba 1 · Identificação",
       descricao:
-        "É o primeiro bloco do formulário. Confira campo a campo — o que você digitar aqui precisa bater com o RG e o CPF que você já nos enviou.",
+        "Deixe DESMARCADO o \"Requerimento realizado por procuração\" no topo — você está fazendo em seu próprio nome. Tipo de Formulário: Pessoa Física. Categoria: Cidadão.",
+      destaque: "cpf_divergente",
       campos: [
-        {
-          label: "Tipo de Formulário",
-          valor: "Requerimento de Aquisição de Arma de Fogo",
-          fixo: true,
-          ajuda: "Você escolhe numa lista, não digita.",
-        },
-        { label: "Categoria", valor: "Cidadão", fixo: true, ajuda: "Escolha na lista." },
-        { label: "CPF", valor: fmtCPF(c.cpf), obrigatorio: true },
-        { label: "Nome", valor: titulo(c.nome_completo), obrigatorio: true },
-        { label: "Nome da Mãe", valor: titulo(c.nome_mae), obrigatorio: true },
+        { label: "Tipo de Formulário", valor: "Pessoa Física", fixo: true },
+        { label: "Categoria", valor: "Cidadão", fixo: true, ajuda: "Não escolha Caçador de Subsistência nem Servidor Público." },
+        { label: "CPF", valor: fmtCPF(c.cpf), govbr: true },
+        { label: "Nome", valor: titulo(c.nome_completo), govbr: true },
         {
           label: "Nome do Pai",
           valor: titulo(c.nome_pai),
-          ajuda: "Deixe em branco se não constar no seu registro de nascimento.",
+          ajuda: "Não é obrigatório. Deixe em branco se não constar no seu registro de nascimento.",
         },
+        { label: "Nome da Mãe", valor: titulo(c.nome_mae), obrigatorio: true },
         { label: "Data de Nascimento", valor: fmtData(c.data_nascimento), obrigatorio: true },
         { label: "Sexo", valor: titulo(c.sexo), obrigatorio: true, fixo: true },
-        { label: "País de Nascimento", valor: titulo(c.naturalidade_pais) || "Brasil", obrigatorio: true, fixo: true },
+        {
+          label: "País de Nascimento",
+          valor: titulo(c.naturalidade_pais) || "Brasil",
+          obrigatorio: true,
+          fixo: true,
+          ajuda: "Escolhendo Brasil, o site abre mais dois campos: UF e Município de Nascimento.",
+        },
         { label: "UF de Nascimento", valor: titulo(c.naturalidade_uf), obrigatorio: true, fixo: true },
         {
           label: "Município de Nascimento",
           valor: titulo(c.naturalidade_municipio) || titulo(c.naturalidade),
           obrigatorio: true,
-        },
-        { label: "Numero do RG", valor: numeroIdentidade, obrigatorio: true },
-        { label: "Data de Expedição", valor: fmtData(c.expedicao_rg), obrigatorio: true },
-        { label: "Órgão Exp. RG", valor: titulo(c.emissor_rg), obrigatorio: true },
-        { label: "UF de Exp. RG", valor: titulo(c.uf_emissor_rg), obrigatorio: true, fixo: true },
-        { label: "Estado Civil", valor: titulo(c.estado_civil), obrigatorio: true, fixo: true },
-        { label: "Profissão", valor: titulo(c.profissao), obrigatorio: true },
-        {
-          label: "Aposentado",
-          valor: "Não",
           fixo: true,
-          ajuda: "Se você é aposentado, marque Sim.",
         },
-        { label: "Titulo de Eleitor", valor: soDigitos(c.titulo_eleitor) },
-        { label: "Email", valor: titulo(c.email), obrigatorio: true },
+        { label: "Número do RG", valor: numeroIdentidade, obrigatorio: true },
+        { label: "Data de Expedição", valor: fmtData(c.expedicao_rg), ajuda: "Não é obrigatório, mas preencha se souber." },
+        { label: "Órgão Exp. RG", valor: titulo(c.emissor_rg), obrigatorio: true },
+        { label: "UF Exp. RG", valor: titulo(c.uf_emissor_rg), obrigatorio: true, fixo: true },
+        { label: "Estado Civil", valor: titulo(c.estado_civil), obrigatorio: true, fixo: true },
+        { label: "Título de Eleitor", valor: soDigitos(c.titulo_eleitor), ajuda: "Não é obrigatório." },
+        {
+          label: "Profissão",
+          valor: titulo(c.profissao),
+          obrigatorio: true,
+          fixo: true,
+          ajuda:
+            "É uma lista fechada. Se a sua profissão não estiver lá, escolha a mais próxima — e nos avise qual escolheu.",
+        },
+        { label: "Aposentado", valor: "Não", fixo: true, ajuda: "Marque a caixinha só se você for aposentado." },
+        { label: "E-mail", valor: titulo(c.email), govbr: true },
       ],
     },
     {
-      titulo: "Endereço residencial",
+      titulo: "Aba 1 · Dados Residenciais",
       descricao:
         "Tem que ser o mesmo endereço do comprovante de residência que você nos enviou. Divergência aqui vira exigência.",
       campos: [
         { label: "CEP", valor: fmtCEP(c.cep), obrigatorio: true },
         { label: "Tipo", valor: "Residencial", fixo: true },
         { label: "Logradouro", valor: titulo(c.endereco), obrigatorio: true },
-        { label: "Numero", valor: titulo(c.numero), obrigatorio: true },
+        { label: "Número", valor: titulo(c.numero), obrigatorio: true },
         { label: "Complemento", valor: titulo(c.complemento) },
         { label: "Bairro", valor: titulo(c.bairro), obrigatorio: true },
         { label: "UF", valor: titulo(c.estado), obrigatorio: true, fixo: true },
-        { label: "Município", valor: titulo(c.cidade), obrigatorio: true },
+        { label: "Município", valor: titulo(c.cidade), obrigatorio: true, fixo: true },
+        { label: "Telefone Fixo", valor: "" },
         { label: "Telefone Celular", valor: fmtTelefone(c.celular), obrigatorio: true },
       ],
     },
     {
-      titulo: "Ocupação lícita (empresa)",
+      titulo: "Aba 1 · Dados Profissionais",
       descricao:
-        "Este é o bloco que mais derruba processo. O endereço aqui precisa ser IDÊNTICO ao do cartão CNPJ que você anexou — se divergir uma vírgula, a Polícia Federal considera o requisito não cumprido.",
+        "O site não marca estes campos como obrigatórios — mas é aqui que processo cai. No indeferimento real que analisamos, o requisito da ocupação lícita foi julgado não cumprido porque o endereço digitado divergia do cartão CNPJ anexado. Copie daqui, não digite de cabeça.",
       campos: [
-        { label: "CNPJ Empresa", valor: fmtCNPJ(c.ocupacao_licita_cnpj), obrigatorio: true },
-        { label: "Razão Social", valor: titulo(c.ocupacao_licita_razao_social), obrigatorio: true },
-        { label: "CEP", valor: fmtCEP(c.ocupacao_licita_cep), obrigatorio: true },
+        { label: "CNPJ Empresa", valor: fmtCNPJ(c.ocupacao_licita_cnpj) },
+        { label: "Razão Social", valor: titulo(c.ocupacao_licita_razao_social) },
+        { label: "CEP", valor: fmtCEP(c.ocupacao_licita_cep) },
         { label: "Tipo", valor: "Comercial", fixo: true },
-        { label: "Logradouro", valor: titulo(c.ocupacao_licita_logradouro), obrigatorio: true },
-        { label: "Numero", valor: titulo(c.ocupacao_licita_numero), obrigatorio: true },
+        { label: "Logradouro", valor: titulo(c.ocupacao_licita_logradouro) },
+        { label: "Número", valor: titulo(c.ocupacao_licita_numero) },
         { label: "Complemento", valor: titulo(c.ocupacao_licita_complemento) },
-        { label: "Bairro", valor: titulo(c.ocupacao_licita_bairro), obrigatorio: true },
-        { label: "UF", valor: titulo(c.ocupacao_licita_estado), obrigatorio: true, fixo: true },
-        { label: "Município", valor: titulo(c.ocupacao_licita_cidade), obrigatorio: true },
+        { label: "Bairro", valor: titulo(c.ocupacao_licita_bairro) },
+        { label: "UF", valor: titulo(c.ocupacao_licita_estado), fixo: true },
+        { label: "Município", valor: titulo(c.ocupacao_licita_cidade), fixo: true },
         { label: "Telefone Comercial", valor: fmtTelefone(c.ocupacao_licita_telefone) },
       ],
     },
+
+    // ── ABA 2 ────────────────────────────────────────────────────────────
     {
-      titulo: "Dados da arma",
+      titulo: "Aba 2 · Dados da Arma",
       descricao:
-        "Depois dos seus dados, o site pede a espécie e o calibre. É a parte mais perigosa do formulário — leia o aviso abaixo antes de escolher.",
+        "Dois campos só, os dois em lista. É a parte mais perigosa do formulário inteiro — leia o aviso antes de escolher.",
       destaque: "calibre",
       campos: [
-        { label: "Espécie", valor: titulo(especieArma), fixo: true },
-        { label: "Calibre", valor: titulo(calibreArma), fixo: true },
+        { label: "Espécie", valor: titulo(especieArma), obrigatorio: true, fixo: true },
+        { label: "Calibre", valor: titulo(calibreArma), obrigatorio: true, fixo: true },
       ],
     },
+
+    // ── ABA 3 ────────────────────────────────────────────────────────────
     {
-      titulo: "Declaração de efetiva necessidade",
+      titulo: "Aba 3 · Declaração de Efetiva Necessidade",
       descricao:
-        "O site abre um campo de texto livre. NÃO escreva a sua história aqui — ela vai inteira, com as provas, na petição que nós montamos. Cole exatamente esta frase:",
+        "São DOIS campos de texto livre, os dois obrigatórios. NÃO escreva a sua história aqui — ela vai inteira, com as provas, na petição que nós montamos. Cole exatamente os textos abaixo.",
       campos: [
         {
-          label: "Motivos da efetiva necessidade",
+          label: "1º campo — motivos da efetiva necessidade",
           valor:
             "Declaro os motivos da efetiva necessidade para aquisição de arma de fogo na juntada de documentos.",
           obrigatorio: true,
           ajuda:
-            "Esta frase remete a análise à petição anexada, que é onde a fundamentação tem força. Texto curto e genérico digitado no formulário é o que a PF chama de justificativa vaga.",
+            "Esta frase remete a análise à petição anexada, que é onde a fundamentação tem força. Texto curto e genérico digitado aqui é o que a PF chama de justificativa vaga — e foi o que derrubou pedidos que analisamos.",
+        },
+        {
+          label: "2º campo — lugar seguro de armazenamento",
+          valor:
+            "Declaro possuir lugar seguro para armazenamento das armas de fogo das quais serei proprietário de modo a adotar as medidas necessárias para impedir que menor de dezoito anos de idade ou pessoa com deficiência mental se apodere de arma de fogo que esteja sob minha posse ou que seja de minha propriedade nos termos do disposto no art. 13 da Lei nº 10.826, de 2003.",
+          obrigatorio: true,
+          ajuda: "É o texto legal do art. 13 do Estatuto do Desarmamento. Cole inteiro.",
+        },
+      ],
+    },
+
+    // ── ABA 4 ────────────────────────────────────────────────────────────
+    {
+      titulo: "Aba 4 · Termo de Responsabilidade",
+      descricao:
+        "Marque as duas caixinhas, escolha a unidade de atendimento, digite o texto da imagem e clique em Emitir Requerimento.",
+      destaque: "unidade_atendimento",
+      campos: [
+        {
+          label: "Unidade de Atendimento — UF",
+          valor: titulo(c.estado),
+          obrigatorio: true,
+          fixo: true,
+        },
+        {
+          label: "Unidade de Atendimento — Município",
+          valor: titulo(c.cidade),
+          obrigatorio: true,
+          fixo: true,
         },
       ],
     },
@@ -326,7 +397,7 @@ function BotaoCopiar({ valor, rotulo }: { valor: string; rotulo: string }) {
 
 function LinhaCampo({ campo }: { campo: CampoSinarm }) {
   const vazio = !campo.valor;
-  const faltando = vazio && campo.obrigatorio;
+  const faltando = vazio && campo.obrigatorio && !campo.govbr;
 
   return (
     <div
@@ -338,11 +409,15 @@ function LinhaCampo({ campo }: { campo: CampoSinarm }) {
       <div className="min-w-0 flex-1">
         <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">
           {campo.label}
-          {campo.fixo && (
+          {campo.govbr ? (
+            <span className="ml-1 font-semibold normal-case tracking-normal text-emerald-700">
+              · já vem preenchido do gov.br
+            </span>
+          ) : campo.fixo ? (
             <span className="ml-1 font-semibold normal-case tracking-normal text-slate-400">
               · escolha na lista
             </span>
-          )}
+          ) : null}
         </p>
         {vazio ? (
           <p
@@ -362,7 +437,13 @@ function LinhaCampo({ campo }: { campo: CampoSinarm }) {
           <p className="mt-0.5 text-[11px] leading-snug text-slate-500">{campo.ajuda}</p>
         )}
       </div>
-      <BotaoCopiar valor={campo.valor} rotulo={campo.label} />
+      {campo.govbr ? (
+        <span className="shrink-0 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-800">
+          Confira
+        </span>
+      ) : (
+        <BotaoCopiar valor={campo.valor} rotulo={campo.label} />
+      )}
     </div>
   );
 }
@@ -391,10 +472,73 @@ function AvisoCalibre() {
           </li>
         ))}
       </ul>
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.08em] text-red-800">
+        Cuidado com os parecidos
+      </p>
+      <ul className="mt-1 space-y-0.5">
+        {CALIBRES_PARECIDOS.map((t) => (
+          <li key={t} className="text-[11px] leading-snug text-red-900">• {t}</li>
+        ))}
+      </ul>
       <p className="mt-2 text-[11px] leading-snug text-red-900">
-        São os permitidos mais vendidos. Se a arma que você quer não estiver aqui, fale com a
-        nossa equipe <span className="font-bold">antes</span> de escolher no site — depois de
-        enviado não dá para corrigir.
+        A lista da Polícia Federal mistura permitidos e restritos sem nenhuma marcação, e aceita
+        qualquer escolha sem avisar. Espécie também: Fuzil, Metralhadora e Submetralhadora estão
+        ali, à mão. Se a arma que você quer não estiver na lista acima, fale com a nossa equipe
+        <span className="font-bold"> antes</span> de escolher — depois de emitido não dá para
+        corrigir.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Alerta que o SINARM abre ao avançar da aba Identificação quando o que foi
+ * digitado não bate com a base de dados do CPF. É silencioso e fácil de
+ * despachar no "Sim" — e seguir com divergência conhecida é exatamente o que
+ * derruba requisito depois.
+ */
+function AvisoCpfDivergente() {
+  return (
+    <div className="border-b border-slate-100 bg-amber-50 px-3 py-2.5">
+      <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-amber-900">
+        <AlertTriangle className="h-3.5 w-3.5" />
+        Se aparecer a caixa "informações divergentes"
+      </p>
+      <p className="mt-1 text-[12px] leading-snug text-amber-900">
+        Ao avançar, o site pode abrir: <em>"As informações relacionadas ao CPF informado foram
+        alteradas e estão divergentes daquelas cadastradas no banco de dados, deseja
+        prosseguir?"</em> Isso quer dizer que algum dado que você digitou não bate com o cadastro
+        oficial. <span className="font-bold">Não clique em Sim no automático.</span> Volte,
+        confira campo a campo contra esta tela e, se continuar aparecendo, fale com a gente antes
+        de seguir.
+      </p>
+      <p className="mt-1.5 text-[11px] leading-snug text-amber-900">
+        Já os avisos vermelhos de CEP ("não encontrado", "não validado na base corporativa") são
+        do próprio site e não são culpa sua — pode seguir.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Unidade de Atendimento: define QUAL delegacia recebe e analisa o processo.
+ * Escolher errado manda o pedido para outra cidade.
+ */
+function AvisoUnidadeAtendimento() {
+  return (
+    <div className="border-b border-slate-100 bg-[#FBF3F4] px-3 py-2.5">
+      <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#7A1F2B]">
+        Escolha a delegacia mais próxima da sua casa
+      </p>
+      <p className="mt-1 text-[12px] leading-snug text-[#7A1F2B]">
+        São três listas em sequência: UF, Município e Unidade. É essa escolha que define qual
+        delegacia da Polícia Federal vai analisar o seu processo — e é onde você teria que
+        comparecer, se for notificado a levar documentos originais. Escolha pela sua residência,
+        não pelo trabalho.
+      </p>
+      <p className="mt-1.5 text-[11px] leading-snug text-[#7A1F2B]">
+        Depois marque as duas declarações, digite o texto da imagem (aquele código embaralhado) e
+        clique em <span className="font-bold">Emitir Requerimento</span>.
       </p>
     </div>
   );
@@ -436,6 +580,8 @@ function Secao({ secao }: { secao: SecaoSinarm }) {
       </header>
       <div>
         {secao.destaque === "calibre" && <AvisoCalibre />}
+        {secao.destaque === "cpf_divergente" && <AvisoCpfDivergente />}
+        {secao.destaque === "unidade_atendimento" && <AvisoUnidadeAtendimento />}
         {secao.campos.map((campo) => (
           <LinhaCampo key={`${secao.titulo}:${campo.label}`} campo={campo} />
         ))}
@@ -445,9 +591,9 @@ function Secao({ secao }: { secao: SecaoSinarm }) {
 }
 
 const PASSOS: string[] = [
-  "Abra o site de armas da Polícia Federal e entre com o seu gov.br. É a sua conta, no seu nome — nós não preenchemos por você.",
-  'Escolha "Requerimento de Aquisição de Arma de Fogo".',
-  "Preencha o formulário com os dados desta tela. Cada campo abaixo tem um botão de copiar, e estão na mesma ordem em que aparecem no site da PF.",
+  'Abra o serviço no gov.br e clique no botão verde "Iniciar". Entre com o seu gov.br — é a sua conta, no seu nome, e nós não preenchemos por você.',
+  "O formulário tem 4 abas, nesta ordem: Identificação, Dados da Arma, Declaração de Efetiva Necessidade e Termo de Responsabilidade. Você avança com o botão \"Próxima >>\".",
+  "Preencha cada aba com os dados desta tela. Os campos abaixo estão na mesma ordem em que aparecem no site, aba por aba, cada um com botão de copiar.",
   "Depois dos seus dados o site pede a espécie e o CALIBRE da arma. Calibre restrito é indeferido de ofício, sem ninguém olhar a sua documentação — use só os permitidos, listados no bloco \"Dados da arma\" aqui embaixo.",
   "Ao terminar, clique em Imprimir Requerimento e baixe o arquivo. São 3 páginas — a via da Polícia Federal. É esse arquivo que você envia aqui.",
   "PARE aqui. Não pague a taxa ainda. A nossa equipe confere o que você digitou contra o seu cadastro e libera o pagamento.",
