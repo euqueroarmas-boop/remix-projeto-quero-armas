@@ -486,6 +486,23 @@ export default function ClienteResumoKanban({
       if (item?._bloqueadoPrerequisito === true) {
         return { label: nomeProcesso, status: "Aguardando etapa anterior", tone: "muted" as const };
       }
+      // ── PROTOCOLADO ─────────────────────────────────────────────────────
+      // Marcado o protocolo pela equipe, o card deixa de convidar para tarefa:
+      // não há mais o que o cliente enviar, o processo está na Polícia Federal.
+      // Continua clicável de propósito — é por aqui que ele reabre o pop-up
+      // guiado e revê o que aconteceu (número do protocolo, o que vem agora).
+      if (["protocolado", "em_analise_orgao"].includes(statusProcesso)) {
+        // O número do protocolo NÃO entra aqui: o badge é estreito e já
+        // quebrou em duas linhas antes por texto longo. Ele aparece inteiro no
+        // detalhe do processo, que é para onde o clique leva.
+        return {
+          label: nomeProcesso,
+          status: "Protocolado",
+          tone: "ok" as const,
+          onClick: () => onOpenChecklist?.(),
+        };
+      }
+
       if (activeProcessos.length && (statusProcesso === "aguardando_documentos" || statusProcesso === "aguardando_documentacao")) {
         return {
           label: nomeProcesso,

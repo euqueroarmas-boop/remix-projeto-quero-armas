@@ -783,6 +783,63 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   });
   const [salvandoProtocolo, setSalvandoProtocolo] = useState(false);
 
+  /**
+   * Monta a JUNTADA — o PDF único que vai para a delegacia.
+   *
+   * A edge recusa (409) quando encontra documento vencido e devolve as linhas
+   * para pendente: nesse caso não há o que montar, o cliente precisa reenviar
+   * primeiro. Mostramos a lista para a equipe saber o que cobrar.
+   */
+  const [montandoJuntada, setMontandoJuntada] = useState(false);
+
+  const montarJuntada = async () => {
+    if (!processo?.id) return;
+    setMontandoJuntada(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-montar-juntada", {
+        body: { processo_id: processo.id },
+      });
+      const resp = (data ?? {}) as {
+        ok?: boolean;
+        paginas?: number;
+        itens?: Array<{ numero: string; tipo_documento: string }>;
+        ignorados?: Array<{ tipo: string; motivo: string }>;
+        vencidos?: Array<{ tipo: string; venceu_em: string | null }>;
+        error?: string;
+      };
+
+      if (resp.vencidos?.length) {
+        const lista = resp.vencidos
+          .map((v) => `• ${String(v.tipo).replace(/_/g, " ")}${v.venceu_em ? ` (venceu ${v.venceu_em})` : ""}`)
+          .join("\n");
+        toast.error(
+          `JUNTADA BLOQUEADA — ${resp.vencidos.length} documento(s) vencido(s).\n` +
+          `Já devolvidos ao checklist do cliente:\n${lista}`,
+          { duration: 12000 },
+        );
+        await carregar();
+        onUpdated?.();
+        return;
+      }
+      if (error || resp.error || !resp.ok) {
+        toast.error(resp.error ?? "Não foi possível montar a juntada.");
+        return;
+      }
+
+      const fora = resp.ignorados?.length ? ` · ${resp.ignorados.length} fora` : "";
+      toast.success(
+        `JUNTADA MONTADA — ${resp.itens?.length ?? 0} documentos, ${resp.paginas ?? 0} páginas${fora}`,
+        { duration: 8000 },
+      );
+      await carregar();
+      onUpdated?.();
+    } catch (e) {
+      toast.error("Erro ao montar a juntada: " + ((e as Error)?.message ?? "desconhecido"));
+    } finally {
+      setMontandoJuntada(false);
+    }
+  };
+
   const confirmarMarcarProtocolado = async () => {
     if (!processo) return;
     setSalvandoProtocolo(true);
@@ -1378,6 +1435,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
                 <span className={`text-xs font-bold uppercase tracking-wider ${st.text}`}>{st.label}</span>
+                {equipeMode && processo?.status === "pronto_para_protocolar" && (
+                  <button
+                    onClick={montarJuntada}
+                    disabled={montandoJuntada}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-[#8A1224] hover:bg-[#6f0f1e] disabled:opacity-60"
+                    title="Junta todos os documentos aprovados e vigentes num PDF único, na ordem do protocolo"
+                  >
+                    <FileSignature className="h-3 w-3" />
+                    {montandoJuntada ? "MONTANDO…" : "MONTAR JUNTADA"}
+                  </button>
+                )}
                 {equipeMode && processo?.status === "pronto_para_protocolar" && (
                   <button
                     onClick={() => setProtocoloModalOpen(true)}
