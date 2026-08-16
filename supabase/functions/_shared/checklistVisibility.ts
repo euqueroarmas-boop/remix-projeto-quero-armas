@@ -59,12 +59,33 @@ export function itemVisivelGuia(
 //  a) Se invisível pelo exige_quando/depende_de → ignora.
 //  b) Se não obrigatório → ignora.
 //  c) Caso contrário → conta.
+/**
+ * Exigências de ETAPA FINAL não contam para "o processo está pronto".
+ *
+ * IMPEDE UM IMPASSE CIRCULAR: liberar o acesso ao gov.br e assinar a juntada só
+ * aparecem para o cliente DEPOIS que o processo vira `pronto_para_protocolar`.
+ * Se elas contassem como pendência aqui, o processo nunca chegaria a esse
+ * status — e elas nunca apareceriam. Uma esperando a outra, para sempre.
+ *
+ * A leitura correta é: esses passos não são pré-requisito para protocolar, eles
+ * SÃO o ato de protocolar. O processo fica pronto quando a documentação está
+ * completa; o acesso e a assinatura acontecem depois disso.
+ */
+export function ehExigenciaEtapaFinal(d: ChecklistItemLike): boolean {
+  if (d?.regra_validacao?.etapa_final === true) return true;
+  // Rede de segurança para bases onde a marca ainda não foi aplicada.
+  return ["credencial_gov_br", "senha_gov_br", "acesso_gov_br", "juntada_assinada"].includes(
+    String(d?.tipo_documento ?? "").trim().toLowerCase(),
+  );
+}
+
 export function itemContaParaConclusao(
   d: ChecklistItemLike,
   respostas: Respostas,
 ): boolean {
   if (!itemVisivelGuia(d, respostas)) return false;
   if (d?.obrigatorio !== true) return false;
+  if (ehExigenciaEtapaFinal(d)) return false;
   return true;
 }
 

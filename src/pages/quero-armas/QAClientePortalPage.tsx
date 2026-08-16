@@ -2166,6 +2166,7 @@ export default function QAClientePortalPage() {
                 onConcluido={() => {
                   setEfetivaReloadKey((k) => k + 1);
                   setDocsReloadKey((k) => k + 1);
+                  checarProntoParaProtocolar(doc.processo_id);
                 }}
               />
             ),
@@ -2213,7 +2214,10 @@ export default function QAClientePortalPage() {
               processoId={String(doc.processo_id)}
               clienteId={Number(cliente.id)}
               onClose={() => setShowContratoPopup(false)}
-              onConcluido={() => setDocsReloadKey((k) => k + 1)}
+              onConcluido={() => {
+                setDocsReloadKey((k) => k + 1);
+                checarProntoParaProtocolar(doc?.processo_id);
+              }}
             />
           ) : ehCredencialGovBr(rawTipo) ? (
             <AcessoGovBrPanel onConcluido={() => setDocsReloadKey((k) => k + 1)} />
@@ -2270,6 +2274,24 @@ export default function QAClientePortalPage() {
         "requerimento_posse",
         "requerimento_sinarm",
       ].includes(String(rawTipo ?? "").trim().toLowerCase());
+
+    /**
+     * Fecha o ciclo do Bloco 3: aprovada a petição e entregue o resto da
+     * documentação, o processo tem que virar "pronto para protocolar" sozinho.
+     *
+     * Antes isso só acontecia quando alguém da equipe ABRIA o drawer do
+     * processo no admin — ou seja, o cliente terminava tudo e ficava esperando
+     * um clique que ninguém sabia que precisava dar. A edge é idempotente e
+     * autoriza o próprio dono, então chamar daqui é seguro e não duplica nada.
+     */
+    const checarProntoParaProtocolar = (processoId?: string | null) => {
+      if (!processoId) return;
+      void supabase.functions
+        .invoke("qa-processo-checar-conclusao-checklist", {
+          body: { processo_id: processoId, origem: "portal_cliente" },
+        })
+        .catch(() => { /* silencioso: é oportunista, o admin ainda tem o fallback */ });
+    };
 
     /**
      * Acesso ao gov.br (Bloco 2). Não é documento para subir: o cliente digita
