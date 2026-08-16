@@ -110,6 +110,53 @@ export default function ColarManifestacaoPFModal({
           .eq("id", processoId);
       }
 
+      // E-MAIL AO CLIENTE — tudo é comunicado por e-mail.
+      // O texto integral NÃO vai no corpo: e-mail longo com juridiquês não é
+      // lido, e o portal já mostra o documento inteiro formatado. O e-mail
+      // carrega o que muda a ação dele — o que aconteceu e até quando responder.
+      try {
+        const { data: proc } = await supabase
+          .from("qa_processos")
+          .select("cliente_id, servico_nome")
+          .eq("id", processoId)
+          .maybeSingle();
+        const clienteId = (proc as { cliente_id?: number } | null)?.cliente_id;
+        if (clienteId) {
+          const { data: cli } = await supabase
+            .from("qa_clientes")
+            .select("nome_completo, email")
+            .eq("id", clienteId)
+            .maybeSingle();
+          const email = (cli as { email?: string } | null)?.email;
+          if (email) {
+            const rotuloStatus = STATUS.find((x) => x.valor === statusProcesso)?.label ?? statusProcesso;
+            const prazoTexto = prazoLimite
+              ? `Prazo para responder: até ${prazoLimite.split("-").reverse().join("/")}.`
+              : prazoDias
+                ? `Prazo para responder: ${prazoDias} dias a contar desta comunicação.`
+                : "";
+            await supabase.functions.invoke("send-transactional-email", {
+              body: {
+                templateName: "evento-status-orgao",
+                recipientEmail: email,
+                idempotencyKey: `manifestacao-${processoId}-${Date.now()}`,
+                templateData: {
+                  nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? "",
+                  servico: (proc as { servico_nome?: string } | null)?.servico_nome ?? "",
+                  status: rotuloStatus,
+                  observacao:
+                    `${prazoTexto} O texto completo da Polícia Federal está na sua Área do Cliente. ` +
+                    "Não responda sozinho — nós preparamos a resposta.",
+                },
+              },
+            });
+          }
+        }
+      } catch (e) {
+        console.warn("[manifestacao] e-mail ao cliente falhou", e);
+        toast.warning("Registrado, mas o e-mail ao cliente falhou. Avise manualmente.");
+      }
+
       toast.success("Registrado. O cliente já vê o texto no portal.");
       setTexto("");
       onSalvo?.();

@@ -891,6 +891,40 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         usuario_id: (await supabase.auth.getUser()).data.user?.id ?? null,
         detalhes: { contexto: "ProcessoDetalheDrawer.marcarProtocolado", ...protocoloPayload },
       });
+      // E-MAIL DO PROTOCOLO — tudo é comunicado por e-mail (regra da equipe).
+      // Enviado depois de o status já estar gravado: se o disparo falhar, o
+      // protocolo continua registrado e o reenvio é manual, nunca o contrário.
+      // A chave de idempotência impede duplicar se alguém clicar duas vezes.
+      try {
+        const { data: cli } = await supabase
+          .from("qa_clientes")
+          .select("nome_completo, email, cidade, estado")
+          .eq("id", processo.cliente_id)
+          .maybeSingle();
+        const email = (cli as { email?: string } | null)?.email;
+        if (email) {
+          await supabase.functions.invoke("send-transactional-email", {
+            body: {
+              templateName: "processo-protocolado",
+              recipientEmail: email,
+              idempotencyKey: `protocolado-${processo.id}-${protocoloPayload.numero_protocolo ?? "s-n"}`,
+              templateData: {
+                nome: (cli as { nome_completo?: string } | null)?.nome_completo ?? "",
+                servico: processo.servico_nome ?? "",
+                numeroProtocolo: protocoloPayload.numero_protocolo ?? "",
+                dataProtocolo: protocoloPayload.data_protocolo
+                  ? String(protocoloPayload.data_protocolo).split("-").reverse().join("/")
+                  : "",
+                delegacia: protocoloForm.observacao.trim() || "Polícia Federal",
+              },
+            },
+          });
+        }
+      } catch (e) {
+        console.warn("[drawer] e-mail de protocolo falhou", e);
+        toast.warning("Protocolo registrado, mas o e-mail ao cliente falhou. Avise manualmente.");
+      }
+
       toast.success("Processo marcado como protocolado.");
       setProtocoloModalOpen(false);
       setProtocoloForm({

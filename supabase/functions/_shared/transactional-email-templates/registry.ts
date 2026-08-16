@@ -23,6 +23,7 @@ import { template as acessoLiberadoPortal } from './acesso-liberado-portal.tsx'
 import { template as novaContratacaoAdmin } from './nova-contratacao-admin.tsx'
 import { template as documentacaoCompleta } from './documentacao-completa.tsx'
 import { template as processoProntoProtocolar } from './processo-pronto-protocolar.tsx'
+import { template as processoProtocolado } from './processo-protocolado.tsx'
 import { template as vencimentoDocumento } from './vencimento-documento.tsx'
 import { template as documentoMudancaFaixa } from './documento-mudanca-faixa.tsx'
 import { template as prazoProcessual } from './prazo-processual.tsx'
@@ -124,6 +125,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   // Internos / equipe
   'nova-contratacao-admin': novaContratacaoAdmin,
   'processo-pronto-protocolar': processoProntoProtocolar,
+  'processo-protocolado': processoProtocolado,
   'gte-alerta-equipe': gteAlertaEquipe,
   // Cliente — processo
   'documentacao-completa': documentacaoCompleta,
