@@ -25,6 +25,7 @@ import { template as documentacaoCompleta } from './documentacao-completa.tsx'
 import { template as etapaFinalLiberada } from './etapa-final-liberada.tsx'
 import { template as processoProntoProtocolar } from './processo-pronto-protocolar.tsx'
 import { template as processoProtocolado } from './processo-protocolado.tsx'
+import { template as recursoAprovadoEquipe } from './recurso-aprovado-equipe.tsx'
 import { template as vencimentoDocumento } from './vencimento-documento.tsx'
 import { template as documentoMudancaFaixa } from './documento-mudanca-faixa.tsx'
 import { template as prazoProcessual } from './prazo-processual.tsx'
@@ -127,6 +128,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'nova-contratacao-admin': novaContratacaoAdmin,
   'processo-pronto-protocolar': processoProntoProtocolar,
   'processo-protocolado': processoProtocolado,
+  'recurso-aprovado-equipe': recursoAprovadoEquipe,
   'gte-alerta-equipe': gteAlertaEquipe,
   // Cliente — processo
   'documentacao-completa': documentacaoCompleta,

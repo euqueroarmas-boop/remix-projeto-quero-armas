@@ -40,6 +40,7 @@ import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
 import ProtocoloStatusPanel, { type ManifestacaoPF } from "@/components/quero-armas/portal/ProtocoloStatusPanel";
 import LinhaDoTempoProcessoPF from "@/components/quero-armas/portal/LinhaDoTempoProcessoPF";
 import AvisoExigenciaPF from "@/components/quero-armas/portal/AvisoExigenciaPF";
+import type { RecursoParaAprovar } from "@/components/quero-armas/portal/RecursoAprovacaoPanel";
 
 /** Status em que o processo já está com a Polícia Federal. Ver `processoNaPF`. */
 const STATUS_PROCESSO_NA_PF = [
@@ -1780,6 +1781,33 @@ export default function QAClientePortalPage() {
       indeferido: String(ultima.status_processo ?? "").toLowerCase().includes("indeferido"),
     };
   }, [manifestacoesPF]);
+
+  /**
+   * O RECURSO da rodada atual, quando existe. É o texto que o cliente precisa
+   * ler e confirmar antes de a equipe protocolar.
+   *
+   * Carregado junto do processo em foco (e não sob demanda) porque ele não é um
+   * detalhe: quando existe, é a tarefa mais urgente que o cliente tem, com
+   * prazo de 10 dias correndo.
+   */
+  const [recursoPF, setRecursoPF] = useState<RecursoParaAprovar | null>(null);
+  const [recursoReloadKey, setRecursoReloadKey] = useState(0);
+  useEffect(() => {
+    const alvo = processoNaPF ? String(processoNaPF.id) : null;
+    if (!alvo) { setRecursoPF(null); return; }
+    let vivo = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_processo_recursos" as never)
+        .select("id, status, narrativa_gerada, narrativa_final, aprovado_em, editada_pelo_cliente, provas_json")
+        .eq("processo_id", alvo)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (vivo) setRecursoPF((data as unknown as RecursoParaAprovar) ?? null);
+    })();
+    return () => { vivo = false; };
+  }, [processoNaPF, recursoReloadKey]);
 
   // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
   useEffect(() => {
@@ -4819,6 +4847,8 @@ export default function QAClientePortalPage() {
                   nomeCliente={cliente?.nome_completo ?? cliente?.nome ?? null}
                   manifestacoes={manifestacoesPF}
                   onAbrirDetalhe={() => setProtocoloAberto(String(processoNaPF.id))}
+                  recurso={recursoPF}
+                  onRecursoAprovado={() => setRecursoReloadKey((k) => k + 1)}
                 />
               )}
               <CockpitZ6MeusProcessos {...cockpitProps} />

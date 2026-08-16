@@ -30,6 +30,7 @@ import {
   janelaMandadoSeguranca,
   linkWhatsAppMS,
 } from "@/lib/quero-armas/mandadoSeguranca";
+import RecursoAprovacaoPanel, { type RecursoParaAprovar } from "./RecursoAprovacaoPanel";
 import type { ManifestacaoPF } from "./ProtocoloStatusPanel";
 
 export interface LinhaDoTempoProcessoPFProps {
@@ -46,6 +47,12 @@ export interface LinhaDoTempoProcessoPFProps {
   manifestacoes?: ManifestacaoPF[];
   /** Abre o painel completo do protocolo. */
   onAbrirDetalhe?: () => void;
+  /**
+   * Recurso aguardando a leitura e a confirmação do cliente. Ausente quando
+   * ainda não há recurso nesta rodada.
+   */
+  recurso?: RecursoParaAprovar | null;
+  onRecursoAprovado?: () => void;
 }
 
 const TIPO_ROTULO: Record<string, string> = {
@@ -93,6 +100,8 @@ export default function LinhaDoTempoProcessoPF({
   nomeCliente,
   manifestacoes = [],
   onAbrirDetalhe,
+  recurso,
+  onRecursoAprovado,
 }: LinhaDoTempoProcessoPFProps) {
   // Do mais ANTIGO para o mais recente — é o que "linha do tempo" quer dizer.
   const cronologica = [...manifestacoes].sort((a, b) =>
@@ -169,6 +178,21 @@ export default function LinhaDoTempoProcessoPF({
           );
         })}
       </ol>
+
+      {/*
+        O RECURSO VEM ANTES DO RESTO. Existindo texto para o cliente aprovar,
+        isso é a coisa mais importante da tela — corre prazo de 10 dias, e a
+        peça não é escrita enquanto ele não confirmar que os fatos são dele.
+      */}
+      {recurso && (
+        <div className="px-4 pb-1">
+          <RecursoAprovacaoPanel
+            recurso={recurso}
+            delegadoNome={negouRecurso?.delegado_nome ?? cronologica[cronologica.length - 1]?.delegado_nome ?? null}
+            onAprovado={onRecursoAprovado}
+          />
+        </div>
+      )}
 
       {onAbrirDetalhe && (
         <div className="border-t border-slate-100 px-4 py-2.5">

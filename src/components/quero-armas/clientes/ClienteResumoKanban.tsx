@@ -494,7 +494,11 @@ export default function ClienteResumoKanban({
       // não há mais o que o cliente enviar, o processo está na Polícia Federal.
       // Continua clicável de propósito — é por aqui que ele reabre o pop-up
       // guiado e revê o que aconteceu (número do protocolo, o que vem agora).
-      if (["protocolado", "em_analise_orgao"].includes(statusProcesso)) {
+      // `recurso_administrativo` entra aqui de proposito (equipe, 16/08/2026):
+      // protocolado o recurso, o processo volta a analise da PF e, para o
+      // cliente, "em resumo continua como estava: protocolado". Ele nao tem
+      // tarefa nenhuma nesse estado — a peca ja foi entregue.
+      if (["protocolado", "em_analise_orgao", "recurso_administrativo"].includes(statusProcesso)) {
         // O número do protocolo NÃO entra aqui: o badge é estreito e já
         // quebrou em duas linhas antes por texto longo. Ele aparece inteiro no
         // detalhe do processo, que é para onde o clique leva.
@@ -504,6 +508,19 @@ export default function ClienteResumoKanban({
           tone: "ok" as const,
           onClick: () =>
             item?.id ? onOpenProtocolo?.(String(item.id)) : onOpenChecklist?.(),
+        };
+      }
+
+      // ── A PF PEDIU ALGO / NEGOU ─────────────────────────────────────────
+      // Aqui o cliente TEM tarefa, e com prazo fatal. O card precisa convidar
+      // ao clique como qualquer pendencia — cair no contador generico faria a
+      // etapa mais urgente do processo parecer a mais silenciosa da tela.
+      if (statusProcesso === "notificado" || statusProcesso === "indeferido") {
+        return {
+          label: nomeProcesso,
+          status: statusProcesso === "indeferido" ? "Indeferido — clique aqui" : "A PF pediu algo",
+          tone: "bad" as const,
+          onClick: () => onOpenChecklist?.(),
         };
       }
 

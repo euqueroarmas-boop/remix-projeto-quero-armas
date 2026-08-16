@@ -795,6 +795,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [montandoJuntada, setMontandoJuntada] = useState(false);
   /** Caixa onde a equipe cola o que a PF escreveu no SINARM. */
   const [manifestacaoAberta, setManifestacaoAberta] = useState(false);
+  const [gerandoRecurso, setGerandoRecurso] = useState(false);
   // Sobe a cada registro para o histórico recarregar sem refetch do drawer todo.
   const [manifestacoesVersao, setManifestacoesVersao] = useState(0);
 
@@ -1483,6 +1484,41 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   >
                     <FileSignature className="h-3 w-3" />
                     REGISTRAR MANIFESTAÇÃO DA PF
+                  </button>
+                )}
+                {/*
+                  RELATO DO RECURSO. Só faz sentido depois que o cliente enviou
+                  o que a PF pediu: o recurso vive do que MUDOU desde a decisão,
+                  e gerar antes das provas produz um texto que só repete o que
+                  já foi negado. Por isso o disparo é da equipe, que sabe se a
+                  papelada nova chegou — e não automático no momento errado.
+                */}
+                {equipeMode && ["notificado", "indeferido"].includes(String(processo?.status ?? "").toLowerCase()) && (
+                  <button
+                    onClick={async () => {
+                      setGerandoRecurso(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("qa-recurso-gerar", {
+                          body: { processo_id: String(processo?.id) },
+                        });
+                        if (error) throw error;
+                        const err = (data as { error?: string } | null)?.error;
+                        if (err) throw new Error(err);
+                        toast.success("Relato gerado. O cliente já pode ler e aprovar no portal.");
+                        setManifestacoesVersao((v) => v + 1);
+                        void carregar();
+                      } catch (e) {
+                        toast.error("Não deu para gerar o relato: " + ((e as Error)?.message ?? "erro"));
+                      } finally {
+                        setGerandoRecurso(false);
+                      }
+                    }}
+                    disabled={gerandoRecurso}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60"
+                    title="Monta o relato em primeira pessoa com as provas novas e manda para o cliente aprovar"
+                  >
+                    <FileSignature className="h-3 w-3" />
+                    {gerandoRecurso ? "GERANDO…" : "GERAR RELATO DO RECURSO"}
                   </button>
                 )}
                 {equipeMode && processo?.status === "pronto_para_protocolar" && (
