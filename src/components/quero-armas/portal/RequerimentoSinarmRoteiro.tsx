@@ -30,8 +30,9 @@
 // Efetiva Necessidade: nada de segundo pop-up por cima do guiado.
 // ============================================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Check, Clock, Copy, ExternalLink } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { hojeISOBRT } from "@/lib/quero-armas/validadeDocumento";
 import {
   dataEmissaoDoNumero,
@@ -141,7 +142,7 @@ interface SecaoSinarm {
 const CALIBRES_PERMITIDOS: Array<{ especie: string; calibres: string[] }> = [
   { especie: "Pistola", calibres: [".22 LR", ".380 ACP", ".38 TPC"] },
   { especie: "Revolver", calibres: [".38 SPL"] },
-  { especie: "Escopeta", calibres: ["12 GA"] },
+  { especie: "Escopeta", calibres: ["12GA"] },
 ];
 
 /**
@@ -156,6 +157,54 @@ const CALIBRES_PARECIDOS: string[] = [
   ".38 e .38 Super Auto não são .38 SPL nem .38 TPC",
   ".22 e .22 MAGNUM não são .22 LR",
 ];
+
+/**
+ * Unidade da Polícia Federal que atende o endereço do cliente.
+ *
+ * A última aba do requerimento pede UF / Município / Unidade de Atendimento, e
+ * é essa escolha que define QUAL delegacia analisa o processo — e onde o
+ * cliente teria que comparecer se for notificado a levar originais. Fazer o
+ * cliente adivinhar em três listas é pedir para o processo cair na cidade
+ * errada; o sistema já sabe a resposta (`qa_resolver_circunscricao_pf`), então
+ * entregamos pronta.
+ */
+interface CircunscricaoPF {
+  unidade_pf?: string | null;
+  sigla_unidade?: string | null;
+  tipo_unidade?: string | null;
+  municipio_sede?: string | null;
+  uf?: string | null;
+}
+
+function useCircunscricaoPF(cidade: string, uf: string): CircunscricaoPF | null {
+  const [circ, setCirc] = useState<CircunscricaoPF | null>(null);
+  useEffect(() => {
+    if (!cidade || !uf) {
+      setCirc(null);
+      return;
+    }
+    let vivo = true;
+    void (async () => {
+      try {
+        const { data } = await supabase.rpc("qa_resolver_circunscricao_pf" as never, {
+          p_municipio: cidade,
+          p_uf: uf,
+        } as never);
+        if (!vivo) return;
+        const linha = Array.isArray(data) ? (data[0] as CircunscricaoPF) : null;
+        setCirc(linha ?? null);
+      } catch {
+        // Sem circunscrição a tela cai no texto genérico ("escolha a mais
+        // próxima da sua casa") — nunca fica sem instrução.
+        if (vivo) setCirc(null);
+      }
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [cidade, uf]);
+  return circ;
+}
 
 export interface RequerimentoSinarmRoteiroProps {
   /** Linha de `qa_clientes` (o portal já carrega com `select("*")`). */
@@ -194,6 +243,7 @@ function montarSecoes(
   c: Record<string, unknown>,
   especieArma?: string | null,
   calibreArma?: string | null,
+  circ?: CircunscricaoPF | null,
 ): SecaoSinarm[] {
   // O RG pode estar em `rg` (legado) ou em `numero_documento_identidade`
   // (cadastro novo, que aceita CIN/RG/CNH). Vale o que estiver preenchido.
@@ -204,7 +254,7 @@ function montarSecoes(
     {
       titulo: "Aba 1 · Identificação",
       descricao:
-        "Deixe DESMARCADO o \"Requerimento realizado por procuração\" no topo — você está fazendo em seu próprio nome. Tipo de Formulário: Pessoa Física. Categoria: Cidadão.",
+        "Deixe DESMARCADO o \"Requerimento realizado por procuração\" no topo. Nós temos a sua procuração, mas nesta etapa quem faz o requerimento é você, em nome próprio — então a caixinha fica em branco. Tipo de Formulário: Pessoa Física. Categoria: Cidadão.",
       destaque: "cpf_divergente",
       campos: [
         { label: "Tipo de Formulário", valor: "Pessoa Física", fixo: true },
@@ -245,7 +295,7 @@ function montarSecoes(
           obrigatorio: true,
           fixo: true,
           ajuda:
-            "É uma lista fechada. Se a sua profissão não estiver lá, escolha a mais próxima — e nos avise qual escolheu.",
+            "É uma lista fechada. Se você é empresário, escolha ADMINISTRADOR — empresário não existe na lista. Se a sua profissão não estiver lá, escolha a mais próxima e nos avise qual escolheu.",
         },
         { label: "Aposentado", valor: "Não", fixo: true, ajuda: "Marque a caixinha só se você for aposentado." },
         { label: "E-mail", valor: titulo(c.email), govbr: true },
@@ -332,13 +382,24 @@ function montarSecoes(
       campos: [
         {
           label: "Unidade de Atendimento — UF",
-          valor: titulo(c.estado),
+          valor: titulo(circ?.uf) || titulo(c.estado),
           obrigatorio: true,
           fixo: true,
         },
         {
           label: "Unidade de Atendimento — Município",
-          valor: titulo(c.cidade),
+          valor: titulo(circ?.municipio_sede) || titulo(c.cidade),
+          obrigatorio: true,
+          fixo: true,
+          ajuda: circ?.municipio_sede
+            ? "É a cidade onde fica a unidade que atende o seu endereço — pode não ser a sua."
+            : undefined,
+        },
+        {
+          label: "Unidade de Atendimento — Unidade",
+          valor: circ?.sigla_unidade
+            ? `${titulo(circ.sigla_unidade)} — ${titulo(circ.unidade_pf)}`
+            : titulo(circ?.unidade_pf),
           obrigatorio: true,
           fixo: true,
         },
@@ -507,10 +568,10 @@ function AvisoCpfDivergente() {
       <p className="mt-1 text-[12px] leading-snug text-amber-900">
         Ao avançar, o site pode abrir: <em>"As informações relacionadas ao CPF informado foram
         alteradas e estão divergentes daquelas cadastradas no banco de dados, deseja
-        prosseguir?"</em> Isso quer dizer que algum dado que você digitou não bate com o cadastro
-        oficial. <span className="font-bold">Não clique em Sim no automático.</span> Volte,
-        confira campo a campo contra esta tela e, se continuar aparecendo, fale com a gente antes
-        de seguir.
+        prosseguir?"</em> Na maioria das vezes é só o cadastro da Receita estar desatualizado —
+        você mudou de endereço, trocou de documento, e ninguém avisou a base. Confira os campos
+        contra esta tela; <span className="font-bold">estando tudo certo, clique em Sim e
+        siga</span>. Se algum dado estiver mesmo errado, corrija antes de prosseguir.
       </p>
       <p className="mt-1.5 text-[11px] leading-snug text-amber-900">
         Já os avisos vermelhos de CEP ("não encontrado", "não validado na base corporativa") são
@@ -524,17 +585,30 @@ function AvisoCpfDivergente() {
  * Unidade de Atendimento: define QUAL delegacia recebe e analisa o processo.
  * Escolher errado manda o pedido para outra cidade.
  */
-function AvisoUnidadeAtendimento() {
+function AvisoUnidadeAtendimento({ circ }: { circ?: CircunscricaoPF | null }) {
+  const resolvida = !!(circ?.unidade_pf || circ?.sigla_unidade);
   return (
     <div className="border-b border-slate-100 bg-[#FBF3F4] px-3 py-2.5">
       <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#7A1F2B]">
-        Escolha a delegacia mais próxima da sua casa
+        {resolvida ? "Já sabemos qual é a sua delegacia" : "Escolha a delegacia mais próxima da sua casa"}
       </p>
       <p className="mt-1 text-[12px] leading-snug text-[#7A1F2B]">
-        São três listas em sequência: UF, Município e Unidade. É essa escolha que define qual
-        delegacia da Polícia Federal vai analisar o seu processo — e é onde você teria que
-        comparecer, se for notificado a levar documentos originais. Escolha pela sua residência,
-        não pelo trabalho.
+        {resolvida ? (
+          <>
+            São três listas em sequência: UF, Município e Unidade. Pelo seu endereço, a unidade
+            que atende você é a <span className="font-bold">{titulo(circ?.sigla_unidade)}
+            {circ?.unidade_pf ? ` — ${titulo(circ.unidade_pf)}` : ""}</span>. Selecione
+            exatamente essa. É ela que vai analisar o seu processo, e é onde você compareceria se
+            fosse notificado a levar documentos originais.
+          </>
+        ) : (
+          <>
+            São três listas em sequência: UF, Município e Unidade. É essa escolha que define qual
+            delegacia da Polícia Federal vai analisar o seu processo — e é onde você teria que
+            comparecer, se for notificado a levar documentos originais. Escolha pela sua
+            residência, não pelo trabalho, e nos avise qual escolheu.
+          </>
+        )}
       </p>
       <p className="mt-1.5 text-[11px] leading-snug text-[#7A1F2B]">
         Depois marque as duas declarações, digite o texto da imagem (aquele código embaralhado) e
@@ -544,7 +618,7 @@ function AvisoUnidadeAtendimento() {
   );
 }
 
-function Secao({ secao }: { secao: SecaoSinarm }) {
+function Secao({ secao, circ }: { secao: SecaoSinarm; circ?: CircunscricaoPF | null }) {
   const preenchidos = secao.campos.filter((c) => c.valor).length;
 
   const copiarSecao = async () => {
@@ -581,7 +655,7 @@ function Secao({ secao }: { secao: SecaoSinarm }) {
       <div>
         {secao.destaque === "calibre" && <AvisoCalibre />}
         {secao.destaque === "cpf_divergente" && <AvisoCpfDivergente />}
-        {secao.destaque === "unidade_atendimento" && <AvisoUnidadeAtendimento />}
+        {secao.destaque === "unidade_atendimento" && <AvisoUnidadeAtendimento circ={circ} />}
         {secao.campos.map((campo) => (
           <LinhaCampo key={`${secao.titulo}:${campo.label}`} campo={campo} />
         ))}
@@ -621,9 +695,14 @@ export default function RequerimentoSinarmRoteiro({
   const liberadoParaPagar = ["aprovado", "entregue_pelo_hub"].includes(status);
   /** Reprovado: tem erro, e pagar agora seria jogar a taxa fora. */
   const reprovado = ["invalido", "divergente"].includes(status);
+  const circ = useCircunscricaoPF(
+    String((cliente as Record<string, unknown>)?.cidade ?? "").trim(),
+    String((cliente as Record<string, unknown>)?.estado ?? "").trim().toUpperCase(),
+  );
+
   const secoes = useMemo(
-    () => (cliente ? montarSecoes(cliente, especieArma, calibreArma) : []),
-    [cliente, especieArma, calibreArma],
+    () => (cliente ? montarSecoes(cliente, especieArma, calibreArma, circ) : []),
+    [cliente, especieArma, calibreArma, circ],
   );
 
   const faltando = useMemo(
@@ -717,7 +796,7 @@ export default function RequerimentoSinarmRoteiro({
       )}
 
       {secoes.map((secao) => (
-        <Secao key={secao.titulo} secao={secao} />
+        <Secao key={secao.titulo} secao={secao} circ={circ} />
       ))}
 
       {/*
