@@ -22,23 +22,24 @@ import {
 
 export type PendenciaKind = "signature" | "documento" | "pergunta";
 
-// ─── Botões discretos do checklist guiado (usuário, 16/08/2026) ───────────
-// O pop-up é uma sequência de instruções; o botão não pode gritar mais alto
-// que o texto que o cliente precisa ler. Fora, portanto: bloco bordô cheio,
-// borda de 2px, peso 900 e tracking largo. Fica o mesmo bordô, em superfície
-// clara, altura menor e caixa alta calma. A hierarquia continua: ação
-// principal em bordô, ação secundária em cinza.
+// ─── Botões do checklist guiado — mesma cor, menos volume ─────────────────
+// Regra do usuário (16/08/2026): a COR fica (bordô cheio na ação principal).
+// O que incomodava era o TAMANHO — blocos de 44–56px de altura, borda de 2px
+// e caixa alta esticada ocupavam a tela inteira. Aqui ficam só as medidas:
+// altura menor, texto menor, borda de 1px e cantos discretos.
 const BTN_BASE =
-  "inline-flex w-full items-center justify-center gap-2 px-3 text-center font-semibold uppercase leading-[1.2] transition-colors";
+  "inline-flex w-full items-center justify-center gap-1.5 px-3 text-center font-bold uppercase leading-[1.2] transition-colors";
 const btnMetrica = (asPage: boolean) =>
-  asPage ? "h-12 rounded-lg px-4 text-[10.5px] tracking-[0.08em]" : "h-10 rounded-lg text-[10px] tracking-[0.08em]";
-const BTN_BORDO_SUAVE =
-  "border border-[#7A1F2B]/25 bg-[#FDF7F8] text-[#7A1F2B] hover:bg-[#F8ECEE]";
-const BTN_NEUTRO = "border border-[#E4E4E4] bg-white text-[#4A4A4A] hover:bg-[#FAFAFA]";
-const BTN_VERDE_SUAVE =
-  "border border-emerald-600/25 bg-emerald-50 text-emerald-800 hover:bg-emerald-100";
-/** Tipografia de rótulo dos botões menores (voltar, navegação, atalhos). */
-const BTN_LABEL_SUAVE = "text-[10px] font-semibold uppercase tracking-[0.08em]";
+  asPage ? "h-10 rounded-lg px-4 text-[9.5px] tracking-[0.1em]" : "h-9 rounded-lg text-[9.5px] tracking-[0.1em]";
+/** Ação principal: bordô cheio, como sempre foi. */
+const BTN_BORDO = "bg-[#8A1224] text-white hover:bg-[#6f0f1e]";
+/** Ação alternativa: bordô em linha (1px, não 2px). */
+const BTN_BORDO_LINHA = "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]";
+/** Download do contrato/procuração: preto, como sempre foi. */
+const BTN_PRETO = "bg-[#0A0A0A] text-white hover:bg-[#1a1a1a]";
+const BTN_VERDE = "bg-emerald-700 text-white hover:bg-emerald-800";
+/** Tipografia dos botões menores (voltar, navegação, atalhos). */
+const BTN_LABEL_MINI = "text-[9.5px] font-bold uppercase tracking-[0.1em]";
 
 export interface PendenciaItem {
   id: string;
@@ -506,19 +507,19 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
     if (active.perguntaChave === "ainda_reside_imovel") {
       if (ativo) {
         return valor === "sim"
-          ? "bg-emerald-50 border-emerald-500/50 text-emerald-800"
-          : "bg-red-50 border-red-400/50 text-red-800";
+          ? "bg-emerald-600 border-emerald-600 text-white"
+          : "bg-red-600 border-red-600 text-white";
       }
       if (valor === "sim") {
-        return "bg-white border-emerald-200 text-emerald-800 hover:bg-emerald-50";
+        return "bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100 hover:border-emerald-300";
       }
       if (valor === "nao") {
-        return "bg-white border-red-200 text-red-800 hover:bg-red-50";
+        return "bg-red-50 border-red-200 text-red-900 hover:bg-red-100 hover:border-red-300";
       }
     }
     return ativo
-      ? "bg-[#FDF7F8] border-[#7A1F2B]/40 text-[#7A1F2B]"
-      : "bg-white border-[#7A1F2B]/25 text-[#7A1F2B] hover:bg-[#FDF7F8]";
+      ? "bg-[#8A1224] border-[#8A1224] text-white"
+      : "bg-white border-[#8A1224] text-[#8A1224] hover:bg-[#FFF7F8]";
   };
 
   const primaryLabel =
@@ -577,7 +578,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute top-3 right-3 z-20 rounded-full border border-[#E4E4E4] bg-white/90 p-1.5 text-[#7A7A7A] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-1.5 text-white hover:bg-[#6f0f1e] transition-colors"
           aria-label="Fechar"
         >
           <X className="h-3.5 w-3.5" />
@@ -765,9 +766,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               <button
                 type="button"
                 onClick={() => setExameModal(null)}
-                className={`${BTN_LABEL_SUAVE} mb-3 inline-flex items-center gap-1.5 rounded-lg border border-[#E4E4E4] bg-white px-3 py-2 text-[#4A4A4A] transition-colors hover:bg-[#FAFAFA]`}
+                className={`${BTN_LABEL_MINI} mb-3 inline-flex items-center gap-1.5 rounded-lg border border-[#E4E4E4] bg-white px-2.5 py-1.5 text-[#0A0A0A] transition-colors hover:bg-[#FAFAFA]`}
               >
-                <ChevronLeft className="h-3.5 w-3.5" /> Voltar às instruções
+                <ChevronLeft className="h-3 w-3" /> Voltar às instruções
               </button>
               <AgendarExamePainel
                 ativo
@@ -846,9 +847,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                       type="button"
                       onClick={() => handleResponder(op.valor)}
                       disabled={!!respondendo || !!active.respostaAtual}
-                      className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors ${getPerguntaButtonClassName(String(op.valor), ativo)} disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className={`inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border px-3 text-[10px] font-bold uppercase tracking-[0.1em] transition-colors ${getPerguntaButtonClassName(String(op.valor), ativo)} disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {ativo ? <Check className="h-4 w-4" /> : null}
+                      {ativo ? <Check className="h-3.5 w-3.5" /> : null}
                       {loading ? "..." : String(op.label || op.valor).toUpperCase()}
                     </button>
                   );
@@ -878,9 +879,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               <button
                 type="button"
                 onClick={() => setExameModal(tipoCredenciado)}
-                className={`${BTN_BASE} ${BTN_BORDO_SUAVE} mt-3 h-10 rounded-lg px-4 text-[10px] tracking-[0.08em]`}
+                className={`${BTN_BASE} ${BTN_BORDO} mt-3 h-9 rounded-lg px-4 text-[9.5px] tracking-[0.1em]`}
               >
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-3.5 w-3.5" />
                 Escolher profissional credenciado
               </button>
             </div>
@@ -1012,7 +1013,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.max(0, i - 1))}
                   disabled={!podeVoltar}
-                  className={`${BTN_LABEL_SUAVE} flex-1 px-3 rounded-lg border border-[#E4E4E4] text-[#4A4A4A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-2.5 px-4" : "h-9"}`}
+                  className={`${BTN_LABEL_MINI} flex-1 px-3 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "h-10 px-4" : "h-9"}`}
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Anterior
                 </button>
@@ -1020,7 +1021,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   type="button"
                   onClick={() => setIndice((i) => Math.min(total - 1, i + 1))}
                   disabled={!podeAvancar}
-                  className={`${BTN_LABEL_SUAVE} flex-1 px-3 rounded-lg border border-[#E4E4E4] text-[#4A4A4A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "py-2.5 px-4" : "h-9"}`}
+                  className={`${BTN_LABEL_MINI} flex-1 px-3 rounded-lg border border-[#E4E4E4] text-[#0A0A0A] bg-white hover:bg-[#FAFAFA] disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5 ${asPage ? "h-10 px-4" : "h-9"}`}
                 >
                   Próximo <ChevronRight className="h-3.5 w-3.5" />
                 </button>
@@ -1040,18 +1041,18 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                       setAvancandoDispensa(false);
                     }
                   }}
-                  className={`${BTN_BASE} ${BTN_VERDE_SUAVE} ${btnMetrica(asPage)} disabled:opacity-50 md:col-span-2`}
+                  className={`${BTN_BASE} ${BTN_VERDE} ${btnMetrica(asPage)} disabled:opacity-50 md:col-span-2`}
                 >
-                  <Check className="h-3.5 w-3.5 shrink-0" />
+                  <Check className="h-3 w-3 shrink-0" />
                   {avancandoDispensa ? "..." : "Avançar"}
                 </button>
               ) : isPergunta ? null : isSignature ? (
                 <button
                   type="button"
                   onClick={active.onPrimary}
-                  className={`${BTN_BASE} ${BTN_NEUTRO} ${btnMetrica(asPage)}`}
+                  className={`${BTN_BASE} ${BTN_PRETO} ${btnMetrica(asPage)}`}
                 >
-                  <Download className="h-3.5 w-3.5 shrink-0" />
+                  <Download className="h-3 w-3 shrink-0" />
                   {primaryLabel}
                 </button>
               ) : active.recusaAlternativa ? (
@@ -1060,7 +1061,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <button
                   type="button"
                   onClick={active.recusaAlternativa.onClick}
-                  className={`${BTN_BASE} ${BTN_NEUTRO} ${btnMetrica(asPage)}`}
+                  className={`${BTN_BASE} ${BTN_BORDO_LINHA} ${btnMetrica(asPage)}`}
                 >
                   {active.recusaAlternativa.label}
                 </button>
@@ -1070,9 +1071,9 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <button
                   type="button"
                   onClick={() => setExameModal(alternativaParticular)}
-                  className={`${BTN_BASE} ${BTN_NEUTRO} ${btnMetrica(asPage)}`}
+                  className={`${BTN_BASE} ${BTN_BORDO_LINHA} ${btnMetrica(asPage)}`}
                 >
-                  <Search className="h-3.5 w-3.5 shrink-0" />
+                  <Search className="h-3 w-3 shrink-0" />
                   {alternativaParticular === "psicologo"
                     ? "Encontrar um psicólogo parceiro"
                     : "Encontrar um instrutor parceiro"}
@@ -1084,13 +1085,15 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <button
                   type="button"
                   onClick={active.onEntregar}
-                  className={`${BTN_BASE} ${btnMetrica(asPage)} ${BTN_BORDO_SUAVE} ${
+                  className={`${BTN_BASE} ${btnMetrica(asPage)} ${
+                    isSignature ? BTN_BORDO_LINHA : BTN_BORDO
+                  } ${
                     !isSignature && !active.recusaAlternativa && !alternativaParticular
                       ? "md:col-span-2"
                       : ""
                   }`}
                 >
-                  <Upload className="h-3.5 w-3.5 shrink-0" />
+                  <Upload className="h-3 w-3 shrink-0" />
                   {entregarLabel}
                 </button>
               )}

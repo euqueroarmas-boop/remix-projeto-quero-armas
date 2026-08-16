@@ -985,10 +985,10 @@ export default function EfetivaNecessidadeModal({
    * espaço que sobra ao lado do "Anterior", e `whitespace-nowrap` impede a
    * quebra feia do rótulo em duas linhas nas telas estreitas.
    */
-  const acaoPrincipalClasse = `inline-flex min-w-0 flex-1 items-center justify-center gap-2 whitespace-nowrap border border-[#7A1F2B]/25 bg-[#FDF7F8] font-semibold uppercase text-[#7A1F2B] transition-colors hover:bg-[#F8ECEE] disabled:opacity-40 ${
+  const acaoPrincipalClasse = `inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap bg-[#7A1F2B] font-bold uppercase text-white transition-colors hover:bg-[#63161f] disabled:opacity-40 ${
     embedded
-      ? "h-11 rounded-lg px-4 text-[10.5px] tracking-[0.08em]"
-      : "rounded-lg px-5 py-2.5 text-[11px] tracking-[0.08em]"
+      ? "h-9 rounded-lg px-4 text-[9.5px] tracking-[0.1em]"
+      : "rounded-lg px-4 py-2 text-[10px] tracking-[0.1em]"
   }`;
 
   const conteudo = (
@@ -1029,7 +1029,7 @@ export default function EfetivaNecessidadeModal({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="absolute top-3 right-3 z-20 rounded-full border border-[#E4E4E4] bg-white/90 p-1.5 text-[#7A7A7A] hover:bg-[#F5F5F5] hover:text-[#0A0A0A] transition-colors"
+            className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-1.5 text-white hover:bg-[#6f0f1e] transition-colors"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -1083,16 +1083,16 @@ export default function EfetivaNecessidadeModal({
                     type="button"
                     disabled={gerando}
                     onClick={() => void gerarNarrativa()}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-4 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE] disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A1F2B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-50"
                   >
-                    {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                    {gerando ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                     {gerando ? "Refazendo…" : "Sim, refazer com os novos fatos"}
                   </button>
                   <button
                     type="button"
                     disabled={gerando}
                     onClick={() => setRefazerDispensado(true)}
-                    className="rounded-lg border border-zinc-300 px-4 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                    className="rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                   >
                     Agora não
                   </button>
@@ -1133,7 +1133,7 @@ export default function EfetivaNecessidadeModal({
               <button
                 type="button"
                 onClick={() => setEditandoNarrativa((v) => !v)}
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 {editandoNarrativa ? "Concluir edição" : "Editar o texto"}
@@ -1142,7 +1142,7 @@ export default function EfetivaNecessidadeModal({
                 type="button"
                 onClick={() => void gerarNarrativa()}
                 disabled={gerando}
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
               >
                 {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 Refazer o relato
@@ -1153,7 +1153,7 @@ export default function EfetivaNecessidadeModal({
               <button
                 type="button"
                 onClick={() => irPara(0)}
-                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
               >
                 Voltar e corrigir provas
               </button>
@@ -1193,15 +1193,15 @@ export default function EfetivaNecessidadeModal({
                       type="button"
                       disabled={salvandoAcrescimo || novoAcrescimo.trim().length < 20}
                       onClick={() => void adicionarAcrescimo()}
-                      className="inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-3 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE] disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A1F2B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-40"
                     >
-                      {salvandoAcrescimo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+                      {salvandoAcrescimo ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
                       Guardar este fato
                     </button>
                     <button
                       type="button"
                       onClick={() => { setCampoAcrescimoAberto(false); setNovoAcrescimo(""); }}
-                      className="rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                      className="rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
                     >
                       Cancelar
                     </button>
@@ -1211,9 +1211,9 @@ export default function EfetivaNecessidadeModal({
                 <button
                   type="button"
                   onClick={() => setCampoAcrescimoAberto(true)}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-3 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE]"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-1.5 text-[11px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Adicionar um fato novo
+                  <Plus className="h-3 w-3" /> Adicionar um fato novo
                 </button>
               )}
 
@@ -1222,7 +1222,7 @@ export default function EfetivaNecessidadeModal({
                   type="button"
                   onClick={() => void gerarNarrativa()}
                   disabled={gerando}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
                 >
                   {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   Refazer o relato com os fatos novos
@@ -1262,14 +1262,14 @@ export default function EfetivaNecessidadeModal({
                   <button
                     type="button"
                     onClick={() => void copiar(textoBo)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
                   >
                     <Copy className="h-3.5 w-3.5" /> Copiar o texto
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditandoBo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
                   >
                     <Pencil className="h-3.5 w-3.5" /> {editandoBo ? "Concluir edição" : "Ajustar"}
                   </button>
@@ -1295,9 +1295,9 @@ export default function EfetivaNecessidadeModal({
                   type="button"
                   onClick={() => void gerarNarrativa()}
                   disabled={gerando}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-4 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE] disabled:opacity-50"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#7A1F2B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-50"
                 >
-                  {gerando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  {gerando ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
                   {gerando ? "Montando o texto…" : "Gerar o meu texto agora"}
                 </button>
               </div>
@@ -1399,9 +1399,9 @@ export default function EfetivaNecessidadeModal({
                     <button
                       type="button"
                       onClick={confirmarRegistroBo}
-                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-4 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE]"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#7A1F2B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#63161f]"
                     >
-                      <Check className="h-3.5 w-3.5" />
+                      <Check className="h-3 w-3" />
                       {boTextoMudouAposRegistro
                         ? "Já levei o texto novo à delegacia"
                         : "Já registrei o boletim"}
@@ -1415,7 +1415,7 @@ export default function EfetivaNecessidadeModal({
                     <button
                       type="button"
                       onClick={confirmarRegistroBo}
-                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-4 py-2 text-[12px] font-semibold text-zinc-700 hover:bg-white"
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-white"
                     >
                       <Plus className="h-3.5 w-3.5" /> Quero registrar um novo boletim mesmo assim
                     </button>
@@ -1532,7 +1532,7 @@ export default function EfetivaNecessidadeModal({
                   type="button"
                   onClick={() => abrirSeletor("boletim_ocorrencia")}
                   disabled={enviandoTipo !== null}
-                  className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-3 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE] disabled:opacity-50"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-1.5 text-[11px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
                 >
                   {enviandoTipo === "boletim_ocorrencia"
                     ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1574,7 +1574,7 @@ export default function EfetivaNecessidadeModal({
                     type="button"
                     onClick={() => abrirSeletor(perguntaAtual.tipoProva!)}
                     disabled={enviandoTipo !== null}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#7A1F2B]/25 bg-[#FDF7F8] px-3 py-2 text-[11.5px] font-semibold text-[#7A1F2B] hover:bg-[#F8ECEE] disabled:opacity-50"
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/5 px-3 py-1.5 text-[11px] font-semibold text-[#7A1F2B] hover:bg-[#7A1F2B]/10 disabled:opacity-50"
                   >
                     {enviandoTipo === perguntaAtual.tipoProva
                       ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1752,11 +1752,11 @@ export default function EfetivaNecessidadeModal({
             type="button"
             disabled={passoIndex === 0}
             onClick={() => irPara(passoIndex - 1)}
-            className={`inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-zinc-200 bg-white font-semibold uppercase tracking-[0.08em] text-zinc-500 transition-colors hover:bg-zinc-50 disabled:opacity-30 ${
-              embedded ? "h-11 px-4 text-[10.5px]" : "px-3 py-2 text-[10.5px]"
+            className={`inline-flex shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-zinc-300 bg-white font-bold uppercase tracking-[0.1em] text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-30 ${
+              embedded ? "h-9 px-3 text-[9.5px]" : "px-3 py-2 text-[10px]"
             }`}
           >
-            <ChevronLeft className="h-3.5 w-3.5" /> Anterior
+            <ChevronLeft className="h-3 w-3" /> Anterior
           </button>
           {/* O botão principal ocupa o resto da linha: em tela estreita o
               rótulo cabia em uma linha só quando havia espaço, e antes
