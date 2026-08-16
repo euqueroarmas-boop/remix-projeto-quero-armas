@@ -9,7 +9,7 @@
 // ============================================================================
 
 import { useEffect, useState } from "react";
-import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, FileUp, MapPin, Search, Upload, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Download, ExternalLink, MapPin, Search, Upload, X } from "lucide-react";
 import { AgendarExamePainel } from "@/components/quero-armas/clientes/AgendarExame/AgendarExamePainel";
 import { getExplicacaoPendencia, temExplicacaoBiblioteca } from "@/lib/quero-armas/pendenciasExplicacoes";
 import { carregarExplicacoesBiblioteca } from "@/lib/quero-armas/bibliotecaExplicacoes";
@@ -649,25 +649,24 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               </h1>
             </div>
           ) : (
-            <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-lg border border-[#8A1224]/15 bg-[#FFF7F8]">
-                <FileUp className="h-3.5 w-3.5 text-[#8A1224]" />
-              </span>
-              <div className="min-w-0">
-                <p className="font-['Oswald',sans-serif] text-[9px] font-black uppercase tracking-[0.2em] text-[#8A1224]">
-                  Checklist guiado
-                </p>
-                {/* Sem quebra de linha forçada: em telas estreitas ela produzia
-                    "Fabio, você está nos / devendo / enviar este documento!".
-                    O balanceamento nativo distribui as linhas sem cortar frase. */}
-                <h1
-                  className="mt-0.5 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.1] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]"
-                  style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
-                >
-                  {primeiroNome ? `${primeiroNome}, você está nos devendo ` : "Você está nos devendo "}
-                  {total === 1 ? "enviar este documento!" : "enviar esses documentos!"}
-                </h1>
-              </div>
+            /* Sem o ícone de documento (usuário, 16/08/2026): ele empurrava o
+               texto 36px para dentro e o título brigava com o X do canto. O
+               bloco agora começa na margem do cartão, alinhado com os badges
+               e com o conteúdo abaixo. */
+            <div className="min-w-0">
+              <p className="font-['Oswald',sans-serif] text-[9px] font-black uppercase tracking-[0.2em] text-[#8A1224]">
+                Checklist guiado
+              </p>
+              {/* Sem quebra de linha forçada: em telas estreitas ela produzia
+                  "Fabio, você está nos / devendo / enviar este documento!".
+                  O balanceamento nativo distribui as linhas sem cortar frase. */}
+              <h1
+                className="mt-0.5 font-['Oswald',sans-serif] text-[18px] font-bold leading-[1.15] tracking-[0.01em] text-[#0A0A0A] sm:text-[20px]"
+                style={{ textWrap: "balance", hyphens: "none" } as React.CSSProperties}
+              >
+                {primeiroNome ? `${primeiroNome}, você está nos devendo ` : "Você está nos devendo "}
+                {total === 1 ? "enviar este documento!" : "enviar esses documentos!"}
+              </h1>
             </div>
           )}
         </div>
@@ -720,7 +719,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
           </div>
           <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-4 h-px bg-[#F0F0F0]"} />
-          <div className={asPage ? "" : "pl-[36px]"}>
+          {/* Sem recuo: o ícone que justificava os 36px saiu do header. */}
+          <div>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio
                 título da etapa — o título grande repetiria o nome do grupo. */}
             {active.corpo ? null : (
