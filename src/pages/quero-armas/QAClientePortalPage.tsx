@@ -36,6 +36,7 @@ import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
 import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/RequerimentoSinarmRoteiro";
+import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
 import { numeroRequerimentoDeDadosExtraidos } from "@/lib/quero-armas/requerimentoSinarm";
 import {
   calcularPassosEfetiva,
@@ -2176,7 +2177,9 @@ export default function QAClientePortalPage() {
           ? "Iniciar efetiva necessidade"
           : ehRequerimentoSinarm(rawTipo)
             ? "Abrir o roteiro do requerimento"
-            : undefined,
+            : ehCredencialGovBr(rawTipo)
+              ? "Liberar o acesso ao gov.br"
+              : undefined,
         // A efetiva necessidade roda DENTRO do pop-up guiado: os seus passos
         // são itens do mesmo checklist, não um segundo pop-up por cima.
         //
@@ -2195,6 +2198,8 @@ export default function QAClientePortalPage() {
               onClose={() => setShowContratoPopup(false)}
               onConcluido={() => setDocsReloadKey((k) => k + 1)}
             />
+          ) : ehCredencialGovBr(rawTipo) ? (
+            <AcessoGovBrPanel onConcluido={() => setDocsReloadKey((k) => k + 1)} />
           ) : ehRequerimentoSinarm(rawTipo) && cliente ? (
             <RequerimentoSinarmRoteiro
               cliente={cliente}
@@ -2248,6 +2253,15 @@ export default function QAClientePortalPage() {
         "requerimento_posse",
         "requerimento_sinarm",
       ].includes(String(rawTipo ?? "").trim().toLowerCase());
+
+    /**
+     * Acesso ao gov.br (Bloco 2). Não é documento para subir: o cliente digita
+     * a senha, ela é cifrada, e a própria edge marca a exigência como cumprida.
+     */
+    const ehCredencialGovBr = (rawTipo: string) =>
+      ["credencial_gov_br", "senha_gov_br", "acesso_gov_br"].includes(
+        String(rawTipo ?? "").trim().toLowerCase(),
+      );
 
 
     const ehDocDeTitularTerceiro = (rawTipo: string) => {

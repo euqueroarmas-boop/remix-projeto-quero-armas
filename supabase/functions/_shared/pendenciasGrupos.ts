@@ -220,7 +220,20 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   }
 
   // Requerimento — último grupo. Também sai das declarações genéricas.
-  if (t.startsWith("requerimento_") || t === "requerimento" || t.includes("sinarm_requerimento")) {
+  // A GRU e o acesso ao gov.br entram aqui de propósito: os três são a mesma
+  // etapa da vida do processo (gerar o requerimento, pagar a taxa, liberar o
+  // acesso para protocolar), e separá-los espalharia um passo só por três
+  // grupos diferentes no checklist do cliente.
+  if (
+    t.startsWith("requerimento_") ||
+    t === "requerimento" ||
+    t.includes("sinarm_requerimento") ||
+    t === "gru" ||
+    t === "gru_paga" ||
+    t === "credencial_gov_br" ||
+    t === "senha_gov_br" ||
+    t === "acesso_gov_br"
+  ) {
     return GRUPOS.requerimento;
   }
 
