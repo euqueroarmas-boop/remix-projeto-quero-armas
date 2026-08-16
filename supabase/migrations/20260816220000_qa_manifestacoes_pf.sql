@@ -16,6 +16,17 @@
 -- fundamenta o recurso, e é o que a IA vai ler para dizer o que falta. Reescrever
 -- para "ficar mais claro" destruiria as três coisas.
 --
+-- ── SOBRE AS POLÍTICAS ──────────────────────────────────────────────────────
+-- A primeira versão desta migration usava os atalhos `qa_is_active_staff` e
+-- `qa_current_cliente_id_legado`. A segunda NÃO EXISTE neste banco (a migration
+-- que a cria nunca foi aplicada), e a colagem falhou inteira com
+-- "function public.qa_current_cliente_id_legado(uuid) does not exist".
+--
+-- Por isso as políticas abaixo não chamam função nenhuma: consultam só tabelas
+-- que sabidamente existem (`qa_usuarios_perfis`, `qa_clientes`,
+-- `cliente_auth_links`, `qa_processos`). Fica mais verboso e roda em qualquer
+-- estado do banco — que é o que importa quando a migration é colada à mão.
+--
 -- Reexecutável.
 -- ============================================================================
 
@@ -31,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.qa_processo_manifestacoes_pf (
   -- | deferido | indeferido | recurso_administrativo
   status_processo   text,
 
-  /** O texto EXATO copiado do SINARM. Nunca editado. */
+  -- O texto EXATO copiado do SINARM. Nunca editado.
   texto             text NOT NULL,
 
   -- Extraídos do texto (pela equipe ou pela IA). Todos opcionais: um texto
@@ -45,12 +56,12 @@ CREATE TABLE IF NOT EXISTS public.qa_processo_manifestacoes_pf (
   -- sistema | email | presencial — como o cliente/equipe deve responder.
   canal_resposta    text,
   contato           text,
-  /** Itens que a PF exigiu, quando a IA consegue separar. */
+  -- Itens que a PF exigiu, quando a IA consegue separar.
   exigencias_json   jsonb NOT NULL DEFAULT '[]'::jsonb,
-  /** Análise estruturada da IA (vícios, fundamentos, o que anexar). */
+  -- Análise estruturada da IA (vícios, fundamentos, o que anexar).
   analise_ia_json   jsonb,
 
-  /** Já apareceu para o cliente? Serve para disparar aviso uma vez só. */
+  -- Já apareceu para o cliente? Serve para disparar aviso uma vez só.
   visto_cliente_em  timestamptz,
 
   registrado_por    uuid REFERENCES auth.users(id),
@@ -63,25 +74,42 @@ CREATE INDEX IF NOT EXISTS idx_qa_manifestacoes_processo
 
 ALTER TABLE public.qa_processo_manifestacoes_pf ENABLE ROW LEVEL SECURITY;
 
--- Equipe: acesso total.
+-- Equipe: acesso total. Perfil ativo em qa_usuarios_perfis.
 DROP POLICY IF EXISTS "qa_manifestacoes_staff_all" ON public.qa_processo_manifestacoes_pf;
 CREATE POLICY "qa_manifestacoes_staff_all" ON public.qa_processo_manifestacoes_pf
   FOR ALL TO authenticated
-  USING (public.qa_is_active_staff(auth.uid()))
-  WITH CHECK (public.qa_is_active_staff(auth.uid()));
+  USING (EXISTS (
+    SELECT 1 FROM public.qa_usuarios_perfis up
+     WHERE up.user_id = auth.uid() AND up.ativo = true
+  ))
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM public.qa_usuarios_perfis up
+     WHERE up.user_id = auth.uid() AND up.ativo = true
+  ));
 
 -- Cliente: LÊ o que é do processo dele. Nunca escreve — o texto é da PF, não
 -- dele, e permitir edição destruiria o valor probatório.
+--
+-- Duas portas de vínculo, as mesmas que o portal usa para achar o cadastro:
+-- `qa_clientes.user_id` (login direto) e `cliente_auth_links` (login social).
 DROP POLICY IF EXISTS "qa_manifestacoes_cliente_select" ON public.qa_processo_manifestacoes_pf;
 CREATE POLICY "qa_manifestacoes_cliente_select" ON public.qa_processo_manifestacoes_pf
   FOR SELECT TO authenticated
   USING (EXISTS (
-    SELECT 1 FROM public.qa_processos p
-    WHERE p.id = qa_processo_manifestacoes_pf.processo_id
-      AND p.cliente_id IN (
-        public.qa_current_cliente_id(auth.uid()),
-        public.qa_current_cliente_id_legado(auth.uid())
-      )
+    SELECT 1
+      FROM public.qa_processos p
+      JOIN public.qa_clientes c ON c.id = p.cliente_id
+     WHERE p.id = qa_processo_manifestacoes_pf.processo_id
+       AND (
+         c.user_id = auth.uid()
+         OR EXISTS (
+           SELECT 1
+             FROM public.cliente_auth_links l
+            WHERE l.user_id = auth.uid()
+              AND l.qa_cliente_id = c.id
+              AND l.status = 'active'
+         )
+       )
   ));
 
 -- service_role (edges) segue livre.
@@ -92,9 +120,9 @@ CREATE POLICY "qa_manifestacoes_service" ON public.qa_processo_manifestacoes_pf
 COMMIT;
 
 -- ── Conferência ─────────────────────────────────────────────────────────────
--- Deve voltar a tabela criada e as três políticas:
+-- Deve voltar TRÊS linhas (staff_all, cliente_select, service):
 --
--- SELECT tablename, policyname, cmd
+-- SELECT policyname, cmd
 --   FROM pg_policies
 --  WHERE tablename = 'qa_processo_manifestacoes_pf'
 --  ORDER BY policyname;
