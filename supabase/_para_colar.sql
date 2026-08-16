@@ -1,95 +1,100 @@
--- =============================================================================
--- EMBEDDING LOCAL: a coluna passa de vector(768) para vector(384)
---
--- Decisao do usuario (14/08/2026): usar o modelo embutido do Supabase
--- (gte-small, 384 dimensoes) em vez de contratar servico externo. Sem chave,
--- sem cartao, roda dentro da propria edge function.
---
--- Por que da para mexer sem medo: a coluna esta VAZIA. Medido no banco vivo —
--- 20 modelos aprovados, 0 com embedding_texto. Nada a migrar, nada a perder.
--- Ainda assim o bloco 1 aborta se encontrar qualquer valor preenchido.
---
--- ─── Por que o indice vetorial NAO volta ─────────────────────────────────
--- `idx_qa_modelos_embedding_cos` era ivfflat com lists=100 numa tabela de 20
--- linhas — 100 gavetas para 20 fichas. O Postgres nunca o usou (0 acessos em
--- 128 dias) e estava certo: varrer 20 linhas e mais rapido. Ele sai aqui porque
--- a mudanca de tipo exige, e nao volta por enquanto.
---
--- Recrie quando a tabela passar de ~1.000 modelos, com lists = linhas/1000:
---   CREATE INDEX idx_qa_modelos_embedding_cos
---     ON public.qa_documentos_modelos_aprovados
---     USING ivfflat (embedding_texto vector_cosine_ops) WITH (lists = 10);
---
--- Idempotente.
--- =============================================================================
+-- ============================================================================
+-- LEVANTAMENTO — REQUERIMENTO GERADO PELO PRÓPRIO CLIENTE
+-- ----------------------------------------------------------------------------
+-- Bloco 100% de LEITURA (só SELECT). Não altera nada, pode rodar em produção.
+-- Rode as 6 consultas de uma vez e me mande os 6 resultados.
+-- ============================================================================
 
-BEGIN;
+-- 1) A exigência do requerimento já tem modelo preenchível (template_key)?
+--    É isso que faz o botão "gerar preenchido" existir. Sem template_key,
+--    o cliente só recebe um PDF em branco.
+SELECT sd.servico_id,
+       s.nome_servico,
+       sd.id,
+       sd.tipo_documento,
+       sd.nome_documento,
+       sd.etapa,
+       sd.obrigatorio,
+       sd.ativo,
+       sd.modelo_url,
+       sd.exemplo_url,
+       sd.link_emissao,
+       sd.regra_validacao,
+       sd.regra_validacao ->> 'template_key'  AS template_key,
+       sd.regra_validacao -> 'template_quando' AS template_quando,
+       sd.instrucoes,
+       sd.observacoes_cliente
+  FROM public.qa_servicos_documentos sd
+  LEFT JOIN public.qa_servicos s ON s.id = sd.servico_id
+ WHERE sd.tipo_documento ILIKE '%requerimento%'
+    OR lower(sd.nome_documento) LIKE '%requerimento%'
+ ORDER BY sd.servico_id, sd.etapa, sd.ordem;
 
--- ─── 1) Guard: so prossegue se a coluna estiver realmente vazia ──────────
-DO $$
-DECLARE v_preenchidos bigint;
-BEGIN
-  SELECT count(*) INTO v_preenchidos
-    FROM public.qa_documentos_modelos_aprovados
-   WHERE embedding_texto IS NOT NULL;
+-- 2) O que a Biblioteca de documentos diz sobre o requerimento
+--    (é daqui que sai o texto "como enviar" que o cliente lê no portal).
+SELECT id,
+       codigo,
+       nome,
+       categoria,
+       ativo,
+       emissor_padrao,
+       validade_dias,
+       link_emissao,
+       link_modelo,
+       descricao_o_que_e,
+       descricao_como_enviar,
+       observacao_cliente,
+       base_legal
+  FROM public.qa_documentos_biblioteca
+ WHERE codigo ILIKE '%requerimento%'
+    OR lower(nome) LIKE '%requerimento%'
+ ORDER BY ativo DESC, nome;
 
-  IF v_preenchidos > 0 THEN
-    RAISE EXCEPTION
-      'Abortado: % modelo(s) ja tem embedding_texto. Trocar a dimensao apagaria '
-      'esses vetores. Confira antes de continuar.', v_preenchidos;
-  END IF;
+-- 3) Quais modelos .docx preenchíveis já existem no storage
+--    (é a lista de chaves que a geração automática consegue usar hoje).
+SELECT name AS caminho,
+       round((metadata ->> 'size')::numeric / 1024, 1) AS kb,
+       created_at,
+       updated_at
+  FROM storage.objects
+ WHERE bucket_id = 'qa-templates'
+ ORDER BY name;
 
-  RAISE NOTICE 'Guard OK: nenhum embedding preenchido, seguro trocar a dimensao.';
-END $$;
+-- 4) Todas as exigências que JÁ usam modelo preenchível hoje
+--    (serve de espelho: é a configuração que o requerimento precisa copiar).
+SELECT sd.servico_id,
+       sd.tipo_documento,
+       sd.nome_documento,
+       sd.regra_validacao ->> 'template_key' AS template_key,
+       sd.regra_validacao -> 'template_quando' AS template_quando
+  FROM public.qa_servicos_documentos sd
+ WHERE sd.ativo
+   AND sd.regra_validacao IS NOT NULL
+   AND (sd.regra_validacao ? 'template_key' OR sd.regra_validacao ? 'template_quando')
+ ORDER BY sd.servico_id, sd.tipo_documento;
 
--- ─── 2) O indice sai (a troca de tipo exige) ─────────────────────────────
-DROP INDEX IF EXISTS public.idx_qa_modelos_embedding_cos;
+-- 5) Tamanho do problema: quantos requerimentos estão pendentes/entregues hoje
+SELECT tipo_documento,
+       status,
+       count(*) AS qtd,
+       min(created_at) AS mais_antigo,
+       max(created_at) AS mais_recente
+  FROM public.qa_documentos_cliente
+ WHERE tipo_documento ILIKE '%requerimento%'
+ GROUP BY tipo_documento, status
+ ORDER BY tipo_documento, qtd DESC;
 
--- ─── 3) 768 -> 384 ───────────────────────────────────────────────────────
-ALTER TABLE public.qa_documentos_modelos_aprovados
-  ALTER COLUMN embedding_texto TYPE vector(384);
-
-COMMENT ON COLUMN public.qa_documentos_modelos_aprovados.embedding_texto IS
-  'Embedding gte-small (384 dim) gerado LOCALMENTE pelo runtime do Supabase. '
-  'Ver supabase/functions/_shared/embedding.ts. Nunca preencher com vetor de '
-  'outra origem sem alinhar a dimensao aqui e na RPC match_qa_modelos_aprovados.';
-
--- ─── 4) A RPC passa a aceitar 384 ────────────────────────────────────────
--- O typmod (768/384) nao faz parte da assinatura da funcao, entao CREATE OR
--- REPLACE substitui a versao antiga sem precisar de DROP.
-CREATE OR REPLACE FUNCTION public.match_qa_modelos_aprovados(
-  query_embedding vector(384),
-  filtro_tipo TEXT,
-  match_limit INTEGER DEFAULT 3
-)
-RETURNS TABLE (
-  id UUID,
-  tipo_documento TEXT,
-  nome_modelo TEXT,
-  origem_emissora TEXT,
-  similaridade NUMERIC,
-  palavras_chave_json JSONB,
-  campos_esperados_json JSONB
-)
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT
-    m.id,
-    m.tipo_documento,
-    m.nome_modelo,
-    m.origem_emissora,
-    (1 - (m.embedding_texto <=> query_embedding))::numeric AS similaridade,
-    m.palavras_chave_json,
-    m.campos_esperados_json
-  FROM public.qa_documentos_modelos_aprovados m
-  WHERE m.ativo = true
-    AND m.embedding_texto IS NOT NULL
-    AND (filtro_tipo IS NULL OR m.tipo_documento = filtro_tipo)
-  ORDER BY m.embedding_texto <=> query_embedding ASC
-  LIMIT GREATEST(match_limit, 1);
-$$;
-
-COMMIT;
+-- 6) Quão preenchido está o cadastro dos clientes ativos — se faltar dado,
+--    o requerimento sai com buraco e o cliente vai ter que responder wizard.
+SELECT count(*)                                                   AS clientes,
+       count(*) FILTER (WHERE nome_completo   IS NOT NULL AND nome_completo   <> '') AS com_nome,
+       count(*) FILTER (WHERE cpf             IS NOT NULL AND cpf             <> '') AS com_cpf,
+       count(*) FILTER (WHERE rg              IS NOT NULL AND rg              <> '') AS com_rg,
+       count(*) FILTER (WHERE data_nascimento IS NOT NULL)                           AS com_nascimento,
+       count(*) FILTER (WHERE nome_mae        IS NOT NULL AND nome_mae        <> '') AS com_nome_mae,
+       count(*) FILTER (WHERE endereco        IS NOT NULL AND endereco        <> '') AS com_endereco,
+       count(*) FILTER (WHERE cep             IS NOT NULL AND cep             <> '') AS com_cep,
+       count(*) FILTER (WHERE profissao       IS NOT NULL AND profissao       <> '') AS com_profissao
+  FROM public.qa_clientes
+ WHERE NOT coalesce(excluido, false)
+   AND NOT coalesce(arquivado, false);
