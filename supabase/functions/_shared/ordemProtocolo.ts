@@ -8,8 +8,10 @@
  * É a mesma numeração do ZIP de referência entregue pela equipe:
  *
  *   1.0 Requerimento do Sinarm            → Grupo 1 — Requerimento e Taxas
- *   1.1 GRU paga                          → Grupo 1
- *   1.2 Petição de efetiva necessidade    → Grupo 1
+ *   1.1 Boleto da GRU                     → Grupo 1
+ *   1.2 Comprovante de pagamento da taxa  → Grupo 1
+ *   1.3..1.8 Provas do caso               → Grupo 1
+ *   1.9 Petição de efetiva necessidade    → Grupo 1 (fecha, depois das provas)
  *   2.  Foto 3x4                          → Grupo 2 — Foto
  *   3.  Documento de identidade           → Grupo 3 — Identificação Civil
  *   4.  Comprovante de residência         → Grupo 4 — Identificação Residencial
@@ -70,11 +72,19 @@ interface Regra {
  */
 const MAPA: Record<string, Regra> = {
   requerimento_sinarm: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento do Sinarm" },
-  gru: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "GRU paga" },
-  gru_paga: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "GRU paga" },
-  peticao_efetiva_necessidade: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Peticao de efetiva necessidade" },
-  efetiva_necessidade: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Peticao de efetiva necessidade" },
-  // Provas da efetiva necessidade — vão anexas à petição, logo depois dela.
+
+  // BOLETO e COMPROVANTE são itens SEPARADOS no dossiê (equipe, 16/08/2026):
+  // a guia emitida e a prova de que ela foi paga são dois documentos, e é assim
+  // que as pastas de referência sempre foram montadas.
+  gru: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "Boleto da GRU" },
+  gru_boleto: { grupo: 1, ordem: 1, numero: "1.1", rotulo: "Boleto da GRU" },
+  gru_comprovante: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Comprovante de pagamento da taxa" },
+  gru_paga: { grupo: 1, ordem: 2, numero: "1.2", rotulo: "Comprovante de pagamento da taxa" },
+
+  // PROVAS PRIMEIRO, PETIÇÃO DEPOIS (equipe, 16/08/2026).
+  // A PF não exige ordem nenhuma — quem organiza somos nós. E a leitura fica
+  // mais coerente assim: o analista vê os fatos comprovados e só então lê o
+  // argumento que os amarra. Petição antes da prova obriga a voltar páginas.
   boletim_ocorrencia: { grupo: 1, ordem: 3, numero: "1.3", rotulo: "Boletim de ocorrencia" },
   bo: { grupo: 1, ordem: 3, numero: "1.3", rotulo: "Boletim de ocorrencia" },
   inquerito_policial: { grupo: 1, ordem: 4, numero: "1.4", rotulo: "Inquerito policial" },
@@ -86,7 +96,13 @@ const MAPA: Record<string, Regra> = {
   sentenca: { grupo: 1, ordem: 6, numero: "1.6", rotulo: "Sentenca" },
   medida_protetiva: { grupo: 1, ordem: 7, numero: "1.7", rotulo: "Medida protetiva" },
   comprovante_efetiva_necessidade: { grupo: 1, ordem: 8, numero: "1.8", rotulo: "Comprovacao de efetiva necessidade" },
-  documento_complementar_caso: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Documento complementar do caso" },
+
+  // A petição FECHA o bloco das provas.
+  peticao_efetiva_necessidade: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Peticao de efetiva necessidade" },
+  efetiva_necessidade: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Peticao de efetiva necessidade" },
+  declaracao_necessidade_efetiva: { grupo: 1, ordem: 9, numero: "1.9", rotulo: "Peticao de efetiva necessidade" },
+
+  documento_complementar_caso: { grupo: 1, ordem: 10, numero: "1.10", rotulo: "Documento complementar do caso" },
 
   requerimento_de_posse_de_arma_de_fogo: { grupo: 1, ordem: 0, numero: "1.0", rotulo: "Requerimento de Posse de Arma de Fogo" },
 
