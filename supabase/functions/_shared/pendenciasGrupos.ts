@@ -220,17 +220,21 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   }
 
   // Requerimento — último grupo. Também sai das declarações genéricas.
-  // A GRU e o acesso ao gov.br entram aqui de propósito: os três são a mesma
-  // etapa da vida do processo (gerar o requerimento, pagar a taxa, liberar o
-  // acesso para protocolar), e separá-los espalharia um passo só por três
-  // grupos diferentes no checklist do cliente.
+  // A GRU e o acesso ao gov.br entram aqui de propósito: são a mesma etapa da
+  // vida do processo (gerar o requerimento, pagar a taxa, liberar o acesso,
+  // assinar a juntada), e separá-los espalharia um passo só por vários grupos
+  // diferentes no checklist do cliente. Boleto e comprovante são itens
+  // distintos no dossiê, mas moram no mesmo grupo do checklist.
   if (
     t.startsWith("requerimento_") ||
     t === "requerimento" ||
     t.includes("sinarm_requerimento") ||
     t === "gru" ||
+    t === "gru_boleto" ||
+    t === "gru_comprovante" ||
     t === "gru_paga" ||
     t === "credencial_gov_br" ||
+    t === "juntada_assinada" ||
     t === "senha_gov_br" ||
     t === "acesso_gov_br"
   ) {

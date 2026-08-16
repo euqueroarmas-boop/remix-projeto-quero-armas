@@ -18,7 +18,7 @@
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { itemContaParaConclusao } from "../_shared/checklistVisibility.ts";
+import { ehExigenciaEtapaFinal, itemContaParaConclusao, itemVisivelGuia } from "../_shared/checklistVisibility.ts";
 import { estaVencido, hojeISOBRT, validadeVigente } from "../_shared/vigenciaDossie.ts";
 import { mesclarRespostasCadastro } from "../_shared/respostasCadastro.ts";
 
@@ -162,6 +162,16 @@ Deno.serve(async (req) => {
     // respostas atuais NÃO contam como pendentes.
     const obrigatorios = lista.filter((d) => itemContaParaConclusao(d, respostas));
 
+    // Este processo tem passos que só abrem AGORA (assinar a juntada no gov.br,
+    // gerar o código de duas etapas)? Eles ficaram de fora da contagem acima de
+    // propósito — não são pré-requisito para protocolar, eles SÃO o protocolo.
+    // Mas mudam o e-mail: "acabou, pode relaxar" seria mentira num processo em
+    // que o cliente ainda tem duas coisas para fazer, e mentira que faz ele
+    // parar de olhar o portal justamente na hora de agir.
+    const temEtapaFinal = lista.some((d) =>
+      d?.obrigatorio === true && ehExigenciaEtapaFinal(d) && itemVisivelGuia(d, respostas)
+    );
+
     if (obrigatorios.length === 0) {
       return json({ pronto: false, motivo: "sem_exigencias_obrigatorias" });
     }
@@ -281,7 +291,11 @@ Deno.serve(async (req) => {
         try {
           const { sendTransactional } = await import("../_shared/sendTransactional.ts");
           const r = await sendTransactional({
-            templateName: "documentacao-completa",
+            // TUDO É COMUNICADO POR E-MAIL (regra da equipe, 16/08/2026). Quando
+            // o processo tem etapa final, o e-mail que sai aqui é o que diz que
+            // chegamos no momento da entrega à PF e que o cliente precisa
+            // assinar a juntada e gerar o código do gov.br.
+            templateName: temEtapaFinal ? "etapa-final-liberada" : "documentacao-completa",
             recipientEmail: (cliente as any).email,
             idempotencyKey: `pronto-proto-cli-${processoId}`,
             templateData: {

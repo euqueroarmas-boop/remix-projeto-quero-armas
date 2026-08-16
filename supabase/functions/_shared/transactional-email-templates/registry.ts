@@ -22,6 +22,7 @@ import { template as clienteJaTemConta } from './cliente-ja-tem-conta.tsx'
 import { template as acessoLiberadoPortal } from './acesso-liberado-portal.tsx'
 import { template as novaContratacaoAdmin } from './nova-contratacao-admin.tsx'
 import { template as documentacaoCompleta } from './documentacao-completa.tsx'
+import { template as etapaFinalLiberada } from './etapa-final-liberada.tsx'
 import { template as processoProntoProtocolar } from './processo-pronto-protocolar.tsx'
 import { template as processoProtocolado } from './processo-protocolado.tsx'
 import { template as vencimentoDocumento } from './vencimento-documento.tsx'
@@ -129,6 +130,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'gte-alerta-equipe': gteAlertaEquipe,
   // Cliente — processo
   'documentacao-completa': documentacaoCompleta,
+  'etapa-final-liberada': etapaFinalLiberada,
   // Alertas / vencimentos
   'vencimento-documento': vencimentoDocumento,
   'documento-mudanca-faixa': documentoMudancaFaixa,

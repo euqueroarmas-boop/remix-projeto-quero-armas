@@ -219,8 +219,16 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   // transação), não ao processo administrativo. O único comprovante de pagamento
   // que pertence ao processo é a GRU (taxa da Polícia Federal / Exército).
   { value: "comprovante_pagamento", label: "Comprovante de pagamento do contrato", short: "PAGTO. CONTRATO", categoria: "juridico", escopo: "processo", aceitaIA: true },
-  { value: "gru", label: "GRU — Guia de Recolhimento da União (taxa do processo)", short: "GRU", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
+  // BOLETO E COMPROVANTE SÃO DUAS PEÇAS (equipe, 16/08/2026): o boleto prova o
+  // valor e o código da taxa, o comprovante prova que ela foi paga. No dossiê
+  // entregue à PF são os itens 1.1 e 1.2, separados.
+  { value: "gru", label: "GRU — boleto da taxa do processo", short: "GRU", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
+  { value: "gru_comprovante", label: "GRU — comprovante de pagamento da taxa", short: "GRU PAGA", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
   { value: "requerimento_de_posse_de_arma_de_fogo", label: "Requerimento de Posse de Arma de Fogo (Polícia Federal)", short: "REQUERIMENTO", categoria: "documentos_processo", escopo: "processo", aceitaIA: true },
+  // O dossiê fechado, assinado pelo cliente no gov.br — é o arquivo que
+  // efetivamente entra na delegacia. Arquivá-lo como "outro" apagaria a peça
+  // que mais precisa ser reencontrada depois.
+  { value: "juntada_assinada", label: "Juntada final assinada no gov.br", short: "JUNTADA", categoria: "documentos_processo", escopo: "processo", revisaoHumanaObrigatoria: true },
   { value: "protocolo_processo", label: "Protocolo do processo", short: "PROTOCOLO", categoria: "documentos_processo", escopo: "processo" },
   { value: "oficio", label: "Ofício", short: "OFÍCIO", categoria: "documentos_processo", escopo: "processo" },
   { value: "despacho", label: "Despacho / movimentação", short: "DESPACHO", categoria: "documentos_processo", escopo: "processo" },

@@ -24,6 +24,11 @@ export const PROCESSO_TO_HUB_TIPO: Record<string, string> = {
   // nacional, cedula_identidade_rg_com_cpf, documento_identidade, identidade,
   // rg) saíram daqui: nenhum catálogo as produz, e exigência antiga que ainda
   // as carregue fecha pelos apelidos criados em 20260807200000.
+  // GRU — grafias legadas do comprovante de pagamento da taxa. O tipo canônico
+  // é `gru_comprovante`; sem estes apelidos um upload antigo cairia em "outro"
+  // e sumiria do Hub.
+  gru_paga: "gru_comprovante",
+  gru_boleto: "gru",
   comprovante_endereco_ano_2022: "comprovante_residencia",
   comprovante_endereco_ano_2023: "comprovante_residencia",
   comprovante_endereco_ano_2024: "comprovante_residencia",
@@ -190,7 +195,8 @@ const HUB_TIPOS_VALIDOS = new Set([
   "procuracao","recurso_administrativo_doc","mandado_seguranca_doc",
   "certidao_alteracao_nome",
   "documento_identificacao_terceiro","foto_3x4","boletim_ocorrencia",
-  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento","gru",
+  "requerimento_de_posse_de_arma_de_fogo","comprovante_pagamento","gru","gru_comprovante",
+  "juntada_assinada",
   "habilitacao_cacador_ibama",
   "contrato_assinado","procuracao_assinada",
   "outro",
