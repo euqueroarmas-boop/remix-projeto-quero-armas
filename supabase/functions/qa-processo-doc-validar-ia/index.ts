@@ -35,6 +35,26 @@ function json(body: unknown, status = 200) {
 const APROVA_AUTO_MIN = 0.90;
 const REVISAO_HUMANA_MIN = 0.70;
 
+/**
+ * Códigos do requerimento gerado no SINARM (o formulário da Polícia Federal
+ * que o cliente preenche com o gov.br dele). A mesma exigência aparece com
+ * nomes diferentes conforme a época do cadastro.
+ *
+ * Lista fechada de propósito: o "Requerimento de Empresário" da Junta
+ * Comercial tem nome parecido mas é documento de ocupação lícita, e não pode
+ * cair no extrator de número/vencimento do SINARM.
+ *
+ * ESPELHO de `src/lib/quero-armas/requerimentoSinarm.ts` (com testes). Deno e
+ * Vite não compartilham módulo, então as duas cópias mudam juntas — mesma
+ * convenção já usada em pendenciasGrupos.
+ */
+const REQUERIMENTO_SINARM_TIPOS = new Set([
+  "requerimento_de_posse_de_arma_de_fogo",
+  "requerimento_posse_arma_fogo",
+  "requerimento_posse",
+  "requerimento_sinarm",
+]);
+
 // ===== APRENDIZADO SUPERVISIONADO — utilitários =====
 function normalizarTexto(s: string): string {
   return (s || "")
@@ -1413,6 +1433,52 @@ Deno.serve(async (req) => {
         if (!dataValidade || dataValDanf3e < dataValidade) {
           dataValidade = dataValDanf3e;
         }
+      }
+    }
+
+    // ===================================================================
+    // REQUERIMENTO DO SINARM — número e vencimento por regex, não por IA
+    // ===================================================================
+    // O número do requerimento tem formato rígido: AAAAMMDDHHMMSSNNNN, 18
+    // dígitos começando pelo ano (conferido em cinco requerimentos reais —
+    // 202509251233571981, 202512241149324512, 202510161000094067…). É o mesmo
+    // dado do código de barras impresso nas três páginas da via da PF.
+    //
+    // Extrair por regex em vez de pedir ao modelo é deliberado: é por esse
+    // número que o cliente reabre o requerimento no site da PF para emitir o
+    // boleto, e um dígito trocado o leva a um requerimento que não é o dele.
+    // Regex não alucina; o modelo, em número longo, troca dígito.
+    //
+    // O vencimento impresso é o relógio REAL do documento (30 dias da emissão)
+    // e vale mais que qualquer validade calculada por regra nossa.
+    if (REQUERIMENTO_SINARM_TIPOS.has(String(doc.tipo_documento || "").toLowerCase())) {
+      // No PDF da PF o rótulo sai DEPOIS do valor na ordem de leitura
+      // ("202509251233571981 26/10/2025Data de Vencimento:NÚMERO DO
+      // REQUERIMENTO:"), então casar por rótulo não funciona — quem identifica
+      // é o formato.
+      const fonteTexto =
+        typeof pdfTexto === "string" && pdfTexto.length >= 40
+          ? pdfTexto
+          : JSON.stringify(camposExtraidosFinal ?? {});
+
+      const numero = fonteTexto.match(/\b(20\d{16})\b/)?.[1] ?? null;
+      if (numero && !camposExtraidosFinal.numero_requerimento) {
+        camposExtraidosFinal.numero_requerimento = numero;
+      }
+
+      const vencBR =
+        fonteTexto.match(/(\d{2}\/\d{2}\/\d{4})\s*Data\s+de\s+Vencimento/i)?.[1] ??
+        fonteTexto.match(/Data\s+de\s+Vencimento[:\s]*(\d{2}\/\d{2}\/\d{4})/i)?.[1] ??
+        null;
+      if (vencBR) {
+        if (!camposExtraidosFinal.data_vencimento_requerimento) {
+          camposExtraidosFinal.data_vencimento_requerimento = vencBR;
+        }
+        const [dd, mm, aaaa] = vencBR.split("/");
+        const vencISO = `${aaaa}-${mm}-${dd}`;
+        // A data impressa pela própria PF substitui a validade calculada:
+        // é ela que o cliente vê no documento e que a delegacia cobra.
+        if (!isNaN(new Date(vencISO).getTime())) dataValidade = vencISO;
       }
     }
 
