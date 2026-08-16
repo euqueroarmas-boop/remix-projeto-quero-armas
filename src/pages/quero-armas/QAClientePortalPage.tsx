@@ -35,6 +35,7 @@ import { ClienteProcessosSection } from "@/components/quero-armas/processos/Clie
 import ContratoBlock from "@/components/quero-armas/portal/ContratoBlock";
 import PendenciasGuiadasPopup, { type PendenciaItem } from "@/components/quero-armas/portal/PendenciasGuiadasPopup";
 import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNecessidadeModal";
+import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/RequerimentoSinarmRoteiro";
 import {
   calcularPassosEfetiva,
   ehTipoEfetivaNecessidade,
@@ -2170,9 +2171,19 @@ export default function QAClientePortalPage() {
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
         onPrimary: () => {},
-        entregarLabel: ehEfetivaNecessidade(rawTipo) ? "Iniciar efetiva necessidade" : undefined,
+        entregarLabel: ehEfetivaNecessidade(rawTipo)
+          ? "Iniciar efetiva necessidade"
+          : ehRequerimentoSinarm(rawTipo)
+            ? "Abrir o roteiro do requerimento"
+            : undefined,
         // A efetiva necessidade roda DENTRO do pop-up guiado: os seus passos
         // são itens do mesmo checklist, não um segundo pop-up por cima.
+        //
+        // O requerimento segue a mesma regra, por um motivo diferente: ele é
+        // preenchido no site da Polícia Federal, com o gov.br do cliente. Não
+        // existe modelo para baixar (o campo sempre esteve vazio no banco, que
+        // é por que este passo nunca destravou). O que a gente entrega é o
+        // roteiro com os dados prontos para copiar, na ordem do formulário.
         corpo:
           ehEfetivaNecessidade(rawTipo) && doc?.processo_id && cliente?.id ? (
             <EfetivaNecessidadeModal
@@ -2182,6 +2193,16 @@ export default function QAClientePortalPage() {
               clienteId={Number(cliente.id)}
               onClose={() => setShowContratoPopup(false)}
               onConcluido={() => setDocsReloadKey((k) => k + 1)}
+            />
+          ) : ehRequerimentoSinarm(rawTipo) && cliente ? (
+            <RequerimentoSinarmRoteiro
+              cliente={cliente}
+              statusDocumento={doc?.status ?? null}
+              onEntregar={() => {
+                setEditDocTipo(hubTipo);
+                setShowAddDoc(true);
+                setShowContratoPopup(false);
+              }}
             />
           ) : undefined,
         onEntregar: () => {
@@ -2209,6 +2230,22 @@ export default function QAClientePortalPage() {
       ["declaracao_necessidade_efetiva", "comprovante_efetiva_necessidade"].includes(
         String(rawTipo ?? "").trim().toLowerCase(),
       );
+
+    /**
+     * Requerimento do SINARM (posse). Casa também os códigos legados, porque a
+     * mesma exigência aparece com nome diferente conforme a época do cadastro.
+     *
+     * O "Requerimento de Empresário" da Junta Comercial NÃO entra aqui: apesar
+     * do nome parecido, é documento de ocupação lícita — daí a checagem por
+     * lista fechada em vez de `includes("requerimento")`.
+     */
+    const ehRequerimentoSinarm = (rawTipo: string) =>
+      [
+        "requerimento_de_posse_de_arma_de_fogo",
+        "requerimento_posse_arma_fogo",
+        "requerimento_posse",
+        "requerimento_sinarm",
+      ].includes(String(rawTipo ?? "").trim().toLowerCase());
 
     const ehDocDeTitularTerceiro = (rawTipo: string) => {
       const t = rawTipo.toLowerCase();

@@ -38,14 +38,27 @@ export const EXPLICACOES_REGISTRO: Record<string, ExplicacaoPendencia> = {
   // ────────────────────────────────────────────────────────────────────────
   // Requerimento / formulários do processo
   // ────────────────────────────────────────────────────────────────────────
+  /**
+   * O texto anterior mandava "baixe o modelo do requerimento no Hub". Esse
+   * modelo NUNCA existiu — o campo sempre esteve vazio no banco. O cliente
+   * clicava, não achava nada, e o passo travava aí. Era esse o motivo real de
+   * nenhum requerimento ter entrado pelo sistema até hoje.
+   *
+   * Não existe modelo porque não pode existir: o requerimento é gerado dentro
+   * do SINARM, com o gov.br do próprio cliente. O que dá para entregar é o
+   * roteiro com os dados prontos para copiar — quem manda nesse passo agora é
+   * o RequerimentoSinarmRoteiro, embutido no pop-up guiado.
+   */
   requerimento_de_posse_de_arma_de_fogo: {
     titulo: "Requerimento de Posse de Arma de Fogo",
     passos: [
-      "Baixe o modelo do requerimento no Hub Documental (aba \"Baixar modelo\").",
-      "Preencha com sua letra ou digite, assine e escaneie em PDF.",
-      "Envie o PDF assinado — a IA confere se os dados batem com seu cadastro.",
+      "Este requerimento é gerado dentro do sistema da Polícia Federal, com o seu gov.br. Não existe modelo para baixar — nem nós podemos gerar por você.",
+      "Abra o roteiro aqui no portal: ele traz os seus dados na mesma ordem dos campos do site da PF, cada um com botão de copiar.",
+      "Ao final o próprio sistema da PF gera o requerimento e o boleto da taxa. Baixe os dois e envie aqui.",
+      "A partir daí a nossa equipe monta o dossiê e protocola no seu nome.",
     ],
-    observacao: "Este é o formulário oficial que instrui o processo perante a Polícia Federal.",
+    observacao:
+      "Copie os dados do roteiro em vez de digitar de cabeça: endereço ou nome divergente do que consta nos seus documentos é motivo de exigência da Polícia Federal.",
   },
   /**
    * Efetiva necessidade — regra do usuário (31/07/2026): PRIMEIRO as provas,
