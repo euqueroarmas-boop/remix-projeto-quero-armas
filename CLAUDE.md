@@ -7,6 +7,25 @@
 - Branch de trabalho: sempre `main`.
 - Mensagem de commit em português, descritiva, com o prefixo convencional (`fix:`, `feat:`, `refactor:`, etc.).
 
+## Diagnóstico: PRIMEIRO os dados, DEPOIS a explicação — CANÔNICO
+
+Vale para toda pergunta e toda resposta, sem exceção.
+
+- **Não explicar nada antes de ter TODOS os dados.** Enquanto faltar o resultado de
+  qualquer query, a resposta é só o pedido das queries — nada de hipótese, nada de
+  "minha leitura é", nada de diagnóstico parcial. Explicação sem dado completo gera
+  erro, e erro me custa tempo.
+- **Pedir tudo de uma vez, na primeira mensagem.** Levantar antes o conjunto inteiro
+  de queries/arquivos/informações necessárias e mandar em um bloco só. Proibido pedir
+  uma query, receber, pedir outra, receber, pedir mais uma.
+- **Depois que todo o SQL estiver respondido, explicar de forma RESUMIDA e para
+  LEIGO.** Sem jargão, sem `arquivo.tsx:linha`, sem trecho de código, sem lista de
+  defeitos numerada de dez itens. O que aconteceu, de quem é o problema, e o que
+  fazer — em poucas linhas.
+- **Não esticar conversa.** Nada de repetir o que já foi dito, recapitular a análise
+  anterior ou reabrir ponto já fechado.
+- Detalhe técnico só se eu pedir "me explica tecnicamente".
+
 ## Migrations e SQL — SEMPRE NA TELA
 
 O Lovable **não aplica migrations**. Todo SQL precisa ser colado à mão no SQL Editor
