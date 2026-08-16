@@ -46,6 +46,13 @@ const STATUS: Array<{ valor: string; label: string }> = [
   { valor: "recurso_indeferido", label: "Recurso NEGADO — abre prazo do MS" },
 ];
 
+/**
+ * Status em que a PF EXIGE algo do cliente. Só nesses a IA é acionada:
+ * parecer de andamento e deferimento não abrem exigência, e rodar a IA neles
+ * seria pagar chamada para receber lista vazia.
+ */
+const PEDE_ALGO = new Set(["notificado", "indeferido", "recurso_indeferido"]);
+
 const CANAIS: Array<{ valor: string; label: string }> = [
   { valor: "sistema", label: "Pelo site da PF" },
   { valor: "email", label: "Por e-mail" },
@@ -147,6 +154,9 @@ export default function ColarManifestacaoPFModal({
   const [canal, setCanal] = useState("sistema");
   const [contato, setContato] = useState("");
   const [salvando, setSalvando] = useState(false);
+  // Ligado por padrão: é o caminho normal. O desligar existe para o caso em que
+  // a equipe já sabe o que pedir e não quer a IA abrindo exigência a mais.
+  const [analisarComIA, setAnalisarComIA] = useState(true);
 
   if (!open) return null;
 
@@ -164,7 +174,7 @@ export default function ColarManifestacaoPFModal({
     setSalvando(true);
     try {
       const { data: sess } = await supabase.auth.getUser();
-      const { error } = await supabase.from("qa_processo_manifestacoes_pf" as never).insert({
+      const { data: inserida, error } = await supabase.from("qa_processo_manifestacoes_pf" as never).insert({
         processo_id: processoId,
         tipo,
         status_processo: statusProcesso || null,
@@ -178,8 +188,9 @@ export default function ColarManifestacaoPFModal({
         canal_resposta: canal || null,
         contato: contato.trim() || null,
         registrado_por: sess?.user?.id ?? null,
-      } as never);
+      } as never).select("id").maybeSingle();
       if (error) throw error;
+      const manifestacaoId = (inserida as { id?: string } | null)?.id ?? null;
 
       // O status do processo acompanha o documento: colar a notificação e
       // esquecer de mudar o status deixaria o cliente vendo "em análise"
@@ -275,6 +286,33 @@ export default function ColarManifestacaoPFModal({
       } catch (e) {
         console.warn("[manifestacao] e-mail ao cliente falhou", e);
         toast.warning("Registrado, mas o e-mail ao cliente falhou. Avise manualmente.");
+      }
+
+      // ── A IA LÊ O DELEGADO E ABRE AS EXIGÊNCIAS ─────────────────────────
+      // Roda DEPOIS de tudo o que importa já estar salvo. Se a IA cair, o
+      // texto, o status, o prazo e o e-mail já foram: a equipe perde a
+      // automação, não o registro. Só faz sentido quando a PF pediu algo —
+      // parecer de andamento e deferimento não geram exigência.
+      if (manifestacaoId && analisarComIA && PEDE_ALGO.has(statusProcesso)) {
+        try {
+          const { data: r, error: iaErr } = await supabase.functions.invoke(
+            "qa-manifestacao-analisar",
+            { body: { manifestacao_id: manifestacaoId } },
+          );
+          if (iaErr) throw iaErr;
+          const criadas = Number((r as { exigencias_criadas?: number } | null)?.exigencias_criadas ?? 0);
+          const apontados = ((r as { elementos_novos?: unknown[] } | null)?.elementos_novos ?? []).length;
+          if (criadas > 0) {
+            toast.success(`IA abriu ${criadas} exigência(s) no checklist do cliente.`);
+          } else if (apontados > 0) {
+            toast.info("IA leu o texto: o que a PF pediu já está no checklist.");
+          } else {
+            toast.info("IA leu o texto e não encontrou documento novo a pedir.");
+          }
+        } catch (e) {
+          console.warn("[manifestacao] análise da IA falhou", e);
+          toast.warning("Registrado, mas a IA não conseguiu ler o texto. Abra as exigências à mão.");
+        }
       }
 
       toast.success("Registrado. O cliente já vê o texto no portal.");
@@ -378,7 +416,24 @@ export default function ColarManifestacaoPFModal({
           </div>
         </div>
 
-        <div className="mt-3 flex justify-end gap-2">
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <label className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+            <input
+              type="checkbox"
+              checked={analisarComIA}
+              onChange={(e) => setAnalisarComIA(e.target.checked)}
+              className="h-3.5 w-3.5 accent-[#8A1224]"
+            />
+            IA lê o texto e abre as exigências
+            {!PEDE_ALGO.has(statusProcesso) && (
+              <span className="font-medium normal-case tracking-normal text-slate-400">
+                — só roda em notificação ou indeferimento
+              </span>
+            )}
+          </label>
+        </div>
+
+        <div className="mt-2 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="h-8 rounded-md px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
             Cancelar
           </button>

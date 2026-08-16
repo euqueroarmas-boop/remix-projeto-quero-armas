@@ -39,6 +39,7 @@ import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/Requerime
 import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
 import ProtocoloStatusPanel, { type ManifestacaoPF } from "@/components/quero-armas/portal/ProtocoloStatusPanel";
 import LinhaDoTempoProcessoPF from "@/components/quero-armas/portal/LinhaDoTempoProcessoPF";
+import AvisoExigenciaPF from "@/components/quero-armas/portal/AvisoExigenciaPF";
 
 /** Status em que o processo já está com a Polícia Federal. Ver `processoNaPF`. */
 const STATUS_PROCESSO_NA_PF = [
@@ -1742,7 +1743,7 @@ export default function QAClientePortalPage() {
       const { data } = await supabase
         .from("qa_processo_manifestacoes_pf" as never)
         .select(
-          "tipo, status_processo, texto, delegado_nome, delegado_cargo, unidade_pf, data_documento, prazo_dias, prazo_limite, canal_resposta, contato, created_at",
+          "tipo, status_processo, texto, delegado_nome, delegado_cargo, unidade_pf, data_documento, prazo_dias, prazo_limite, canal_resposta, contato, created_at, analise_ia_json",
         )
         .eq("processo_id", manifestacoesAlvoId)
         .order("created_at", { ascending: false });
@@ -1750,6 +1751,35 @@ export default function QAClientePortalPage() {
     })();
     return () => { vivo = false; };
   }, [manifestacoesAlvoId]);
+
+  /**
+   * O CONTEXTO DA TARJA que acompanha as exigências abertas pela PF.
+   *
+   * Sai da manifestação MAIS RECENTE: é ela que abriu o prazo em curso. Usar a
+   * primeira mostraria ao cliente um prazo que já morreu, e nada corrói mais a
+   * confiança num contador do que ele estar errado uma vez.
+   */
+  const avisoPF = useMemo(() => {
+    const ultima = manifestacoesPF[0];
+    if (!ultima) return null;
+    const prazoLimite = ultima.prazo_limite ?? null;
+    let diasRestantes: number | null = null;
+    if (prazoLimite) {
+      const [y, m, d] = String(prazoLimite).slice(0, 10).split("-").map(Number);
+      const hoje = new Date();
+      diasRestantes = Math.round(
+        (Date.UTC(y, m - 1, d) -
+          Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())) / 86_400_000,
+      );
+    }
+    return {
+      delegadoNome: ultima.delegado_nome ?? null,
+      prazoLimite,
+      diasRestantes,
+      riscos: ultima.analise_ia_json?.riscos ?? [],
+      indeferido: String(ultima.status_processo ?? "").toLowerCase().includes("indeferido"),
+    };
+  }, [manifestacoesPF]);
 
   // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
   useEffect(() => {
@@ -2251,6 +2281,14 @@ export default function QAClientePortalPage() {
         }
         return;
       }
+      // Regra gravada na própria linha do processo — é dela que saem o grupo e
+      // a origem da exigência (catálogo do serviço x pedido do delegado).
+      const regraDoc = (doc.regra_validacao ?? null) as {
+        grupo_checklist?: string | null;
+        ordem_grupo_checklist?: number | null;
+        origem?: string | null;
+        delegado_nome?: string | null;
+      } | null;
       items.push({
         id: `doc:${doc.id}`,
         kind: "documento",
@@ -2263,6 +2301,30 @@ export default function QAClientePortalPage() {
         rawTipo,
         fallbackNome: nomeFallback,
         contexto: "Exigência do processo",
+        // GRUPO GRAVADO NA PRÓPRIA LINHA. As exigências criadas depois de uma
+        // manifestação da PF não existem no catálogo do serviço — nascem no
+        // processo, uma a uma, a partir do que o delegado pediu. Sem ler o
+        // grupo daqui, elas cairiam na classificação temática por tipo (um
+        // boletim de ocorrência iria para "Idoneidade") e se perderiam no meio
+        // do checklist, quando são justamente as que têm prazo fatal.
+        grupoProprio: regraDoc?.grupo_checklist ?? null,
+        ordemGrupoPropria: Number(regraDoc?.ordem_grupo_checklist) || null,
+        // TARJA DE CONTEXTO. Uma exigência que aparece do nada, depois de o
+        // cliente já ter dado tudo por entregue, é lida como bug do sistema —
+        // e vira ligação para a equipe. A tarja diz quem pediu, o que acontece
+        // se ele não cumprir e até quando.
+        avisoTopo:
+          regraDoc?.origem === "manifestacao_pf"
+            ? (
+              <AvisoExigenciaPF
+                delegadoNome={regraDoc?.delegado_nome ?? avisoPF?.delegadoNome ?? null}
+                prazoLimite={avisoPF?.prazoLimite ?? null}
+                diasRestantes={avisoPF?.diasRestantes ?? null}
+                riscos={avisoPF?.riscos ?? []}
+                indeferido={avisoPF?.indeferido ?? false}
+              />
+            )
+            : undefined,
         instrucoesCatalogo: catFinal?.instrucoes ?? null,
         linkEmissao: catFinal?.link_emissao ?? null,
         observacoesCatalogo: catFinal?.observacoes_cliente ?? null,
@@ -2768,13 +2830,18 @@ export default function QAClientePortalPage() {
         // Perguntas e documentos usam classificação temática (ex.: pergunta de
         // endereço → "Identificação residencial"; pergunta sem tema → "Cadastros").
         : grupoDaPendenciaHelper(it.rawTipo, it.tipo);
-      const grupoOverride = normalizarGrupoId(catalogoGrupo?.grupo_checklist);
+      // A linha do processo vence o catálogo, e o catálogo vence o tema.
+      const grupoOverride =
+        normalizarGrupoId(it.grupoProprio) ?? normalizarGrupoId(catalogoGrupo?.grupo_checklist);
       const metaOverride = grupoOverride
         ? PENDENCIA_GRUPOS[grupoOverride]
         : undefined;
+      const ordemOverride = normalizarGrupoId(it.grupoProprio)
+        ? it.ordemGrupoPropria
+        : catalogoGrupo?.ordem_grupo_checklist;
       const g = grupoOverride
         && metaOverride
-        ? { ...metaOverride, ordem: catalogoGrupo?.ordem_grupo_checklist ?? metaOverride.ordem }
+        ? { ...metaOverride, ordem: ordemOverride ?? metaOverride.ordem }
         : gBase;
       const tier = it.kind === "signature" ? 0 : 1;
       const [servicoOrdem, servicoCriacao] =

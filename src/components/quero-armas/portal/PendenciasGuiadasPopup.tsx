@@ -63,6 +63,14 @@ export interface PendenciaItem {
    *  (2) exibir o chip de grupo no header do popup. */
   grupoId?: PendenciaGrupoId;
   grupoLabel?: string;
+  /**
+   * Grupo gravado na PRÓPRIA linha do checklist, e não no catálogo do serviço.
+   * É o caso das exigências abertas a partir de uma manifestação da PF: elas
+   * nascem no processo, uma a uma, e não existem em catálogo nenhum.
+   * Vence o catálogo, que por sua vez vence a classificação por tipo.
+   */
+  grupoProprio?: string | null;
+  ordemGrupoPropria?: number | null;
   /** Rótulo curto exibido na lista de próximos passos. */
   label: string;
   /** Tipo canônico (para signature: "contract"|"procuration"; para documento: hub_tipo). */
@@ -135,6 +143,15 @@ export interface PendenciaItem {
  * ação do rodapé saem de cena: quem manda é o fluxo embutido.
  */
   corpo?: React.ReactNode;
+  /**
+   * Aviso de contexto exibido ANTES do título do passo — hoje, o alerta de que
+   * a exigência veio de uma notificação ou indeferimento da PF.
+   *
+   * Fica fora de `corpo` de propósito: `corpo` SUBSTITUI o passo a passo e os
+   * botões, e aqui o que se quer é o passo normal com uma tarja em cima. São
+   * coisas diferentes e juntá-las custaria o botão de enviar o arquivo.
+   */
+  avisoTopo?: React.ReactNode;
 }
 
 interface Props {
@@ -719,6 +736,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             ) : null}
           </div>
           <div className={asPage ? "mt-4 mb-1 h-px bg-[#F0F0F0]" : "mt-4 h-px bg-[#F0F0F0]"} />
+          {active.avisoTopo}
           {/* Sem recuo: o ícone que justificava os 36px saiu do header. */}
           <div>
             {/* Corpo customizado (ex.: efetiva necessidade) já traz o próprio

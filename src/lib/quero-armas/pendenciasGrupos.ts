@@ -8,6 +8,7 @@
 // ============================================================================
 
 export type PendenciaGrupoId =
+  | "exigencias_pf"
   | "assinaturas"
   | "perguntas"
   | "identificacao"
@@ -33,6 +34,11 @@ export interface PendenciaGrupoMeta {
 // → Idoneidade → Efetiva necessidade → Laudos → Requerimento → Fechamento
 // Habitualidade fica entre Idoneidade e Arma, mas é filtrada para compra/posse.
 const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
+  // A PF PASSA NA FRENTE DE TUDO. Quando a delegacia notifica, corre prazo
+  // fatal de 10 dias e o requerimento é arquivado se ninguém responder. Um
+  // contrato pendente ou uma certidão vencendo em 20 dias podem esperar; isto
+  // não pode. Por isso ordem 5, antes até das assinaturas.
+  exigencias_pf: { id: "exigencias_pf", label: "Exigências da Polícia Federal", ordem: 5 },
   assinaturas:   { id: "assinaturas",   label: "Contratos",                ordem: 10 },
   perguntas:     { id: "perguntas",     label: "Cadastros",                ordem: 20 },
   identificacao: { id: "identificacao", label: "Identificação civil",      ordem: 30 },

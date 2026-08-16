@@ -66,6 +66,17 @@ export interface ManifestacaoPF {
   canal_resposta?: string | null;
   contato?: string | null;
   created_at?: string | null;
+  /**
+   * Leitura da IA sobre este documento: o que a PF disse, os riscos concretos
+   * de não cumprir e o que precisa ser juntado de novo. Ausente enquanto a
+   * análise não roda — e o painel funciona sem ela.
+   */
+  analise_ia_json?: {
+    resumo_para_cliente?: string;
+    o_que_a_pf_disse?: string[];
+    riscos?: string[];
+    natureza?: string;
+  } | null;
 }
 
 const TIPO_ROTULO: Record<string, string> = {
@@ -180,6 +191,37 @@ export default function ProtocoloStatusPanel({
               <p className="mt-0.5 text-[11px] leading-snug text-amber-900">
                 Não precisa fazer nada sozinho — nós preparamos a resposta. Perder este prazo faz
                 o requerimento ser arquivado.
+              </p>
+            </div>
+          )}
+
+          {/*
+            TRADUÇÃO ANTES DO ORIGINAL. O texto do delegado é juridiquês denso:
+            o cliente lê duas linhas, não entende, e liga para a equipe
+            perguntando "isso é ruim?". O resumo responde essa pergunta em
+            três frases. Ele vem ANTES, e não no lugar — o original continua
+            logo abaixo, inteiro, porque é ele que vale como prova.
+          */}
+          {ultima.analise_ia_json?.resumo_para_cliente && (
+            <div className="border-b border-slate-100 bg-slate-50 px-3 py-2.5">
+              <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-slate-500">
+                Em poucas palavras
+              </p>
+              <p className="mt-1 text-[12px] font-semibold leading-snug text-slate-800">
+                {ultima.analise_ia_json.resumo_para_cliente}
+              </p>
+              {(ultima.analise_ia_json.o_que_a_pf_disse ?? []).length > 0 && (
+                <ul className="mt-1.5 space-y-1 text-[11px] leading-snug text-slate-700">
+                  {(ultima.analise_ia_json.o_que_a_pf_disse ?? []).slice(0, 5).map((x, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-400" />
+                      <span>{x}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-1.5 text-[10px] text-slate-500">
+                Resumo automático. O texto oficial, na íntegra, está logo abaixo.
               </p>
             </div>
           )}
