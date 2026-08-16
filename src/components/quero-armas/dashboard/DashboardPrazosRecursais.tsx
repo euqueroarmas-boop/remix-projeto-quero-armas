@@ -66,11 +66,27 @@ async function copyTextSafe(text: string): Promise<boolean> {
 
 const MAX_CARDS = 9; // 9 cards individuais + 1 card "+N"
 
-function toneFor(dias: number) {
-  if (dias < 0)  return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
-  if (dias <= 4) return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
-  if (dias <= 7) return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
-  return            { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
+/**
+ * O MANDADO DE SEGURANÇA TEM RÉGUA PRÓPRIA.
+ *
+ * As faixas de 4 e 7 dias foram desenhadas para o prazo de 10 dias da Lei
+ * 9.784/99. Aplicá-las aos 120 dias do MS (art. 23 da Lei 12.016/09) pintaria
+ * de verde um caso com 20 dias de vida — quando 20 dias, para uma ação que
+ * precisa de decisão do cliente, contratação e petição assinada por advogado,
+ * já é aperto.
+ *
+ * Escalar proporcionalmente também não serve: daria amarelo aos 84 dias, e um
+ * painel que grita cedo demais é um painel que a equipe aprende a ignorar.
+ * Por isso o MS tem os seus números, escolhidos pelo tempo que o trabalho leva.
+ */
+function toneFor(dias: number, prazoTotalDias = 10) {
+  const ms = prazoTotalDias > 10;
+  const critico = ms ? 15 : 4;
+  const atencao = ms ? 45 : 7;
+  if (dias < 0)         return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
+  if (dias <= critico)  return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
+  if (dias <= atencao)  return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
+  return                     { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
 }
 
 export default function DashboardPrazosRecursais() {
@@ -153,15 +169,26 @@ export default function DashboardPrazosRecursais() {
 
   if (!rows.length) return null;
 
+  const rowsMS = rows.filter(r => r.evento === "MANDADO DE SEGURANÇA").length;
+
   return (
     <div className="space-y-4">
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div>
         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
-          Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)
+          Prazos Processuais — Lei 9.784/99 (PF)
         </h3>
         <p className="text-[11px] text-slate-500 mt-0.5">
-          {rows.length} cliente(s) com prazo ainda ativo de manifestação · ordenado do mais urgente ao menos urgente
+          {rows.length} cliente(s) com prazo ainda ativo · ordenado do mais urgente ao menos urgente
+          {/*
+            O título não pode mais dizer "10 dias" sozinho: desde que a equipe
+            passou a registrar o indeferimento do RECURSO, este mesmo painel
+            recebe também os 120 dias do mandado de segurança. Anunciar 10 e
+            mostrar um card de 90 faria a equipe duvidar do número certo.
+          */}
+          {rowsMS > 0 && (
+            <> · <strong>{rowsMS}</strong> com prazo de 120 dias para mandado de segurança</>
+          )}
         </p>
       </div>
 
@@ -169,7 +196,7 @@ export default function DashboardPrazosRecursais() {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
           {visible.map(r => {
-            const tone = toneFor(r.diasRestantes);
+            const tone = toneFor(r.diasRestantes, r.prazoTotalDias);
             const link = r.clienteIdLegado
               ? `/clientes?cliente=${r.clienteIdLegado}`
               : `/clientes`;

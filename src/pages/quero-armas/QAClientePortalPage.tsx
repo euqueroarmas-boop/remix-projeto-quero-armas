@@ -38,6 +38,20 @@ import EfetivaNecessidadeModal from "@/components/quero-armas/portal/EfetivaNece
 import RequerimentoSinarmRoteiro from "@/components/quero-armas/portal/RequerimentoSinarmRoteiro";
 import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
 import ProtocoloStatusPanel, { type ManifestacaoPF } from "@/components/quero-armas/portal/ProtocoloStatusPanel";
+import LinhaDoTempoProcessoPF from "@/components/quero-armas/portal/LinhaDoTempoProcessoPF";
+
+/** Status em que o processo já está com a Polícia Federal. Ver `processoNaPF`. */
+const STATUS_PROCESSO_NA_PF = [
+  "protocolado", "em_analise_orgao", "notificado", "recurso_administrativo", "indeferido",
+];
+
+interface ProcessoNaPF {
+  id: string | number;
+  status?: string | null;
+  servico_nome?: string | null;
+  updated_at?: string | null;
+  respostas_questionario_json?: unknown;
+}
 import { useCircunscricaoPF, rotuloCircunscricao } from "@/hooks/useCircunscricaoPF";
 import { numeroRequerimentoDeDadosExtraidos } from "@/lib/quero-armas/requerimentoSinarm";
 import {
@@ -365,27 +379,11 @@ export default function QAClientePortalPage() {
   const circunscricaoCliente = useCircunscricaoPF(cliente?.cidade, cliente?.estado);
   /**
    * O que a PF escreveu no processo, copiado do SINARM pela equipe.
-   * Carregado sob demanda: só quando o cliente abre o painel do protocolo.
+   * O efeito que carrega isto fica mais abaixo, junto de `processoNaPF`: a
+   * linha do tempo de Meus Processos precisa dos textos SEM esperar o cliente
+   * abrir o popup do protocolo.
    */
   const [manifestacoesPF, setManifestacoesPF] = useState<ManifestacaoPF[]>([]);
-  useEffect(() => {
-    if (!protocoloAberto) {
-      setManifestacoesPF([]);
-      return;
-    }
-    let vivo = true;
-    void (async () => {
-      const { data } = await supabase
-        .from("qa_processo_manifestacoes_pf" as never)
-        .select(
-          "tipo, texto, delegado_nome, delegado_cargo, unidade_pf, data_documento, prazo_dias, prazo_limite, canal_resposta, contato, created_at",
-        )
-        .eq("processo_id", protocoloAberto)
-        .order("created_at", { ascending: false });
-      if (vivo) setManifestacoesPF((data as unknown as ManifestacaoPF[]) ?? []);
-    })();
-    return () => { vivo = false; };
-  }, [protocoloAberto]);
   const [editDocTipo, setEditDocTipo] = useState<string | undefined>(undefined);
   // Efetiva necessidade: o questionário + recepção de provas (BO, inquérito,
   // ação criminal) tem fluxo próprio. Guardamos o processo alvo.
@@ -1704,6 +1702,54 @@ export default function QAClientePortalPage() {
       }) || p.servico_nome || "Processo",
     }))
   ), [processos, catalogoByServicoId, SERVICO_MAP]);
+
+  /**
+   * O PROCESSO QUE ESTÁ NA POLÍCIA FEDERAL.
+   *
+   * Enquanto o cliente junta documento, Meus Processos mostra tudo — é o que
+   * ele quer ver. Depois de protocolado, não: existe um processo só que
+   * importa, e a pergunta vira "onde ele está". Este é o processo que ganha
+   * espaço próprio, acima da lista.
+   *
+   * `deferido` fica de fora de propósito: processo aprovado não tem mais linha
+   * do tempo para acompanhar. `indeferido` FICA, porque é justamente aí que o
+   * cliente mais precisa da tela — é dela que sai o recurso e, negado o
+   * recurso, o mandado de segurança.
+   */
+  const processoNaPF = useMemo<ProcessoNaPF | null>(() => {
+    const candidatos = (processosComNomeDisplay as ProcessoNaPF[]).filter((p) =>
+      STATUS_PROCESSO_NA_PF.includes(String(p?.status ?? "").toLowerCase()),
+    );
+    if (candidatos.length === 0) return null;
+    // O mais recentemente movimentado é o que o cliente está acompanhando.
+    return [...candidatos].sort((a, b) =>
+      String(b?.updated_at ?? "").localeCompare(String(a?.updated_at ?? "")),
+    )[0];
+  }, [processosComNomeDisplay]);
+
+  /**
+   * Carrega os textos da PF do processo em foco — o que o cliente abriu no
+   * popup ou, na falta dele, o que está na delegacia.
+   */
+  const manifestacoesAlvoId = protocoloAberto ?? (processoNaPF ? String(processoNaPF.id) : null);
+  useEffect(() => {
+    if (!manifestacoesAlvoId) {
+      setManifestacoesPF([]);
+      return;
+    }
+    let vivo = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_processo_manifestacoes_pf" as never)
+        .select(
+          "tipo, status_processo, texto, delegado_nome, delegado_cargo, unidade_pf, data_documento, prazo_dias, prazo_limite, canal_resposta, contato, created_at",
+        )
+        .eq("processo_id", manifestacoesAlvoId)
+        .order("created_at", { ascending: false });
+      if (vivo) setManifestacoesPF((data as unknown as ManifestacaoPF[]) ?? []);
+    })();
+    return () => { vivo = false; };
+  }, [manifestacoesAlvoId]);
 
   // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
   useEffect(() => {
@@ -4684,8 +4730,30 @@ export default function QAClientePortalPage() {
             onFocoCta: () => setActiveSection("contratos"),
           });
 
+          // O ESPAÇO SÓ DO PROCESSO QUE ESTÁ NA PF vem ACIMA da lista, sem
+          // tocar nela: o Cockpit Z6 é layout canônico e não se mexe.
+          const protocoloPF =
+            (processoNaPF?.respostas_questionario_json as Record<string, Record<string, string>> | null)
+              ?.protocolo ?? {};
+
           return (
             <div>
+              {processoNaPF && (
+                <LinhaDoTempoProcessoPF
+                  servico={processoNaPF.servico_nome ?? null}
+                  numeroProtocolo={protocoloPF?.numero_protocolo ?? null}
+                  dataProtocolo={protocoloPF?.data_protocolo ?? null}
+                  delegacia={
+                    protocoloPF?.unidade_pf ??
+                    rotuloCircunscricao(circunscricaoCliente) ??
+                    "Polícia Federal"
+                  }
+                  status={processoNaPF.status ?? null}
+                  nomeCliente={cliente?.nome_completo ?? cliente?.nome ?? null}
+                  manifestacoes={manifestacoesPF}
+                  onAbrirDetalhe={() => setProtocoloAberto(String(processoNaPF.id))}
+                />
+              )}
               <CockpitZ6MeusProcessos {...cockpitProps} />
             </div>
           );

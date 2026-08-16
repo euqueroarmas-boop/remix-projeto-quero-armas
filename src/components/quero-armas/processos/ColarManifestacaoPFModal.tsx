@@ -18,6 +18,11 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getVendaFK } from "@/components/quero-armas/clientes/clientFK";
+import {
+  patchPrazoDoItem,
+  statusProcessoDoStatusManifestacao,
+} from "@/lib/quero-armas/manifestacaoPrazoPF";
 
 /** Tipos de documento que a PF publica no SINARM. */
 const TIPOS: Array<{ valor: string; label: string; statusSugerido: string }> = [
@@ -27,12 +32,18 @@ const TIPOS: Array<{ valor: string; label: string; statusSugerido: string }> = [
   { valor: "decisao", label: "Decisão final", statusSugerido: "indeferido" },
 ];
 
+// A ORDEM AQUI É A DA VIDA DO PROCESSO. E `recurso_indeferido` é o único item
+// que não existe em `qa_processos.status`: lá o processo continua `indeferido`.
+// A distinção mora aqui porque é aqui que ela decide o que vem depois — negado
+// o recurso, esgota-se a via administrativa (Lei 9.784/99) e o que resta é o
+// juiz, com 120 dias para o mandado de segurança.
 const STATUS: Array<{ valor: string; label: string }> = [
   { valor: "em_analise_orgao", label: "Em análise pela PF" },
   { valor: "notificado", label: "Notificado" },
   { valor: "indeferido", label: "Indeferido" },
   { valor: "deferido", label: "Deferido" },
   { valor: "recurso_administrativo", label: "Recurso protocolado" },
+  { valor: "recurso_indeferido", label: "Recurso NEGADO — abre prazo do MS" },
 ];
 
 const CANAIS: Array<{ valor: string; label: string }> = [
@@ -40,6 +51,76 @@ const CANAIS: Array<{ valor: string; label: string }> = [
   { valor: "email", label: "Por e-mail" },
   { valor: "presencial", label: "Presencialmente" },
 ];
+
+function hojeISO(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Leva a data da manifestação para a linha de `qa_itens_venda`, que é de onde
+ * a Dashboard tira o contador de prazos.
+ *
+ * A PONTE TEM UMA TRADUÇÃO NO MEIO, e é fácil errar: `qa_processos.venda_id`
+ * aponta para `qa_vendas.id` (o id real), enquanto `qa_itens_venda.venda_id`
+ * aponta para `qa_vendas.id_legado`. Comparar os dois direto casa na maioria
+ * dos clientes — os que nasceram sem legado, onde os dois números são iguais —
+ * e falha silenciosamente justo nos vindos do sistema antigo.
+ *
+ * Falhar aqui NÃO derruba o registro da manifestação: o texto do cliente é o
+ * que não pode se perder. O prazo vira um aviso para a equipe conferir.
+ */
+async function gravarPrazoNoItemDaVenda(
+  processoId: string,
+  statusManifestacao: string,
+  dataDocumento: string,
+): Promise<void> {
+  const patch = patchPrazoDoItem({
+    status: statusManifestacao,
+    dataDocumento: dataDocumento || null,
+    hojeISO: hojeISO(),
+  });
+  if (Object.keys(patch).length === 0) return;
+
+  try {
+    const { data: proc } = await supabase
+      .from("qa_processos")
+      .select("venda_id, servico_id")
+      .eq("id", processoId)
+      .maybeSingle();
+    const vendaId = (proc as { venda_id?: number | null } | null)?.venda_id ?? null;
+    const servicoId = (proc as { servico_id?: number | null } | null)?.servico_id ?? null;
+    if (!vendaId || !servicoId) {
+      toast.warning("Prazo não lançado: o processo não está ligado a uma venda/serviço.");
+      return;
+    }
+
+    const { data: venda } = await supabase
+      .from("qa_vendas")
+      .select("id, id_legado")
+      .eq("id", vendaId)
+      .maybeSingle();
+    const fkVenda = getVendaFK(venda as { id: number; id_legado?: number | null } | null);
+    if (!fkVenda) {
+      toast.warning("Prazo não lançado: venda do processo não encontrada.");
+      return;
+    }
+
+    const { data: atualizados, error } = await supabase
+      .from("qa_itens_venda")
+      .update(patch as never)
+      .eq("venda_id", fkVenda)
+      .eq("servico_id", servicoId)
+      .select("id");
+    if (error) throw error;
+    if (!atualizados || atualizados.length === 0) {
+      toast.warning("Prazo não lançado: nenhum item desta venda corresponde ao serviço.");
+    }
+  } catch (e) {
+    console.error("[manifestacao] prazo não lançado na venda", e);
+    toast.warning("Texto registrado, mas o prazo não entrou no painel da equipe. Confira na venda.");
+  }
+}
 
 export interface ColarManifestacaoPFModalProps {
   open: boolean;
@@ -103,12 +184,51 @@ export default function ColarManifestacaoPFModal({
       // O status do processo acompanha o documento: colar a notificação e
       // esquecer de mudar o status deixaria o cliente vendo "em análise"
       // enquanto o prazo dele corre.
-      if (statusProcesso) {
-        await supabase
+      //
+      // O erro é CHECADO. `qa_processos.status` tem CHECK: um status fora da
+      // lista faz o UPDATE falhar, e engolir esse erro deixaria a manifestação
+      // salva com o processo parado no status anterior — o pior dos dois
+      // mundos, porque a tela diria que deu certo.
+      const statusAlvo = statusProcessoDoStatusManifestacao(statusProcesso);
+      if (statusAlvo) {
+        const { error: stErr } = await supabase
           .from("qa_processos")
-          .update({ status: statusProcesso, updated_at: new Date().toISOString() })
+          .update({ status: statusAlvo, updated_at: new Date().toISOString() })
           .eq("id", processoId);
+        if (stErr) {
+          console.error("[manifestacao] status do processo não mudou", stErr);
+          toast.warning(
+            `Texto registrado, mas o status do processo não mudou (${stErr.message}). Ajuste na mão.`,
+          );
+        }
       }
+
+      // PRAZO PARA A EQUIPE — o painel da Dashboard não lê texto, lê data.
+      // Sem esta escrita, colar a notificação avisaria o cliente e deixaria a
+      // equipe no escuro até alguém lembrar de digitar a data na venda.
+      await gravarPrazoNoItemDaVenda(processoId, statusProcesso, dataDocumento);
+
+      // EVENTO — a aba Histórico do processo é o log de tudo o que aconteceu.
+      // Uma manifestação da PF que não deixa rastro ali some entre a montagem
+      // da juntada e o protocolo, e a próxima pessoa que abrir o processo não
+      // tem como saber que a PF já falou.
+      await supabase.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        tipo_evento: "manifestacao_pf_registrada",
+        descricao:
+          `${TIPOS.find((t) => t.valor === tipo)?.label ?? tipo} registrada` +
+          (prazoLimite ? ` · prazo até ${prazoLimite.split("-").reverse().join("/")}` : "") +
+          (delegadoNome.trim() ? ` · ${delegadoNome.trim()}` : ""),
+        ator: "equipe_operacional",
+        dados_json: {
+          tipo,
+          status_processo: statusProcesso || null,
+          data_documento: dataDocumento || null,
+          prazo_limite: prazoLimite || null,
+          unidade_pf: unidade.trim() || null,
+          caracteres: texto.trim().length,
+        },
+      });
 
       // E-MAIL AO CLIENTE — tudo é comunicado por e-mail.
       // O texto integral NÃO vai no corpo: e-mail longo com juridiquês não é

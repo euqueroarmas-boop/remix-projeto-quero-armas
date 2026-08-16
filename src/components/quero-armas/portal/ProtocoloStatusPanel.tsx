@@ -50,6 +50,12 @@ const REGUA: Array<{ chave: string; titulo: string; descricao: string }> = [
 /** O que a Polícia Federal escreveu, copiado do SINARM pela equipe. */
 export interface ManifestacaoPF {
   tipo?: string | null;
+  /**
+   * Para onde o processo foi com este documento. É o campo que distingue
+   * "indeferido no pedido" de `recurso_indeferido` — e é essa distinção que
+   * decide se ainda cabe recurso ou se o caminho que resta é o juiz.
+   */
+  status_processo?: string | null;
   texto: string;
   delegado_nome?: string | null;
   delegado_cargo?: string | null;

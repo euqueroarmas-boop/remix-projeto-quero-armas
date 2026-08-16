@@ -10,6 +10,11 @@ export const STATUS_PROCESSO = {
   pronto_para_protocolar: { label: "PRONTO PARA PROTOCOLAR", color: "#16A34A", bg: "bg-emerald-50", border: "border-emerald-300", text: "text-emerald-800" },
   protocolado: { label: "PROTOCOLADO", color: "#0EA5E9", bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-800" },
   em_analise_orgao: { label: "EM ANÁLISE PELO ÓRGÃO", color: "#6366F1", bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },
+  // A vida do processo na PF é mais longa que protocolado→decisão. Sem estes
+  // dois, `getStatusProcesso` cai no fallback e a tela da equipe mostraria
+  // "AGUARDANDO DOCUMENTOS" num processo que está com prazo de 10 dias correndo.
+  notificado: { label: "NOTIFICADO PELA PF", color: "#F59E0B", bg: "bg-amber-50", border: "border-amber-300", text: "text-amber-900" },
+  recurso_administrativo: { label: "RECURSO PROTOCOLADO", color: "#6366F1", bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },
   deferido: { label: "DEFERIDO", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
   indeferido: { label: "INDEFERIDO", color: "#EF4444", bg: "bg-red-50", border: "border-red-200", text: "text-red-800" },
   concluido: { label: "CONCLUÍDO", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },

@@ -9,6 +9,7 @@ import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isC
 import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
 import ColarManifestacaoPFModal from "@/components/quero-armas/processos/ColarManifestacaoPFModal";
+import HistoricoManifestacoesPF from "@/components/quero-armas/processos/HistoricoManifestacoesPF";
 import ClienteCadastroProgressivoModal from "@/components/quero-armas/portal/ClienteCadastroProgressivoModal";
 import DocsTresCaixasPanel from "@/components/quero-armas/portal/DocsTresCaixasPanel";
 import { limparDivergenciasVazias } from "@/lib/quero-armas/divergenciasUtils";
@@ -794,6 +795,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [montandoJuntada, setMontandoJuntada] = useState(false);
   /** Caixa onde a equipe cola o que a PF escreveu no SINARM. */
   const [manifestacaoAberta, setManifestacaoAberta] = useState(false);
+  // Sobe a cada registro para o histórico recarregar sem refetch do drawer todo.
+  const [manifestacoesVersao, setManifestacoesVersao] = useState(0);
 
   const montarJuntada = async () => {
     if (!processo?.id) return;
@@ -2581,6 +2584,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
             )
           ) : tab === "historico" ? (
             <div className="space-y-2">
+              {/*
+                Antes do log de eventos: o TEXTO da PF. O evento diz que houve
+                manifestação; quem vai responder precisa do que foi escrito.
+              */}
+              {processo?.id && (
+                <HistoricoManifestacoesPF
+                  processoId={String(processo.id)}
+                  recarregarEm={manifestacoesVersao}
+                />
+              )}
               {eventos.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">SEM EVENTOS REGISTRADOS</div>}
               {eventos.map((ev) => (
                 <div key={ev.id} className="bg-white border border-slate-200 rounded-lg px-4 py-2.5">
@@ -2947,7 +2960,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           open={manifestacaoAberta}
           processoId={String(processo.id)}
           onClose={() => setManifestacaoAberta(false)}
-          onSalvo={() => { void carregar(); onUpdated?.(); }}
+          onSalvo={() => { setManifestacoesVersao((v) => v + 1); void carregar(); onUpdated?.(); }}
         />
       )}
       <TemplateDataConfirmationModal
