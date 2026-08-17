@@ -60,8 +60,13 @@ ORDER BY pd.processo_id, pd.tipo_documento;
 --    bloco 2 mostrar tudo "vencido", está confirmado: o único comprovante do
 --    acervo está fora da validade e o item continua (corretamente) em aberto —
 --    falta o cliente conseguir ENVIAR o comprovante novo.
---    Troque <ID_DO_CLIENTE> pelo id devolvido no bloco 1.
-SELECT public.qa_processo_rever_exigencias(<ID_DO_CLIENTE>) AS itens_fechados;
+SELECT
+  qc.id AS cliente_id,
+  qc.nome_completo,
+  public.qa_processo_rever_exigencias(qc.id) AS itens_fechados
+FROM public.qa_clientes qc
+WHERE qc.nome_completo ILIKE '%gilson%'
+ORDER BY qc.id;
 
 -- 5) Conferência DEPOIS de o cliente reenviar o comprovante pelo portal:
 --    o novo documento tem que aparecer aprovado e válido, o antigo com
