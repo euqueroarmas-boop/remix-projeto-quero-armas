@@ -65,6 +65,7 @@ import {
 import { TERMO_BO_CODIGO, TERMO_BO_VERSAO } from "@/lib/quero-armas/boExplicacao";
 import DeclaracaoResponsavelImovelModal from "@/components/quero-armas/clientes/DeclaracaoResponsavelImovelModal";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
+import { anoDoSlotEndereco } from "@/lib/quero-armas/duplicidadeHub";
 import { comparePersonNames } from "@/lib/quero-armas/nameMatch";
 import ContratosPosPagamentoCard from "@/components/quero-armas/portal/ContratosPosPagamentoCard";
 import QAContratosCockpitV1 from "@/components/quero-armas/portal/QAContratosCockpitV1";
@@ -394,6 +395,8 @@ export default function QAClientePortalPage() {
   // id para que o Hub Documental salve o novo como substituição (marca o
   // antigo como `substituido`).
   const [substituirDocId, setSubstituirDocId] = useState<string | null>(null);
+  /** Ano de competência do slot que abriu o Hub (comprovante de endereço por ano). */
+  const [anoCompetenciaAlvo, setAnoCompetenciaAlvo] = useState<number | null>(null);
   const [showArmaManual, setShowArmaManual] = useState(false);
   // BLOCO 12 — guarda o destino de navegação pendente enquanto o cliente
   // (que respondeu "sim possuo arma" no wizard) preenche o cadastro mínimo.
@@ -2444,6 +2447,11 @@ export default function QAClientePortalPage() {
         onEntregar: () => {
           if (ehEfetivaNecessidade(rawTipo)) return;
           setEditDocTipo(hubTipo);
+          // O slug do slot carrega o ano de competência
+          // (`comprovante_endereco_ano_2025`), que o tipo do Hub
+          // (`comprovante_residencia`) perde. Sem ele, o Hub não sabe se o
+          // comprovante guardado ainda cobre ESTE item do checklist.
+          setAnoCompetenciaAlvo(anoDoSlotEndereco(rawTipo));
           setShowAddDoc(true);
           setShowContratoPopup(false);
         },
@@ -5315,12 +5323,18 @@ export default function QAClientePortalPage() {
       {(customerId || cliente?.id) && (
         <ClienteDocsHubModal
           open={!mustChangePassword && showAddDoc}
-          onClose={() => { setShowAddDoc(false); setEditDocTipo(undefined); setSubstituirDocId(null); }}
+          onClose={() => {
+            setShowAddDoc(false);
+            setEditDocTipo(undefined);
+            setSubstituirDocId(null);
+            setAnoCompetenciaAlvo(null);
+          }}
           customerId={customerId}
           qaClienteId={cliente?.id ?? null}
           mode="portal"
           defaultTipo={editDocTipo}
           substituirDocumentoId={substituirDocId}
+          anoCompetenciaAlvo={anoCompetenciaAlvo}
           clienteCpf={String(cliente?.cpf || "").replace(/\D/g, "") || null}
           clienteNome={cliente?.nome_completo || null}
           clienteDataNascimento={cliente?.data_nascimento || null}

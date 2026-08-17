@@ -67,6 +67,11 @@ import {
   isTipoSemVencimento,
   textoIndicaValidadeIndeterminada,
 } from "@/lib/quero-armas/validadeDocumento";
+import {
+  anoDoSlotEndereco,
+  avaliarDuplicidadeHub,
+  mensagemRenovacao,
+} from "@/lib/quero-armas/duplicidadeHub";
 import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
@@ -1545,6 +1550,10 @@ interface Props {
    *  `substituido` (soft delete com trilha de auditoria). Usado pelo botão
    *  "Renovar" do Hub Documental. */
   substituirDocumentoId?: string | null;
+  /** Ano de competência exigido pelo slot que abriu o envio
+   *  (`comprovante_endereco_ano_2025` → 2025). Sem ele, o alvo é o ano
+   *  corrente — que é o que o comprovante de residência ATUAL pede. */
+  anoCompetenciaAlvo?: number | null;
 }
 
 function getDefaultTipo(mode: "portal" | "arsenal", defaultTipo?: string) {
@@ -1569,6 +1578,7 @@ export function ClienteDocsHubModal({
   gruposBloqueados = [],
   grupoCorrenteLabel = null,
   substituirDocumentoId = null,
+  anoCompetenciaAlvo = null,
 }: Props) {
   const defaultTipoEfetivo = getDefaultTipo(mode, defaultTipo);
   // BLOCO 4 — fonte única de validade: catálogo do banco antes de qualquer cálculo.
@@ -1760,7 +1770,10 @@ export function ClienteDocsHubModal({
     let cancelled = false;
     supabase
       .from("qa_documentos_cliente" as any)
-      .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos, data_emissao, numero_documento")
+      // `data_validade`/`regra_validacao`/`ano_competencia` são obrigatórios aqui:
+      // sem eles a trava de duplicidade não consegue distinguir documento que
+      // ainda cobre a exigência de documento vencido que precisa ser renovado.
+      .select("id, tipo_documento, status, validado_admin, updated_at, created_at, ia_dados_extraidos, data_emissao, data_validade, data_validade_efetiva, regra_validacao, ano_competencia, numero_documento")
       .eq("qa_cliente_id", qaClienteId)
       .eq("status", "aprovado")
       .then(({ data }) => {
@@ -1926,19 +1939,36 @@ export function ClienteDocsHubModal({
   const mensagemGrupoBloqueado = grupoCorrenteLabel
     ? `Este documento é de uma etapa mais adiante do seu checklist. Conclua ${grupoCorrenteLabel} para liberar esta entrega.`
     : "Este documento é de uma etapa mais adiante do seu checklist. Conclua a etapa atual para liberar esta entrega.";
-  // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental.
-  // Não existe "mandar para análise" nesse caso — o documento é rejeitado na
-  // hora, com carimbo vermelho, e o cliente precisa excluir o anterior ou
-  // anexar o documento realmente exigido.
-  const docDuplicado = !!(
-    form.tipo_documento &&
-    (classificacao || conferenciaLocal) &&
-    docsEfetivos.some(
-      (d: any) =>
-        String(d.tipo_documento || "") === form.tipo_documento &&
-        String(d.status || "") === "aprovado",
-    )
+  // DUPLICIDADE: o tipo lido pela IA já consta aprovado no Hub Documental E
+  // aquele documento AINDA COBRE a exigência. Não existe "mandar para análise"
+  // nesse caso — o documento é rejeitado na hora, com carimbo vermelho, e o
+  // cliente precisa excluir o anterior ou anexar o documento realmente exigido.
+  //
+  // Documento aprovado porém VENCIDO (ou de outro ano de competência) não é
+  // duplicidade: é RENOVAÇÃO. O banco nunca aceitou documento vencido para
+  // fechar o slot — `qa_processo_rever_exigencias` e o gatilho
+  // `qa_doc_hub_satisfaz_exigencias_processo` exigem `data_validade >= hoje` e
+  // o ano certo. Enquanto a tela achava que bastava tipo + status, o cliente
+  // caía numa armadilha fechada: o checklist pedia o comprovante e o Hub
+  // recusava o comprovante novo por causa do vencido (caso Gilson, 17/08/2026).
+  const avaliacaoDuplicidade = useMemo(
+    () =>
+      avaliarDuplicidadeHub({
+        docs: docsEfetivos as any[],
+        tipo: form.tipo_documento,
+        anoAlvo: anoCompetenciaAlvo ?? anoDoSlotEndereco(defaultTipo),
+      }),
+    [docsEfetivos, form.tipo_documento, anoCompetenciaAlvo, defaultTipo],
   );
+  const leituraConcluida = !!(classificacao || conferenciaLocal);
+  const docDuplicado = !!(
+    form.tipo_documento && leituraConcluida && avaliacaoDuplicidade.duplicata
+  );
+  /** Documento do acervo que este envio vem substituir (vencido / outro ano). */
+  const renovacaoAlvo = form.tipo_documento ? avaliacaoDuplicidade.renovar : null;
+  const avisoRenovacao = renovacaoAlvo
+    ? mensagemRenovacao(avaliacaoDuplicidade.motivo)
+    : null;
   // Bloqueio duro da prévia: divergente do slot E já entregue antes.
   const rejeitadoDuplicidade = docDuplicado;
 
@@ -2144,11 +2174,33 @@ export function ClienteDocsHubModal({
     // dispensamos a exigência do processo e mostramos sucesso — o cliente
     // não precisa fazer nada, o documento já está válido no Hub.
     if (motivoRejeicao === "duplicidade" && qaClienteId) {
-      void Promise.resolve(
-        supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId }),
-      ).catch(() => {});
       const label = duplicidadeLabelCurto || "Documento";
-      setResultadoCarimbo({ tipo: "aprovado", mensagem: `${label} já aprovado no Hub · exigência atendida` });
+      // O carimbo verde só pode aparecer se a exigência REALMENTE fechou. O
+      // motor devolve quantos slots foram fechados; quando devolve zero, o
+      // documento do acervo não serviu para o slot (região, ano, validade) e
+      // dizer "exigência atendida" seria mentir para o cliente — que era
+      // exatamente o que ele via na tela enquanto o checklist seguia pedindo o
+      // mesmo documento.
+      void (async () => {
+        let fechou = 0;
+        try {
+          const { data } = await supabase.rpc(
+            "qa_processo_rever_exigencias" as any,
+            { p_cliente_id: qaClienteId },
+          );
+          fechou = Number(data ?? 0) || 0;
+        } catch {
+          fechou = 0;
+        }
+        setResultadoCarimbo(
+          fechou > 0
+            ? { tipo: "aprovado", mensagem: `${label} já aprovado no Hub · exigência atendida` }
+            : {
+                tipo: "reprovado",
+                mensagem: `${label} já consta no Hub, mas não atende a este item do checklist. Fale com a equipe.`,
+              },
+        );
+      })();
       return;
     }
 
@@ -4565,7 +4617,13 @@ export function ClienteDocsHubModal({
       // cliente é avisado para excluir o documento anterior antes de enviar o
       // correto. Salvar por cima gerava duas linhas aprovadas do mesmo tipo
       // (ex.: dois cartões CNPJ) — a PF exige um só.
-      const alvoSubstituicao: string | null = substituirDocumentoId ?? null;
+      // Renovação: o documento aprovado do mesmo tipo já não cobre a exigência
+      // (venceu ou é de outro ano de competência). O envio novo entra como
+      // SUBSTITUIÇÃO do antigo — o mesmo caminho do botão "Renovar" do Hub.
+      // Sem isto o cliente ficava travado entre um checklist que pedia o
+      // documento e um Hub que recusava o documento por já existir o vencido.
+      const alvoSubstituicao: string | null =
+        substituirDocumentoId ?? (renovacaoAlvo?.id ? String(renovacaoAlvo.id) : null);
       if (!alvoSubstituicao && qaClienteId && form.tipo_documento) {
         const { data: jaEnviados } = await supabase
           .from("qa_documentos_cliente" as any)
@@ -5069,6 +5127,17 @@ export function ClienteDocsHubModal({
                     nem enviado para análise. Exclua o anterior se quiser substituí-lo, ou
                     anexe o documento realmente exigido
                     {expectedTipoMeta ? <> (<b>{expectedTipoMeta.label}</b>)</> : null}.
+                  </div>
+                </div>
+              </div>
+            ) : avisoRenovacao && leituraConcluida ? (
+              <div className="mt-1 flex items-start gap-1.5 border border-emerald-300 bg-emerald-50 p-2 text-[10px] leading-snug text-emerald-900">
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <div>
+                  <div className="font-bold uppercase tracking-[0.08em]">Renovação do documento</div>
+                  <div>
+                    {avisoRenovacao} O anterior fica guardado no histórico — você
+                    não precisa excluir nada.
                   </div>
                 </div>
               </div>
