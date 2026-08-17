@@ -87,6 +87,9 @@ Deno.serve(async (req) => {
       const clienteId = Number(body.cliente_id);
       const motivo = String(body.motivo || "").trim();
       const processoRef = String(body.processo_ref || "").trim();
+      // Guardamos o id além do nome: nome muda quando o catálogo é editado, o
+      // vínculo não. A auditoria precisa apontar para o processo de verdade.
+      const processoId = body.processo_id ? String(body.processo_id) : null;
       const minutos = Math.min(
         DURACAO_MIN_MAX,
         Math.max(5, Number(body.minutos) || DURACAO_MIN_PADRAO),
@@ -125,6 +128,7 @@ Deno.serve(async (req) => {
           operador_nome: operadorNome,
           motivo,
           processo_ref: processoRef || null,
+          processo_id: processoId,
           expira_em: expiraEm,
           ip,
           user_agent: userAgent,

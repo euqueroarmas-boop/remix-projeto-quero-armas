@@ -13,6 +13,8 @@ import EmuAcessoCard from "./EmuAcessoCard";
 interface Props {
   cliente: {
     id: number;
+    /** qa_processos/qa_vendas gravam ora o id real, ora o legado — ver clientFK. */
+    id_legado?: number | null;
     nome_completo: string;
     cpf: string;
     email: string;
@@ -685,7 +687,12 @@ export default function ClienteAcessoPortal({ cliente }: Props) {
         </div>
       )}
 
-      <EmuAcessoCard clienteId={Number(cliente.id)} clienteNome={cliente.nome_completo} clienteEmail={cliente.email} />
+      <EmuAcessoCard
+        clienteId={Number(cliente.id)}
+        clienteIdLegado={cliente.id_legado ?? null}
+        clienteNome={cliente.nome_completo}
+        clienteEmail={cliente.email}
+      />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5">
         <div className="flex items-center gap-2 mb-3">

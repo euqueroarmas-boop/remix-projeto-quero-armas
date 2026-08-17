@@ -192,6 +192,39 @@ describe("modo espelho — o cliente vê quem mexeu", () => {
   });
 });
 
+describe("modo espelho — processo se escolhe, não se digita", () => {
+  const card = r("src/components/quero-armas/clientes/EmuAcessoCard.tsx");
+
+  it("carrega as contratações do cliente, ignorando canceladas", () => {
+    expect(card).toContain('.from("qa_processos")');
+    expect(card).toContain('.not("status", "in", "(cancelado,arquivado)")');
+    // qa_processos grava ora o id real, ora o legado — os dois entram na busca.
+    expect(card).toContain("clienteIdLegado ?? clienteId");
+    expect(card).toContain('.in("cliente_id", ids)');
+  });
+
+  it("põe o pago na frente e marca o pendente", () => {
+    expect(card).toContain('p.pagamento_status === "confirmado" ? 0 : 1');
+    expect(card).toContain("PAGAMENTO PENDENTE");
+  });
+
+  it("um processo só já vem selecionado", () => {
+    expect(card).toContain("if (lista.length === 1) setProcessoId(lista[0].id)");
+  });
+
+  it("mantém saída para quem não tem contratação", () => {
+    expect(card).toContain('<option value="outro">');
+    expect(card).toContain('processoId === "outro"');
+  });
+
+  it("manda o id do processo junto do nome", () => {
+    expect(card).toContain("processo_id: escolhido ? escolhido.id : null");
+    expect(card).toContain("const processoRef = escolhido ? escolhido.servico_nome : processoLivre.trim()");
+    expect(r(FN_EMU)).toContain("processo_id: processoId");
+    expect(r(MIGRATION)).toContain("ADD COLUMN IF NOT EXISTS processo_id uuid");
+  });
+});
+
 describe("modo espelho — edge function", () => {
   const src = r(FN_EMU);
 

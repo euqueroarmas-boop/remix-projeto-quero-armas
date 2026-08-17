@@ -322,3 +322,16 @@ UPDATE public.qa_suporte_sessoes
    SET encerrado_em = now(),
        resumo = COALESCE(resumo, 'Encerrada automaticamente na migração para o Modo Espelho.')
  WHERE encerrado_em IS NULL;
+
+-- ---------------------------------------------------------------------
+-- 6. Vínculo com o processo escolhido (não só o nome digitado)
+-- ---------------------------------------------------------------------
+-- O operador passou a SELECIONAR o processo do cliente em vez de digitar.
+-- Guardamos o id junto do nome: nome muda quando o catálogo é editado, o
+-- vínculo não — e a auditoria precisa apontar para o processo de verdade.
+ALTER TABLE public.qa_emu_sessoes
+  ADD COLUMN IF NOT EXISTS processo_id uuid;
+
+CREATE INDEX IF NOT EXISTS qa_emu_sessoes_processo_idx
+  ON public.qa_emu_sessoes (processo_id)
+  WHERE processo_id IS NOT NULL;

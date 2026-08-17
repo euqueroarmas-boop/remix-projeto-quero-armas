@@ -7,7 +7,35 @@ import { toast } from "sonner";
 import { Eye, Loader2, ShieldCheck } from "lucide-react";
 import { codificarParaUrl, type EmuSessao } from "@/lib/quero-armas/emuSessao";
 
-type Props = { clienteId: number | string; clienteNome?: string | null; clienteEmail?: string | null };
+type Props = {
+  clienteId: number | string;
+  /** qa_processos grava ora o id real, ora o legado — consultamos os dois. */
+  clienteIdLegado?: number | null;
+  clienteNome?: string | null;
+  clienteEmail?: string | null;
+};
+
+interface ProcessoOpcao {
+  id: string;
+  servico_nome: string;
+  status: string | null;
+  pagamento_status: string | null;
+  data_criacao: string | null;
+}
+
+/** Pago primeiro — é o caso normal de atendimento; o resto desce. */
+function ordenarProcessos(a: ProcessoOpcao, b: ProcessoOpcao): number {
+  const pago = (p: ProcessoOpcao) => (p.pagamento_status === "confirmado" ? 0 : 1);
+  if (pago(a) !== pago(b)) return pago(a) - pago(b);
+  return String(b.data_criacao || "").localeCompare(String(a.data_criacao || ""));
+}
+
+function rotuloProcesso(p: ProcessoOpcao): string {
+  const nome = p.servico_nome || "Serviço sem nome";
+  const situacao = String(p.status || "").replace(/_/g, " ");
+  const pago = p.pagamento_status === "confirmado" ? "" : " · PAGAMENTO PENDENTE";
+  return situacao ? `${nome} — ${situacao}${pago}` : `${nome}${pago}`;
+}
 
 interface SessaoHistorico {
   id: string;
@@ -34,9 +62,13 @@ const fmt = (d?: string | null) =>
  * Por isso toda alteração já sai carimbada com o nome do operador no histórico
  * que o cliente lê, e contratação/pagamento/assinatura ficam travados no banco.
  */
-export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: Props) {
+export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome, clienteEmail }: Props) {
   const [motivo, setMotivo] = useState("");
-  const [processo, setProcesso] = useState("");
+  /** id do processo escolhido; "" = nenhum, "outro" = digitar à mão. */
+  const [processoId, setProcessoId] = useState("");
+  const [processoLivre, setProcessoLivre] = useState("");
+  const [processos, setProcessos] = useState<ProcessoOpcao[]>([]);
+  const [carregandoProcessos, setCarregandoProcessos] = useState(true);
   const [minutos, setMinutos] = useState(30);
   const [loading, setLoading] = useState(false);
   const [historico, setHistorico] = useState<SessaoHistorico[]>([]);
@@ -52,11 +84,39 @@ export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: 
     return () => { ativo = false; };
   }, [clienteId]);
 
+  // O que o cliente contratou. Ler direto da tabela (o operador é staff e a RLS
+  // já libera) evita mais uma ida à edge function só para preencher um campo.
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      setCarregandoProcessos(true);
+      const ids = Array.from(
+        new Set([Number(clienteId), Number(clienteIdLegado ?? clienteId)]),
+      ).filter((n) => Number.isFinite(n) && n > 0);
+      const { data } = await supabase
+        .from("qa_processos")
+        .select("id, servico_nome, status, pagamento_status, data_criacao")
+        .in("cliente_id", ids)
+        .not("status", "in", "(cancelado,arquivado)")
+        .order("data_criacao", { ascending: false });
+      if (!ativo) return;
+      const lista = ((data as unknown as ProcessoOpcao[]) ?? []).slice().sort(ordenarProcessos);
+      setProcessos(lista);
+      // Um processo só: já vem escolhido, não faz sentido obrigar o clique.
+      if (lista.length === 1) setProcessoId(lista[0].id);
+      setCarregandoProcessos(false);
+    })();
+    return () => { ativo = false; };
+  }, [clienteId, clienteIdLegado]);
+
   async function abrirEspelho() {
     if (motivo.trim().length < 5) {
       toast.error("Descreva o motivo do acesso.");
       return;
     }
+    const escolhido = processos.find((p) => p.id === processoId) || null;
+    const processoRef = escolhido ? escolhido.servico_nome : processoLivre.trim();
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-emu-sessao", {
@@ -64,7 +124,8 @@ export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: 
           action: "iniciar",
           cliente_id: Number(clienteId),
           motivo: motivo.trim(),
-          processo_ref: processo.trim(),
+          processo_id: escolhido ? escolhido.id : null,
+          processo_ref: processoRef,
           minutos,
         },
       });
@@ -96,7 +157,7 @@ export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: 
         data.email_enviado ? "Espelho aberto. O cliente foi avisado por e-mail." : "Espelho aberto (e-mail de aviso não saiu).",
       );
       setMotivo("");
-      setProcesso("");
+      setProcessoLivre("");
     } finally {
       setLoading(false);
     }
@@ -119,12 +180,46 @@ export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: 
         Único bloqueio: contratar serviço, pagar e assinar contrato continuam sendo só do cliente — travado no banco,
         não só na tela.
       </p>
-      <Input
-        value={processo}
-        onChange={(e) => setProcesso(e.target.value.toUpperCase())}
-        placeholder="PROCESSO / SERVIÇO (EX.: AUTORIZAÇÃO DE COMPRA)"
-        className="h-9 text-xs"
-      />
+      {/* O processo não se digita: escolhe-se entre o que o cliente contratou.
+          Digitar à mão gerava divergência com o nome real do serviço e ainda
+          fazia o e-mail sair citando um processo que não existe. */}
+      <div className="space-y-1">
+        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          Processo do cliente
+        </label>
+        {carregandoProcessos ? (
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-slate-200 px-3 text-xs text-slate-400">
+            <Loader2 className="h-3 w-3 animate-spin" /> Carregando contratações…
+          </div>
+        ) : (
+          <select
+            value={processoId}
+            onChange={(e) => setProcessoId(e.target.value)}
+            className="h-9 w-full rounded-lg border border-slate-200 px-2 text-xs"
+          >
+            <option value="">
+              {processos.length ? "Selecione o processo…" : "Cliente sem processo contratado"}
+            </option>
+            {processos.map((p) => (
+              <option key={p.id} value={p.id}>{rotuloProcesso(p)}</option>
+            ))}
+            <option value="outro">Outro / não relacionado a um processo</option>
+          </select>
+        )}
+        {processoId === "outro" && (
+          <Input
+            value={processoLivre}
+            onChange={(e) => setProcessoLivre(e.target.value.toUpperCase())}
+            placeholder="DESCREVA O ASSUNTO"
+            className="h-9 text-xs"
+          />
+        )}
+        {!carregandoProcessos && processos.length === 0 && (
+          <p className="text-[10px] text-slate-400">
+            Nenhuma contratação ativa encontrada. Use “Outro” para descrever o assunto.
+          </p>
+        )}
+      </div>
       <Textarea
         value={motivo}
         onChange={(e) => setMotivo(e.target.value)}
