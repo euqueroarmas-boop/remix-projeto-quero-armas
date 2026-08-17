@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { saveOrShareBlob } from "@/lib/quero-armas/saveOrShareBlob";
 import { Loader2, ShieldCheck, ExternalLink } from "lucide-react";
+import { aguardandoOutroBo } from "@/lib/quero-armas/efetivaTeses";
 
 type Registro = Record<string, any>;
 type Prova = Record<string, any>;
@@ -48,6 +49,10 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
   const [registro, setRegistro] = useState<Registro | null>(null);
   const [provas, setProvas] = useState<Prova[]>([]);
   const [acrescimos, setAcrescimos] = useState<Registro[]>([]);
+  const [teses, setTeses] = useState<Registro[]>([]);
+  const [motivoDestrava, setMotivoDestrava] = useState("");
+  const [destravando, setDestravando] = useState(false);
+  const [erroDestrava, setErroDestrava] = useState<string | null>(null);
   const [auditoria, setAuditoria] = useState<Registro[]>([]);
   const [acaoRevisao, setAcaoRevisao] = useState<"aprovar" | "devolver" | null>(null);
   const [observacao, setObservacao] = useState("");
@@ -81,6 +86,12 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           .eq("efetiva_necessidade_id", reg.id)
           .order("ordem", { ascending: true });
         if (vivo) setAcrescimos((ac as Registro[]) ?? []);
+        const { data: ts } = await supabase
+          .from("qa_efetiva_teses" as any)
+          .select("*")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("ordem", { ascending: true });
+        if (vivo) setTeses((ts as Registro[]) ?? []);
         const { data: au } = await supabase
           .from("qa_efetiva_necessidade_auditoria" as any)
           .select("*")
@@ -91,6 +102,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
         setProvas([]);
         setAcrescimos([]);
         setAuditoria([]);
+        setTeses([]);
       }
       if (vivo) setLoading(false);
     })();
@@ -116,6 +128,30 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
       setErroRevisao((e as Error).message);
     } finally {
       setSalvando(false);
+    }
+  };
+
+  /**
+   * Destrava o cliente que respondeu "vou abrir outro boletim" e não vai mais
+   * abrir. Regra do usuário (17/08/2026): não se destrava sozinho — ele abre
+   * chamado, e a liberação fica registrada aqui com autor, motivo e carimbo.
+   */
+  const destravarBo = async () => {
+    if (!registro?.id) return;
+    setErroDestrava(null);
+    setDestravando(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-efetiva-destravar-bo", {
+        body: { registro_id: registro.id, motivo: motivoDestrava },
+      });
+      if (error) throw new Error(error.message);
+      if ((data as any)?.error) throw new Error(String((data as any).error));
+      setMotivoDestrava("");
+      setRecarregar((n) => n + 1);
+    } catch (e) {
+      setErroDestrava((e as Error).message);
+    } finally {
+      setDestravando(false);
     }
   };
 
@@ -349,6 +385,86 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
               </div>
             ))}
           </div>
+        </Bloco>
+      )}
+
+      <Bloco titulo={`Frentes de risco (teses) — ${teses.length}`}>
+        {teses.length === 0 ? (
+          <p className="text-[11px] text-slate-400">
+            Nenhuma frente separada ainda. Elas nascem junto com o relato gerado pela IA.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {teses.map((t, i) => (
+              <div key={String(t.id)} className="border border-slate-200 rounded-lg p-3">
+                <div className="text-[9px] uppercase tracking-[0.12em] text-slate-400">
+                  Frente {i + 1}
+                  {t.confirmada_em ? ` · confirmada pelo cliente em ${dataHoraBR(t.confirmada_em)}` : " · aguardando confirmação do cliente"}
+                  {t.titulo_editado_pelo_cliente ? " · título ajustado por ele" : ""}
+                </div>
+                <div className="mt-1 text-[12px] font-bold uppercase tracking-[0.06em] text-slate-700">
+                  {t.titulo}
+                </div>
+                {t.resumo ? <p className="mt-1 text-[11px] text-slate-500">{t.resumo}</p> : null}
+                {t.texto_bo ? (
+                  <p className="mt-2 text-[12px] leading-relaxed text-slate-700 whitespace-pre-wrap">
+                    {t.texto_bo}
+                  </p>
+                ) : null}
+                <div className="mt-2 text-[10px] text-slate-400">
+                  {String(t.texto_bo ?? "").length}/500 caracteres
+                  {t.texto_bo_editado_pelo_cliente ? " · texto ajustado pelo cliente" : ""}
+                  {t.registro_confirmado_em ? ` · declarou registro em ${dataHoraBR(t.registro_confirmado_em)}` : ""}
+                  {t.prova_id
+                    ? ` · boletim anexado (${provas.find((p) => p.id === t.prova_id)?.numero || "sem número lido"})`
+                    : " · sem boletim ainda"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Bloco>
+
+      {/* ── Cliente travado esperando outro boletim ────────────────────────
+        * Ele respondeu que ia abrir outro BO e o passo trava de propósito. Se
+        * desistiu, abre chamado — e a liberação sai daqui, com motivo. */}
+      {registro.bo_quer_outro === true && (
+        <Bloco titulo="Boletim adicional — cliente aguardando">
+          <p className="text-[11px] text-slate-500">
+            O cliente informou em {dataHoraBR(registro.bo_aguardando_desde)} que ia registrar outro
+            boletim, e o passo está travado até o documento chegar.
+            {registro.bo_destravado_em && !aguardandoOutroBo(registro as any)
+              ? ` Já liberado em ${dataHoraBR(registro.bo_destravado_em)}${registro.bo_destravado_por_nome ? ` por ${registro.bo_destravado_por_nome}` : ""}.`
+              : " Libere abaixo apenas se ele abriu chamado desistindo desse registro."}
+          </p>
+          {registro.bo_destrava_motivo ? (
+            <div className="mt-2 rounded-md border border-slate-200 bg-[#F9F9FA] px-3 py-2 text-[11px] text-slate-600">
+              <span className="font-bold uppercase tracking-[0.1em]">Último motivo: </span>
+              {registro.bo_destrava_motivo}
+            </div>
+          ) : null}
+          {aguardandoOutroBo(registro as any) ? (
+            <div className="mt-3 space-y-2">
+              <textarea
+                value={motivoDestrava}
+                onChange={(e) => setMotivoDestrava(e.target.value.toUpperCase())}
+                rows={3}
+                placeholder="MOTIVO / NÚMERO DO CHAMADO (OBRIGATÓRIO)"
+                className="w-full rounded-md border border-slate-200 p-2 text-[11px] uppercase text-slate-700 outline-none focus:border-[#2F3337]"
+              />
+              {erroDestrava ? (
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#2F3337]">{erroDestrava}</p>
+              ) : null}
+              <button
+                type="button"
+                disabled={destravando || motivoDestrava.trim().length < 5}
+                onClick={destravarBo}
+                className="h-9 rounded-md bg-[#0A0A0A] px-4 text-[10px] font-bold uppercase tracking-[0.12em] text-white disabled:opacity-50"
+              >
+                {destravando ? "Liberando..." : "Liberar continuação sem o boletim"}
+              </button>
+            </div>
+          ) : null}
         </Bloco>
       )}
 

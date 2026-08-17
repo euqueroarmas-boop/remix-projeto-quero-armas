@@ -148,6 +148,24 @@ Deno.serve(async (req) => {
       }, 409);
     }
 
+    /* ── 0.b) O laço dos boletins também trava aqui ─────────────────────
+     * Regra do usuário (17/08/2026): quem respondeu que vai abrir outro
+     * boletim fica esperando por ele. Só sai dessa espera com a destrava da
+     * equipe (chamado), gravada em `bo_destravado_em` DEPOIS do início da
+     * espera. Sem esta conferência, bastaria abrir a defesa final por outro
+     * caminho para fechar a efetiva necessidade pela metade.             */
+    const esperaDesde = Date.parse(String(reg.bo_aguardando_desde ?? ""));
+    const destravadoEm = Date.parse(String(reg.bo_destravado_em ?? ""));
+    const aguardandoOutroBo = reg.bo_quer_outro === true &&
+      (!Number.isFinite(destravadoEm) ||
+        (Number.isFinite(esperaDesde) && destravadoEm < esperaDesde));
+    if (aguardandoOutroBo) {
+      return json({
+        error:
+          "Você informou que vai registrar outro boletim. Anexe esse documento para aprovar — ou fale com a nossa equipe para liberar a sua continuação sem ele.",
+      }, 409);
+    }
+
     /* ── 1) Carimbo da conexão ─────────────────────────────────────────── */
     const agora = new Date();
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

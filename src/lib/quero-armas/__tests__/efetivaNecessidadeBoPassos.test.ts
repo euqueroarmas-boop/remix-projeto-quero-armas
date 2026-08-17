@@ -37,15 +37,18 @@ const REGISTRO_SEM_BO = {
 };
 
 describe("passos da efetiva necessidade — lista única", () => {
-  it("são sempre 11, na ordem canônica, independente do texto da IA", () => {
-    expect(EFETIVA_PASSOS_IDS).toHaveLength(11);
+  it("são sempre 12, na ordem canônica, independente do texto da IA", () => {
+    // 17/08/2026: entrou a confirmação das frentes de risco (teses), entre a
+    // geração do relato e o caminho da delegacia.
+    expect(EFETIVA_PASSOS_IDS).toHaveLength(12);
     expect(EFETIVA_PASSOS_IDS.slice(7)).toEqual([
+      "teses",
       "entender_bo",
       "registrar_bo",
       "enviar_bo",
       "defesa_final",
     ]);
-    expect(calcularPassosEfetiva(REGISTRO_SEM_BO, [], true)).toHaveLength(11);
+    expect(calcularPassosEfetiva(REGISTRO_SEM_BO, [], true)).toHaveLength(12);
   });
 
   it("o wizard consome a lista da lib — não monta a dele a partir do texto_bo", () => {

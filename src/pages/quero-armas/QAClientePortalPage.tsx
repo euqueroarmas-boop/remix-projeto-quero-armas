@@ -3188,6 +3188,7 @@ export default function QAClientePortalPage() {
             .eq("processo_id", pid)
             .maybeSingle();
           let provas: any[] = [];
+          let teses: any[] = [];
           if ((reg as any)?.id) {
             const { data: pv } = await supabase
               .from("qa_efetiva_necessidade_provas" as any)
@@ -3196,8 +3197,15 @@ export default function QAClientePortalPage() {
               .select("tipo, data_fato, created_at")
               .eq("efetiva_necessidade_id", (reg as any).id);
             provas = (pv as any[]) ?? [];
+            // As frentes de risco: enquanto houver uma sem confirmação do
+            // cliente, o passo das teses continua sendo pendência na fila.
+            const { data: ts } = await supabase
+              .from("qa_efetiva_teses" as any)
+              .select("id, ordem, confirmada_em, prova_id")
+              .eq("efetiva_necessidade_id", (reg as any).id);
+            teses = (ts as any[]) ?? [];
           }
-          mapa[pid] = calcularPassosEfetiva(reg as any, provas, cienciaBo);
+          mapa[pid] = calcularPassosEfetiva(reg as any, provas, cienciaBo, teses);
         } catch (e) {
           console.warn("[portal] efetiva necessidade: leitura falhou", e);
           mapa[pid] = calcularPassosEfetiva(null, []);
