@@ -1,12 +1,3 @@
--- ############################################################################
--- PARA COLAR NO SQL EDITOR DO SUPABASE — Bloco 8 (17/08/2026)
--- ----------------------------------------------------------------------------
--- MODO ESPELHO: a equipe abre a Area do Cliente exatamente como o cliente ve,
--- sem trocar de conta. Toda alteracao sai carimbada com o nome do operador no
--- historico que o cliente le. Unico bloqueio: comprar, pagar e assinar.
--- UM bloco so. Reexecutavel: colar de novo nao duplica nada.
--- ############################################################################
-
 -- =====================================================================
 -- MODO ESPELHO — emulador real da Área do Cliente para a equipe
 -- =====================================================================
@@ -308,16 +299,3 @@ UPDATE public.qa_suporte_sessoes
    SET encerrado_em = now(),
        resumo = COALESCE(resumo, 'Encerrada automaticamente na migração para o Modo Espelho.')
  WHERE encerrado_em IS NULL;
-
--- ############################################################################
--- CONFERENCIA — rode depois de colar o bloco acima.
--- Esperado: 4 linhas qa_emu_block_compra + 13 linhas qa_emu_rastro,
--- e ZERO linha qa_suporte_block.
--- ############################################################################
-SELECT tgname AS gatilho, c.relname AS tabela
-FROM pg_trigger t
-JOIN pg_class c ON c.oid = t.tgrelid
-JOIN pg_namespace n ON n.oid = c.relnamespace
-WHERE n.nspname = 'public'
-  AND tgname IN ('qa_emu_block_compra', 'qa_emu_rastro', 'qa_suporte_block')
-ORDER BY tgname, tabela;

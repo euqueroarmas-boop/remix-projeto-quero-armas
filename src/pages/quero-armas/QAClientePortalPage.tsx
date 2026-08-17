@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, Fragment, useRef, useCallback } from "react";
-import SuporteModoBanner from "@/components/quero-armas/clientes/SuporteModoBanner";
+import EmuEspelhoBanner from "@/components/quero-armas/clientes/EmuEspelhoBanner";
+import { clearEmuSessao, getEmuSessao, isEmuAtivo, EMU_BLOQUEIO_COMPRA } from "@/lib/quero-armas/emuSessao";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import whatsappIcon from "@/assets/whatsapp-icon.png.asset.json";
@@ -765,13 +766,19 @@ export default function QAClientePortalPage() {
         if (!user) { navigate("/area-do-cliente/login", { replace: true }); return; }
         setAuthKnown(true);
 
+        // MODO ESPELHO: o operador segue logado na conta DELE; só apontamos o
+        // portal para o cliente-alvo. Nada abaixo pode tratá-lo como cliente —
+        // troca de senha, aviso de novo login e vínculo automático de cadastro
+        // são atos do titular e ficam de fora.
+        const emu = getEmuSessao();
+
         // Força troca de senha no primeiro acesso
-        if (deveForcarTrocaSenha(user)) {
+        if (!emu && deveForcarTrocaSenha(user)) {
           setMustChangePassword(true);
         }
 
         // Aviso de novo acesso (IP, dispositivo, local) — 1x por sessão.
-        registrarLoginArsenal(String(user?.app_metadata?.provider || "senha"));
+        if (!emu) registrarLoginArsenal(String(user?.app_metadata?.provider || "senha"));
 
         const [{ data: profile }, { data: authLink }, { data: clienteDireto }] = await Promise.all([
           supabase
@@ -780,24 +787,34 @@ export default function QAClientePortalPage() {
             .eq("user_id", user.id)
             .eq("ativo", true)
             .maybeSingle(),
-          supabase
-            .from("cliente_auth_links" as any)
-            .select("id, status, email, qa_cliente_id, customer_id")
-            .eq("user_id", user.id)
-            .eq("status", "active")
-            .order("activated_at", { ascending: false, nullsFirst: false })
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle(),
-          supabase
-            .from("qa_clientes" as any)
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("excluido", false)
-            .maybeSingle(),
+          emu
+            ? Promise.resolve({ data: null as Record<string, unknown> | null })
+            : supabase
+                .from("cliente_auth_links" as any)
+                .select("id, status, email, qa_cliente_id, customer_id")
+                .eq("user_id", user.id)
+                .eq("status", "active")
+                .order("activated_at", { ascending: false, nullsFirst: false })
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle(),
+          // Espelho: o alvo vem do id da janela. Fora dele, do vínculo do login.
+          (() => {
+            const q = supabase.from("qa_clientes" as any).select("*");
+            return emu
+              ? q.eq("id", emu.clienteId).maybeSingle()
+              : q.eq("user_id", user.id).eq("excluido", false).maybeSingle();
+          })(),
         ]);
 
-        if (!profile && !authLink && !clienteDireto) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
+        // Em espelho, só o cadastro do alvo importa: o operador tem perfil de
+        // staff, então `profile` sempre existe e mascararia a falha real.
+        if (emu && !clienteDireto) {
+          toast.error("Cliente do espelho não encontrado.");
+          navigate("/clientes", { replace: true });
+          return;
+        }
+        if (!emu && !profile && !authLink && !clienteDireto) { toast.error("Perfil não encontrado."); navigate("/area-do-cliente/login", { replace: true }); return; }
 
         let customerLink: any = null;
         if ((authLink as any)?.customer_id) {
@@ -850,7 +867,9 @@ export default function QAClientePortalPage() {
         // FASE 2 — Fundação de identidade.
         // Se ainda não temos cliente nesta sessão, garante vínculo via RPC segura
         // (auth.uid() é resolvido server-side; nunca enviamos user_id daqui).
-        if (!clienteData) {
+        // Em espelho nunca criamos/vinculamos cadastro: o auth.uid() é o do
+        // operador e o vínculo nasceria errado.
+        if (!clienteData && !emu) {
           try {
             const ensured = await ensureClienteFromAuthUser({
               email: lookupEmail || user.email || null,
@@ -895,7 +914,13 @@ export default function QAClientePortalPage() {
         }
         if (!clienteData) { setLoading(false); return; }
         setCliente(clienteData);
-        setUserName((profile as any)?.nome || clienteData?.nome_completo || customerLink?.responsavel || customerLink?.razao_social || user.email || "");
+        // Em espelho o nome exibido é o do CLIENTE — `profile` aqui é o perfil
+        // de staff do operador e trocaria o nome no topo da tela.
+        setUserName(
+          emu
+            ? (clienteData?.nome_completo || "")
+            : ((profile as any)?.nome || clienteData?.nome_completo || customerLink?.responsavel || customerLink?.razao_social || user.email || ""),
+        );
         setCustomerId(customerLink?.id ?? null);
 
         // FK para vendas/itens (regra legada: qa_vendas.cliente_id → qa_clientes.id_legado).
@@ -1276,7 +1301,24 @@ export default function QAClientePortalPage() {
     };
   }, [cliente?.id, cliente?.imagem, cliente?.avatar_tatico_path, docsReloadKey, avatarReloadKey]);
 
+  /**
+   * Contratar é ato do titular. Em espelho paramos aqui, na tela — e o banco
+   * (trigger `qa_emu_block_compra`) para de novo, caso alguém contorne a UI.
+   */
+  const irParaContratar = () => {
+    if (isEmuAtivo()) { toast.error(EMU_BLOQUEIO_COMPRA); return; }
+    navigate("/area-do-cliente/contratar");
+  };
+
   const handleLogout = async () => {
+    // Em modo espelho "sair" fecha o espelho, não a conta: quem está logado é o
+    // operador, e derrubar a sessão dele mataria também a aba do admin.
+    // O encerramento formal (com e-mail de resumo) é o botão da faixa vermelha.
+    if (isEmuAtivo()) {
+      clearEmuSessao();
+      navigate("/clientes", { replace: true });
+      return;
+    }
     try {
       await supabase.auth.signOut();
     } catch {
@@ -3904,7 +3946,7 @@ export default function QAClientePortalPage() {
       selectedScopeId={selectedScopeId}
       onScopeChange={setSelectedScopeId}
     >
-    <><SuporteModoBanner />
+    <><EmuEspelhoBanner />
     <div className="min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 pl-0 lg:pl-[200px]">
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
@@ -4221,7 +4263,7 @@ export default function QAClientePortalPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => navigate("/area-do-cliente/contratar")}
+                      onClick={irParaContratar}
                       className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition"
                     >
                       <ShoppingBag className="h-3.5 w-3.5" /> Contratar serviço da Quero Armas
@@ -4671,7 +4713,7 @@ export default function QAClientePortalPage() {
                         <BriefcaseBusiness className="h-5 w-5 text-slate-300" />
                       </div>
                       <p className="text-[12px] text-slate-500 leading-snug">Seu dossiê está pronto.<br />Inicie seu primeiro processo.</p>
-                      <button type="button" onClick={() => navigate("/area-do-cliente/contratar")}
+                      <button type="button" onClick={irParaContratar}
                         className="inline-flex items-center gap-1 h-8 px-4 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-bold transition">
                         Contratar serviço
                       </button>

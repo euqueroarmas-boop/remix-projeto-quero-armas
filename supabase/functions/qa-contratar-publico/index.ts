@@ -7,6 +7,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { chamadorEmEspelho, respostaEmEspelho } from "../_shared/emuGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,10 @@ const Schema = z.object({
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  // MODO ESPELHO: a equipe navega o portal inteiro, menos comprar.
+  if (await chamadorEmEspelho(req)) return respostaEmEspelho(corsHeaders);
+
 
   const traceId = `qa-contratar-pub-${crypto.randomUUID()}`;
 

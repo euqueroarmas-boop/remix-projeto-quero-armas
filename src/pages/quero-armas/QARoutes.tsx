@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { lazyRetry } from "@/lib/lazyRetry";
 import QARouteFallback from "@/components/quero-armas/QARouteFallback";
+import EmuCompraGate from "@/components/quero-armas/portal/EmuCompraGate";
 import { isCadastroRefinadoEnabled } from "@/lib/quero-armas/cadastroRefinadoFlag";
 
 const QALayout = lazyRetry(() => import("@/components/quero-armas/QALayout"), "QALayout");
@@ -243,14 +244,17 @@ export default function QARoutes() {
         <Route path="area-do-cliente/login-mockup" element={<QAScope><QAClienteLoginMockupPage /></QAScope>} />
         <Route path="area-do-cliente/criar-conta" element={<QAScope><QACriarContaPage /></QAScope>} />
         <Route path="area-do-cliente" element={<QAScope><QAClientePortalPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar" element={<QAScope><QAContratarServicoPage /></QAScope>} />
+        {/* Contratação/pagamento: única parte fechada no MODO ESPELHO.
+            `EmuCompraGate` cobre a navegação venha ela de onde vier; o bloqueio
+            que realmente vale é o trigger qa_emu_block_compra no banco. */}
+        <Route path="area-do-cliente/contratar" element={<QAScope><EmuCompraGate><QAContratarServicoPage /></EmuCompraGate></QAScope>} />
         <Route path="area-do-cliente/contratacoes" element={<QAScope><QAClienteContratacoesPage /></QAScope>} />
         <Route path="area-do-cliente/contratos/:id" element={<QAContratoViewPage />} />
         <Route path="area-do-cliente/procuracoes/:id" element={<QAProcuracaoViewPage />} />
-        <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><QAContratarIdentificarPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><QAContratarPublicoPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><QAContratarConfirmarPage /></QAScope>} />
-        <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><QAContratarSucessoPage /></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/identificar" element={<QAScope><EmuCompraGate><QAContratarIdentificarPage /></EmuCompraGate></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/solicitar" element={<QAScope><EmuCompraGate><QAContratarPublicoPage /></EmuCompraGate></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/confirmar" element={<QAScope><EmuCompraGate><QAContratarConfirmarPage /></EmuCompraGate></QAScope>} />
+        <Route path="area-do-cliente/contratar/:slug/sucesso" element={<QAScope><EmuCompraGate><QAContratarSucessoPage /></EmuCompraGate></QAScope>} />
         <Route path="area-do-cliente/agendar-exame" element={<QAScope><QAClienteAgendarExamePage /></QAScope>} />
         <Route path="area-do-cliente/agendar-exame/mockups" element={<QAScope><QAAgendarExameMockupsPage /></QAScope>} />
         <Route path="area-do-cliente/agendar-exame/mockups-v2" element={<QAScope><QAAgendarExameMockupsV2Page /></QAScope>} />

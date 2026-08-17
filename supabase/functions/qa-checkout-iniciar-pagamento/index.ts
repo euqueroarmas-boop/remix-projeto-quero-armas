@@ -18,6 +18,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { logSistemaBackend } from "../_shared/logSistema.ts";
+import { chamadorEmEspelho, respostaEmEspelho } from "../_shared/emuGuard.ts";
 import {
   constantTimeEqual,
   createOrReuseQaAsaasCustomer,
@@ -79,6 +80,10 @@ async function logEvent(
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // MODO ESPELHO: a equipe navega o portal inteiro, menos comprar.
+  if (await chamadorEmEspelho(req)) return respostaEmEspelho(corsHeaders);
+
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   let body: any;

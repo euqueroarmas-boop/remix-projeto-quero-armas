@@ -4,6 +4,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { generateCheckoutToken } from "../_shared/qaAsaas.ts";
+import { chamadorEmEspelho, respostaEmEspelho } from "../_shared/emuGuard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -131,6 +132,10 @@ function isLegacyNumericId(value: string): boolean {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  // MODO ESPELHO: a equipe navega o portal inteiro, menos comprar.
+  if (await chamadorEmEspelho(req)) return respostaEmEspelho(corsHeaders);
+
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "method_not_allowed" }), {
       status: 405,
