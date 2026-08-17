@@ -7221,6 +7221,78 @@ export type Database = {
           },
         ]
       }
+      qa_emu_sessoes: {
+        Row: {
+          acoes: Json
+          cliente_email: string | null
+          cliente_id: number
+          cliente_nome: string | null
+          created_at: string
+          email_fim_enviado: boolean
+          email_inicio_enviado: boolean
+          encerrado_em: string | null
+          encerrado_por: string | null
+          expira_em: string
+          id: string
+          iniciado_em: string
+          ip: string | null
+          motivo: string
+          operador_email: string
+          operador_nome: string | null
+          operador_user_id: string
+          processo_id: string | null
+          processo_ref: string | null
+          resumo: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          acoes?: Json
+          cliente_email?: string | null
+          cliente_id: number
+          cliente_nome?: string | null
+          created_at?: string
+          email_fim_enviado?: boolean
+          email_inicio_enviado?: boolean
+          encerrado_em?: string | null
+          encerrado_por?: string | null
+          expira_em?: string
+          id?: string
+          iniciado_em?: string
+          ip?: string | null
+          motivo: string
+          operador_email: string
+          operador_nome?: string | null
+          operador_user_id: string
+          processo_id?: string | null
+          processo_ref?: string | null
+          resumo?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          acoes?: Json
+          cliente_email?: string | null
+          cliente_id?: number
+          cliente_nome?: string | null
+          created_at?: string
+          email_fim_enviado?: boolean
+          email_inicio_enviado?: boolean
+          encerrado_em?: string | null
+          encerrado_por?: string | null
+          expira_em?: string
+          id?: string
+          iniciado_em?: string
+          ip?: string | null
+          motivo?: string
+          operador_email?: string
+          operador_nome?: string | null
+          operador_user_id?: string
+          processo_id?: string | null
+          processo_ref?: string | null
+          resumo?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       qa_endereco_geocache: {
         Row: {
           created_at: string
@@ -10043,6 +10115,155 @@ export type Database = {
           },
           {
             foreignKeyName: "qa_processo_eventos_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processo_manifestacoes_pf: {
+        Row: {
+          analise_ia_json: Json | null
+          canal_resposta: string | null
+          contato: string | null
+          created_at: string
+          data_documento: string | null
+          delegado_cargo: string | null
+          delegado_nome: string | null
+          exigencias_json: Json
+          id: string
+          prazo_dias: number | null
+          prazo_limite: string | null
+          processo_id: string
+          registrado_por: string | null
+          status_processo: string | null
+          texto: string
+          tipo: string
+          unidade_pf: string | null
+          updated_at: string
+          visto_cliente_em: string | null
+        }
+        Insert: {
+          analise_ia_json?: Json | null
+          canal_resposta?: string | null
+          contato?: string | null
+          created_at?: string
+          data_documento?: string | null
+          delegado_cargo?: string | null
+          delegado_nome?: string | null
+          exigencias_json?: Json
+          id?: string
+          prazo_dias?: number | null
+          prazo_limite?: string | null
+          processo_id: string
+          registrado_por?: string | null
+          status_processo?: string | null
+          texto: string
+          tipo?: string
+          unidade_pf?: string | null
+          updated_at?: string
+          visto_cliente_em?: string | null
+        }
+        Update: {
+          analise_ia_json?: Json | null
+          canal_resposta?: string | null
+          contato?: string | null
+          created_at?: string
+          data_documento?: string | null
+          delegado_cargo?: string | null
+          delegado_nome?: string | null
+          exigencias_json?: Json
+          id?: string
+          prazo_dias?: number | null
+          prazo_limite?: string | null
+          processo_id?: string
+          registrado_por?: string | null
+          status_processo?: string | null
+          texto?: string
+          tipo?: string
+          unidade_pf?: string | null
+          updated_at?: string
+          visto_cliente_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_manifestacoes_pf_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_processo_recursos: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          created_at: string
+          editada_pelo_cliente: boolean
+          enviado_equipe_em: string | null
+          exigencias_json: Json
+          id: string
+          manifestacao_id: string | null
+          narrativa_final: string | null
+          narrativa_gerada: string | null
+          narrativa_gerada_em: string | null
+          numero_protocolo: string | null
+          processo_id: string
+          protocolado_em: string | null
+          provas_json: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          editada_pelo_cliente?: boolean
+          enviado_equipe_em?: string | null
+          exigencias_json?: Json
+          id?: string
+          manifestacao_id?: string | null
+          narrativa_final?: string | null
+          narrativa_gerada?: string | null
+          narrativa_gerada_em?: string | null
+          numero_protocolo?: string | null
+          processo_id: string
+          protocolado_em?: string | null
+          provas_json?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          editada_pelo_cliente?: boolean
+          enviado_equipe_em?: string | null
+          exigencias_json?: Json
+          id?: string
+          manifestacao_id?: string | null
+          narrativa_final?: string | null
+          narrativa_gerada?: string | null
+          narrativa_gerada_em?: string | null
+          numero_protocolo?: string | null
+          processo_id?: string
+          protocolado_em?: string | null
+          provas_json?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_recursos_manifestacao_id_fkey"
+            columns: ["manifestacao_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processo_manifestacoes_pf"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_processo_recursos_processo_id_fkey"
             columns: ["processo_id"]
             isOneToOne: false
             referencedRelation: "qa_processos"
@@ -13318,6 +13539,7 @@ export type Database = {
         Returns: string
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
+      qa_current_cliente_id_legado: { Args: { _uid: string }; Returns: number }
       qa_derive_status_financeiro: {
         Args: { p_status_venda: string; p_valor_aberto: number }
         Returns: string
@@ -13412,6 +13634,11 @@ export type Database = {
           template_name: string
         }[]
       }
+      qa_emu_campo_ignorado: { Args: { _k: string }; Returns: boolean }
+      qa_emu_cliente_atual: { Args: never; Returns: number }
+      qa_emu_operador_atual: { Args: never; Returns: string }
+      qa_emu_rotulo_tabela: { Args: { _t: string }; Returns: string }
+      qa_emu_sessao_atual: { Args: never; Returns: string }
       qa_ensure_cliente_from_auth: {
         Args: {
           p_cpf?: string
