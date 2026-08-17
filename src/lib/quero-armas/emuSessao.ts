@@ -30,11 +30,18 @@ function parse(raw: string | null): EmuSessao | null {
   }
 }
 
-/** Sessão de espelho desta aba, já descartada se expirou. */
+/**
+ * Sessão de espelho desta aba, já descartada se expirou.
+ *
+ * Se o sessionStorage ainda estiver vazio, tenta adotar o `?emu=` da URL AQUI
+ * mesmo. Sem isso a leitura vira uma corrida: o portal resolve o cliente no
+ * primeiro efeito e a faixa só grava a sessão no efeito dela — quando a faixa
+ * perdia a corrida, o portal abria a conta do próprio operador.
+ */
 export function getEmuSessao(): EmuSessao | null {
   let s: EmuSessao | null = null;
   try {
-    s = parse(sessionStorage.getItem(KEY));
+    s = parse(sessionStorage.getItem(KEY)) ?? adotarSessaoDaUrl();
   } catch {
     return null;
   }

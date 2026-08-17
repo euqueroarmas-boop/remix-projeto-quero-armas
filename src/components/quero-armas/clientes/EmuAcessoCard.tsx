@@ -72,6 +72,8 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
   const [minutos, setMinutos] = useState(30);
   const [loading, setLoading] = useState(false);
   const [historico, setHistorico] = useState<SessaoHistorico[]>([]);
+  /** Sessão criada mas aba bloqueada pelo navegador — link de resgate. */
+  const [urlPendente, setUrlPendente] = useState<string | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -117,6 +119,13 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
     const escolhido = processos.find((p) => p.id === processoId) || null;
     const processoRef = escolhido ? escolhido.servico_nome : processoLivre.trim();
 
+    // A aba precisa nascer AQUI, ainda dentro do clique. Depois do `await` o
+    // navegador já não reconhece o gesto do usuário e bloqueia o window.open
+    // (Safari é implacável nisso). Abrimos em branco agora e só apontamos a URL
+    // quando a sessão voltar. Sem `noopener`: com ele o retorno vem null e
+    // perdemos a referência para navegar.
+    const aba = window.open("", "_blank");
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-emu-sessao", {
@@ -133,6 +142,7 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
         // "Failed to send a request" = o navegador nem alcançou a função. Não é
         // erro de permissão nem de dados: a edge function não está publicada.
         const msg = String(error?.message || "");
+        aba?.close();
         if (/failed to send|fetch/i.test(msg)) {
           toast.error("A função qa-emu-sessao ainda não foi publicada no Supabase. Publique o projeto e tente de novo.");
           return;
@@ -152,7 +162,20 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
         operadorEmail: s.operador_email,
         expiraEm: s.expira_em,
       };
-      window.open(`/area-do-cliente?emu=${codificarParaUrl(payload)}`, "_blank", "noopener");
+      const destino = `/area-do-cliente?emu=${codificarParaUrl(payload)}`;
+
+      if (aba && !aba.closed) {
+        // Não precisamos do vínculo com esta aba; cortamos por higiene.
+        try { aba.opener = null; } catch { /* navegador pode recusar — tudo bem */ }
+        aba.location.replace(destino);
+      } else {
+        // Aba barrada (iframe do preview do Lovable sem allow-popups, bloqueador
+        // de pop-up). A sessão JÁ existe no servidor — não pode ficar órfã, então
+        // oferecemos o link para o operador abrir com um clique dele.
+        setUrlPendente(destino);
+        toast.warning("Seu navegador bloqueou a aba nova. Use o botão que apareceu no cartão.");
+      }
+
       toast.success(
         data.email_enviado ? "Espelho aberto. O cliente foi avisado por e-mail." : "Espelho aberto (e-mail de aviso não saiu).",
       );
@@ -247,6 +270,32 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
         Abrir área do cliente em espelho
       </Button>
+
+      {/* Sessão criada, aba barrada. Âncora de verdade: o clique do operador é
+          gesto direto e passa onde o window.open programático não passa. */}
+      {urlPendente && (
+        <div className="space-y-1.5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+            Sessão aberta — seu navegador bloqueou a aba
+          </p>
+          <a
+            href={urlPendente}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setUrlPendente(null)}
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#641722]"
+          >
+            <Eye className="h-3.5 w-3.5" /> Abrir em nova aba
+          </a>
+          <button
+            type="button"
+            onClick={() => { const u = urlPendente; setUrlPendente(null); window.location.href = u; }}
+            className="w-full text-[10px] font-semibold uppercase tracking-wider text-amber-800 underline"
+          >
+            ou abrir nesta aba
+          </button>
+        </div>
+      )}
 
       {historico.length > 0 && (
         <div className="space-y-1.5 border-t border-slate-100 pt-3">

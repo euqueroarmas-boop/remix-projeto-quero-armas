@@ -6,7 +6,6 @@ import {
   clearEmuSessao,
   formatarRestante,
   getEmuSessao,
-  adotarSessaoDaUrl,
   segundosRestantes,
   type EmuSessao,
 } from "@/lib/quero-armas/emuSessao";
@@ -22,7 +21,9 @@ export default function EmuEspelhoBanner({ onEncerrar }: { onEncerrar?: () => vo
   const [encerrando, setEncerrando] = useState(false);
 
   useEffect(() => {
-    const s = adotarSessaoDaUrl() ?? getEmuSessao();
+    // `getEmuSessao` já adota o `?emu=` da URL quando preciso — quem chegar
+    // primeiro (portal ou faixa) grava, o outro só lê.
+    const s = getEmuSessao();
     setSessao(s);
     setRestante(segundosRestantes(s));
   }, []);
@@ -84,8 +85,11 @@ export default function EmuEspelhoBanner({ onEncerrar }: { onEncerrar?: () => vo
   const acabando = restante <= 120;
 
   return (
+    // `sticky`, não `fixed`: fixo saía do fluxo e cobria o topo da página do
+    // cliente (o "bem-vindo" ficava atrás da faixa). Sticky ocupa a própria
+    // altura, empurra o conteúdo e continua visível ao rolar.
     <div
-      className="fixed top-0 left-0 right-0 z-[130] flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+      className="sticky top-0 z-[130] flex flex-wrap items-center justify-between gap-2 px-3 py-2"
       style={{ background: "#7A1F2B", color: "#fff" }}
     >
       <span className="flex min-w-0 items-center gap-2 text-[10px] font-black uppercase leading-tight tracking-[0.16em] sm:text-[11px]">

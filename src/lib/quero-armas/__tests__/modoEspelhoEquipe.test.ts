@@ -50,6 +50,27 @@ describe("modo espelho — estado da aba", () => {
     expect(isEmuAtivo()).toBe(false);
   });
 
+  it("adota o ?emu= da URL na primeira leitura, venha ela de onde vier", () => {
+    // REGRESSÃO: a faixa adotava a URL no efeito dela, que roda DEPOIS do
+    // efeito do portal. Quando o portal lia primeiro, achava sessionStorage
+    // vazio, caía no `else` e abria a conta do PRÓPRIO OPERADOR.
+    clearEmuSessao();
+    const s = sessaoFake({ clienteId: 4045, clienteNome: "Anthony Nelson" });
+    const anterior = window.location.href;
+    window.history.replaceState({}, "", `/area-do-cliente?emu=${codificarParaUrl(s)}`);
+
+    const lido = getEmuSessao();
+    expect(lido?.clienteId).toBe(4045);
+    expect(lido?.clienteNome).toBe("Anthony Nelson");
+    // Adotou e limpou a query — o parâmetro não fica no histórico.
+    expect(window.location.search).not.toContain("emu=");
+    // Segunda leitura vem do sessionStorage, sem depender mais da URL.
+    expect(getEmuSessao()?.clienteId).toBe(4045);
+
+    window.history.replaceState({}, "", anterior);
+    clearEmuSessao();
+  });
+
   it("codifica a sessão para a URL sem quebrar acentuação", () => {
     const s = sessaoFake({ clienteNome: "João Conceição" });
     const encoded = codificarParaUrl(s);
@@ -97,6 +118,13 @@ describe("modo espelho — portal renderiza o cliente, não o operador", () => {
   it("usa a faixa de espelho e não a faixa antiga de suporte", () => {
     expect(src).toContain("<EmuEspelhoBanner />");
     expect(src).not.toContain("SuporteModoBanner");
+  });
+
+  it("a faixa ocupa espaço em vez de cobrir o topo da página", () => {
+    // `fixed` saía do fluxo e escondia o "bem-vindo" do cliente atrás da faixa.
+    const banner = r("src/components/quero-armas/clientes/EmuEspelhoBanner.tsx");
+    expect(banner).toContain("sticky top-0");
+    expect(banner).not.toContain("fixed top-0 left-0 right-0");
   });
 
   it("barra a contratação na tela", () => {
@@ -215,6 +243,27 @@ describe("modo espelho — processo se escolhe, não se digita", () => {
   it("mantém saída para quem não tem contratação", () => {
     expect(card).toContain('<option value="outro">');
     expect(card).toContain('processoId === "outro"');
+  });
+
+  it("abre a aba no clique, antes do await — senão o Safari bloqueia", () => {
+    const idxOpen = card.indexOf('window.open("", "_blank")');
+    // Âncora na chamada de `iniciar` — a de `listar`, no topo do arquivo,
+    // também casa com "functions.invoke" e daria um falso negativo.
+    const idxAwait = card.indexOf('action: "iniciar"');
+    expect(idxOpen).toBeGreaterThan(-1);
+    expect(idxAwait).toBeGreaterThan(-1);
+    expect(idxOpen).toBeLessThan(idxAwait);
+    // Com `noopener` o window.open devolve null e perdemos a referência.
+    expect(card).not.toContain('window.open("", "_blank", "noopener")');
+    expect(card).toContain("aba.location.replace(destino)");
+  });
+
+  it("se a aba for barrada, a sessão não fica órfã", () => {
+    expect(card).toContain("setUrlPendente(destino)");
+    expect(card).toContain('target="_blank"');
+    expect(card).toContain("ou abrir nesta aba");
+    // Erro no meio do caminho fecha a aba em branco.
+    expect(card).toContain("aba?.close()");
   });
 
   it("manda o id do processo junto do nome", () => {
