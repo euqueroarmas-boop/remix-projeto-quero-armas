@@ -49,10 +49,10 @@ export function useCircunscricaoPF(
     let vivo = true;
     void (async () => {
       try {
-        const { data } = await supabase.rpc("qa_resolver_circunscricao_pf" as never, {
+        const { data } = (await supabase.rpc("qa_resolver_circunscricao_pf" as never, {
           p_municipio: cidadeNorm,
           p_uf: ufNorm,
-        } as never);
+        } as never)) as { data: unknown };
         if (!vivo) return;
         setCirc(Array.isArray(data) ? ((data[0] as CircunscricaoPF) ?? null) : null);
       } catch {
