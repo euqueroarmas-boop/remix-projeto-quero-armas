@@ -149,7 +149,7 @@ export function ArsenalCardSizeToggle({ size, onChange }: ToggleProps) {
             className={
               "px-2 py-[3px] text-[10px] font-bold uppercase tracking-wider transition-colors " +
               (active
-                ? "bg-[#7A1F2B] text-white"
+                ? "bg-[#2F3337] text-white"
                 : "text-slate-600 hover:bg-slate-50")
             }
           >

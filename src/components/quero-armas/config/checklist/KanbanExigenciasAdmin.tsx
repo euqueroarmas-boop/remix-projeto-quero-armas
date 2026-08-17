@@ -241,7 +241,7 @@ export default function KanbanExigenciasAdmin() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-[15px] font-bold uppercase tracking-[0.12em] text-[#0A0A0A]">
-            <Columns3 className="h-4 w-4 text-[#7A1F2B]" /> Painel Kanban de Exigências
+            <Columns3 className="h-4 w-4 text-[#2F3337]" /> Painel Kanban de Exigências
           </h2>
           <p className="mt-1 text-[11px] text-slate-600">
             Abra um ou mais processos, arraste exigências entre grupos e entre processos. Nada afeta o cliente
@@ -292,13 +292,13 @@ export default function KanbanExigenciasAdmin() {
                     <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">
                       {st?.itens.length ?? 0} exigências
                       {alterado && (
-                        <span className="ml-2 inline-flex items-center gap-1 text-[#7A1F2B]">
+                        <span className="ml-2 inline-flex items-center gap-1 text-[#2F3337]">
                           <AlertTriangle className="h-3 w-3" /> não publicado
                         </span>
                       )}
                     </div>
                   </div>
-                  <button type="button" onClick={() => fecharQuadro(servicoId)} className="text-slate-400 hover:text-[#7A1F2B]">
+                  <button type="button" onClick={() => fecharQuadro(servicoId)} className="text-slate-400 hover:text-[#2F3337]">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -316,7 +316,7 @@ export default function KanbanExigenciasAdmin() {
                     type="button"
                     onClick={() => publicar(servicoId)}
                     disabled={publicando === servicoId}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7A1F2B] px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white hover:bg-[#631a23]"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#2F3337] px-2.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white hover:bg-[#262A2D]"
                   >
                     {publicando === servicoId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />} Publicar
                   </button>
@@ -382,7 +382,7 @@ export default function KanbanExigenciasAdmin() {
           <div className="max-h-[80vh] w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-[#E3DED5] px-4 py-3 pr-12 relative">
               <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#0A0A0A]">Adicionar exigência</div>
-              <button type="button" onClick={() => setPicker(null)} className="absolute right-3 top-3 rounded-md bg-[#7A1F2B] p-1 text-white">
+              <button type="button" onClick={() => setPicker(null)} className="absolute right-3 top-3 rounded-md bg-[#2F3337] p-1 text-white">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -462,13 +462,13 @@ function KanbanColuna({
           </span>
           <span className="shrink-0 text-[10px] text-slate-400">({cards.length})</span>
           {grupo.servico_id !== null && (
-            <span className="shrink-0 rounded bg-[#7A1F2B]/10 px-1 text-[9px] font-bold uppercase text-[#7A1F2B]">extra</span>
+            <span className="shrink-0 rounded bg-[#2F3337]/10 px-1 text-[9px] font-bold uppercase text-[#2F3337]">extra</span>
           )}
         </div>
         <button
           type="button"
           onClick={onAdd}
-          className="shrink-0 text-slate-400 hover:text-[#7A1F2B]"
+          className="shrink-0 text-slate-400 hover:text-[#2F3337]"
           title="Adicionar exigência neste grupo"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -479,7 +479,7 @@ function KanbanColuna({
         ref={setNodeRef}
         style={{ minHeight: 72 }}
         className={`flex-1 space-y-1.5 p-2 transition-colors ${
-          isOver ? "bg-[#7A1F2B]/5 ring-2 ring-inset ring-[#7A1F2B]/30" : ""
+          isOver ? "bg-[#2F3337]/5 ring-2 ring-inset ring-[#2F3337]/30" : ""
         }`}
       >
         {cards.length === 0 && (
@@ -545,12 +545,12 @@ function KanbanCard({
             title={item.obrigatorio ? "Obrigatória" : "Opcional"}
             onClick={onToggleObrig}
             className={`rounded px-1 py-0.5 text-[9px] font-bold uppercase ${
-              item.obrigatorio ? "bg-[#7A1F2B] text-white" : "bg-slate-100 text-slate-500"
+              item.obrigatorio ? "bg-[#2F3337] text-white" : "bg-slate-100 text-slate-500"
             }`}
           >
             {item.obrigatorio ? "obrig." : "opc."}
           </button>
-          <button type="button" title="Remover do processo" onClick={onRemove} className="text-slate-300 hover:text-[#7A1F2B]">
+          <button type="button" title="Remover do processo" onClick={onRemove} className="text-slate-300 hover:text-[#2F3337]">
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -571,7 +571,7 @@ function GerenciarGruposModal({
   onChanged: () => Promise<void>;
 }) {
   const [nome, setNome] = useState("");
-  const [cor, setCor] = useState("#7A1F2B");
+  const [cor, setCor] = useState("#2F3337");
   const [escopo, setEscopo] = useState<string>("");
   const [salvando, setSalvando] = useState(false);
 
@@ -623,7 +623,7 @@ function GerenciarGruposModal({
         <div className="relative border-b border-[#E3DED5] px-4 py-3 pr-12">
           <div className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#0A0A0A]">Grupos do Kanban</div>
           <p className="mt-0.5 text-[10px] text-slate-500">Globais valem para todos os processos. Extras aparecem só no processo escolhido.</p>
-          <button type="button" onClick={onClose} className="absolute right-3 top-3 rounded-md bg-[#7A1F2B] p-1 text-white">
+          <button type="button" onClick={onClose} className="absolute right-3 top-3 rounded-md bg-[#2F3337] p-1 text-white">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -649,7 +649,7 @@ function GerenciarGruposModal({
               type="button"
               onClick={criar}
               disabled={salvando}
-              className="inline-flex h-9 items-center gap-1 rounded-md bg-[#7A1F2B] px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
+              className="inline-flex h-9 items-center gap-1 rounded-md bg-[#2F3337] px-3 text-[10px] font-bold uppercase tracking-[0.12em] text-white"
             >
               {salvando ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />} Criar
             </button>
@@ -678,9 +678,9 @@ function GerenciarGruposModal({
                 title="Ordem da coluna"
               />
               {g.servico_id !== null && (
-                <span className="rounded bg-[#7A1F2B]/10 px-1 text-[9px] font-bold uppercase text-[#7A1F2B]">extra</span>
+                <span className="rounded bg-[#2F3337]/10 px-1 text-[9px] font-bold uppercase text-[#2F3337]">extra</span>
               )}
-              <button type="button" onClick={() => excluir(g)} className="text-slate-300 hover:text-[#7A1F2B]">
+              <button type="button" onClick={() => excluir(g)} className="text-slate-300 hover:text-[#2F3337]">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>

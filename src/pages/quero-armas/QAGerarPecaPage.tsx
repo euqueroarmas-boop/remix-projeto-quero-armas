@@ -253,7 +253,7 @@ function stageProgress(s: DocUploadStage): number {
 function stageColor(s: DocUploadStage): string {
   if (s === "done") return "text-emerald-400";
   if (s === "failed") return "text-red-400";
-  return "text-[#7A1F2B]";
+  return "text-[#2F3337]";
 }
 
 function ElapsedTime({ startedAt }: { startedAt?: number }) {
@@ -1680,7 +1680,7 @@ export default function QAGerarPecaPage() {
                       <CommandGroup>
                         {municipiosList.map(m => (
                           <CommandItem key={m} value={m} onSelect={() => handleCidadeSelect(m)}
-                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-[#FBF3F4] data-[selected=true]:text-[#7A1F2B]">
+                            className="text-sm text-slate-700 cursor-pointer data-[selected=true]:bg-[#F7F7F8] data-[selected=true]:text-[#2F3337]">
                             <CheckCircle className={`mr-2 h-3.5 w-3.5 ${clienteCidade === m ? "opacity-100 text-emerald-400" : "opacity-0"}`} />
                             {toTitleCase(m)}
                           </CommandItem>
@@ -1814,10 +1814,10 @@ export default function QAGerarPecaPage() {
 
         {/* ── Decisão Administrativa / Indeferimento (somente recurso_administrativo) ── */}
         {tipoPeca === "recurso_administrativo" && (
-          <div className="space-y-3 border border-[#7A1F2B]/20 bg-[#FBF3F4] rounded p-3">
+          <div className="space-y-3 border border-[#2F3337]/20 bg-[#F7F7F8] rounded p-3">
             <div className="flex items-center gap-2">
-              <Gavel className="h-3.5 w-3.5 text-[#7A1F2B]" />
-              <span className="text-[10px] text-[#7A1F2B] uppercase tracking-[0.15em] font-semibold">
+              <Gavel className="h-3.5 w-3.5 text-[#2F3337]" />
+              <span className="text-[10px] text-[#2F3337] uppercase tracking-[0.15em] font-semibold">
                 Decisão Administrativa / Indeferimento
               </span>
               {indeferimentoAnalise && (
@@ -1863,7 +1863,7 @@ export default function QAGerarPecaPage() {
                   type="button" size="sm"
                   disabled={analisandoIndef || indeferimentoTexto.trim().length < 100}
                   onClick={analisarIndeferimento}
-                  className="bg-[#7A1F2B] hover:bg-[#641722] text-white h-7 text-[11px] disabled:opacity-40"
+                  className="bg-[#2F3337] hover:bg-[#26292C] text-white h-7 text-[11px] disabled:opacity-40"
                 >
                   {analisandoIndef ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Scale className="h-3 w-3 mr-1.5" />}
                   ANALISAR INDEFERIMENTO COM IA
@@ -1874,22 +1874,22 @@ export default function QAGerarPecaPage() {
             {indeferimentoAnalise && (
               <div className="space-y-2 bg-white border border-slate-200 rounded p-2.5 text-[11px] text-slate-700">
                 {indeferimentoAnalise.resumo_decisao && (
-                  <div><span className="font-semibold text-[#7A1F2B]">Resumo:</span> {indeferimentoAnalise.resumo_decisao}</div>
+                  <div><span className="font-semibold text-[#2F3337]">Resumo:</span> {indeferimentoAnalise.resumo_decisao}</div>
                 )}
                 {Array.isArray(indeferimentoAnalise.fundamentos_de_indef) && indeferimentoAnalise.fundamentos_de_indef.length > 0 && (
                   <div>
-                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Fundamentos do indeferimento ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
+                    <div className="font-semibold text-[#2F3337] mb-0.5">Fundamentos do indeferimento ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
                     <ul className="list-decimal list-inside space-y-0.5 text-slate-600">
                       {indeferimentoAnalise.fundamentos_de_indef.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
                   </div>
                 )}
                 {Array.isArray(indeferimentoAnalise.artigos_citados) && indeferimentoAnalise.artigos_citados.length > 0 && (
-                  <div><span className="font-semibold text-[#7A1F2B]">Dispositivos citados:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
+                  <div><span className="font-semibold text-[#2F3337]">Dispositivos citados:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
                 )}
                 {Array.isArray(indeferimentoAnalise.falhas_logicas) && indeferimentoAnalise.falhas_logicas.length > 0 && (
                   <div>
-                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Falhas lógicas:</div>
+                    <div className="font-semibold text-[#2F3337] mb-0.5">Falhas lógicas:</div>
                     <ul className="list-disc list-inside space-y-0.5 text-slate-600">
                       {indeferimentoAnalise.falhas_logicas.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
@@ -1897,7 +1897,7 @@ export default function QAGerarPecaPage() {
                 )}
                 {Array.isArray(indeferimentoAnalise.vicios_formais) && indeferimentoAnalise.vicios_formais.length > 0 && (
                   <div>
-                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Vícios formais:</div>
+                    <div className="font-semibold text-[#2F3337] mb-0.5">Vícios formais:</div>
                     <ul className="list-disc list-inside space-y-0.5 text-slate-600">
                       {indeferimentoAnalise.vicios_formais.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
@@ -1905,7 +1905,7 @@ export default function QAGerarPecaPage() {
                 )}
                 {Array.isArray(indeferimentoAnalise.pontos_nao_enfrentados) && indeferimentoAnalise.pontos_nao_enfrentados.length > 0 && (
                   <div>
-                    <div className="font-semibold text-[#7A1F2B] mb-0.5">Pontos não enfrentados pela autoridade:</div>
+                    <div className="font-semibold text-[#2F3337] mb-0.5">Pontos não enfrentados pela autoridade:</div>
                     <ul className="list-disc list-inside space-y-0.5 text-slate-600">
                       {indeferimentoAnalise.pontos_nao_enfrentados.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
@@ -2001,7 +2001,7 @@ export default function QAGerarPecaPage() {
         {docTotal > 0 && (
           <div className={`flex items-center flex-wrap gap-2 text-xs px-3 py-1.5 rounded border ${
             docFailed > 0 ? "border-red-500/30 bg-red-500/5 text-red-400" :
-            docActive > 0 ? "border-slate-300/30 bg-[#FBF3F4] text-[#7A1F2B]" :
+            docActive > 0 ? "border-slate-300/30 bg-[#F7F7F8] text-[#2F3337]" :
             hasDocsUnclassified ? "border-amber-500/30 bg-amber-500/5 text-amber-400" :
             docDone === docTotal ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400" :
             "border-neutral-700 bg-slate-100/50 text-slate-600"
@@ -2030,7 +2030,7 @@ export default function QAGerarPecaPage() {
           </div>
         )}
 
-        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#7A1F2B] hover:bg-[#641722] text-white border border-[#7A1F2B] w-full md:w-auto h-9 text-sm disabled:opacity-40">
+        <Button onClick={gerar} disabled={!canGenerate} className="bg-[#2F3337] hover:bg-[#26292C] text-white border border-[#2F3337] w-full md:w-auto h-9 text-sm disabled:opacity-40">
           {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Send className="h-4 w-4 mr-2" />}
           Gerar Peça
         </Button>

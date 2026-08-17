@@ -194,10 +194,10 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
     <div className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border transition-all ${
       isFailed ? "bg-red-50 border-red-200" :
       isDone ? "bg-emerald-50 border-emerald-200" :
-      "bg-[#FBF3F4] border-[#E5C2C6]"
+      "bg-[#F7F7F8] border-[#D1D3D6]"
     }`}>
       <div className="shrink-0">
-        {isActive && <Loader2 className="h-4 w-4 text-[#7A1F2B] animate-spin" />}
+        {isActive && <Loader2 className="h-4 w-4 text-[#2F3337] animate-spin" />}
         {isDone && <CheckCircle className="h-4 w-4 text-emerald-700" />}
         {isFailed && <AlertCircle className="h-4 w-4 text-red-600" />}
       </div>
@@ -207,7 +207,7 @@ function ActivityItem({ item, onDismiss, onReprocess }: { item: TrackedImport; o
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap ${
             isFailed ? "bg-red-100 text-red-700" :
             isDone ? "bg-emerald-100 text-emerald-700" :
-            "bg-[#FBF3F4] text-[#7A1F2B]"
+            "bg-[#F7F7F8] text-[#2F3337]"
           }`}>{stage.label}</span>
           {duration > 0 && (
             <span className="text-[10px] text-slate-500 tabular-nums">{formatDuration(duration)}</span>
@@ -747,7 +747,7 @@ export default function QABaseConhecimentoPage() {
     if (s === "erro" || s === "texto_invalido") return <AlertCircle className="h-4 w-4 text-red-400" />;
     if (TERMINAL.includes(s)) return <Clock className="h-4 w-4 text-slate-500" />;
     // Any processing stage
-    if (s !== "pendente") return <Loader2 className="h-4 w-4 text-[#7A1F2B] animate-spin" />;
+    if (s !== "pendente") return <Loader2 className="h-4 w-4 text-[#2F3337] animate-spin" />;
     return <Clock className="h-4 w-4 text-slate-500" />;
   };
 
@@ -756,12 +756,12 @@ export default function QABaseConhecimentoPage() {
     if (s === "concluido") return { text: "Concluído", cls: "bg-emerald-50 text-emerald-700" };
     if (s === "texto_invalido") return { text: "Texto Inválido", cls: "bg-orange-50 text-orange-600" };
     if (s === "erro") return { text: "Falhou", cls: "bg-red-50 text-red-600" };
-    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-[#FBF3F4] text-[#7A1F2B]" };
+    if (s !== "pendente" && !TERMINAL.includes(s)) return { text: stage.label, cls: "bg-[#F7F7F8] text-[#2F3337]" };
     return { text: "Pendente", cls: "bg-slate-100 text-slate-500" };
   };
 
   const origemIcon = (t: string) => {
-    if (t === "link_publico") return <Globe className="h-3 w-3" style={{ color: "hsl(352 60% 30%)" }} />;
+    if (t === "link_publico") return <Globe className="h-3 w-3" style={{ color: "hsl(210 8% 20%)" }} />;
     return <Upload className="h-3 w-3" style={{ color: "hsl(220 10% 62%)" }} />;
   };
 
@@ -800,7 +800,7 @@ export default function QABaseConhecimentoPage() {
             <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.doc,.docx,.txt,.rtf" multiple />
             <span
               className={`flex w-full sm:w-auto items-center justify-center gap-2 h-10 px-4 text-xs font-semibold rounded-xl border-0 shadow-md ${uploading ? "opacity-70 pointer-events-none" : "hover:opacity-90"}`}
-              style={{ background: "#7A1F2B", color: "#ffffff" }}
+              style={{ background: "#2F3337", color: "#ffffff" }}
             >
               {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} {uploading ? "Enviando..." : "Enviar Documento"}
             </span>
@@ -814,13 +814,13 @@ export default function QABaseConhecimentoPage() {
           <div className="flex items-center justify-between mb-1">
             <button onClick={() => setQueueCollapsed(c => !c)} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider hover:opacity-70 transition-opacity"
               style={{ color: "hsl(220 20% 18%)" }}>
-              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin" style={{ color: "hsl(352 60% 30%)" }} />}
+              {activeTracked.length > 0 && <Loader2 className="h-3 w-3 animate-spin" style={{ color: "hsl(210 8% 20%)" }} />}
               Fila de Processamento
               {queueCollapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
             </button>
             <div className="flex items-center gap-2">
               {activeTracked.length > 0 && (
-                <span className="qa-badge bg-[#FBF3F4] text-[#7A1F2B]">
+                <span className="qa-badge bg-[#F7F7F8] text-[#2F3337]">
                   {activeTracked.length} ativa{activeTracked.length > 1 ? "s" : ""}
                 </span>
               )}
@@ -854,7 +854,7 @@ export default function QABaseConhecimentoPage() {
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
-        <StatCard icon={FileText} label="Total" value={totalDocs} color="hsl(352 60% 30%)" />
+        <StatCard icon={FileText} label="Total" value={totalDocs} color="hsl(210 8% 20%)" />
         <StatCard icon={ShieldCheck} label="Validados" value={validados} color="hsl(152 60% 42%)" />
         <StatCard icon={Clock} label="Pendentes" value={pendentes} color="hsl(38 92% 50%)" />
         <StatCard icon={Zap} label="Ativos na IA" value={ativosIA} color="hsl(262 60% 55%)" />
@@ -895,7 +895,7 @@ export default function QABaseConhecimentoPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
         </div>
       ) : docs.length === 0 ? (
         <div className="qa-card text-center py-16">
@@ -918,14 +918,14 @@ export default function QABaseConhecimentoPage() {
               <div key={d.id} className="qa-card flex items-center gap-3 p-4 group">
                 {statusIcon(d.status_processamento)}
                 <Link to={`/base-conhecimento/${d.id}`} className="flex-1 min-w-0 cursor-pointer">
-                  <div className="text-[13px] font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-[#7A1F2B]"
+                  <div className="text-[13px] font-medium truncate flex items-center gap-1.5 transition-colors group-hover:text-[#2F3337]"
                     style={{ color: "hsl(220 20% 18%)" }}>
                     {d.titulo}
                     {isRef && <Star className="h-3 w-3 text-amber-400 shrink-0" />}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap" style={{ color: "hsl(220 10% 55%)" }}>
                     <span className="qa-badge bg-slate-100 text-slate-600 capitalize">{d.tipo_documento?.replace(/_/g, " ")}</span>
-                    <span className="qa-badge bg-[#FBF3F4] text-[#7A1F2B]">Aprendizado IA</span>
+                    <span className="qa-badge bg-[#F7F7F8] text-[#2F3337]">Aprendizado IA</span>
                     <span className="flex items-center gap-1 text-[11px]">{origemIcon(d.tipo_origem)}{d.tipo_origem === "link_publico" ? "Link" : "Upload"}</span>
                     <span className="text-[11px] font-mono">{new Date(d.created_at).toLocaleDateString("pt-BR")}</span>
                     {d.tamanho_bytes && <span className="text-[11px]">{(d.tamanho_bytes / 1024).toFixed(0)} KB</span>}
@@ -939,7 +939,7 @@ export default function QABaseConhecimentoPage() {
                   {isProcessing && (
                     <div className="mt-1.5 flex items-center gap-2">
                       <Progress value={getStageInfo(d.status_processamento).pct} className="h-1 bg-slate-100 flex-1 max-w-[200px]" />
-                      <span className="text-[10px]" style={{ color: "hsl(352 60% 30%)" }}>{getStageInfo(d.status_processamento).label}</span>
+                      <span className="text-[10px]" style={{ color: "hsl(210 8% 20%)" }}>{getStageInfo(d.status_processamento).label}</span>
                     </div>
                   )}
                 </Link>
@@ -970,7 +970,7 @@ export default function QABaseConhecimentoPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
                 <Link to={`/base-conhecimento/${d.id}`}>
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-[#7A1F2B]" style={{ color: "hsl(220 10% 72%)" }} />
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-colors group-hover:text-[#2F3337]" style={{ color: "hsl(220 10% 72%)" }} />
                 </Link>
               </div>
             );
@@ -982,7 +982,7 @@ export default function QABaseConhecimentoPage() {
       <Dialog open={showLinkDialog} onOpenChange={setShowLinkDialog}>
         <DialogContent className="border-slate-200 max-w-lg rounded-xl overflow-y-auto max-h-[90dvh]" style={{ background: "hsl(0 0% 100%)", color: "hsl(220 20% 18%)" }}>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Link2 className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} /> Importar por Link Público</DialogTitle>
+            <DialogTitle className="flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}><Link2 className="h-5 w-5" style={{ color: "hsl(210 8% 20%)" }} /> Importar por Link Público</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-[10px] text-emerald-600 bg-emerald-50 rounded px-2 py-1.5 border border-emerald-200">
@@ -1014,7 +1014,7 @@ export default function QABaseConhecimentoPage() {
               onClick={handleImportLink}
               disabled={!linkUrl.trim() || importingLink}
               className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: "hsl(352 60% 30%)", color: "hsl(0 0% 100%)" }}
+              style={{ background: "hsl(210 8% 20%)", color: "hsl(0 0% 100%)" }}
             >
               {importingLink ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Enviando...</> : <><Globe className="h-3.5 w-3.5" /> Importar</>}
             </button>
@@ -1068,7 +1068,7 @@ export default function QABaseConhecimentoPage() {
               onClick={handleBulkImport}
               disabled={!bulkLinks.trim() || bulkImporting}
               className="flex items-center gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: "hsl(352 60% 30%)", color: "hsl(0 0% 100%)" }}
+              style={{ background: "hsl(210 8% 20%)", color: "hsl(0 0% 100%)" }}
             >
               {bulkImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} Importar Links
             </button>

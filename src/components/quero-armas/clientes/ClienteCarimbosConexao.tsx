@@ -20,7 +20,7 @@ interface Carimbo {
   detalhe: string | null;
 }
 
-const BORDO = "#7A1F2B";
+const BORDO = "#2F3337";
 
 const dataHora = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
@@ -126,7 +126,7 @@ export default function ClienteCarimbosConexao({ cliente }: { cliente: any }) {
           type="button"
           onClick={() => setOrigem("")}
           className={`rounded-full border px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider ${
-            origem === "" ? "border-[#7A1F2B] text-[#7A1F2B]" : "border-slate-200 text-slate-500"
+            origem === "" ? "border-[#2F3337] text-[#2F3337]" : "border-slate-200 text-slate-500"
           }`}
         >
           Todas
@@ -137,7 +137,7 @@ export default function ClienteCarimbosConexao({ cliente }: { cliente: any }) {
             type="button"
             onClick={() => setOrigem((v) => (v === o ? "" : o))}
             className={`rounded-full border px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider ${
-              origem === o ? "border-[#7A1F2B] text-[#7A1F2B]" : "border-slate-200 text-slate-500"
+              origem === o ? "border-[#2F3337] text-[#2F3337]" : "border-slate-200 text-slate-500"
             }`}
           >
             {o}

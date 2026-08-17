@@ -20,7 +20,7 @@ import { calcularPrecoFinal } from "@/lib/checkoutPricing";
 // ─── Tokens (papel, tinta, bordô) ────────────────────────────────────────────
 const CSS = `
 .qafin-central{--paper:#f6f5f1;--ink:#141414;--ink-soft:#4a4a4a;--line:#e3e0d8;
-  --bordo:#7A1F2B;--bordo-soft:#f4e6e8;--amber:#a8741a;--danger:#8a1414;
+  --bordo:#2F3337;--bordo-soft:#ECEDEE;--amber:#a8741a;--danger:#8a1414;
   --ok:#1f4d2b;--card:#fff;background:var(--paper);color:var(--ink);
   font-family:'Arial Narrow',Arial,sans-serif;padding:0 0 24px}
 .qafin-sticky-header{position:sticky;top:0;z-index:10;background:var(--paper);padding:0 0 14px;margin:0}

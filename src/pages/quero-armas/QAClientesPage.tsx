@@ -373,7 +373,7 @@ function SelfieThumb({ path, name, size = "lg" }: { path: string | null | undefi
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
+        className={`${dim} rounded-xl overflow-hidden shrink-0 flex items-center justify-center border bg-slate-50 transition-all ${url ? "hover:ring-2 hover:ring-[#2F3337] cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Sem selfie"}
       >
@@ -437,7 +437,7 @@ function DocumentThumb({
         type="button"
         onClick={() => url && setOpen(true)}
         disabled={!url}
-        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-[#7A1F2B] cursor-zoom-in" : "cursor-default"}`}
+        className={`relative w-full aspect-[4/3] rounded-lg overflow-hidden border bg-slate-100 flex items-center justify-center transition-all ${url ? "hover:ring-2 hover:ring-[#2F3337] cursor-zoom-in" : "cursor-default"}`}
         style={{ borderColor: "hsl(220 13% 88%)" }}
         title={url ? "Clique para ampliar" : "Não enviado"}
       >
@@ -1325,7 +1325,7 @@ function ClientePortalMirrorAdmin({
                 onClick={() => setDocsSubview(k)}
                 className="px-3 py-1.5 text-[10px] font-black uppercase rounded-sm transition-colors"
                 style={{
-                  background: docsSubview === k ? "#7A1F2B" : "transparent",
+                  background: docsSubview === k ? "#2F3337" : "transparent",
                   color: docsSubview === k ? "#fff" : "#7A7A7A",
                 }}
               >
@@ -1532,7 +1532,7 @@ function ClientePortalMirrorAdmin({
                 key={item.key}
                 type="button"
                 onClick={() => setActiveSection(item.key)}
-                className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${active ? "bg-[#7A1F2B] text-white" : "bg-slate-50 text-slate-600"}`}
+                className={`px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider ${active ? "bg-[#2F3337] text-white" : "bg-slate-50 text-slate-600"}`}
               >
                 {item.label}
               </button>
@@ -3120,11 +3120,11 @@ export default function QAClientesPage() {
   });
   const filteredRejeitados = cadastrosRejeitados.filter(matchSearch);
 
-  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-[#641722]";
+  const statusColor = (s: string) => s === "ATIVO" ? "text-emerald-600" : s === "DESISTENTE" ? "text-red-600" : "text-[#26292C]";
   const svcStatusColor = (s: string) => {
     if (s === "DEFERIDO" || s === "CONCLUÍDO") return "text-emerald-700 bg-emerald-50";
     if (s === "INDEFERIDO") return "text-red-700 bg-red-50";
-    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-[#4F121C] bg-[#FBF3F4]";
+    if (s === "EM ANÁLISE" || s === "PRONTO PARA ANÁLISE") return "text-[#1E2023] bg-[#F7F7F8]";
     return "text-slate-600 bg-slate-100";
   };
   const formatDate = (d: string | null) => {
@@ -3243,7 +3243,7 @@ export default function QAClientesPage() {
                 { value: "portal", icon: KeyRound, label: "Portal" },
                 { value: "destravar", icon: Wrench, label: "Destravar" },
               ].map(t => (
-                <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#7A1F2B] data-[state=active]:text-white rounded-lg font-bold">
+                <TabsTrigger key={t.value} value={t.value} className="text-[12px] whitespace-nowrap px-3 data-[state=active]:bg-[#2F3337] data-[state=active]:text-white rounded-lg font-bold">
                   <t.icon className="h-3.5 w-3.5 mr-1.5" /> {t.label}
                 </TabsTrigger>
               ))}
@@ -3549,10 +3549,10 @@ export default function QAClientesPage() {
                 <div className="qa-card p-4 md:p-5 mb-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 60% 30% / 0.12)" }}>
-                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(210 8% 20% / 0.12)" }}>
+                        <ShoppingCart className="h-3.5 w-3.5" style={{ color: "hsl(210 8% 20%)" }} />
                       </div>
-                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(352 60% 30%)" }}>
+                      <h3 className="text-[11px] uppercase tracking-[0.14em] font-bold" style={{ color: "hsl(210 8% 20%)" }}>
                         Serviços — Vendas e Processos
                       </h3>
                     </div>
@@ -3600,7 +3600,7 @@ export default function QAClientesPage() {
                         </div>
                         <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
                           <div className="text-[9px] uppercase tracking-wider text-slate-500">Pagas</div>
-                          <div className="text-[14px] font-bold" style={{ color: "hsl(352 60% 40%)" }}>{totalPagas}</div>
+                          <div className="text-[14px] font-bold" style={{ color: "hsl(210 8% 31.6%)" }}>{totalPagas}</div>
                         </div>
                         <div
                           className="rounded-md border px-2 py-1.5"
@@ -3621,9 +3621,9 @@ export default function QAClientesPage() {
                       </div>
                       <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-3 gap-1.5 text-[10px]">
                         <div className="rounded-md border px-2 py-1.5"
-                          style={{ background: "hsl(352 60% 30% / 0.06)", borderColor: "hsl(352 60% 30% / 0.30)" }}>
+                          style={{ background: "hsl(210 8% 20% / 0.06)", borderColor: "hsl(210 8% 20% / 0.30)" }}>
                           <div className="text-[9px] uppercase tracking-wider text-slate-500">Valor Total em Serviços</div>
-                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(352 60% 30%)" }}>
+                          <div className="text-[14px] font-bold font-mono tabular-nums" style={{ color: "hsl(210 8% 20%)" }}>
                             R$ {valorTotalServicos.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -3651,18 +3651,18 @@ export default function QAClientesPage() {
                 {/* Solicitações de serviço vindas do formulário público
                     — exibidas como leads operacionais; não criam pagamento. */}
                 {solicitacoesPublicas.filter(s => !s.ja_convertido).length > 0 && (
-                  <div className="mb-4 rounded-lg border border-[#E5C2C6] bg-[#7A1F2B]/60 p-3">
+                  <div className="mb-4 rounded-lg border border-[#D1D3D6] bg-[#2F3337]/60 p-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#4F121C]">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1E2023]">
                         Solicitações — Formulário público
                       </span>
-                      <span className="text-[10px] text-[#4F121C]">
+                      <span className="text-[10px] text-[#1E2023]">
                         {solicitacoesPublicas.filter(s => !s.ja_convertido).length} aguardando contratação
                       </span>
                     </div>
                     <div className="space-y-2">
                       {solicitacoesPublicas.filter(s => !s.ja_convertido).map(s => (
-                        <div key={s.cadastro_publico_id} className="rounded-md border border-[#E5C2C6] bg-white p-2.5">
+                        <div key={s.cadastro_publico_id} className="rounded-md border border-[#D1D3D6] bg-white p-2.5">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <div className="text-[12px] font-semibold text-slate-800 truncate">
@@ -3675,7 +3675,7 @@ export default function QAClientesPage() {
                                 )}
                               </div>
                               <div className="flex flex-wrap gap-1.5 mt-1.5">
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#F1D9DC] text-[#3D0E16] border border-[#E5C2C6]">
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#E3E5E7] text-[#17191B] border border-[#D1D3D6]">
                                   Aguardando contratação
                                 </span>
                                 <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
@@ -3726,7 +3726,7 @@ export default function QAClientesPage() {
                             <div className="flex items-center gap-2 flex-wrap min-w-0">
                               <span
                                 className="px-2 py-[2px] rounded text-[11px] font-bold uppercase tracking-wider"
-                                style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" }}
+                                style={{ background: "hsl(210 8% 20% / 0.10)", color: "hsl(210 8% 31.6%)" }}
                               >
                                 VENDA #{v.id_legado ?? v.id}
                               </span>
@@ -3932,7 +3932,7 @@ export default function QAClientesPage() {
                                       </div>
                                     </div>
                                     {!isStatusDefinido(it.status) ? (
-                                      <div className="rounded-md border border-[#E5C2C6] bg-[#FBF3F4] px-3 py-2 text-[10px] text-[#4F121C]">
+                                      <div className="rounded-md border border-[#D1D3D6] bg-[#F7F7F8] px-3 py-2 text-[10px] text-[#1E2023]">
                                         ⚠️ Selecione o <strong>status</strong> deste serviço para liberar o preenchimento do formulário.
                                       </div>
                                     ) : (
@@ -3952,7 +3952,7 @@ export default function QAClientesPage() {
                                                 setItemEditForm(prev => ({ ...prev, [field.key]: val }));
                                               }}
                                               placeholder={field.type === "date" ? "DD/MM/AAAA" : "—"}
-                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-[#7A1F2B]"}`}
+                                              className={`w-full h-7 px-2 text-[10px] rounded bg-white border text-slate-700 placeholder:text-slate-300 focus:outline-none transition-colors ${field.required && !itemEditForm[field.key] ? "border-red-300 focus:border-red-500" : "border-slate-200 focus:border-[#2F3337]"}`}
                                             />
                                           </div>
                                         ))}
@@ -3970,7 +3970,7 @@ export default function QAClientesPage() {
                             <div className="flex justify-between items-center pt-2 mt-1 border-t border-slate-200">
                               <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">Total</span>
                               <div className="flex gap-3 items-center">
-                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-[#641722] font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
+                                {Number(v.desconto) > 0 && <span className="text-[14px] font-bold text-[#26292C] font-mono tabular-nums">Desc: R$ {Number(v.desconto).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>}
                                 <span className="text-[17px] font-bold text-slate-900 font-mono tabular-nums">R$ {Number(v.valor_a_pagar).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                               </div>
                             </div>
@@ -3978,7 +3978,7 @@ export default function QAClientesPage() {
                           {/* Timeline operacional — só quando há solicitação canônica vinculada */}
                           {v.solicitacao_id && (
                             <details className="border-t border-slate-100 px-3 py-2 bg-slate-50/40">
-                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-[#7A1F2B] select-none">
+                              <summary className="cursor-pointer text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 hover:text-[#2F3337] select-none">
                                 Linha do tempo do serviço
                               </summary>
                               <div className="mt-3 pl-1">
@@ -4052,11 +4052,11 @@ export default function QAClientesPage() {
               <TabsContent value="destravar" className="mt-3">
                 <div className="space-y-6">
                   <div>
-                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">Modo Suporte — Checklist</h3>
+                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#2F3337]">Modo Suporte — Checklist</h3>
                     <ClienteModoSuporte clienteId={c.id} />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">Destravar Cadastro</h3>
+                    <h3 className="mb-2 text-[12px] font-bold uppercase tracking-wide text-[#2F3337]">Destravar Cadastro</h3>
                     <ClienteDestravarCadastro cliente={c} />
                   </div>
                 </div>
@@ -4093,7 +4093,7 @@ export default function QAClientesPage() {
   const cadastroStatusColor = (s: string) => {
     const normalized = String(s || "").toLowerCase();
     if (CADASTRO_PUBLICO_APROVADO_STATUSES.has(normalized)) return "text-emerald-600 bg-emerald-50";
-    if (CADASTRO_MIRA_PENDENTE_STATUSES.has(normalized)) return "text-[#641722] bg-[#FBF3F4]";
+    if (CADASTRO_MIRA_PENDENTE_STATUSES.has(normalized)) return "text-[#26292C] bg-[#F7F7F8]";
     if (normalized === "rejeitado" || normalized === "abandonado") return "text-red-600 bg-red-50";
     return "text-slate-500 bg-slate-100";
   };
@@ -4115,7 +4115,7 @@ export default function QAClientesPage() {
         key={`edit-${fieldKey}`}
         value={ef[fieldKey] || ""}
         onChange={e => setEf(fieldKey, e.target.value.toUpperCase())}
-        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
+        className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#2F3337] py-0.5"
         style={{ color: "hsl(220 20% 18%)" }}
       />
     );
@@ -4174,7 +4174,7 @@ export default function QAClientesPage() {
               disabled={!!savingCadastroPublicoStatus || c.status === "aprovado"}
               onClick={() => updateCadastroPublicoStatus("aprovado")}
               className="h-8 px-3 rounded-lg text-[11px] font-bold text-white transition-all disabled:opacity-40 inline-flex items-center gap-1.5"
-              style={{ background: "#7A1F2B" }}
+              style={{ background: "#2F3337" }}
             >
               {savingCadastroPublicoStatus === "aprovado" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -4215,7 +4215,7 @@ export default function QAClientesPage() {
                 <button
                   disabled={!!savingCadastroPublicoStatus}
                   onClick={() => updateCadastroPublicoStatus("pendente")}
-                  className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-[#FBF3F4] text-[#3D0E16] border-[#E5C2C6] hover:bg-[#F1D9DC]"
+                  className="h-8 px-3 rounded-lg text-[11px] font-semibold border transition-all disabled:opacity-40 inline-flex items-center gap-1.5 bg-[#F7F7F8] text-[#17191B] border-[#D1D3D6] hover:bg-[#E3E5E7]"
                   title="Voltar para pendente (remove a conferência)"
                 >
                   {savingCadastroPublicoStatus === "pendente" ? (
@@ -4366,7 +4366,7 @@ export default function QAClientesPage() {
                   <select
                     value={ef.servico_interesse || ""}
                     onChange={e => setEf("servico_interesse", e.target.value)}
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#2F3337] py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   >
                     <option value="">Selecione...</option>
@@ -4400,7 +4400,7 @@ export default function QAClientesPage() {
                     value={ef.servico_fechado_final || ""}
                     onChange={e => setEf("servico_fechado_final", e.target.value)}
                     placeholder="Defina após negociação"
-                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                    className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#2F3337] py-0.5 uppercase"
                     style={{ color: "hsl(220 20% 18%)" }}
                   />
                 </div>
@@ -4497,7 +4497,7 @@ export default function QAClientesPage() {
                     if (cli) { setSelectedCadastroPublico(null); void openClient(cli); }
                   }}
                   className="h-7 px-2.5 rounded-md text-[10px] font-bold uppercase tracking-wider border bg-white hover:bg-slate-50 transition-colors"
-                  style={{ color: "#7A1F2B", borderColor: "#E5C2C6" }}
+                  style={{ color: "#2F3337", borderColor: "#D1D3D6" }}
                 >
                   Abrir cliente
                 </button>
@@ -4551,7 +4551,7 @@ export default function QAClientesPage() {
                       value={ef.rg || ""}
                       onChange={e => setEf("rg", maskRg(e.target.value))}
                       placeholder="00.000.000-X"
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#2F3337] py-0.5"
                       style={{ color: "hsl(220 20% 18%)" }}
                     />
                   </div>
@@ -4564,7 +4564,7 @@ export default function QAClientesPage() {
                     <select
                       value={ef.uf_emissor_rg || ""}
                       onChange={e => setEf("uf_emissor_rg", e.target.value)}
-                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#7A1F2B] py-0.5 uppercase"
+                      className="flex-1 text-sm font-medium border-b border-slate-300 bg-transparent outline-none focus:border-[#2F3337] py-0.5 uppercase"
                       style={{ color: "hsl(220 20% 18%)" }}
                     >
                       <option value="">Selecione</option>
@@ -4707,7 +4707,7 @@ export default function QAClientesPage() {
                   value={ef.observacoes || ""}
                   onChange={e => setEf("observacoes", e.target.value.toUpperCase())}
                   rows={3}
-                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-[#7A1F2B]"
+                  className="w-full text-sm border rounded-lg p-3 outline-none focus:border-[#2F3337]"
                   style={{ color: "hsl(220 20% 25%)", borderColor: "hsl(220 13% 88%)" }}
                 />
               ) : (
@@ -4785,7 +4785,7 @@ export default function QAClientesPage() {
         {/* Mobile: full-width primary CTA */}
         <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
           className="flex sm:hidden items-center justify-center gap-1.5 w-full h-10 rounded-xl text-xs font-bold tracking-wide"
-          style={{ background: "hsl(352 60% 30%)", color: "#fff" }}>
+          style={{ background: "hsl(210 8% 20%)", color: "#fff" }}>
           <Plus className="h-4 w-4" /> NOVO CLIENTE
         </button>
         {/* Desktop: inline actions */}
@@ -4795,7 +4795,7 @@ export default function QAClientesPage() {
           </Button>
           <button onClick={() => { setEditingCliente(null); setClienteModal(true); }}
             className="flex items-center gap-1.5 h-8 px-3 text-[11px] font-semibold rounded-md transition-all hover:opacity-90 shadow-sm"
-            style={{ background: "hsl(352 60% 30%)", color: "#ffffff" }}>
+            style={{ background: "hsl(210 8% 20%)", color: "#ffffff" }}>
             <Plus className="h-3.5 w-3.5" /> NOVO CLIENTE
           </button>
         </div>
@@ -4808,7 +4808,7 @@ export default function QAClientesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nome, CPF, telefone, e-mail ou serviço..."
-          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
+          className="w-full h-10 pl-9 pr-4 rounded-xl border text-[13px] outline-none transition-all focus:ring-2 focus:ring-[#2F3337] focus:border-[#2F3337]"
           style={{ background: "hsl(0 0% 100%)", borderColor: "hsl(220 13% 88%)", color: "hsl(220 20% 18%)" }}
         />
       </div>
@@ -4825,7 +4825,7 @@ export default function QAClientesPage() {
             onClick={() => setArchivedFilter(opt.key)}
             className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all"
             style={{
-              background: archivedFilter === opt.key ? "hsl(352 60% 30%)" : "transparent",
+              background: archivedFilter === opt.key ? "hsl(210 8% 20%)" : "transparent",
               color: archivedFilter === opt.key ? "white" : "hsl(220 10% 55%)",
             }}
           >
@@ -4993,7 +4993,7 @@ export default function QAClientesPage() {
                   <span>{c.email || "—"}</span>
                 </div>
                 {c.servico_interesse && (
-                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(352 60% 30%)" }}>🎯 {c.servico_interesse}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: "hsl(210 8% 20%)" }}>🎯 {c.servico_interesse}</div>
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -5494,7 +5494,7 @@ function ClienteHeaderCard({
             variant="ghost"
             size="sm"
             onClick={onEdit}
-            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#7A1F2B] hover:border-[#E5C2C6] hover:bg-[#FBF3F4]"
+            className="h-9 w-9 p-0 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#2F3337] hover:border-[#D1D3D6] hover:bg-[#F7F7F8]"
             title="Editar cliente"
           >
             <Edit className="h-4 w-4" />

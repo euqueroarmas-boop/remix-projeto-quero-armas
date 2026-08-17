@@ -345,7 +345,7 @@ export default function QABibliotecaDocumentosAdmin() {
     <div className="bg-white rounded-2xl border p-4 md:p-5" style={{ borderColor: "hsl(220 15% 90%)" }}>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <BookMarked className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} /> Biblioteca de Documentos
+          <BookMarked className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} /> Biblioteca de Documentos
         </h2>
         <Button variant="ghost" size="sm" onClick={carregar} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
@@ -398,7 +398,7 @@ export default function QABibliotecaDocumentosAdmin() {
         <Button
           size="sm"
           onClick={() => setCriandoNovo((v) => !v)}
-          className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8"
+          className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-8"
         >
           {criandoNovo ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
           {criandoNovo ? "Cancelar" : "Adicionar documento"}
@@ -407,7 +407,7 @@ export default function QABibliotecaDocumentosAdmin() {
 
       {/* Formulário de novo item */}
       {criandoNovo && (
-        <div className="rounded-lg border border-dashed border-[#7B1C2E]/40 bg-[#7B1C2E]/[0.03] p-3 mb-4 space-y-2">
+        <div className="rounded-lg border border-dashed border-[#2E3236]/40 bg-[#2E3236]/[0.03] p-3 mb-4 space-y-2">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
               <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Nome do documento</label>
@@ -518,7 +518,7 @@ export default function QABibliotecaDocumentosAdmin() {
             <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => { setNovo({ ...BLANK }); setModelosNovo([]); setCriandoNovo(false); }}>
               Cancelar
             </Button>
-            <Button size="sm" onClick={criarNovo} disabled={treinandoNovo} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7">
+            <Button size="sm" onClick={criarNovo} disabled={treinandoNovo} className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-7">
               {treinandoNovo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
               {treinandoNovo ? "Treinando modelos…" : "Adicionar à biblioteca"}
             </Button>
@@ -540,7 +540,7 @@ export default function QABibliotecaDocumentosAdmin() {
           {grupos.map(([cat, lista]) => (
             <div key={cat}>
               <div className="flex items-center justify-between gap-2 mb-1.5 px-1 border-b border-slate-200 pb-1">
-                <span className="text-[11px] font-bold tracking-[0.18em] text-[#7A1F2B] uppercase">
+                <span className="text-[11px] font-bold tracking-[0.18em] text-[#2F3337] uppercase">
                   {labelCategoria(cat)}
                 </span>
                 <span className="text-[10px] font-semibold text-slate-500 tabular-nums">
@@ -661,13 +661,13 @@ function ItemBiblioteca({
               <button
                 type="button"
                 onClick={() => setAjudaAberta((v) => !v)}
-                className="text-[10px] font-semibold uppercase tracking-wide text-[#7A1F2B] inline-flex items-center gap-1 hover:underline"
+                className="text-[10px] font-semibold uppercase tracking-wide text-[#2F3337] inline-flex items-center gap-1 hover:underline"
               >
                 <HelpCircle className="w-3 h-3" /> Como escrever
               </button>
             </div>
             {ajudaAberta && (
-              <div className="mb-1.5 rounded-md border border-[#7A1F2B]/25 bg-[#7A1F2B]/[0.04] p-2.5 text-[11px] leading-relaxed text-slate-700 space-y-1.5">
+              <div className="mb-1.5 rounded-md border border-[#2F3337]/25 bg-[#2F3337]/[0.04] p-2.5 text-[11px] leading-relaxed text-slate-700 space-y-1.5">
                 <p><b>Uma linha = um passo numerado no portal do cliente.</b> Escreva como se estivesse explicando por telefone para alguém que nunca entrou no site do órgão. Dê Enter a cada passo — o sistema numera sozinho (1, 2, 3…).</p>
                 <p>Regras práticas: comece cada linha com o verbo (“Abra…”, “Selecione…”, “Marque…”), diga <b>exatamente</b> o nome do botão ou campo entre aspas, e termine mandando o cliente voltar e clicar em “Entregar documento”.</p>
                 <p>O <b>link do site oficial</b> não vai no texto: coloque no campo “Link para emissão” abaixo — ele aparece destacado no topo do passo a passo. A frase curta de prazo (“emitida nos últimos 30 dias”) vai em “Observação curta ao cliente”.</p>
@@ -764,7 +764,7 @@ Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
                 size="sm"
                 variant="ghost"
                 onClick={() => onDuplicar(item)}
-                className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
+                className="text-xs h-7 text-slate-500 hover:text-[#2F3337] gap-1"
               >
                 <Copy className="w-3 h-3" /> Duplicar
               </Button>
@@ -773,7 +773,7 @@ Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
                 variant="ghost"
                 onClick={() => onSincronizar(item)}
                 title="Aplicar este cadastro em todos os serviços que exigem este documento"
-                className="text-xs h-7 text-slate-500 hover:text-[#7A1F2B] gap-1"
+                className="text-xs h-7 text-slate-500 hover:text-[#2F3337] gap-1"
               >
                 <RefreshCw className="w-3 h-3" /> Sincronizar serviços
               </Button>
@@ -782,7 +782,7 @@ Baixe o PDF original com QR Code e volte aqui para entregar o documento.`}</p>
               size="sm"
               onClick={() => onSalvar(local)}
               disabled={salvando}
-              className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7"
+              className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-7"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
               Salvar

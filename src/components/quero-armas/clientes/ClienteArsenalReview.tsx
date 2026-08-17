@@ -32,7 +32,7 @@ const fmtDate = (d: string | null) => {
 function FonteBadge({ fonte }: { fonte: string }) {
   const cfg = (() => {
     switch ((fonte || "").toLowerCase()) {
-      case "craf":   return { label: "CRAF",   bg: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 40%)" };
+      case "craf":   return { label: "CRAF",   bg: "hsl(210 8% 20% / 0.10)", color: "hsl(210 8% 31.6%)" };
       case "manual": return { label: "MANUAL", bg: "hsl(262 60% 55% / 0.10)", color: "hsl(262 60% 40%)" };
       case "ocr":
       case "ia":     return { label: "IA/OCR", bg: "hsl(190 80% 42% / 0.12)", color: "hsl(190 80% 32%)" };
@@ -211,7 +211,7 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
         </div>
         <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
           <div className="text-[9px] uppercase tracking-wider text-slate-500">CRAF (R/O)</div>
-          <div className="text-[14px] font-bold" style={{ color: "hsl(352 60% 40%)" }}>{totalCraf}</div>
+          <div className="text-[14px] font-bold" style={{ color: "hsl(210 8% 31.6%)" }}>{totalCraf}</div>
         </div>
         <div className="rounded-md border border-slate-200 bg-white px-2 py-1.5">
           <div className="text-[9px] uppercase tracking-wider text-slate-500">Manual/IA</div>
@@ -242,7 +242,7 @@ export default function ClienteArsenalReview({ qaClienteId }: Props) {
               onClick={() => setFiltro(f.key)}
               className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border transition ${
                 active
-                  ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                  ? "bg-[#2F3337] text-white border-[#2F3337]"
                   : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
               }`}
             >

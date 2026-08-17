@@ -26,7 +26,7 @@ interface Stats {
 function Spinner() {
   return (
     <div className="qa-card p-6 flex justify-center">
-      <div className="w-5 h-5 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
     </div>
   );
 }
@@ -35,8 +35,8 @@ function KPICard({ icon: Icon, label, value, to }: { icon: any; label: string; v
   const content = (
     <div className="qa-card qa-hover-lift p-4 md:p-5 cursor-pointer h-full pointer-events-none">
       <div className="flex items-start justify-between mb-3">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 33% 97%)" }}>
-          <Icon className="h-[18px] w-[18px]" style={{ color: "hsl(352 60% 30%)" }} />
+        <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "hsl(210 4% 97%)" }}>
+          <Icon className="h-[18px] w-[18px]" style={{ color: "hsl(210 8% 20%)" }} />
         </div>
       </div>
       <div className="qa-kpi text-2xl md:text-3xl mb-1" style={{ color: "hsl(220 20% 14%)" }}>
@@ -45,7 +45,7 @@ function KPICard({ icon: Icon, label, value, to }: { icon: any; label: string; v
       <div className="text-xs font-medium" style={{ color: "hsl(220 10% 55%)" }}>{label}</div>
     </div>
   );
-  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#7A1F2B] rounded-xl">{content}</Link> : content;
+  return to ? <Link to={to} className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2F3337] rounded-xl">{content}</Link> : content;
 }
 
 export default function MotoresApagadosAdmin() {
@@ -86,7 +86,7 @@ export default function MotoresApagadosAdmin() {
   const alerts = [
     stats.erros > 0 && { label: `${stats.erros} documento(s) com erro de processamento`, icon: XCircle, color: "text-red-500", bg: "bg-red-50 border-red-100", link: "/base-conhecimento" },
     stats.pendentes > 0 && { label: `${stats.pendentes} documento(s) pendente(s) de validação`, icon: AlertTriangle, color: "text-amber-500", bg: "bg-amber-50 border-amber-100", link: "/base-conhecimento" },
-    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4] border-[#E5C2C6]", link: "/historico" },
+    stats.rascunhos > 0 && { label: `${stats.rascunhos} peça(s) em rascunho aguardando revisão`, icon: Clock, color: "text-[#2F3337]", bg: "bg-[#F7F7F8] border-[#D1D3D6]", link: "/historico" },
   ].filter(Boolean) as any[];
 
   return (

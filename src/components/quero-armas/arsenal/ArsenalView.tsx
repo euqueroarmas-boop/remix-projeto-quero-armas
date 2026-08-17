@@ -1844,7 +1844,7 @@ export function ArsenalView({
           estrutura, ordem, dados ou comportamento. Reflete os mesmos tokens
           usados no Resumo (ClienteResumoKanban). */}
       <style>{`
-        .qa-arsenal-z6{--paper:#f3f3f2;--card:#ffffff;--ink:#111111;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;--amber:#d5a33d;--green:#278652;--red:#df2727;background:var(--paper);color:var(--ink);font-family:'Arial Narrow',Arial,sans-serif;padding:14px;border-radius:6px}
+        .qa-arsenal-z6{--paper:#f3f3f2;--card:#ffffff;--ink:#111111;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#2F3337;--amber:#d5a33d;--green:#278652;--red:#df2727;background:var(--paper);color:var(--ink);font-family:'Arial Narrow',Arial,sans-serif;padding:14px;border-radius:6px}
         .qa-arsenal-z6 :where(h1,h2,h3,h4){font-family:'Oswald','Arial Narrow',Arial,sans-serif !important;text-transform:uppercase;letter-spacing:.04em;color:var(--ink) !important}
         .qa-arsenal-z6 div.rounded-2xl.bg-white,
         .qa-arsenal-z6 div.rounded-xl.bg-white{position:relative;border-radius:3px !important;border:1px solid var(--line) !important;box-shadow:0 6px 14px rgba(17,17,17,.04) !important}

@@ -112,10 +112,10 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
   if (arquivos.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4] p-3 mb-3">
+    <div className="rounded-xl border border-[#D1D3D6] bg-[#F7F7F8] p-3 mb-3">
       <div className="flex items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <FileImage className="h-4 w-4 text-[#7A1F2B]" />
+          <FileImage className="h-4 w-4 text-[#2F3337]" />
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-800">
             Documentos do Cadastro Público
           </span>
@@ -123,7 +123,7 @@ export default function ClienteDocsCadastroPublico({ cliente }: { cliente: any }
             · {arquivos.length} arquivo(s)
           </span>
         </div>
-        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+        <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-[#2F3337]">
           <ShieldAlert className="h-3 w-3" /> Somente leitura
         </span>
       </div>

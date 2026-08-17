@@ -41,7 +41,7 @@ const QA_TAB =
   "text-[#5A5A5A] whitespace-nowrap lg:whitespace-normal lg:text-left transition-colors hover:bg-white hover:text-[#0A0A0A] " +
   "border-l-2 border-transparent " +
   "data-[state=active]:bg-white data-[state=active]:text-[#0A0A0A] data-[state=active]:font-semibold " +
-  "data-[state=active]:border-l-[#7A1F2B] data-[state=active]:shadow-none";
+  "data-[state=active]:border-l-[#2F3337] data-[state=active]:shadow-none";
 
 // ── Grupos de configuração (abas superiores) ─────────────────────────────────
 type SecaoConfig = { v: string; label: string; admin?: boolean };
@@ -482,7 +482,7 @@ export default function QAConfiguracoesPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-16">
-        <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
       </div>
     );
   }
@@ -504,7 +504,7 @@ export default function QAConfiguracoesPage() {
           <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
             <div className="min-w-0">
               <h1 className="qa-h1 flex items-center gap-2 leading-none">
-                <Settings className="h-5 w-5 shrink-0" style={{ color: "#7A1F2B" }} /> Configurações
+                <Settings className="h-5 w-5 shrink-0" style={{ color: "#2F3337" }} /> Configurações
               </h1>
               <p className="qa-body qa-body--soft mt-1">
                 {grupoAtivo?.label}{secaoLabel ? ` · ${secaoLabel}` : ""}
@@ -525,7 +525,7 @@ export default function QAConfiguracoesPage() {
                   }}
                   className={`shrink-0 pb-3 -mb-px border-b-2 text-[13px] uppercase tracking-[.06em] transition-colors ${
                     ativo
-                      ? "border-[#7A1F2B] text-[#7A1F2B] font-semibold"
+                      ? "border-[#2F3337] text-[#2F3337] font-semibold"
                       : "border-transparent text-[#9A9A9A] hover:text-[#0A0A0A] font-medium"
                   }`}
                   style={{ fontFamily: "Oswald, sans-serif" }}
@@ -580,7 +580,7 @@ export default function QAConfiguracoesPage() {
           {/* System Status */}
           <div className="qa-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <Database className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+              <Database className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Status</span>
             </div>
             <div className="grid grid-cols-4 md:grid-cols-7 gap-3">
@@ -618,7 +618,7 @@ export default function QAConfiguracoesPage() {
                       className="h-7 px-3 rounded-md text-[12.5px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "catalogo" ? "white" : "transparent",
-                        color: activeTab === "catalogo" ? "hsl(352 60% 30%)" : "hsl(220 12% 38%)",
+                        color: activeTab === "catalogo" ? "hsl(210 8% 20%)" : "hsl(220 12% 38%)",
                         boxShadow: activeTab === "catalogo" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -629,7 +629,7 @@ export default function QAConfiguracoesPage() {
                       className="h-7 px-3 rounded-md text-[12.5px] font-semibold uppercase tracking-wider transition-colors"
                       style={{
                         background: activeTab === "internos" ? "white" : "transparent",
-                        color: activeTab === "internos" ? "hsl(352 60% 30%)" : "hsl(220 12% 38%)",
+                        color: activeTab === "internos" ? "hsl(210 8% 20%)" : "hsl(220 12% 38%)",
                         boxShadow: activeTab === "internos" ? "0 1px 2px rgba(0,0,0,0.04)" : "none",
                       }}
                     >
@@ -692,7 +692,7 @@ export default function QAConfiguracoesPage() {
                     <button
                       onClick={() => handleCopiarChecklist(svc)}
                       title="Copiar checklist de outro serviço"
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#7A1F2B] opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-600 hover:text-[#2F3337] opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Copy className="h-3 w-3" />
                     </button>
@@ -970,7 +970,7 @@ export default function QAConfiguracoesPage() {
       {/* Profile */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-3">
-          <User className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+          <User className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>Perfil</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
@@ -1025,7 +1025,7 @@ function MonitoramentoToggles() {
   return (
     <div className="qa-card p-5">
       <div className="flex items-center gap-2 mb-1">
-        <Settings className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+        <Settings className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 14% 32%)" }}>
           Configurações de Monitoramento
         </span>

@@ -8,7 +8,7 @@ export default function ClienteRecargaMunicoesSection() {
   return (
     <section className="qa-alvo qa-recarga qa-client-summary-print">
       <style>{`
-        .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#7A1F2B;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
+        .qa-alvo{--paper:#f3f3f2;--card:#ffffff;--ink:#0A0A0A;--muted:#6A6A6A;--line:#e3e3e1;--bordo:#2F3337;font-family:'Arial Narrow',Arial,sans-serif;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
         .qa-alvo__head{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;flex-shrink:0}
         .qa-alvo__row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
         .qa-alvo__head-main{min-width:0}
@@ -28,7 +28,7 @@ export default function ClienteRecargaMunicoesSection() {
         .qa-alvo__card svg{width:16px;height:16px;color:var(--ink);margin-top:2px}
         .qa-alvo__card-t{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;color:var(--ink);text-transform:uppercase;line-height:1.1}
         .qa-alvo__card-d{font-family:Arial,sans-serif;font-size:12px;line-height:1.35;color:var(--muted);margin-top:3px}
-        .qa-alvo__note{border:1px solid rgba(122,31,43,.25);background:#fff;border-radius:3px;padding:14px 16px;margin-top:2px}
+        .qa-alvo__note{border:1px solid rgba(47,51,55,.25);background:#fff;border-radius:3px;padding:14px 16px;margin-top:2px}
         .qa-alvo__note-k{font-family:Oswald,'Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.22em;color:var(--bordo);text-transform:uppercase;margin-bottom:4px}
         .qa-alvo__note-p{font-family:Arial,sans-serif;font-size:12px;line-height:1.45;color:#4a4a4a;margin:0}
         .qa-alvo__note-legal{font-family:Arial,sans-serif;font-size:11px;line-height:1.35;color:#8a8a8a;margin:8px 0 0}

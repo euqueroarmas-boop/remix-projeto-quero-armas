@@ -236,7 +236,7 @@ function WeaponCard({
               {marca}
             </div>
             {!isSm && (
-              <div className={`truncate font-semibold uppercase tracking-[0.18em] text-[#7A1F2B] ${isMd ? "text-[10px]" : "text-[11px]"}`}>
+              <div className={`truncate font-semibold uppercase tracking-[0.18em] text-[#2F3337] ${isMd ? "text-[10px]" : "text-[11px]"}`}>
                 {modelo}
               </div>
             )}
@@ -256,7 +256,7 @@ function WeaponCard({
               <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-600">
                 {w.source}
                 {w.hasGte && (
-                  <span className="rounded bg-[#FBF3F4] px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                  <span className="rounded bg-[#F7F7F8] px-1 py-0.5 text-[7px] font-bold uppercase tracking-wider text-[#2F3337]">
                     + GTE
                   </span>
                 )}
@@ -432,7 +432,7 @@ function WeaponCard({
           {(() => {
             const regime = w.regime || "REVISAR";
             const cls = regime === "SIGMA"
-              ? "bg-[#7A1F2B]/10 text-[#7A1F2B] border border-[#7A1F2B]/30"
+              ? "bg-[#2F3337]/10 text-[#2F3337] border border-[#2F3337]/30"
               : regime === "SINARM"
                 ? "bg-slate-900 text-white"
                 : "bg-amber-50 text-amber-800 border border-amber-300";
@@ -451,7 +451,7 @@ function WeaponCard({
 
         {!isSm && (
           <div className="mt-auto flex items-center justify-between pt-3 text-[10px] text-slate-400">
-            <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#7A1F2B] ml-auto">
+            <span className="inline-flex items-center gap-1 text-slate-400 group-hover:text-[#2F3337] ml-auto">
               INSPECIONAR <ChevronRight className="h-3 w-3" />
             </span>
           </div>
@@ -492,7 +492,7 @@ function DocumentTag({ d }: { d: DocCard }) {
         onClick={d.onOpen}
         className="flex flex-1 items-center gap-2.5 text-left min-w-0"
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FBF3F4] text-[#7A1F2B]">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F7F7F8] text-[#2F3337]">
           <FileText className="h-3.5 w-3.5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -681,7 +681,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
       {/* Top HUD strip */}
       <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FBF3F4] text-[#7A1F2B] ring-1 ring-[#7A1F2B]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F7F7F8] text-[#2F3337] ring-1 ring-[#2F3337]">
             <Crosshair className="h-3.5 w-3.5" />
           </div>
           <div>
@@ -704,7 +704,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
               type="button"
               onClick={() => persistOrder([])}
               title="Restaurar ordem padrão"
-              className="text-[9px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#7A1F2B]"
+              className="text-[9px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#2F3337]"
             >
               Restaurar ordem
             </button>
@@ -763,7 +763,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                   </p>
                 </div>
                 <div className="rounded-md border border-slate-200 bg-white p-2.5">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">GTE</div>
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-[#2F3337]">GTE</div>
                   <p className="mt-1 text-[10px] leading-snug text-slate-600">
                     Guia de Tráfego Eventual. Pode ser exigida em acervos vinculados ao
                     SIGMA/CAC, conforme o regime do acervo.
@@ -821,7 +821,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                 <button
                   type="button"
                   onClick={() => setShowAll(true)}
-                  className="rounded-full border border-[#E5C2C6] bg-[#FBF3F4] px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7A1F2B] hover:bg-[#FBF3F4]"
+                  className="rounded-full border border-[#D1D3D6] bg-[#F7F7F8] px-4 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#2F3337] hover:bg-[#F7F7F8]"
                 >
                   Ver todos (+{overflow})
                 </button>
@@ -834,7 +834,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
         <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-1">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-[#7A1F2B]" />
+              <Layers className="h-3.5 w-3.5 text-[#2F3337]" />
               <div className="text-[10px] font-black uppercase tracking-[0.24em] text-slate-700">
                 Munições · Por Calibre
               </div>
@@ -858,7 +858,7 @@ export function Workbench({ weapons, documents, ammoByCalibre, onSelectWeapon, h
                     </div>
                     <div className="mt-1 h-1 w-full rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-[#7A1F2B] to-[#641722]"
+                        className="h-full rounded-full bg-gradient-to-r from-[#2F3337] to-[#26292C]"
                         style={{ width: `${Math.min(100, (a.quantidade / 200) * 100)}%` }}
                       />
                     </div>

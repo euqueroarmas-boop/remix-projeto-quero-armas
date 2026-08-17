@@ -37,7 +37,7 @@ function chipColor(kind: StatusKind) {
     case "danger":
       return { bg: "bg-red-50", text: "text-red-800", border: "border-red-200", dot: "bg-red-500" };
     case "info":
-      return { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]", border: "border-[#E5C2C6]", dot: "bg-[#7A1F2B]" };
+      return { bg: "bg-[#F7F7F8]", text: "text-[#2F3337]", border: "border-[#D1D3D6]", dot: "bg-[#2F3337]" };
     default:
       return { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200", dot: "bg-slate-400" };
   }
@@ -112,8 +112,8 @@ export default function ConferenciaHeader({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       {/* Top strip — origem */}
-      <div className="flex items-center justify-between gap-3 bg-[#FBF3F4] border-b border-[#E5C2C6] px-4 py-1.5">
-        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#7A1F2B]">
+      <div className="flex items-center justify-between gap-3 bg-[#F7F7F8] border-b border-[#D1D3D6] px-4 py-1.5">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#2F3337]">
           <FileText className="h-3 w-3" />
           Cadastro Público — Conferência da Equipe
         </div>
@@ -159,7 +159,7 @@ export default function ConferenciaHeader({
                 </div>
                 {servicoInteresse && (
                   <div className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] uppercase font-bold text-slate-700">
-                    <ShieldCheck className="h-3 w-3 text-[#7A1F2B]" />
+                    <ShieldCheck className="h-3 w-3 text-[#2F3337]" />
                     {servicoInteresse}
                   </div>
                 )}

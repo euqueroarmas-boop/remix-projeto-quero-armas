@@ -74,7 +74,7 @@ export default function QACasosPage() {
     if (s === "gerado" || s === "revisado") return { bg: "bg-emerald-50", text: "text-emerald-700" };
     if (s === "deferido") return { bg: "bg-green-50", text: "text-green-700" };
     if (s === "indeferido") return { bg: "bg-red-50", text: "text-red-600" };
-    if (s === "em_geracao") return { bg: "bg-[#FBF3F4]", text: "text-[#7A1F2B]" };
+    if (s === "em_geracao") return { bg: "bg-[#F7F7F8]", text: "text-[#2F3337]" };
     if (s === "arquivado") return { bg: "bg-slate-100", text: "text-slate-500" };
     if (s === "rascunho") return { bg: "bg-amber-50", text: "text-amber-700" };
     return { bg: "bg-slate-100", text: "text-slate-500" };
@@ -242,7 +242,7 @@ export default function QACasosPage() {
             value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..."
             className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
             style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-            onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
+            onFocus={e => e.currentTarget.style.borderColor = "hsl(210 8% 20%)"}
             onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
           />
         </div>
@@ -260,13 +260,13 @@ export default function QACasosPage() {
       <div className="flex gap-1 bg-white border rounded-xl p-1 w-fit" style={{ borderColor: "hsl(220 13% 91%)" }}>
         <button onClick={() => setActiveTab("casos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "casos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "casos" ? "bg-[#2F3337] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <FolderOpen className="h-3.5 w-3.5" /> Casos ({casosAtivos.length})
         </button>
         <button onClick={() => setActiveTab("servicos")}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
-            activeTab === "servicos" ? "bg-[#7A1F2B] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+            activeTab === "servicos" ? "bg-[#2F3337] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
           }`}>
           <Shield className="h-3.5 w-3.5" /> Deferidos ({servicosConcluidos.length})
         </button>

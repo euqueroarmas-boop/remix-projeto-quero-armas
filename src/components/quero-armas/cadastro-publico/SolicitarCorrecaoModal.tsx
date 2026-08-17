@@ -187,7 +187,7 @@ export default function SolicitarCorrecaoModal({
               value={livre}
               onChange={(e) => setLivre(e.target.value)}
               placeholder="Ex.: Confirmar nome da mãe completo."
-              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-[13px] text-slate-900 outline-none focus:border-[#7A1F2B] bg-white"
+              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-[13px] text-slate-900 outline-none focus:border-[#2F3337] bg-white"
             />
           </div>
 
@@ -200,7 +200,7 @@ export default function SolicitarCorrecaoModal({
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               placeholder="Será incluída na mensagem ao cliente."
-              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-[13px] text-slate-900 outline-none focus:border-[#7A1F2B] bg-white"
+              className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-[13px] text-slate-900 outline-none focus:border-[#2F3337] bg-white"
             />
           </div>
 
@@ -233,7 +233,7 @@ export default function SolicitarCorrecaoModal({
           <Button
             disabled={!podeConfirmar || tel.length < 10}
             onClick={() => void handleConfirm(true)}
-            className="bg-[#7A1F2B] hover:bg-[#641722] text-white"
+            className="bg-[#2F3337] hover:bg-[#26292C] text-white"
             title={tel.length < 10 ? "Telefone do cliente ausente." : "Registrar e abrir WhatsApp"}
           >
             <MessageCircle className="h-4 w-4 mr-1" /> Registrar e abrir WhatsApp

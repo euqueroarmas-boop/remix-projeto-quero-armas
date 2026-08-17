@@ -251,7 +251,7 @@ function KpiCard({
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
-    boxShadow: featured ? `inset 0 0 0 2px #7A1F2B22` : `inset 0 0 0 1px ${color}10`,
+    boxShadow: featured ? `inset 0 0 0 2px #2F333722` : `inset 0 0 0 1px ${color}10`,
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging ? 20 : "auto",
   };
@@ -1173,11 +1173,11 @@ export function ArsenalSummary({
         <div className="flex items-center gap-2 mb-1">
           <div
             className="inline-flex h-7 w-7 items-center justify-center rounded-lg"
-            style={{ background: "#7A1F2B14", color: "#7A1F2B" }}
+            style={{ background: "#2F333714", color: "#2F3337" }}
           >
             <Crosshair className="h-3.5 w-3.5" />
           </div>
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "#7A1F2B" }}>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: "#2F3337" }}>
             Ao abrir uma arma na Bancada
           </h3>
         </div>
@@ -1191,7 +1191,7 @@ export function ArsenalSummary({
             { icon: <Boxes className="h-4 w-4" />, color: "hsl(38 92% 50%)", title: "Munições por calibre", desc: "Estoque disponível para o calibre da arma" },
             { icon: <CalendarClock className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Validade e status", desc: "Alertas de vencimentos e pendências" },
             { icon: <Hash className="h-4 w-4" />, color: "hsl(220 13% 50%)", title: "Nº de série", desc: "Número de série da arma" },
-            { icon: <Fingerprint className="h-4 w-4" />, color: "#7A1F2B", title: "SIGMA / SINARM", desc: "ID SIGMA/SINARM e situação no sistema" },
+            { icon: <Fingerprint className="h-4 w-4" />, color: "#2F3337", title: "SIGMA / SINARM", desc: "ID SIGMA/SINARM e situação no sistema" },
           ].map((b, i) => (
             <div key={i} className="flex items-start gap-2.5 lg:px-3 first:lg:pl-0">
               <div

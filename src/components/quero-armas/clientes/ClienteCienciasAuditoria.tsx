@@ -113,7 +113,7 @@ export default function ClienteCienciasAuditoria({ cliente }: { cliente: any }) 
               onClick={() => setAberto(expandido ? null : c.id)}
               className="flex w-full items-start gap-3 px-4 py-3 text-left"
             >
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#7A1F2B]" />
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#2F3337]" />
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] font-bold uppercase text-slate-800">
                   {c.termo_titulo}

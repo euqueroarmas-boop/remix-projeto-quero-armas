@@ -79,7 +79,7 @@ export default function DocClassReviewModal({
     : "Confirmar classificação";
 
   const cor = revisao_obrigatoria
-    ? "#7A1F2B"
+    ? "#2F3337"
     : divergenciaComSelecaoManual
     ? "#B45309"
     : "#0A0A0A";
@@ -118,14 +118,14 @@ export default function DocClassReviewModal({
             <div
               className="rounded-md border p-3"
               style={{
-                background: divergenciaComSelecaoManual ? "rgba(122,31,43,0.06)" : "rgba(16,185,129,0.06)",
-                borderColor: divergenciaComSelecaoManual ? "rgba(122,31,43,0.30)" : "rgba(16,185,129,0.30)",
+                background: divergenciaComSelecaoManual ? "rgba(47,51,55,0.06)" : "rgba(16,185,129,0.06)",
+                borderColor: divergenciaComSelecaoManual ? "rgba(47,51,55,0.30)" : "rgba(16,185,129,0.30)",
               }}
             >
-              <p className="text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: divergenciaComSelecaoManual ? "#7A1F2B" : "#047857" }}>
+              <p className="text-[9px] font-bold uppercase tracking-[0.15em]" style={{ color: divergenciaComSelecaoManual ? "#2F3337" : "#047857" }}>
                 IA detectou
               </p>
-              <p className="mt-1 text-[12px] font-bold uppercase leading-tight" style={{ color: divergenciaComSelecaoManual ? "#7A1F2B" : "#065F46" }}>
+              <p className="mt-1 text-[12px] font-bold uppercase leading-tight" style={{ color: divergenciaComSelecaoManual ? "#2F3337" : "#065F46" }}>
                 {TIPO_LABEL[tipoDetectado]}
               </p>
               <p className="mt-1 text-[10px] text-slate-500">Confiança: <b>{pct}%</b></p>
@@ -195,7 +195,7 @@ export default function DocClassReviewModal({
               onResolve({ decision: "manter_revisao", tipoFinal: tipoSelecionado, revisaoObrigatoria: true })
             }
             className="w-full"
-            style={{ borderColor: "#7A1F2B", color: "#7A1F2B" }}
+            style={{ borderColor: "#2F3337", color: "#2F3337" }}
           >
             Enviar para revisão da Equipe Quero Armas
           </Button>

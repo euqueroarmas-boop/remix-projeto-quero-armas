@@ -36,7 +36,7 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
                 {c.registro && <div className="qa-caption mt-0.5">{c.registro}</div>}
               </div>
               {c.distancia_km != null && (
-                <span className="qa-h3 shrink-0 !text-[#7A1F2B]">{fmtKm(c.distancia_km)}</span>
+                <span className="qa-h3 shrink-0 !text-[#2F3337]">{fmtKm(c.distancia_km)}</span>
               )}
             </header>
             {c.endereco && (
@@ -47,7 +47,7 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
             <div className="qa-body mt-1 flex flex-wrap items-center gap-x-3 gap-y-1.5">
               {c.telefones.map((t) => (
                 <span key={t} className="inline-flex items-center gap-2">
-                  <a href={`tel:${t.replace(/\D/g, "")}`} className="border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">📞 {t}</a>
+                  <a href={`tel:${t.replace(/\D/g, "")}`} className="border-b border-dotted border-[#2F3337] text-[#0A0A0A] no-underline">📞 {t}</a>
                   {/* WhatsApp: a maioria destes profissionais atende por lá, e
                       ligar do celular para um consultório raramente é atendido.
                       Só aparece em número com DDD (10 ou 11 dígitos) — fixo de
@@ -73,9 +73,9 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
                 </span>
               ))}
               {c.emails.map((e) => (
-                <a key={e} href={`mailto:${e}`} className="break-all border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">✉ {e}</a>
+                <a key={e} href={`mailto:${e}`} className="break-all border-b border-dotted border-[#2F3337] text-[#0A0A0A] no-underline">✉ {e}</a>
               ))}
-              <a href={mapsLink(c)} target="_blank" rel="noreferrer noopener" className="border-b border-dotted border-[#7A1F2B] text-[#0A0A0A] no-underline">📍 Abrir no mapa</a>
+              <a href={mapsLink(c)} target="_blank" rel="noreferrer noopener" className="border-b border-dotted border-[#2F3337] text-[#0A0A0A] no-underline">📍 Abrir no mapa</a>
             </div>
             {validade && (
               <div className={`qa-caption mt-1 ${vencido ? "!text-[#C32E26]" : ""}`}>

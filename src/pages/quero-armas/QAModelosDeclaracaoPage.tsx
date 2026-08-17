@@ -211,7 +211,7 @@ export default function QAModelosDeclaracaoPage() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-            <FileSignature className="h-5 w-5" style={{ color: "hsl(352 60% 30%)" }} />
+            <FileSignature className="h-5 w-5" style={{ color: "hsl(210 8% 20%)" }} />
             MODELOS DE DECLARAÇÃO
           </h1>
           <p className="text-sm mt-0.5" style={{ color: "hsl(220 10% 62%)" }}>
@@ -234,7 +234,7 @@ export default function QAModelosDeclaracaoPage() {
         <div className="flex flex-wrap gap-2">
           {PLACEHOLDERS_OFICIAIS.map(p => (
             <code key={p} className="text-[10px] px-2 py-1 rounded-lg font-mono"
-              style={{ background: "hsl(220 20% 97%)", color: "hsl(352 60% 30%)", border: "1px solid hsl(220 13% 91%)" }}>
+              style={{ background: "hsl(220 20% 97%)", color: "hsl(210 8% 20%)", border: "1px solid hsl(220 13% 91%)" }}>
               {p}
             </code>
           ))}
@@ -244,7 +244,7 @@ export default function QAModelosDeclaracaoPage() {
       {/* Lista */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
         </div>
       ) : rows.length === 0 ? (
         <div className="text-center py-16 qa-card">
@@ -265,7 +265,7 @@ export default function QAModelosDeclaracaoPage() {
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     {uso.length > 0 ? (
                       <span className="text-[10px] px-2 py-0.5 rounded uppercase font-semibold"
-                        style={{ background: "hsl(352 60% 30% / 0.08)", color: "hsl(352 60% 30%)", border: "1px solid hsl(352 40% 83%)" }}>
+                        style={{ background: "hsl(210 8% 20% / 0.08)", color: "hsl(210 8% 20%)", border: "1px solid hsl(210 5% 83%)" }}>
                         EM USO POR {uso.length} EXIGÊNCIA{uso.length > 1 ? "S" : ""}
                       </span>
                     ) : (
@@ -666,7 +666,7 @@ function renderParagraphWithPlaceholders(p: string, key: number) {
           <code
             key={i}
             className="px-1.5 py-0.5 mx-0.5 rounded font-mono text-[11px] font-semibold"
-            style={{ background: "hsl(352 60% 30% / 0.10)", color: "hsl(352 60% 30%)", border: "1px solid hsl(352 40% 80%)" }}
+            style={{ background: "hsl(210 8% 20% / 0.10)", color: "hsl(210 8% 20%)", border: "1px solid hsl(210 5% 80%)" }}
           >
             {part.v}
           </code>
@@ -759,8 +759,8 @@ function VisualizarTemplateModal({
               onClick={() => setAba(a)}
               className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider border-b-2 -mb-px"
               style={{
-                color: aba === a ? "hsl(352 60% 30%)" : "hsl(220 10% 55%)",
-                borderColor: aba === a ? "hsl(352 60% 30%)" : "transparent",
+                color: aba === a ? "hsl(210 8% 20%)" : "hsl(220 10% 55%)",
+                borderColor: aba === a ? "hsl(210 8% 20%)" : "transparent",
               }}
             >
               {a === "preview" ? "Preview" : a === "placeholders" ? "Placeholders" : "Uso"}
@@ -838,7 +838,7 @@ function VisualizarTemplateModal({
                   ) : (
                     data.usage.map((u) => (
                       <div key={u.id} className="p-2 rounded border flex items-start gap-2" style={{ borderColor: "hsl(220 13% 91%)" }}>
-                        <FileText className="h-3.5 w-3.5 mt-0.5" style={{ color: "hsl(352 60% 30%)" }} />
+                        <FileText className="h-3.5 w-3.5 mt-0.5" style={{ color: "hsl(210 8% 20%)" }} />
                         <div className="min-w-0">
                           <div className="font-mono text-[12px] uppercase" style={{ color: "hsl(220 20% 22%)" }}>{u.tipo_documento || "—"}</div>
                           {u.nome_servico && (

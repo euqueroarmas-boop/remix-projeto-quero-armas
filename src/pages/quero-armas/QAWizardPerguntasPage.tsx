@@ -329,7 +329,7 @@ export default function QAWizardPerguntasPage() {
                     type="button"
                     onClick={() => salvar(def)}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-1 rounded-lg bg-[#7A1F2B] px-4 py-2 text-[11px] font-bold text-white hover:bg-[#5e1721] disabled:opacity-50"
+                    className="inline-flex items-center gap-1 rounded-lg bg-[#2F3337] px-4 py-2 text-[11px] font-bold text-white hover:bg-[#24272A] disabled:opacity-50"
                   >
                     {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     SALVAR

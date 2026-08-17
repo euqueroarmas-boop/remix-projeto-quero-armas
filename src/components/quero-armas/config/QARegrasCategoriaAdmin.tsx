@@ -33,7 +33,7 @@ const CATEGORIAS: { valor: string; label: string }[] = [
 const GRUPOS = Object.values(PENDENCIA_GRUPOS).sort((a, b) => a.ordem - b.ordem);
 
 const inputCls =
-  "h-9 w-full rounded-sm border border-[#E4E4E4] bg-white px-2 text-[13px] uppercase text-[#0A0A0A] outline-none focus:border-[#7A1F2B]";
+  "h-9 w-full rounded-sm border border-[#E4E4E4] bg-white px-2 text-[13px] uppercase text-[#0A0A0A] outline-none focus:border-[#2F3337]";
 
 export default function QARegrasCategoriaAdmin() {
   const [linhas, setLinhas] = useState<RegraCategoria[]>([]);
@@ -130,7 +130,7 @@ export default function QARegrasCategoriaAdmin() {
         <button
           type="button"
           onClick={adicionar}
-          className="inline-flex h-9 items-center gap-2 rounded-sm bg-[#7A1F2B] px-3 text-[12px] font-bold uppercase tracking-[.08em] text-white hover:bg-[#63111d]"
+          className="inline-flex h-9 items-center gap-2 rounded-sm bg-[#2F3337] px-3 text-[12px] font-bold uppercase tracking-[.08em] text-white hover:bg-[#23272A]"
         >
           <Plus className="h-3.5 w-3.5" /> Nova regra
         </button>
@@ -221,7 +221,7 @@ export default function QARegrasCategoriaAdmin() {
                   <button
                     type="button"
                     onClick={() => remover(l.id)}
-                    className="inline-flex h-9 items-center gap-2 rounded-sm border border-[#E4E4E4] px-3 text-[12px] font-bold uppercase tracking-[.08em] text-[#7A1F2B] hover:bg-[#FFF7F8]"
+                    className="inline-flex h-9 items-center gap-2 rounded-sm border border-[#E4E4E4] px-3 text-[12px] font-bold uppercase tracking-[.08em] text-[#2F3337] hover:bg-[#FBFBFB]"
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Remover
                   </button>

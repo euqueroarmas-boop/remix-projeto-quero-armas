@@ -87,12 +87,12 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
       }}>
         <header style={{ padding: "16px 20px", borderBottom: "1px solid #e3e3e1", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div>
-            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, fontWeight: 700, color: "#7A1F2B", letterSpacing: ".22em" }}>AGENDAR EXAME</div>
+            <div style={{ fontFamily: "Oswald, sans-serif", fontSize: 14, fontWeight: 700, color: "#2F3337", letterSpacing: ".22em" }}>AGENDAR EXAME</div>
             <h2 style={{ margin: "4px 0 0", fontFamily: "Oswald, sans-serif", fontSize: 16, color: "#0A0A0A", letterSpacing: ".06em" }}>
               {TITULO[tipo]}{cidadeUfLabel ? ` EM ${cidadeUfLabel}` : ""}
             </h2>
             <div style={{ fontSize: 11, color: "#6A6A6A", marginTop: 6 }}>
-              Fonte: <a href={tipo === "psicologo" ? "https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados" : "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados"} target="_blank" rel="noreferrer" style={{ color: "#7A1F2B" }}>gov.br/PF</a>
+              Fonte: <a href={tipo === "psicologo" ? "https://www.gov.br/pf/pt-br/assuntos/armas/psicologos/psicologos-crediciados" : "https://www.gov.br/pf/pt-br/assuntos/armas/instrutores-de-armamento-e-tiro/credenciados"} target="_blank" rel="noreferrer" style={{ color: "#2F3337" }}>gov.br/PF</a>
               {cidadeUfLabel ? ` · próximos de ${cidadeUfLabel}` : ""}
             </div>
           </div>
@@ -102,8 +102,8 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
           <span style={{ fontSize: 11, color: "#6A6A6A", alignSelf: "center", letterSpacing: ".12em" }}>RAIO:</span>
           {(isInstrutor && !iatTemEnderecos ? [] : [10, 25, 50, 100]).map((r) => (
             <button key={r} type="button" onClick={() => setRaio(r)} style={{
-              border: "1px solid " + (raio === r ? "#7A1F2B" : "#d6d6d4"),
-              background: raio === r ? "#7A1F2B" : "#fff",
+              border: "1px solid " + (raio === r ? "#2F3337" : "#d6d6d4"),
+              background: raio === r ? "#2F3337" : "#fff",
               color: raio === r ? "#fff" : "#303030",
               fontFamily: "Oswald, sans-serif", fontSize: 11, letterSpacing: ".08em",
               padding: "5px 10px", borderRadius: 999, cursor: "pointer",
@@ -148,7 +148,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
               Fonte oficial da Polícia Federal — sempre consulte o PDF para conferir.
               {pdfHref ? (
                 <div style={{ marginTop: 6 }}>
-                  <a href={pdfHref} target="_blank" rel="noreferrer noopener" style={{ color: "#7A1F2B", fontWeight: 700 }}>
+                  <a href={pdfHref} target="_blank" rel="noreferrer noopener" style={{ color: "#2F3337", fontWeight: 700 }}>
                     Baixar lista atualizada — {ufResolved}
                   </a>
                 </div>
@@ -166,7 +166,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
             }}>VER LISTA COMPLETA</button>
           )}
           <button onClick={onClose} style={{
-            border: 0, background: "#7A1F2B", color: "#fff", padding: "8px 16px",
+            border: 0, background: "#2F3337", color: "#fff", padding: "8px 16px",
             fontFamily: "Oswald, sans-serif", fontSize: 11, letterSpacing: ".16em", cursor: "pointer", marginLeft: "auto",
           }}>FECHAR</button>
         </footer>

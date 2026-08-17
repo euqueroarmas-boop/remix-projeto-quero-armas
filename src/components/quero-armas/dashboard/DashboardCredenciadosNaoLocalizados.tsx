@@ -26,7 +26,7 @@ type Row = {
   created_at: string;
 };
 
-const BORDO = "#7A1F2B";
+const BORDO = "#2F3337";
 
 export default function DashboardCredenciadosNaoLocalizados() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -55,7 +55,7 @@ export default function DashboardCredenciadosNaoLocalizados() {
           </h2>
           <span
             className="text-[10px] font-bold px-1.5 py-0.5 rounded-md tabular-nums"
-            style={{ background: "rgba(122,31,43,0.08)", color: BORDO }}
+            style={{ background: "rgba(47,51,55,0.08)", color: BORDO }}
           >
             {rows.length}
           </span>
@@ -114,7 +114,7 @@ export default function DashboardCredenciadosNaoLocalizados() {
                       className="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
                       style={
                         r.situacao === "pendente"
-                          ? { background: "rgba(122,31,43,0.08)", color: BORDO }
+                          ? { background: "rgba(47,51,55,0.08)", color: BORDO }
                           : { background: "rgba(16,122,72,0.08)", color: "#0F7A48" }
                       }
                     >

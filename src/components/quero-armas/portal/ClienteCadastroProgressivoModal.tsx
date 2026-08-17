@@ -6,7 +6,7 @@
 //      atualizar-cadastro), persistindo o progresso para o cliente.
 //   2) Enviar documento e usar IA — faz upload e chama qa-cliente-prefill;
 //      o cliente revisa os campos extraídos antes de salvar.
-// Mantém Cockpit Z6 Light / Arsenal UI (papel + bordô #7A1F2B). Sem fundo preto.
+// Mantém Cockpit Z6 Light / Arsenal UI (papel + grafite #2F3337). Sem fundo preto.
 // ============================================================================
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,7 +27,7 @@ import {
   type GuiaProcesso, type GuiaDoc,
 } from "@/lib/quero-armas/checklistGuiadoEngine";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 type Modo = "escolher" | "manual" | "ia_upload" | "ia_revisao";
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -433,9 +433,9 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     const docLabel = (origem.source_doc || "").toUpperCase();
 
     const inputBase =
-      "w-full rounded-[2px] border bg-white px-2.5 py-2 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15";
+      "w-full rounded-[2px] border bg-white px-2.5 py-2 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#2F3337] focus:ring-2 focus:ring-[#2F3337]/15";
     const inputBorder = isAi
-      ? "border-[#7A1F2B]/40"
+      ? "border-[#2F3337]/40"
       : isOverride
         ? "border-[#0A0A0A]/40"
         : "border-[#E5E5E5]";
@@ -502,10 +502,10 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
           )}
           {state === "error" && <span className="text-red-600">Erro</span>}
           {state === "idle" && isEmpty && (
-            <span className="inline-block rounded-[1px] bg-[#7A1F2B] px-1.5 py-[3px] text-white">FALTA</span>
+            <span className="inline-block rounded-[1px] bg-[#2F3337] px-1.5 py-[3px] text-white">FALTA</span>
           )}
           {state === "idle" && !isEmpty && isAi && (
-            <span className="text-[#7A1F2B]">{docLabel ? `IA · ${docLabel}` : "IA"}</span>
+            <span className="text-[#2F3337]">{docLabel ? `IA · ${docLabel}` : "IA"}</span>
           )}
           {state === "idle" && !isEmpty && isOverride && (
             <span className="text-[#0A0A0A]">EDITADO</span>
@@ -522,7 +522,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
     const v = valorAtual(campo);
     const state = savingState[campo.key] ?? "idle";
     const baseClass =
-      "w-full rounded-[4px] border border-[#E5E5E5] bg-white px-3 py-2.5 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15";
+      "w-full rounded-[4px] border border-[#E5E5E5] bg-white px-3 py-2.5 text-[13px] text-[#0A0A0A] placeholder:text-[#9A9A9A] focus:outline-none focus:border-[#2F3337] focus:ring-2 focus:ring-[#2F3337]/15";
     return (
       <div className={campo.colSpan === 2 ? "sm:col-span-2" : ""}>
         <label className="font-heading text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A]">{campo.label}</label>
@@ -606,7 +606,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
               </button>
             ) : null}
             <div className="min-w-0 flex-1">
-              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.24em] text-[#7A1F2B]">
+              <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.24em] text-[#2F3337]">
                 ARSENAL INTELIGENTE · CONTROLE DE DOCUMENTOS
               </div>
               <h2 className="font-heading text-[26px] font-semibold uppercase tracking-[0.03em] leading-[0.95] text-[#0A0A0A] mt-2">
@@ -631,7 +631,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
               <div className="mt-2 h-[7px] w-full overflow-hidden rounded-[2px] bg-[#ECECEC]">
                 <div className="h-full transition-all duration-500" style={{ width: `${progresso}%`, background: progresso === 100 ? "#059669" : MARROM }} />
               </div>
-              <div className="mt-2 font-heading text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B]">
+              <div className="mt-2 font-heading text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2F3337]">
                 {motivacao}
               </div>
             </div>
@@ -645,12 +645,12 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
         {/* Body */}
         <div className="min-h-[280px] flex-1 overflow-y-auto bg-[#F3F1EF] px-8 py-6">
           {(autoPrefillLoading || autoPrefillBanner) && (
-            <div className="mb-4 flex items-start gap-3 rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-3 shadow-sm">
+            <div className="mb-4 flex items-start gap-3 rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#2F3337] bg-white p-3 shadow-sm">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
                 {autoPrefillLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F3337]">
                   IA · LEITURA DOS SEUS DOCUMENTOS
                 </div>
                 {autoPrefillLoading ? (
@@ -669,38 +669,38 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
           {modo === "escolher" && (
             <div className="space-y-3">
-              <div className="rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#7A1F2B] bg-white p-5 shadow-sm">
-                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+              <div className="rounded-[4px] border border-[#E5E5E5] border-l-[3px] border-l-[#2F3337] bg-white p-5 shadow-sm">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F3337]">
                   POR QUE COMPLETAR AGORA
                 </div>
                 <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
                   Quando o cadastro está fechado, o sistema deixa de ser uma lista parada e passa a trabalhar pelo seu acervo todos os dias:
                 </p>
                 <ul className="mt-3 space-y-2 text-[12px] leading-snug text-[#3A3A3A]">
-                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#2F3337]">
                     <strong className="text-[#0A0A0A]">Documentos pessoais sob controle.</strong> RG, CIN, CNH e comprovante de residência ficam organizados em um só lugar, com data de emissão, órgão expedidor e validade — sem precisar caçar foto no celular.
                   </li>
-                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#2F3337]">
                     <strong className="text-[#0A0A0A]">Vencimentos vigiados peça a peça.</strong> CR, cada CRAF, cada GTE, exame psicológico e exame de tiro têm prazos diferentes. O radar avisa com antecedência real antes de qualquer um expirar.
                   </li>
-                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#2F3337]">
                     <strong className="text-[#0A0A0A]">Cruzamento inteligente.</strong> O sistema compara seus documentos oficiais com os laudos emitidos pelos profissionais credenciados (psicólogo e instrutor de tiro) e aponta na hora qualquer divergência de nome, CPF, data ou número de registro.
                   </li>
-                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#2F3337]">
                     <strong className="text-[#0A0A0A]">Análise de consistência.</strong> Cada campo digitado é checado contra os documentos enviados: número de série fora do padrão, calibre incompatível, CRAF com dígito trocado, CPF com erro de digitação — tudo sinalizado antes de virar problema no processo.
                   </li>
-                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#7A1F2B]">
+                  <li className="relative pl-4 before:absolute before:left-0 before:top-[7px] before:h-[6px] before:w-[6px] before:rounded-full before:bg-[#2F3337]">
                     <strong className="text-[#0A0A0A]">Acervo em prontidão.</strong> Com os campos finais preenchidos, cada arma aparece com ficha completa, status atualizado e histórico próprio — pronta para qualquer protocolo, renovação ou transferência.
                   </li>
                 </ul>
               </div>
               <button onClick={() => setModo("ia_upload")}
-                className="group flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                className="group flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#2F3337]">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">CAMINHO RÁPIDO · RECOMENDADO</div>
+                  <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F3337]">CAMINHO RÁPIDO · RECOMENDADO</div>
                   <div className="font-heading text-[13px] font-semibold uppercase tracking-[0.02em] text-[#0A0A0A] mt-0.5">
                     DEIXE A IA LER SEU DOCUMENTO
                   </div>
@@ -710,7 +710,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </div>
               </button>
               <button onClick={() => setModo("manual")}
-                className="flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#7A1F2B]">
+                className="flex w-full items-start gap-4 rounded-[4px] border border-[#E5E5E5] bg-white p-5 text-left shadow-sm transition hover:border-[#2F3337]">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] border border-[#E5E5E5] bg-white text-[#0A0A0A]">
                   <Pencil className="h-4 w-4" />
                 </div>
@@ -734,7 +734,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                   {mostrarTodos ? `${CAMPOS_CADASTRO.length} campos no total` : `${faltantes.length} campo(s) faltando`}
                 </p>
                 <button type="button" onClick={() => setMostrarTodos((v) => !v)}
-                  className="font-heading text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7A1F2B] hover:underline">
+                  className="font-heading text-[11px] font-semibold uppercase tracking-[0.14em] text-[#2F3337] hover:underline">
                   {mostrarTodos ? "Ver apenas faltantes" : "Ver todos os dados"}
                 </button>
               </div>
@@ -756,7 +756,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                     className="grid grid-cols-[40px_1fr] overflow-hidden rounded-[3px] border border-[#E5E5E5] bg-white shadow-sm"
                   >
                     <div
-                      className={`flex items-center justify-center ${muted ? "bg-[#ededeb] text-[#6A6A6A]" : "bg-[#7A1F2B] text-white"}`}
+                      className={`flex items-center justify-center ${muted ? "bg-[#ededeb] text-[#6A6A6A]" : "bg-[#2F3337] text-white"}`}
                     >
                       <span
                         className="font-heading text-[10px] font-black uppercase tracking-[0.32em] whitespace-nowrap"
@@ -785,8 +785,8 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
 
           {modo === "ia_upload" && (
             <div className="space-y-4">
-              <div className="rounded-[4px] border-l-[3px] border-[#7A1F2B] bg-white p-4 shadow-sm">
-                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+              <div className="rounded-[4px] border-l-[3px] border-[#2F3337] bg-white p-4 shadow-sm">
+                <div className="font-heading text-[10px] font-semibold uppercase tracking-[0.18em] text-[#2F3337]">
                   UM DOCUMENTO. DEZENAS DE CAMPOS.
                 </div>
                 <p className="mt-1 text-[13px] leading-snug text-[#0A0A0A]">
@@ -794,7 +794,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 </p>
               </div>
               <button onClick={handleEscolherArquivo} disabled={iaProcessando}
-                className="flex w-full flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-[#E5E5E5] bg-white px-4 py-10 text-center transition hover:border-[#7A1F2B] disabled:opacity-60">
+                className="flex w-full flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-[#E5E5E5] bg-white px-4 py-10 text-center transition hover:border-[#2F3337] disabled:opacity-60">
                 <div className="flex h-12 w-12 items-center justify-center rounded-[4px] text-white" style={{ background: MARROM }}>
                   {iaProcessando ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
                 </div>
@@ -835,7 +835,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                     <div key={k} className={def?.colSpan === 2 ? "sm:col-span-2" : ""}>
                       <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{def?.label ?? k}</label>
                       <input
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 focus:outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#7A1F2B]/15"
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-[13px] text-slate-900 focus:outline-none focus:border-[#2F3337] focus:ring-2 focus:ring-[#2F3337]/15"
                         value={v}
                         onChange={(e) => setIaFields((prev) => ({ ...prev, [k]: e.target.value }))}
                       />
@@ -849,7 +849,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                 })}
               </div>
               {checklistMatches.length > 0 && (
-                <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4]/50 p-4">
+                <div className="rounded-xl border border-[#D1D3D6] bg-[#F7F7F8]/50 p-4">
                   <div className="flex items-start gap-2">
                     <Sparkles className="mt-0.5 h-4 w-4 shrink-0" style={{ color: MARROM }} />
                     <div className="min-w-0 flex-1">
@@ -864,7 +864,7 @@ export default function ClienteCadastroProgressivoModal({ open, onClose, cliente
                           <label key={m.doc.id} className="flex items-start gap-2 text-[12px] text-slate-800 cursor-pointer">
                             <input
                               type="checkbox"
-                              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#7A1F2B]"
+                              className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-[#2F3337]"
                               checked={!!checklistSelecionados[m.doc.id]}
                               onChange={(e) =>
                                 setChecklistSelecionados((prev) => ({ ...prev, [m.doc.id]: e.target.checked }))

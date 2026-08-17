@@ -71,7 +71,7 @@ export default function RevisaoCampos({ state, onChange, origem, readonlyNome, o
                   "w-full rounded-lg border bg-white px-3 py-2 text-[13px] uppercase outline-none " +
                   (isLocked
                     ? "border-slate-200 text-slate-500 bg-slate-50 cursor-not-allowed"
-                    : "border-slate-300 text-slate-900 focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#FBE2E6]")
+                    : "border-slate-300 text-slate-900 focus:border-[#2F3337] focus:ring-2 focus:ring-[#EDEEF0]")
                 }
               />
             </div>

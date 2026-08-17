@@ -12,7 +12,7 @@ import {
   type TemplatePreviewField,
 } from "@/lib/quero-armas/templatePreviewData";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 interface Props {
   open: boolean;
@@ -61,7 +61,7 @@ export default function TemplateDataConfirmationModal({
         {/* Cabeçalho */}
         <div
           className="shrink-0 border-b border-slate-200 px-5 py-4"
-          style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}
+          style={{ background: "linear-gradient(180deg,#F7F7F8,#ffffff)" }}
         >
           <div className="flex items-start gap-3">
             <div

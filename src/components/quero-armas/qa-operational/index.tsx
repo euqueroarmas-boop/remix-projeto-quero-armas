@@ -6,7 +6,7 @@
  * principal devem ser tratados como legado visual e migrados progressivamente
  * para cá, sem regressão.
  *
- * Paleta oficial: PRETO + VERMELHO BORDO #7A1F2B sobre papel #f6f5f1.
+ * Paleta oficial: PRETO + GRAFITE #2F3337 sobre papel #f6f5f1.
  * Âmbar / vermelho / esmeralda apenas em chips/alertas pontuais.
  */
 import React from "react";
@@ -20,7 +20,7 @@ const TONE: Record<QATone, { bg: string; bd: string; fg: string; dot: string }> 
   ok:      { bg: "#D1FAE5", bd: "#A7F3D0", fg: "#065F46", dot: "#047857" },
   warn:    { bg: "#FEF3C7", bd: "#FDE68A", fg: "#7C2D12", dot: "#B45309" },
   danger:  { bg: "#FEE2E2", bd: "#FCA5A5", fg: "#7F1D1D", dot: "#B91C1C" },
-  primary: { bg: "#FBF3F4", bd: "#E5C2C6", fg: "#7A1F2B", dot: "#7A1F2B" },
+  primary: { bg: "#F7F7F8", bd: "#D1D3D6", fg: "#2F3337", dot: "#2F3337" },
 };
 
 /* ─────────────── QAStatusChip ─────────────── */
@@ -75,7 +75,7 @@ export function QAOperationalSection({
           {Icon && (
             <span
               className="inline-flex items-center justify-center w-6 h-6 rounded-md shrink-0"
-              style={{ background: "#FBF3F4", color: "#7A1F2B" }}
+              style={{ background: "#F7F7F8", color: "#2F3337" }}
             >
               <Icon className="h-3.5 w-3.5" />
             </span>
@@ -154,7 +154,7 @@ export function QAMetricCard({
     <Wrapper
       onClick={onClick}
       type={onClick ? "button" : undefined}
-      className={`text-left rounded-xl border bg-white p-3 md:p-3.5 shadow-sm transition-colors ${onClick ? "hover:border-[#7A1F2B] hover:bg-[#FBF3F4]" : ""}`}
+      className={`text-left rounded-xl border bg-white p-3 md:p-3.5 shadow-sm transition-colors ${onClick ? "hover:border-[#2F3337] hover:bg-[#F7F7F8]" : ""}`}
       style={{ borderColor: "hsl(220 13% 90%)" }}
     >
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -206,7 +206,7 @@ export function QAActionCard({
 }) {
   return (
     <div
-      className={`rounded-xl border bg-white p-3 md:p-3.5 shadow-sm ${onClick ? "cursor-pointer hover:border-[#7A1F2B] hover:bg-[#FBF3F4] transition-colors" : ""}`}
+      className={`rounded-xl border bg-white p-3 md:p-3.5 shadow-sm ${onClick ? "cursor-pointer hover:border-[#2F3337] hover:bg-[#F7F7F8] transition-colors" : ""}`}
       style={{ borderColor: "hsl(220 13% 90%)" }}
       onClick={onClick}
     >
@@ -215,7 +215,7 @@ export function QAActionCard({
           {Icon && (
             <span
               className="inline-flex items-center justify-center w-7 h-7 rounded-md shrink-0"
-              style={{ background: "#FBF3F4", color: "#7A1F2B" }}
+              style={{ background: "#F7F7F8", color: "#2F3337" }}
             >
               <Icon className="h-3.5 w-3.5" />
             </span>
@@ -288,7 +288,7 @@ export function QAEmptyState({
   return (
     <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
       {Icon && (
-        <div className="mx-auto mb-2 inline-flex w-9 h-9 rounded-lg items-center justify-center" style={{ background: "#FBF3F4", color: "#7A1F2B" }}>
+        <div className="mx-auto mb-2 inline-flex w-9 h-9 rounded-lg items-center justify-center" style={{ background: "#F7F7F8", color: "#2F3337" }}>
           <Icon className="h-4 w-4" />
         </div>
       )}
@@ -421,7 +421,7 @@ export function QAFieldRow({
             e.stopPropagation();
             navigator.clipboard.writeText(copyContent);
           }}
-          className="opacity-0 group-hover:opacity-100 text-[10px] uppercase font-bold text-[#7A1F2B] hover:underline"
+          className="opacity-0 group-hover:opacity-100 text-[10px] uppercase font-bold text-[#2F3337] hover:underline"
         >
           Copiar
         </button>

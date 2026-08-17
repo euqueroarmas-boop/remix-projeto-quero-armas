@@ -9,7 +9,7 @@ import { useCart } from "@/shared/cart/CartProvider";
 import { getServiceBySlug } from "@/shared/data/catalog";
 import { startWavRecording, type WavRecorder } from "@/lib/quero-armas/wavRecorder";
 
-const BRAND = "#7A1F2B";
+const BRAND = "#2F3337";
 const INK = "#0A0A0A";
 const INK_2 = "#6A6A6A";
 const PAPER = "#F2F2F2";

@@ -91,7 +91,7 @@ export default function QASincronizarExigenciasBtn({
         type="button"
         onClick={sincronizar}
         disabled={loading}
-        className={`inline-flex h-9 items-center gap-2 rounded-md border border-[#7A1F2B]/30 bg-white px-3 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:bg-[#7A1F2B]/5 disabled:opacity-50 ${className}`}
+        className={`inline-flex h-9 items-center gap-2 rounded-md border border-[#2F3337]/30 bg-white px-3 text-[11px] font-bold uppercase tracking-wider text-[#2F3337] hover:bg-[#2F3337]/5 disabled:opacity-50 ${className}`}
       >
         {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
         Sincronizar exigências do catálogo
@@ -105,7 +105,7 @@ export default function QASincronizarExigenciasBtn({
       onClick={sincronizar}
       disabled={loading}
       title="Sincronizar exigências do catálogo (insere apenas itens faltantes)"
-      className={`inline-flex h-7 items-center gap-1 rounded-md border border-[#7A1F2B]/30 bg-white px-2 text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:bg-[#7A1F2B]/5 disabled:opacity-50 ${className}`}
+      className={`inline-flex h-7 items-center gap-1 rounded-md border border-[#2F3337]/30 bg-white px-2 text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:bg-[#2F3337]/5 disabled:opacity-50 ${className}`}
     >
       {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
       Sincronizar

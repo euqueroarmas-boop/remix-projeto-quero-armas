@@ -13,11 +13,11 @@ import {
  * do drawer. Renderize ACIMA da lista de documentos existente, sem substituir
  * nada que já funcione.
  *
- * Aceita modo "light" (papel #f6f5f1 + vermelho bordô #7A1F2B) para o portal
+ * Aceita modo "light" (papel #f6f5f1 + grafite #2F3337) para o portal
  * e admin (Premium Light obrigatório no Quero Armas).
  * ============================================================================= */
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 interface Props {
   docs: ReadonlyArray<DocClassificavel> | null | undefined;

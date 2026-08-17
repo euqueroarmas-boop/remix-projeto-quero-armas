@@ -227,7 +227,7 @@ export function labelStatusDocumentoCliente(raw?: string | null): string {
 }
 
 const CLASSES: Record<StatusDocCanonico, string> = {
-  pendente: "bg-[#7A1F2B]/10 text-[#7A1F2B] border-[#7A1F2B]/30",
+  pendente: "bg-[#2F3337]/10 text-[#2F3337] border-[#2F3337]/30",
   em_analise: "bg-amber-100 text-amber-700 border-amber-300",
   aprovado: "bg-emerald-100 text-emerald-700 border-emerald-300",
   reprovado: "bg-red-100 text-red-700 border-red-300",
@@ -267,7 +267,7 @@ export function toneStatusDocumento(raw?: string | null): "green" | "amber" | "r
 }
 
 const CORES: Record<StatusDocCanonico, string> = {
-  pendente: "#7A1F2B",
+  pendente: "#2F3337",
   em_analise: "#B45309",
   aprovado: "#15803D",
   reprovado: "#B91C1C",

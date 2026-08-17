@@ -199,7 +199,7 @@ export default function QAContratoPrimarioAdmin() {
     <div className="bg-white rounded-2xl border p-4 md:p-5" style={{ borderColor: "hsl(220 15% 90%)" }}>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <FileSignature className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} /> Contrato Primário
+          <FileSignature className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} /> Contrato Primário
         </h2>
         <Button variant="ghost" size="sm" onClick={() => carregar()} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
@@ -290,7 +290,7 @@ export default function QAContratoPrimarioAdmin() {
 
             <div className="flex items-center justify-end">
               <Button size="sm" onClick={publicar} disabled={!editorHtml.trim() || publicando}
-                className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
+                className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-8">
                 {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 {publicando ? "Publicando…" : "Publicar como contrato primário"}
               </Button>
@@ -360,7 +360,7 @@ export default function QAContratoPrimarioAdmin() {
                           value={anexoForm.titulo}
                           onChange={(e) => setAnexoForm((f) => ({ ...f, titulo: e.target.value }))}
                           placeholder={`Título do Anexo — ${s.nome}`}
-                          className="w-full h-7 rounded border px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
+                          className="w-full h-7 rounded border px-2 text-xs focus:outline-none focus:ring-1 focus:ring-[#2E3236]/40"
                           style={{ borderColor: "hsl(220 15% 85%)" }}
                         />
                         <QAEditorModelo
@@ -373,7 +373,7 @@ export default function QAContratoPrimarioAdmin() {
                         />
                         <div className="flex justify-end">
                           <Button size="sm" onClick={() => salvarAnexo(s)} disabled={salvandoAnexo}
-                            className="h-7 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white">
+                            className="h-7 text-xs gap-1 bg-[#2E3236] hover:bg-[#282B2F] text-white">
                             {salvandoAnexo ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                             Salvar anexo
                           </Button>

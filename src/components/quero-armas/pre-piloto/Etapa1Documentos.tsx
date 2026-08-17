@@ -555,7 +555,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
 
       {/* Drop zone */}
       <div
-        className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center cursor-pointer hover:border-[#7B1C2E]/40 hover:bg-[#7B1C2E]/5 transition-colors"
+        className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center cursor-pointer hover:border-[#2E3236]/40 hover:bg-[#2E3236]/5 transition-colors"
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); adicionarArquivos(e.dataTransfer.files); }}
@@ -567,9 +567,9 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         <p className="text-xs text-muted-foreground mt-1">
           JPG, PNG, WEBP, PDF, ou ZIP do WhatsApp
         </p>
-        {processandoZip && <p className="text-xs text-[#7B1C2E] mt-2 animate-pulse">Extraindo ZIP...</p>}
+        {processandoZip && <p className="text-xs text-[#2E3236] mt-2 animate-pulse">Extraindo ZIP...</p>}
         {classificando && !processandoZip && (
-          <p className="text-xs text-[#7B1C2E] mt-2 animate-pulse flex items-center justify-center gap-1">
+          <p className="text-xs text-[#2E3236] mt-2 animate-pulse flex items-center justify-center gap-1">
             <Sparkles className="w-3 h-3" /> IA classificando documentos...
           </p>
         )}
@@ -589,7 +589,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
           <div className="flex items-center justify-between">
             <Label className="text-xs font-semibold">Arquivos selecionados ({arquivos.length})</Label>
             {classificando && (
-              <span className="text-[10px] text-[#7B1C2E] flex items-center gap-1">
+              <span className="text-[10px] text-[#2E3236] flex items-center gap-1">
                 <Sparkles className="w-3 h-3 animate-pulse" /> Classificando com IA...
               </span>
             )}
@@ -679,7 +679,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         <Button
           onClick={onAvancar}
           disabled={!podeProsseguir}
-          className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+          className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
         >
           {classificando ? (
             <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Aguardando IA...</>
@@ -719,7 +719,7 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
                   <button
                     type="button"
                     onClick={() => window.open(previewItem.url, "_blank")}
-                    className="text-[11px] font-semibold text-[#7A1F2B] underline hover:opacity-80"
+                    className="text-[11px] font-semibold text-[#2F3337] underline hover:opacity-80"
                   >
                     Abrir em nova aba →
                   </button>

@@ -56,7 +56,7 @@ import { WIZARD_REGISTRY } from "@/lib/quero-armas/checklistWizardGate";
  * Camada ADITIVA: CRUD em `qa_servicos_documentos` (template por servico_id).
  * Não toca em edge functions, schema, nem em qualquer outro fluxo.
  *
- * Visual: Premium Light (#7A1F2B sobre #f6f5f1 / branco).
+ * Visual: Premium Light (#2F3337 sobre #f6f5f1 / branco).
  * Linguagem: "Equipe Quero Armas" — sem usar a palavra "admin" na UI.
  * ============================================================================= */
 
@@ -618,7 +618,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
         <DialogContent className="max-w-5xl bg-[#f6f5f1] border-slate-200 max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="uppercase tracking-tight text-slate-900 text-sm font-bold flex items-center gap-2">
-              <FileText className="h-4 w-4 text-[#7A1F2B]" />
+              <FileText className="h-4 w-4 text-[#2F3337]" />
               DOCUMENTOS EXIGIDOS — {servicoNome}
             </DialogTitle>
           </DialogHeader>
@@ -665,7 +665,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
               <button
                 type="button"
                 onClick={() => void addNew()}
-                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#2F3337] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#24272A]"
               >
                 <Plus className="h-3.5 w-3.5" /> NOVA EXIGÊNCIA
               </button>
@@ -694,7 +694,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
                 type="button"
                 onClick={() => void sincronizarProcessos()}
                 disabled={sincronizando}
-                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+                className="h-9 shrink-0 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#2F3337] text-white text-[12.5px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-50"
               >
                 {sincronizando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 SINCRONIZAR PROCESSOS EXISTENTES
@@ -711,7 +711,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
           <div className="flex-1 overflow-y-auto -mx-2 px-2">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 text-[#7A1F2B] animate-spin" />
+                <Loader2 className="h-6 w-6 text-[#2F3337] animate-spin" />
               </div>
             ) : merged.length === 0 ? (
               <div className="text-center py-16 text-slate-700 text-xs uppercase tracking-wider">
@@ -754,7 +754,7 @@ export default function QAServicoDocumentosModal({ open, onClose, servicoId, ser
 
           <div className="pt-3 mt-2 border-t border-slate-200 flex items-center justify-between">
             <div className="text-[11.5px] uppercase tracking-wider text-slate-700">
-              ALTERAÇÕES SÃO SALVAS LINHA-A-LINHA. CAMPO COM <span className="text-[#7A1F2B] font-bold">PONTO</span> = NÃO SALVO.
+              ALTERAÇÕES SÃO SALVAS LINHA-A-LINHA. CAMPO COM <span className="text-[#2F3337] font-bold">PONTO</span> = NÃO SALVO.
             </div>
             <button
               type="button"
@@ -1115,7 +1115,7 @@ function ExigenciaCard({
                 type="checkbox"
                 checked={repeteAberto}
                 onChange={(e) => setRepeteAberto(e.target.checked)}
-                className="accent-[#7A1F2B]"
+                className="accent-[#2F3337]"
               />
               ESTE DOCUMENTO SE REPETE POR PERÍODO / ANO?
             </label>
@@ -1146,7 +1146,7 @@ function ExigenciaCard({
                       onExpandirAnos(anosParsed);
                       setRepeteAberto(false);
                     }}
-                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                    className="h-9 px-3 inline-flex items-center gap-1 rounded-md bg-[#2F3337] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#24272A]"
                   >
                     <Plus className="h-3 w-3" /> GERAR 1 EXIGÊNCIA POR ANO
                   </button>
@@ -1168,7 +1168,7 @@ function ExigenciaCard({
               type="checkbox"
               checked={!!row.obrigatorio}
               onChange={(e) => onPatch({ obrigatorio: e.target.checked })}
-              className="accent-[#7A1F2B]"
+              className="accent-[#2F3337]"
             />
             OBRIGATÓRIO
           </label>
@@ -1177,7 +1177,7 @@ function ExigenciaCard({
               type="checkbox"
               checked={!!row.ativo}
               onChange={(e) => onPatch({ ativo: e.target.checked })}
-              className="accent-[#7A1F2B]"
+              className="accent-[#2F3337]"
             />
             ATIVO
           </label>
@@ -1187,7 +1187,7 @@ function ExigenciaCard({
             type="button"
             onClick={onDuplicate}
             title="Duplicar exigência"
-            className="h-8 px-2 inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-700 text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B]"
+            className="h-8 px-2 inline-flex items-center gap-1 rounded-md bg-slate-100 text-slate-700 text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#2F3337]/10 hover:text-[#2F3337]"
           >
             <CopyIcon className="h-3.5 w-3.5" /> DUPLICAR
           </button>
@@ -1203,7 +1203,7 @@ function ExigenciaCard({
             type="button"
             onClick={onSave}
             disabled={!dirty || saving}
-            className="h-8 px-3 inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-40"
+            className="h-8 px-3 inline-flex items-center gap-1 rounded-md bg-[#2F3337] text-white text-[11.5px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-40"
           >
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />} SALVAR
           </button>
@@ -1287,8 +1287,8 @@ function AnexoBox({
 
 function ClientePreview({ rows }: { rows: ExigenciaRow[] }) {
   return (
-    <div className="rounded-xl border border-[#7A1F2B]/20 bg-white p-3 mb-3">
-      <div className="text-[11.5px] font-bold uppercase tracking-widest text-[#7A1F2B] mb-2">
+    <div className="rounded-xl border border-[#2F3337]/20 bg-white p-3 mb-3">
+      <div className="text-[11.5px] font-bold uppercase tracking-widest text-[#2F3337] mb-2">
         PRÉ-VIA — ORDEM EM QUE O CLIENTE VERÁ
       </div>
       {rows.length === 0 ? (
@@ -1300,14 +1300,14 @@ function ClientePreview({ rows }: { rows: ExigenciaRow[] }) {
             .sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))
             .map((r, i) => (
               <li key={r.id} className="flex items-start gap-2 text-[12px]">
-                <span className="inline-flex shrink-0 w-5 h-5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B] text-[11.5px] font-bold items-center justify-center mt-0.5">
+                <span className="inline-flex shrink-0 w-5 h-5 rounded bg-[#2F3337]/10 text-[#2F3337] text-[11.5px] font-bold items-center justify-center mt-0.5">
                   {i + 1}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-slate-900">
                     {r.nome_documento}
                     {r.obrigatorio ? (
-                      <span className="ml-2 text-[11px] font-bold uppercase text-[#7A1F2B]">OBRIGATÓRIO</span>
+                      <span className="ml-2 text-[11px] font-bold uppercase text-[#2F3337]">OBRIGATÓRIO</span>
                     ) : (
                       <span className="ml-2 text-[11px] font-bold uppercase text-slate-600">OPCIONAL</span>
                     )}
@@ -1358,7 +1358,7 @@ function SortableExigenciaItem(props: SortableProps) {
       ref={setNodeRef}
       style={style}
       className={`rounded-xl border bg-white transition ${
-        dirty ? "border-[#7A1F2B]/40 shadow-[0_0_0_3px_rgba(122,31,43,0.06)]" : "border-slate-200"
+        dirty ? "border-[#2F3337]/40 shadow-[0_0_0_3px_rgba(47,51,55,0.06)]" : "border-slate-200"
       }`}
     >
       {/* CABEÇALHO COMPACTO — sempre visível */}
@@ -1400,7 +1400,7 @@ function SortableExigenciaItem(props: SortableProps) {
             {row.condicao_profissional ? row.condicao_profissional : "TODOS"}
           </span>
           {row.obrigatorio ? (
-            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">OBR</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2F3337]/10 text-[#2F3337]">OBR</span>
           ) : (
             <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-700">OPC</span>
           )}
@@ -1408,7 +1408,7 @@ function SortableExigenciaItem(props: SortableProps) {
             <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">INATIVO</span>
           )}
           {dirty && (
-            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#7A1F2B]/10 text-[#7A1F2B]">• NÃO SALVO</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#2F3337]/10 text-[#2F3337]">• NÃO SALVO</span>
           )}
         </div>
 
@@ -1419,7 +1419,7 @@ function SortableExigenciaItem(props: SortableProps) {
             type="number"
             value={row.ordem ?? 0}
             onChange={(e) => onPatch({ ordem: Number(e.target.value) || 0 })}
-            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[12.5px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+            className="h-7 w-14 px-1.5 rounded-md border border-slate-200 bg-white text-[12.5px] font-mono text-right text-slate-900 focus:outline-none focus:border-[#2F3337]/40"
             title="Ordem — edite e clique fora para salvar via SALVAR"
           />
         </div>
@@ -1496,6 +1496,6 @@ function SortableExigenciaItem(props: SortableProps) {
 }
 
 const inputCls =
-  "h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15";
+  "h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15";
 const textareaCls =
-  "w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15";
+  "w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15";

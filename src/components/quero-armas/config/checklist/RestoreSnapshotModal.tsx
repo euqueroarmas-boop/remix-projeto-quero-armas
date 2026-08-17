@@ -102,7 +102,7 @@ export default function RestoreSnapshotModal({ servicoId, servicoNome, onClose, 
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-2">
-            <RotateCcw className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
+            <RotateCcw className="w-4 h-4" style={{ color: "hsl(210 8% 20%)" }} />
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
               Snapshots — {servicoNome}
             </div>
@@ -145,7 +145,7 @@ export default function RestoreSnapshotModal({ servicoId, servicoNome, onClose, 
                   <button
                     onClick={() => restaurar(snap)}
                     disabled={restoringId === snap.id}
-                    className="text-[11px] font-semibold h-7 px-3 rounded-md bg-[#7A1F2B] text-white hover:bg-[#6a1827] disabled:opacity-50 flex items-center gap-1"
+                    className="text-[11px] font-semibold h-7 px-3 rounded-md bg-[#2F3337] text-white hover:bg-[#282B2F] disabled:opacity-50 flex items-center gap-1"
                   >
                     {restoringId === snap.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                     Restaurar

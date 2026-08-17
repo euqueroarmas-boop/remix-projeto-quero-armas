@@ -189,7 +189,7 @@ export default function ClienteExames({ cliente, onChanged }: Props) {
       {/* Header */}
       <div className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-[#7A1F2B] to-[#641722] p-2.5 rounded-lg shadow-sm">
+          <div className="bg-gradient-to-br from-[#2F3337] to-[#26292C] p-2.5 rounded-lg shadow-sm">
             <ShieldCheck className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -241,9 +241,9 @@ export default function ClienteExames({ cliente, onChanged }: Props) {
 
 const COLOR_MAP = {
   violet: {
-    headerBg: "from-[#7A1F2B] to-purple-600",
-    accent: "text-[#7A1F2B]",
-    ring: "ring-[#7A1F2B]",
+    headerBg: "from-[#2F3337] to-purple-600",
+    accent: "text-[#2F3337]",
+    ring: "ring-[#2F3337]",
   },
   orange: {
     headerBg: "from-orange-500 to-amber-600",
@@ -374,7 +374,7 @@ function ExameCard({ tipo, icon: Icon, color, historico, vigente, novo, setNovo,
                           <SIcon className="h-2.5 w-2.5 mr-0.5" /> {sb.label}
                         </Badge>
                         {isLatest && (
-                          <Badge className="text-[8px] bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6] border">
+                          <Badge className="text-[8px] bg-[#F7F7F8] text-[#2F3337] border-[#D1D3D6] border">
                             ATUAL
                           </Badge>
                         )}

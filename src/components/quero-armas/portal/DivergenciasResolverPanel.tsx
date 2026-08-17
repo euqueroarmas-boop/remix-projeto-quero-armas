@@ -29,7 +29,7 @@ import {
   User,
 } from "lucide-react";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 export interface DivergenciaItem {
   campo: string;
@@ -326,7 +326,7 @@ export default function DivergenciasResolverPanel({
             <div className="flex items-start gap-2">
               <div
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
-                style={{ background: "#FBF3F4", color: MARROM }}
+                style={{ background: "#F7F7F8", color: MARROM }}
               >
                 <Icon className="h-4 w-4" />
               </div>
@@ -658,13 +658,13 @@ function EnderecoEscolhaCard({
           onClick={() => setEscolha("cadastro")}
           className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition ${
             escolha === "cadastro"
-              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              ? "border-[#2F3337] bg-[#F7F7F8] shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300"
           }`}
         >
           <span
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-              escolha === "cadastro" ? "border-[#7A1F2B]" : "border-slate-300"
+              escolha === "cadastro" ? "border-[#2F3337]" : "border-slate-300"
             }`}
           >
             {escolha === "cadastro" && (
@@ -691,13 +691,13 @@ function EnderecoEscolhaCard({
           disabled={!podeAtualizarCadastro}
           className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
             escolha === "documento"
-              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              ? "border-[#2F3337] bg-[#F7F7F8] shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300"
           }`}
         >
           <span
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-              escolha === "documento" ? "border-[#7A1F2B]" : "border-slate-300"
+              escolha === "documento" ? "border-[#2F3337]" : "border-slate-300"
             }`}
           >
             {escolha === "documento" && (
@@ -852,13 +852,13 @@ function EstadoCivilEscolhaCard({
           onClick={() => setEscolha("cadastro")}
           className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition ${
             escolha === "cadastro"
-              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              ? "border-[#2F3337] bg-[#F7F7F8] shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300"
           }`}
         >
           <span
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-              escolha === "cadastro" ? "border-[#7A1F2B]" : "border-slate-300"
+              escolha === "cadastro" ? "border-[#2F3337]" : "border-slate-300"
             }`}
           >
             {escolha === "cadastro" && (
@@ -881,13 +881,13 @@ function EstadoCivilEscolhaCard({
           disabled={!podeAtualizarCadastro}
           className={`flex w-full items-start gap-2 rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
             escolha === "documento"
-              ? "border-[#7A1F2B] bg-[#FBF3F4] shadow-sm"
+              ? "border-[#2F3337] bg-[#F7F7F8] shadow-sm"
               : "border-slate-200 bg-white hover:border-slate-300"
           }`}
         >
           <span
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-              escolha === "documento" ? "border-[#7A1F2B]" : "border-slate-300"
+              escolha === "documento" ? "border-[#2F3337]" : "border-slate-300"
             }`}
           >
             {escolha === "documento" && (

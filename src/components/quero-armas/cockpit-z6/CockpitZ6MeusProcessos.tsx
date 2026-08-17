@@ -82,14 +82,14 @@ export interface CockpitZ6MeusProcessosProps {
 const DOT: Record<CockpitZ6Kpi["dot"], string> = {
   amber: "#D6A64B",
   blue: "#3A6FB3",
-  bordo: "#7A1F2B",
+  bordo: "#2F3337",
   green: "#2F8F4A",
   gray: "#8A8A8A",
   red: "#D9342B",
 };
 
 const BADGE_TONE: Record<NonNullable<CockpitZ6Process["badgeTone"]>, { bg: string; fg: string }> = {
-  bordo: { bg: "#7A1F2B", fg: "#FFFFFF" },
+  bordo: { bg: "#2F3337", fg: "#FFFFFF" },
   amber: { bg: "#FCEFCE", fg: "#7A5A14" },
   green: { bg: "#E3F2E8", fg: "#1F6638" },
   red: { bg: "#FCE3E1", fg: "#8A1410" },
@@ -104,7 +104,7 @@ const CHECK_TONE: Record<CockpitZ6ChecklistItem["tone"], { bg: string; fg: strin
 };
 
 const PROGRESS_FILL: Record<CockpitZ6Process["progressoTone"], string> = {
-  bordo: "#7A1F2B",
+  bordo: "#2F3337",
   amber: "#D6A64B",
   green: "#2F8F4A",
   red: "#D9342B",
@@ -308,7 +308,7 @@ const ProcessoCompacto: React.FC<{ p: CockpitZ6Process }> = ({ p }) => {
               <button
                 type="button"
                 onClick={c.banner.cta.onClick}
-                style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "8px 14px", fontFamily: "Oswald, sans-serif", fontSize: 10, letterSpacing: ".14em", cursor: "pointer", borderRadius: 2 }}
+                style={{ background: "#2F3337", color: "#fff", border: 0, padding: "8px 14px", fontFamily: "Oswald, sans-serif", fontSize: 10, letterSpacing: ".14em", cursor: "pointer", borderRadius: 2 }}
               >
                 {c.banner.cta.label}
               </button>
@@ -450,7 +450,7 @@ export const CockpitZ6MeusProcessos: React.FC<CockpitZ6MeusProcessosProps> = ({
               type="button"
               onClick={focoDoDia.cta.onClick}
               className="z6-foco-cta qa-btn-label"
-              style={{ background: "#7A1F2B", color: "#fff", border: 0, padding: "11px 16px", cursor: "pointer", borderRadius: 2 }}
+              style={{ background: "#2F3337", color: "#fff", border: 0, padding: "11px 16px", cursor: "pointer", borderRadius: 2 }}
             >
               {focoDoDia.cta.label}
             </button>

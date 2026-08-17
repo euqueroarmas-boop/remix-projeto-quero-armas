@@ -87,7 +87,7 @@ const COMMON_CALIBRES = [
 
 const TONE_BG: Record<CorStatus, string> = {
   verde: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  azul: "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]",
+  azul: "bg-[#F7F7F8] text-[#2F3337] border-[#D1D3D6]",
   amarelo: "bg-amber-50 text-amber-700 border-amber-200",
   laranja: "bg-orange-50 text-orange-700 border-orange-200",
   vermelho: "bg-red-50 text-red-700 border-red-200",
@@ -503,7 +503,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
-        <Boxes className="h-4 w-4 text-[#7A1F2B]" />
+        <Boxes className="h-4 w-4 text-[#2F3337]" />
         <div>
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-700">
             Estoque de Munições — Movimentações
@@ -574,7 +574,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
           onChange={(e) => setFormEntrada((f) => ({ ...f, observacao: e.target.value }))}
           className="mt-2 h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-[12px] text-slate-700"
         />
-        <label className="mt-2 flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#7A1F2B]/40">
+        <label className="mt-2 flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#2F3337]/40">
           <Paperclip className="h-3.5 w-3.5" />
           {fileEntrada ? <span className="truncate">{fileEntrada.name}</span> : "Anexar nota fiscal / comprovante (opcional)"}
           <input
@@ -622,7 +622,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                 <div key={key} className="rounded-lg border border-slate-200 bg-white">
                   <div className="flex items-center justify-between gap-2 px-3 py-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded bg-[#FBF3F4] px-2 py-0.5 text-[10px] font-bold uppercase text-[#7A1F2B]">
+                      <span className="rounded bg-[#F7F7F8] px-2 py-0.5 text-[10px] font-bold uppercase text-[#2F3337]">
                         {s.calibre}
                       </span>
                       <span className="font-mono text-[14px] font-semibold text-slate-800">
@@ -642,7 +642,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                       <Button
                         variant="outline" size="sm"
                         onClick={() => setShowSaida({ calibre: s.calibre, marca: s.marca, lote: s.lote })}
-                        className="h-7 border-[#7A1F2B]/30 bg-white px-2 text-[10px] uppercase tracking-wider text-[#7A1F2B] hover:bg-[#FBF3F4]"
+                        className="h-7 border-[#2F3337]/30 bg-white px-2 text-[10px] uppercase tracking-wider text-[#2F3337] hover:bg-[#F7F7F8]"
                       >
                         <Minus className="mr-1 h-3 w-3" /> Saída
                       </Button>
@@ -706,7 +706,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                                   }
                                   await saveOrShareBlob(await resp.blob(), m.documento_nome || "anexo");
                                 }}
-                                className="text-slate-400 hover:text-[#7A1F2B]"
+                                className="text-slate-400 hover:text-[#2F3337]"
                               >
                                 <Paperclip className="h-3 w-3" />
                               </button>
@@ -728,7 +728,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-xl">
             <div className="mb-3 flex items-center justify-between">
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B]">Registrar Saída</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[#2F3337]">Registrar Saída</div>
                 <div className="text-[12px] font-semibold text-slate-700">
                   {showSaida.calibre}{showSaida.marca && ` · ${showSaida.marca}`}{showSaida.lote && ` · LOTE ${showSaida.lote}`}
                 </div>
@@ -760,7 +760,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                 rows={3}
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-700"
               />
-              <label className="flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#7A1F2B]/40">
+              <label className="flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-white px-3 text-[11px] text-slate-600 hover:border-[#2F3337]/40">
                 <Paperclip className="h-3.5 w-3.5" />
                 {fileSaida ? <span className="truncate">{fileSaida.name}</span> : "Anexar comprovante (opcional)"}
                 <input
@@ -781,7 +781,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
                 <Button
                   onClick={handleSaida}
                   disabled={saving}
-                  className="h-9 bg-[#7A1F2B] text-[11px] uppercase text-white hover:bg-[#641722]"
+                  className="h-9 bg-[#2F3337] text-[11px] uppercase text-white hover:bg-[#26292C]"
                 >
                   {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
                   Confirmar Saída
@@ -794,7 +794,7 @@ export function MunicoesMovimentacoesManager({ clienteId, onChange }: Props) {
 
       {iaLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="rounded-xl bg-white px-4 py-3 text-[12px] font-bold uppercase tracking-wider text-[#7A1F2B] shadow-xl flex items-center gap-2">
+          <div className="rounded-xl bg-white px-4 py-3 text-[12px] font-bold uppercase tracking-wider text-[#2F3337] shadow-xl flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             Analisando anexo com IA…
           </div>

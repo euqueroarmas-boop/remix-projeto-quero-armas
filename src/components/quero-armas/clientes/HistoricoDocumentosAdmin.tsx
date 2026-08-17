@@ -29,7 +29,7 @@ const fmtDateTime = (d: string) => {
 };
 
 const CONFIG_STATUS: Record<string, { cor: string; fundo: string; ponto: string; rotulo: string; Icone: typeof FileText }> = {
-  rejeitado: { cor: "#7A1F2B", fundo: "#FDF4F5", ponto: "#C4333E", rotulo: "Rejeitado", Icone: XCircle },
+  rejeitado: { cor: "#2F3337", fundo: "#F8F9F9", ponto: "#636C75", rotulo: "Rejeitado", Icone: XCircle },
   aprovado:  { cor: "#0F7A45", fundo: "#F1FAF4", ponto: "#16A34A", rotulo: "Aprovado",  Icone: CheckCircle2 },
   em_analise:{ cor: "#8A6A17", fundo: "#FDFAF1", ponto: "#B45309", rotulo: "Em análise",Icone: Clock3 },
 };
@@ -184,7 +184,7 @@ export function HistoricoDocumentosAdmin({ clienteId }: Props) {
                     <div className="mt-2 space-y-2 rounded-sm border border-[#E4E4E4] bg-[#FAFAFA] px-3 py-2.5">
                       {ev.metadata.motivo_rejeicao && (
                         <div>
-                          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#7A1F2B] mb-0.5">
+                          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#2F3337] mb-0.5">
                             Motivo da rejeição
                           </p>
                           <p className="text-[11px] leading-snug text-[#2A2A2A]">

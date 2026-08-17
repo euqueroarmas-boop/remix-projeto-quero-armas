@@ -77,7 +77,7 @@ const FONTE_LABEL: Record<string, string> = {
 
 const CorVeredicto: Record<string, string> = {
   aprovado: "#166534",
-  rejeitado: "#7A1F2B",
+  rejeitado: "#2F3337",
   revisao: "#92400E",
   revisao_humana: "#92400E",
   cadastro_pendente: "#1E3A8A",
@@ -239,9 +239,9 @@ export default function ClienteAuditoriaLeitura({ cliente }: { cliente: any }) {
                         <div
                           key={i}
                           className="rounded-lg border p-2 text-[11px]"
-                          style={{ borderColor: "#F1D6DA", background: "#FDF7F8" }}
+                          style={{ borderColor: "#E2E3E5", background: "#F9FAFA" }}
                         >
-                          <p className="font-bold uppercase" style={{ color: "#7A1F2B" }}>
+                          <p className="font-bold uppercase" style={{ color: "#2F3337" }}>
                             {ach.label} — {ach.problema.replace(/_/g, " ").toUpperCase()}
                           </p>
                           <p className="text-slate-700 mt-0.5">{ach.mensagem}</p>

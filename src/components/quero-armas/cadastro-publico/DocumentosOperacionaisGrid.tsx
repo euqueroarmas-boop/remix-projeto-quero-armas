@@ -87,7 +87,7 @@ function DocCard({
   return (
     <div
       className={`rounded-xl border p-3 flex flex-col gap-2 ${
-        presente ? "bg-white border-slate-200" : "bg-[#FBF3F4] border-[#E5C2C6]"
+        presente ? "bg-white border-slate-200" : "bg-[#F7F7F8] border-[#D1D3D6]"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -128,7 +128,7 @@ function DocCard({
             <button
               type="button"
               onClick={handleVer}
-              className="relative w-full h-28 rounded-md overflow-hidden border bg-slate-100 hover:ring-2 hover:ring-[#7A1F2B] transition-all"
+              className="relative w-full h-28 rounded-md overflow-hidden border bg-slate-100 hover:ring-2 hover:ring-[#2F3337] transition-all"
               style={{ borderColor: "hsl(220 13% 88%)" }}
               title="Abrir documento"
             >
@@ -191,7 +191,7 @@ function DocCard({
                 size="sm"
                 variant="outline"
                 onClick={() => onSolicitarCorrecao(`Reenviar ${label.toLowerCase()} (arquivo atual com problema).`)}
-                className="h-8 flex-1 min-w-[88px] text-[10px] font-semibold uppercase tracking-wider gap-1 border-[#E5C2C6] text-[#7A1F2B] hover:bg-[#FBF3F4]"
+                className="h-8 flex-1 min-w-[88px] text-[10px] font-semibold uppercase tracking-wider gap-1 border-[#D1D3D6] text-[#2F3337] hover:bg-[#F7F7F8]"
                 title="Solicitar correção deste documento"
               >
                 <MailWarning className="h-3.5 w-3.5" /> Corrigir
@@ -201,7 +201,7 @@ function DocCard({
         </>
       ) : (
         <>
-          <div className="w-full rounded-md bg-white/60 border border-dashed border-[#E5C2C6] p-3 text-[11px] text-[#7A1F2B] leading-snug">
+          <div className="w-full rounded-md bg-white/60 border border-dashed border-[#D1D3D6] p-3 text-[11px] text-[#2F3337] leading-snug">
             Documento não enviado pelo cliente.
           </div>
           {onSolicitarCorrecao && (
@@ -210,7 +210,7 @@ function DocCard({
               size="sm"
               onClick={() => onSolicitarCorrecao(pendenciaLabel)}
               className="h-8 w-full text-[10px] font-bold uppercase tracking-wider gap-1.5 mt-auto"
-              style={{ background: "#7A1F2B", color: "#fff" }}
+              style={{ background: "#2F3337", color: "#fff" }}
             >
               <MailWarning className="h-3.5 w-3.5" />
               Solicitar correção

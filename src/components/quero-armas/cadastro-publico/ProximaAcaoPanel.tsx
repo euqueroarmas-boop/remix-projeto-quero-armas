@@ -35,7 +35,7 @@ function toneStyles(tone: ProximaAcaoTone) {
     case "neutral":
       return { wrap: "border-slate-200 bg-slate-50", title: "text-slate-800", icon: "text-slate-600", btn: "bg-slate-700 hover:bg-slate-800 text-white" };
     default:
-      return { wrap: "border-[#E5C2C6] bg-[#FBF3F4]", title: "text-[#3D0E16]", icon: "text-[#7A1F2B]", btn: "bg-[#7A1F2B] hover:bg-[#641722] text-white" };
+      return { wrap: "border-[#D1D3D6] bg-[#F7F7F8]", title: "text-[#17191B]", icon: "text-[#2F3337]", btn: "bg-[#2F3337] hover:bg-[#26292C] text-white" };
   }
 }
 
@@ -81,7 +81,7 @@ export default function ProximaAcaoPanel({
           <ul className="space-y-1">
             {pendencias.map((p, i) => {
               const dot =
-                p.tone === "danger" ? "bg-red-500" : p.tone === "info" ? "bg-[#7A1F2B]" : "bg-amber-500";
+                p.tone === "danger" ? "bg-red-500" : p.tone === "info" ? "bg-[#2F3337]" : "bg-amber-500";
               return (
                 <li key={i} className="flex items-start gap-2 text-[11px] text-slate-800">
                   <span className={`mt-1 h-1.5 w-1.5 rounded-full shrink-0 ${dot}`} />

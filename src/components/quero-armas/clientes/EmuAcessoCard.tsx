@@ -189,7 +189,7 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
       <div className="flex items-center gap-2">
-        <Eye className="h-4 w-4 text-[#7A1F2B]" />
+        <Eye className="h-4 w-4 text-[#2F3337]" />
         <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600">Modo espelho (auditado)</h4>
       </div>
       <p className="text-[11px] leading-relaxed text-slate-500">
@@ -265,7 +265,7 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
       <Button
         onClick={abrirEspelho}
         disabled={loading}
-        className="h-10 w-full rounded-xl bg-[#7A1F2B] text-xs font-bold uppercase tracking-wider text-white hover:bg-[#641722]"
+        className="h-10 w-full rounded-xl bg-[#2F3337] text-xs font-bold uppercase tracking-wider text-white hover:bg-[#26292C]"
       >
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Eye className="mr-2 h-4 w-4" />}
         Abrir área do cliente em espelho
@@ -283,7 +283,7 @@ export default function EmuAcessoCard({ clienteId, clienteIdLegado, clienteNome,
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setUrlPendente(null)}
-            className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#7A1F2B] text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#641722]"
+            className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#2F3337] text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#26292C]"
           >
             <Eye className="h-3.5 w-3.5" /> Abrir em nova aba
           </a>

@@ -76,7 +76,7 @@ export default function ClubeSearchCombobox({ onSelect, onNotFound }: Props) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nome, CNPJ, cidade, UF ou número CR..."
-          className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 py-3 text-[14px] uppercase outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#FBE2E6]"
+          className="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-3 py-3 text-[14px] uppercase outline-none focus:border-[#2F3337] focus:ring-2 focus:ring-[#EDEEF0]"
         />
         {loading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />}
       </div>

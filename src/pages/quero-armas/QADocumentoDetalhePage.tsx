@@ -233,15 +233,15 @@ export default function QADocumentoDetalhePage() {
             </h1>
             <div className="flex items-center gap-3 mt-2 text-xs text-slate-500 flex-wrap">
               <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">{doc.tipo_documento?.replace(/_/g, " ")}</span>
-              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-[#FBF3F4] text-[#7A1F2B] border border-slate-300/20" : "bg-[#7A1F2B] text-[#7A1F2B] border border-[#7A1F2B]"}`}>
+              <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${isAuxiliar ? "bg-[#F7F7F8] text-[#2F3337] border border-slate-300/20" : "bg-[#2F3337] text-[#2F3337] border border-[#2F3337]"}`}>
                 {isAuxiliar ? "Auxiliar do Caso" : "Aprendizado"}
               </span>
               {isAuxiliar && doc.caso_id && (
-                <span className="px-2 py-0.5 rounded bg-[#FBF3F4] text-[#7A1F2B] text-[10px]">caso: {doc.caso_id}</span>
+                <span className="px-2 py-0.5 rounded bg-[#F7F7F8] text-[#2F3337] text-[10px]">caso: {doc.caso_id}</span>
               )}
               {doc.categoria && <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-600">{doc.categoria}</span>}
               <span className="flex items-center gap-1">
-                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-[#7A1F2B]" /> : <Upload className="h-3 w-3 text-slate-500" />}
+                {doc.tipo_origem === "link_publico" ? <Globe className="h-3 w-3 text-[#2F3337]" /> : <Upload className="h-3 w-3 text-slate-500" />}
                 {doc.tipo_origem === "link_publico" ? "Link público" : doc.tipo_origem === "cadastro_manual" ? "Manual" : "Upload"}
               </span>
               <span>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</span>
@@ -251,8 +251,8 @@ export default function QADocumentoDetalhePage() {
             </div>
             {doc.url_origem && (
               <div className="flex items-center gap-1.5 mt-1.5">
-                <Link2 className="h-3 w-3 text-[#7A1F2B] shrink-0" />
-                <a href={doc.url_origem} target="_blank" rel="noopener noreferrer" className="text-xs text-[#7A1F2B] hover:text-[#FBF3F4] truncate">
+                <Link2 className="h-3 w-3 text-[#2F3337] shrink-0" />
+                <a href={doc.url_origem} target="_blank" rel="noopener noreferrer" className="text-xs text-[#2F3337] hover:text-[#F7F7F8] truncate">
                   {doc.url_origem}
                 </a>
               </div>
@@ -299,9 +299,9 @@ export default function QADocumentoDetalhePage() {
         </div>
 
         {isAuxiliar && (
-          <div className="mt-3 bg-[#FBF3F4] border border-slate-300/15 rounded-lg px-4 py-2.5 text-xs text-[#7A1F2B]">
+          <div className="mt-3 bg-[#F7F7F8] border border-slate-300/15 rounded-lg px-4 py-2.5 text-xs text-[#2F3337]">
             <strong>Documento auxiliar do caso.</strong> Este documento é utilizado apenas como suporte factual do caso concreto. Não alimenta o aprendizado global da IA, não aparece no ranking de referências e não serve como modelo de peça.
-            {doc.caso_id && <span className="block mt-1 text-[#7A1F2B]">Vinculado ao caso: <strong>{doc.caso_id}</strong></span>}
+            {doc.caso_id && <span className="block mt-1 text-[#2F3337]">Vinculado ao caso: <strong>{doc.caso_id}</strong></span>}
           </div>
         )}
 

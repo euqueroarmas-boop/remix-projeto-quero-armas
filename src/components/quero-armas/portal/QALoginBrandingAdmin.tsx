@@ -77,7 +77,7 @@ export default function QALoginBrandingAdmin() {
   return (
     <div className="qa-card p-5">
       <div className="flex items-center gap-2 mb-1">
-        <ImageIcon className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+        <ImageIcon className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
           Tela de Login do Cliente · Imagem de destaque
         </span>
@@ -118,7 +118,7 @@ export default function QALoginBrandingAdmin() {
             type="button"
             onClick={handlePick}
             disabled={saving}
-            className="h-9 px-3 rounded-lg bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] font-semibold uppercase tracking-wider flex items-center gap-2 disabled:opacity-60 w-fit"
+            className="h-9 px-3 rounded-lg bg-[#2F3337] hover:bg-[#26292C] text-white text-[11px] font-semibold uppercase tracking-wider flex items-center gap-2 disabled:opacity-60 w-fit"
           >
             {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
             {dataUrl ? "Trocar imagem" : "Enviar imagem"}

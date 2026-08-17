@@ -273,7 +273,7 @@ export default function QANotificacoesAdmin() {
       <div className="qa-card p-5">
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+            <Bell className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
               Notificações ativas ({listaFiltrada.length})
             </span>
@@ -375,7 +375,7 @@ export default function QANotificacoesAdmin() {
       {/* Criar notificação manual */}
       <div className="qa-card p-5">
         <div className="flex items-center gap-2 mb-1">
-          <Plus className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+          <Plus className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
           <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
             Criar notificação manual
           </span>
@@ -542,7 +542,7 @@ export default function QANotificacoesAdmin() {
               size="sm"
               onClick={criarNotificacaoManual}
               disabled={criando}
-              className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-9"
+              className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-9"
             >
               {criando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
               Criar notificação

@@ -20,7 +20,7 @@ import RevisaoCampos from "./RevisaoCampos";
 import { ClubeFiliacaoFormState, EMPTY_FORM } from "./types";
 import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverrides";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 /**
  * Normaliza datas em vários formatos aceitos para ISO `YYYY-MM-DD`.
@@ -388,7 +388,7 @@ export default function ClubeFiliacaoStep({ processoId, clienteId, documentoId, 
             className="w-full flex items-center justify-between rounded-xl border border-slate-300 bg-white px-4 py-4 text-left hover:bg-slate-50"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FBF3F4] text-[#7A1F2B]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F7F7F8] text-[#2F3337]">
                 <Upload className="h-4 w-4" />
               </div>
               <div>

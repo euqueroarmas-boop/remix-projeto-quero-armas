@@ -53,7 +53,7 @@ export function QABreadcrumb() {
         to="/dashboard"
         className="flex items-center gap-1.5 font-semibold uppercase tracking-wider transition-colors"
         style={{ color: "hsl(220 20% 18%)" }}
-        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(352 60% 30%)")}
+        onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(210 8% 20%)")}
         onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(220 20% 18%)")}
       >
         <ChevronLeft className="h-3.5 w-3.5" />
@@ -74,7 +74,7 @@ export function QABreadcrumb() {
                 to={href}
                 className="uppercase tracking-wider transition-colors"
                 style={{ color: "hsl(220 10% 52%)" }}
-                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(352 60% 30%)")}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(210 8% 20%)")}
                 onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "hsl(220 10% 52%)")}
               >
                 {labelOf(slug)}

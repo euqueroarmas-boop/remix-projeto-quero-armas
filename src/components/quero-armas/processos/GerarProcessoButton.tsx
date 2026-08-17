@@ -138,7 +138,7 @@ export function GerarProcessoButton({ venda, itens, clienteNome, processoExisten
           variant="ghost"
           size="sm"
           onClick={() => setOpenProcessoId(processoExistente.id)}
-          className="h-7 px-2 text-[10px] text-[#7A1F2B] hover:text-[#7A1F2B]"
+          className="h-7 px-2 text-[10px] text-[#2F3337] hover:text-[#2F3337]"
           title="Abrir processo"
         >
           <ExternalLink className="h-3.5 w-3.5 mr-1" /> Abrir

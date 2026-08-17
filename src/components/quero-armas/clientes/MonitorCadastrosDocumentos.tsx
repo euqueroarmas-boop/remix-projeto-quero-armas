@@ -111,7 +111,7 @@ const tone = {
   green:   "bg-emerald-50 border-emerald-200 text-emerald-700",
   yellow:  "bg-amber-50  border-amber-200  text-amber-800",
   red:     "bg-rose-50   border-rose-200   text-rose-700",
-  blue:    "bg-[#FBF3F4]    border-[#E5C2C6]    text-[#7A1F2B]",
+  blue:    "bg-[#F7F7F8]    border-[#D1D3D6]    text-[#2F3337]",
 } as const;
 
 function KpiCard({

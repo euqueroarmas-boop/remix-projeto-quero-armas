@@ -364,7 +364,7 @@ export default function QAChatAprovacaoPage() {
         <div className="flex items-center gap-3">
           <div
             className="h-10 w-10 rounded-lg flex items-center justify-center"
-            style={{ background: "hsl(352 33% 96%)", color: "hsl(352 60% 30%)" }}
+            style={{ background: "hsl(210 4% 96%)", color: "hsl(210 8% 20%)" }}
           >
             <BrainCircuit className="h-5 w-5" />
           </div>
@@ -383,13 +383,13 @@ export default function QAChatAprovacaoPage() {
             className={`px-3 py-1.5 rounded-md text-xs font-medium uppercase tracking-wide border transition-colors`}
             style={
               filtro === "pendentes"
-                ? { background: "hsl(352 60% 30%)", color: "#fff", borderColor: "hsl(352 60% 30%)" }
+                ? { background: "hsl(210 8% 20%)", color: "#fff", borderColor: "hsl(210 8% 20%)" }
                 : { background: "#fff", color: "hsl(220 20% 30%)", borderColor: "hsl(220 13% 88%)" }
             }
           >
             Pendentes {pendentesCount > 0 && (
               <span className="ml-1 inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full text-[10px] font-bold"
-                style={{ background: filtro === "pendentes" ? "rgba(255,255,255,0.25)" : "hsl(352 60% 30%)", color: "#fff" }}>
+                style={{ background: filtro === "pendentes" ? "rgba(255,255,255,0.25)" : "hsl(210 8% 20%)", color: "#fff" }}>
                 {pendentesCount}
               </span>
             )}
@@ -399,7 +399,7 @@ export default function QAChatAprovacaoPage() {
             className="px-3 py-1.5 rounded-md text-xs font-medium uppercase tracking-wide border transition-colors"
             style={
               filtro === "todos"
-                ? { background: "hsl(352 60% 30%)", color: "#fff", borderColor: "hsl(352 60% 30%)" }
+                ? { background: "hsl(210 8% 20%)", color: "#fff", borderColor: "hsl(210 8% 20%)" }
                 : { background: "#fff", color: "hsl(220 20% 30%)", borderColor: "hsl(220 13% 88%)" }
             }
           >
@@ -496,7 +496,7 @@ export default function QAChatAprovacaoPage() {
                           }
                         }}
                         className="text-sm leading-relaxed"
-                        style={{ color: "hsl(220 20% 18%)", background: "#fff", borderColor: "hsl(352 33% 80%)" }}
+                        style={{ color: "hsl(220 20% 18%)", background: "#fff", borderColor: "hsl(210 4% 80%)" }}
                       />
                     ) : (
                       <div className="text-sm leading-relaxed whitespace-pre-wrap rounded-lg p-3 border"
@@ -517,7 +517,7 @@ export default function QAChatAprovacaoPage() {
                             className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full border"
                             style={
                               c.kind === "aprendizado"
-                                ? { background: "hsl(352 33% 97%)", color: "hsl(352 60% 30%)", borderColor: "hsl(352 33% 88%)" }
+                                ? { background: "hsl(210 4% 97%)", color: "hsl(210 8% 20%)", borderColor: "hsl(210 4% 88%)" }
                                 : c.kind === "legislacao"
                                 ? { background: "hsl(220 14% 96%)", color: "hsl(220 30% 25%)", borderColor: "hsl(220 13% 88%)" }
                                 : { background: "#fff", color: "hsl(220 20% 30%)", borderColor: "hsl(220 13% 88%)" }
@@ -531,7 +531,7 @@ export default function QAChatAprovacaoPage() {
                   )}
 
                   {row.conteudo_corrigido && (
-                    <div className="text-[11px] inline-flex items-center gap-1" style={{ color: "hsl(352 60% 30%)" }}>
+                    <div className="text-[11px] inline-flex items-center gap-1" style={{ color: "hsl(210 8% 20%)" }}>
                       <Pencil className="h-3 w-3" /> Corrigida pela equipe
                     </div>
                   )}
@@ -642,13 +642,13 @@ export default function QAChatAprovacaoPage() {
                   {refiningId === row.id && (
                     <div
                       className="mt-3 rounded-lg border overflow-hidden"
-                      style={{ borderColor: "hsl(352 33% 85%)", background: "hsl(352 33% 98%)" }}
+                      style={{ borderColor: "hsl(210 4% 85%)", background: "hsl(210 4% 98%)" }}
                     >
                       <div
                         className="px-3 py-2 border-b flex items-center justify-between"
-                        style={{ borderColor: "hsl(352 33% 88%)", background: "hsl(352 33% 96%)" }}
+                        style={{ borderColor: "hsl(210 4% 88%)", background: "hsl(210 4% 96%)" }}
                       >
-                        <div className="text-[11px] uppercase tracking-widest flex items-center gap-1.5" style={{ color: "hsl(352 60% 30%)" }}>
+                        <div className="text-[11px] uppercase tracking-widest flex items-center gap-1.5" style={{ color: "hsl(210 8% 20%)" }}>
                           <Sparkles className="h-3 w-3" />
                           Refinamento com Klal — use este chat para chegar na resposta certa antes de aprovar.
                         </div>
@@ -692,7 +692,7 @@ export default function QAChatAprovacaoPage() {
                       </div>
                       <div
                         className="p-2 border-t flex gap-2"
-                        style={{ borderColor: "hsl(352 33% 88%)", background: "#fff" }}
+                        style={{ borderColor: "hsl(210 4% 88%)", background: "#fff" }}
                       >
                         <Input
                           value={refineInput}
@@ -711,7 +711,7 @@ export default function QAChatAprovacaoPage() {
                           size="sm"
                           disabled={refineStreaming || !refineInput.trim()}
                           onClick={() => enviarRefinamento(row)}
-                          style={{ background: "hsl(352 60% 30%)", color: "#fff" }}
+                          style={{ background: "hsl(210 8% 20%)", color: "#fff" }}
                         >
                           {refineStreaming ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />

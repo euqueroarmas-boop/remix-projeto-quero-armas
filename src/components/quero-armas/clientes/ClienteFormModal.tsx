@@ -1037,7 +1037,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                         ? "bg-zinc-50 border-zinc-200 text-zinc-600"
                         : "bg-zinc-50 border-zinc-200 text-zinc-600"
                     )}>
-                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-[#7A1F2B]")} />
+                      <span className={cn("h-1.5 w-1.5 rounded-full", isEdit ? "bg-emerald-500" : "bg-[#2F3337]")} />
                       {isEdit ? "Editando" : "Em cadastro"}
                     </span>
                     <span className="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
@@ -1065,7 +1065,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     type="button"
                     onClick={save}
                     disabled={saving}
-                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-[#7A1F2B] hover:bg-[#641722] text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
+                    className="h-9 px-4 inline-flex items-center gap-2 rounded-md bg-[#2F3337] hover:bg-[#26292C] text-white text-xs font-semibold uppercase tracking-wide justify-center disabled:opacity-50 transition-colors shadow-sm"
                   >
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     {isEdit ? "Salvar Alterações" : "Cadastrar Cliente"}
@@ -1096,7 +1096,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     onClick={() => setAba(t.id)}
                     className={`relative px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em] whitespace-nowrap transition-colors ${
                       aba === t.id
-                        ? "text-[#7A1F2B] border-b-2 border-[#7A1F2B] -mb-px"
+                        ? "text-[#2F3337] border-b-2 border-[#2F3337] -mb-px"
                         : "text-zinc-400 hover:text-zinc-600 border-b-2 border-transparent -mb-px"
                     }`}
                   >
@@ -1335,7 +1335,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <button
                     type="button"
                     onClick={() => { set("geolocalizacao", ""); resolveGeoloc(""); }}
-                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#2F3337] hover:underline"
                   >
                     Reprocessar geolocalização
                   </button>
@@ -1363,8 +1363,8 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                         className={cn(
                           "h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors",
                           active
-                            ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
-                            : "bg-white text-zinc-700 border-zinc-200 hover:border-[#7A1F2B]"
+                            ? "bg-[#2F3337] text-white border-[#2F3337]"
+                            : "bg-white text-zinc-700 border-zinc-200 hover:border-[#2F3337]"
                         )}
                       >
                         {label}
@@ -1491,7 +1491,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   <button
                     type="button"
                     onClick={() => { set("geolocalizacao2", ""); resolveGeoloc("2"); }}
-                    className="mt-2 text-[11px] uppercase font-semibold text-[#7A1F2B] hover:underline"
+                    className="mt-2 text-[11px] uppercase font-semibold text-[#2F3337] hover:underline"
                   >
                     Reprocessar geolocalização
                   </button>
@@ -1516,9 +1516,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                   </div>
                 </div>
                 {!f.categoria_titular && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#FBF3F4] border border-[#E5C2C6]">
-                    <AlertTriangle className="h-3.5 w-3.5 text-[#4F121C] flex-shrink-0" />
-                    <span className="text-[11px] text-[#3D0E16] font-medium">
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-[#F7F7F8] border border-[#D1D3D6]">
+                    <AlertTriangle className="h-3.5 w-3.5 text-[#1E2023] flex-shrink-0" />
+                    <span className="text-[11px] text-[#17191B] font-medium">
                       Categoria não definida — sistema considerará todas as exigências.
                     </span>
                   </div>
@@ -1613,10 +1613,10 @@ function KpiCard({ icon: Icon, label, value, tone = "info" }: {
   const glow = tone === "ok"
     ? "rgba(16, 185, 129, 0.55)"      // emerald-500
     : tone === "warn"
-      ? "rgba(122, 31, 43, 0.55)"     // bordo
+      ? "rgba(47,51,55,0.55)"     // bordo
       : "rgba(161, 161, 170, 0.45)";  // zinc-400
-  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#7A1F2B]" : "bg-zinc-300";
-  const iconCls = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-[#7A1F2B]" : "text-zinc-400";
+  const dotCls = tone === "ok" ? "bg-emerald-500" : tone === "warn" ? "bg-[#2F3337]" : "bg-zinc-300";
+  const iconCls = tone === "ok" ? "text-emerald-600" : tone === "warn" ? "text-[#2F3337]" : "text-zinc-400";
   return (
     <div className="relative rounded-lg border border-zinc-200 bg-white p-3 shadow-sm overflow-hidden transition-colors">
       {/* Glow esfumaçado animado no canto superior direito (padrão Arsenal) */}

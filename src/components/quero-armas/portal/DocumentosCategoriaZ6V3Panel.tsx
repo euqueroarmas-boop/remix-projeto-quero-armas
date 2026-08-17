@@ -419,7 +419,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
          botão ADICIONAR nunca competir com ele no desktop (lg+). */
       @media (min-width: 1024px){.qa-docsz6 .hdr-top{padding-right:140px}}
        .qa-docsz6 .hdr .add{display:inline-flex;align-items:center;gap:3px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:3px 7px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:8.5px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase;flex:0 0 auto;white-space:nowrap}
-       .qa-docsz6 .hdr .add:hover{border-color:#7A1F2B;color:#7A1F2B}
+       .qa-docsz6 .hdr .add:hover{border-color:#2F3337;color:#2F3337}
         .qa-docsz6 .hdr .meta{margin-top:11px;font-size:10px;line-height:1.4;color:#6A6A6A;display:flex;flex-direction:column;gap:4px;flex-wrap:nowrap;font-family:'Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.22em}
         .qa-docsz6 .hdr .meta > span{display:flex;align-items:center;gap:18px;white-space:nowrap}
         @media (max-width:520px){.qa-docsz6 .hdr .meta{font-size:9px;letter-spacing:.12em;gap:3px}.qa-docsz6 .hdr .meta > span{gap:10px}}
@@ -427,8 +427,8 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .hdr .meta span b{color:#0A0A0A;font-weight:600}
         .qa-docsz6 .kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:18px}
         .qa-docsz6 .kpi{background:#fff;border:1px solid #E5E5E5;padding:12px 12px;border-radius:4px;cursor:pointer;transition:all .12s ease;text-align:left;font:inherit;color:inherit}
-        .qa-docsz6 .kpi:hover{border-color:#7A1F2B}
-        .qa-docsz6 .kpi.active{border-color:#7A1F2B;box-shadow:inset 0 0 0 1px #7A1F2B;background:#FFF8F8}
+        .qa-docsz6 .kpi:hover{border-color:#2F3337}
+        .qa-docsz6 .kpi.active{border-color:#2F3337;box-shadow:inset 0 0 0 1px #2F3337;background:#FFF8F8}
         .qa-docsz6 .kpi .l{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;color:#7A7A7A;display:flex;align-items:flex-start;gap:6px;text-transform:uppercase;min-width:0;overflow-wrap:anywhere;word-break:break-word;line-height:1.25}
         .qa-docsz6 .kpi .l .dot{margin-top:4px;flex:0 0 auto}
         .qa-docsz6 .kpi .l .lt{min-width:0;overflow-wrap:anywhere}
@@ -439,7 +439,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .listhead .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:13px;letter-spacing:.24em;color:#0A0A0A;font-weight:900;display:flex;align-items:center;gap:8px;text-transform:uppercase}
         .qa-docsz6 .listhead .ttl .cnt{background:#EDEDED;color:#444;font-size:9px;padding:1px 6px;border-radius:2px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-weight:900;letter-spacing:.18em;white-space:nowrap;overflow-wrap:normal;word-break:keep-all;flex:0 0 auto;align-self:center}
         .qa-docsz6 .listhead .add{display:inline-flex;align-items:center;gap:3px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:3px 7px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:8.5px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase}
-        .qa-docsz6 .listhead .add:hover{border-color:#7A1F2B;color:#7A1F2B}
+        .qa-docsz6 .listhead .add:hover{border-color:#2F3337;color:#2F3337}
         
         .qa-docsz6 .grp{background:#fff;border:1px solid #E5E5E5;border-top:0}
         .qa-docsz6 .grp:last-child{border-radius:0 0 4px 4px}
@@ -459,7 +459,7 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
         .qa-docsz6 .rem{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:11px;letter-spacing:.18em;font-weight:900;text-align:right;min-width:110px;text-transform:uppercase}
         .qa-docsz6 .acts{display:flex;align-items:center;gap:6px;justify-content:flex-end}
         .qa-docsz6 .act{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid transparent;background:transparent;color:#9A9A9A;border-radius:2px;cursor:pointer;transition:all .12s ease}
-        .qa-docsz6 .act:hover{color:#7A1F2B;border-color:#E5E5E5;background:#fff}
+        .qa-docsz6 .act:hover{color:#2F3337;border-color:#E5E5E5;background:#fff}
         .qa-docsz6 .act:disabled{opacity:.35;cursor:not-allowed}
         .qa-docsz6 .act:disabled:hover{color:#9A9A9A;border-color:transparent;background:transparent}
         .qa-docsz6 .rm{color:#C8C8C8}
@@ -529,9 +529,9 @@ export default function DocumentosCategoriaZ6V3Panel({ cliente, meusDocs, custom
       </div>
 
       {filter && (
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #7A1F2B",borderRadius:4,padding:"8px 12px",marginBottom:14,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",fontSize:11,letterSpacing:".22em",color:"#7A1F2B",fontWeight:900,textTransform:"uppercase"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#FFF8F8",border:"1px solid #2F3337",borderRadius:4,padding:"8px 12px",marginBottom:14,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",fontSize:11,letterSpacing:".22em",color:"#2F3337",fontWeight:900,textTransform:"uppercase"}}>
           <span>FILTRO ATIVO · {docsFiltrados.length} DOCUMENTO{docsFiltrados.length === 1 ? "" : "S"}</span>
-          <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#7A1F2B",cursor:"pointer",fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".22em",fontSize:10,fontWeight:900}}>LIMPAR ✕</button>
+          <button type="button" onClick={() => setFilter(null)} style={{background:"transparent",border:0,color:"#2F3337",cursor:"pointer",fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".22em",fontSize:10,fontWeight:900}}>LIMPAR ✕</button>
         </div>
       )}
       </div>
@@ -766,7 +766,7 @@ function PreviewModal({
                   type="button"
                   onClick={triggerDownload}
                   style={{
-                    background: "#7A1F2B",
+                    background: "#2F3337",
                     color: "#fff",
                     border: 0,
                     padding: "7px 12px",
@@ -849,7 +849,7 @@ function PreviewModal({
                     type="button"
                     onClick={triggerDownload}
                     style={{
-                      background: "#7A1F2B", color: "#fff", border: 0,
+                      background: "#2F3337", color: "#fff", border: 0,
                       padding: "10px 16px",
                       letterSpacing: ".22em", fontWeight: 900, borderRadius: 2,
                       cursor: "pointer",

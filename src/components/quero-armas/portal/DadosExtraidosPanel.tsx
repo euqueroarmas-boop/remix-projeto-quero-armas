@@ -205,8 +205,8 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
         .qa-dx-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
         .qa-dx-toolbar .ttl{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:14px;letter-spacing:.22em;font-weight:900;color:#0A0A0A;text-transform:uppercase}
         .qa-dx-toolbar .sub{font-size:11px;color:#7A7A7A;text-transform:uppercase;letter-spacing:.18em;font-weight:700}
-        .qa-dx-print{display:inline-flex;align-items:center;gap:6px;background:#7A1F2B;color:#fff;border:0;padding:9px 14px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.22em;font-size:11px;font-weight:900;cursor:pointer;border-radius:2px;text-transform:uppercase}
-        .qa-dx-print:hover{background:#5e1721}
+        .qa-dx-print{display:inline-flex;align-items:center;gap:6px;background:#2F3337;color:#fff;border:0;padding:9px 14px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.22em;font-size:11px;font-weight:900;cursor:pointer;border-radius:2px;text-transform:uppercase}
+        .qa-dx-print:hover{background:#24272A}
         .qa-dx-kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:18px}
         .qa-dx-kpi{background:#fff;border:1px solid #E5E5E5;padding:10px 8px 9px;border-radius:4px;min-width:0;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start}
         .qa-dx-kpi .l{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:9.5px;font-weight:900;letter-spacing:.12em;color:#7A7A7A;text-transform:uppercase;line-height:1.15;min-height:2.3em}
@@ -226,12 +226,12 @@ export default function DadosExtraidosPanel({ cliente, meusDocs, onEditDoc }: Pr
         .qa-dx-doc-nm{font-family:'Arial Narrow',Arial,sans-serif;font-size:13px;font-weight:900;color:#0A0A0A;text-transform:none;letter-spacing:-.01em}
         .qa-dx-doc-meta{font-size:10px;color:#7A7A7A;margin-top:2px;text-transform:uppercase;letter-spacing:.18em;font-weight:700}
         .qa-dx-edit{display:inline-flex;align-items:center;gap:4px;background:transparent;border:1px solid #C8C8C8;color:#7A7A7A;padding:5px 9px;font-family:'Oswald','Arial Narrow',Arial,sans-serif;letter-spacing:.18em;font-size:9px;font-weight:900;border-radius:2px;cursor:pointer;text-transform:uppercase}
-        .qa-dx-edit:hover{border-color:#7A1F2B;color:#7A1F2B}
+        .qa-dx-edit:hover{border-color:#2F3337;color:#2F3337}
         .qa-dx-table{width:100%;border-collapse:collapse;font-size:12px}
         .qa-dx-table th,.qa-dx-table td{padding:6px 8px;border-bottom:1px solid #F2F2F2;text-align:left;vertical-align:top}
         .qa-dx-table th{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;font-weight:900;letter-spacing:.18em;color:#7A7A7A;text-transform:uppercase;width:34%}
         .qa-dx-table td{font-family:'Arial Narrow',Arial,sans-serif;color:#0A0A0A;font-weight:700}
-        .qa-dx-sub{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;letter-spacing:.22em;color:#7A1F2B;font-weight:900;text-transform:uppercase;margin:10px 0 4px}
+        .qa-dx-sub{font-family:'Oswald','Arial Narrow',Arial,sans-serif;font-size:10px;letter-spacing:.22em;color:#2F3337;font-weight:900;text-transform:uppercase;margin:10px 0 4px}
         .qa-dx-empty{padding:30px;text-align:center;color:#9A9A9A;font-size:12px;background:#fff;border:1px solid #E5E5E5;border-radius:4px}
 
         /* Bloco de impressão */

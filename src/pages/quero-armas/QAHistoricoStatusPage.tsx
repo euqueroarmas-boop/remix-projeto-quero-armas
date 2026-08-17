@@ -28,10 +28,10 @@ interface EventoRow {
 const PAGE_SIZE = 50;
 
 const ORIGEM_BADGE_CLASS: Record<string, string> = {
-  equipe: "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]",
+  equipe: "bg-[#F7F7F8] text-[#2F3337] border-[#D1D3D6]",
   ia: "bg-purple-100 text-purple-700 border-purple-200",
   cliente: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  webhook: "bg-[#FBF3F4] text-[#7A1F2B] border-[#E5C2C6]",
+  webhook: "bg-[#F7F7F8] text-[#2F3337] border-[#D1D3D6]",
   sistema: "bg-slate-100 text-slate-700 border-slate-200",
   cron: "bg-amber-100 text-amber-700 border-amber-200",
   importacao: "bg-orange-100 text-orange-700 border-orange-200",
@@ -158,7 +158,7 @@ export default function QAHistoricoStatusPage() {
     <div className="p-4 md:p-6 max-w-[1400px] mx-auto space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#7A1F2B] text-white">
+        <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#2F3337] text-white">
           <History className="h-5 w-5" />
         </div>
         <div>
@@ -304,7 +304,7 @@ export default function QAHistoricoStatusPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 text-[10px] uppercase tracking-wider text-[#7A1F2B] hover:text-[#7A1F2B]"
+                            className="h-6 text-[10px] uppercase tracking-wider text-[#2F3337] hover:text-[#2F3337]"
                             onClick={() => setDetailJson(r.detalhes)}
                           >
                             Ver detalhes

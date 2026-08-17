@@ -83,7 +83,7 @@ export default function DeclaracaoFiliacaoUploader({ onExtracted, onCancel }: Pr
         type="button"
         disabled={loading}
         onClick={() => inputRef.current?.click()}
-        className="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 hover:border-[#7A1F2B] hover:bg-[#FBF3F4] transition-colors disabled:opacity-60"
+        className="w-full rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-8 hover:border-[#2F3337] hover:bg-[#F7F7F8] transition-colors disabled:opacity-60"
       >
         <div className="flex flex-col items-center gap-2 text-slate-600">
           {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <FileUp className="h-6 w-6" />}

@@ -152,7 +152,7 @@ export default function ClienteSelfieAvatar({
 
   return (
     <div
-      className={`${dim} rounded-2xl shrink-0 flex items-center justify-center text-white text-xs font-bold bg-[#7A1F2B] border border-[#7A1F2B] shadow-sm`}
+      className={`${dim} rounded-2xl shrink-0 flex items-center justify-center text-white text-xs font-bold bg-[#2F3337] border border-[#2F3337] shadow-sm`}
       aria-label={cliente?.nome_completo || "Sem foto"}
       title={cliente?.nome_completo || ""}
     >

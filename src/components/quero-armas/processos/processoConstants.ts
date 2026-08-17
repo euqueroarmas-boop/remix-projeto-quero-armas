@@ -2,11 +2,11 @@
 
 export const STATUS_PROCESSO = {
   aguardando_pagamento: { label: "AGUARDANDO PAGAMENTO", color: "#94A3B8", bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-700" },
-  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#7A1F2B", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
-  em_validacao_ia: { label: "VALIDAÇÃO AUTOMÁTICA", color: "#6366F1", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
-  em_revisao_humana: { label: "EM REVISÃO HUMANA", color: "#0EA5E9", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
+  aguardando_documentos: { label: "AGUARDANDO DOCUMENTOS", color: "#2F3337", bg: "bg-[#F7F7F8]", border: "border-[#D1D3D6]", text: "text-[#2F3337]" },
+  em_validacao_ia: { label: "VALIDAÇÃO AUTOMÁTICA", color: "#6366F1", bg: "bg-[#F7F7F8]", border: "border-[#D1D3D6]", text: "text-[#2F3337]" },
+  em_revisao_humana: { label: "EM REVISÃO HUMANA", color: "#0EA5E9", bg: "bg-[#F7F7F8]", border: "border-[#D1D3D6]", text: "text-[#2F3337]" },
   aprovado: { label: "DOCUMENTAÇÃO APROVADA", color: "#10B981", bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
-  em_andamento: { label: "EM ANDAMENTO", color: "#7A1F2B", bg: "bg-[#FBF3F4]", border: "border-[#E5C2C6]", text: "text-[#7A1F2B]" },
+  em_andamento: { label: "EM ANDAMENTO", color: "#2F3337", bg: "bg-[#F7F7F8]", border: "border-[#D1D3D6]", text: "text-[#2F3337]" },
   pronto_para_protocolar: { label: "PRONTO PARA PROTOCOLAR", color: "#16A34A", bg: "bg-emerald-50", border: "border-emerald-300", text: "text-emerald-800" },
   protocolado: { label: "PROTOCOLADO", color: "#0EA5E9", bg: "bg-sky-50", border: "border-sky-200", text: "text-sky-800" },
   em_analise_orgao: { label: "EM ANÁLISE PELO ÓRGÃO", color: "#6366F1", bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },

@@ -52,7 +52,7 @@ import { loadPlaceholderOverrides } from "@/lib/quero-armas/templatePlaceholderO
 import type { OverridesMap } from "@/lib/quero-armas/templatePlaceholderOverrides";
 import ClubeFiliacaoStep from "./clube-wizard/ClubeFiliacaoStep";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 interface Props {
   open: boolean;
@@ -320,7 +320,7 @@ export default function DocumentDataOnboardingWizard({
         className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[94dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden"
       >
         {/* Cabeçalho */}
-        <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+        <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#F7F7F8,#ffffff)" }}>
           <div className="flex items-start gap-3">
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm"
@@ -600,7 +600,7 @@ function StepView({
               className={
                 "rounded-xl border px-3 py-2.5 text-[12px] font-bold uppercase tracking-wide " +
                 (value === op.value
-                  ? "border-[#7A1F2B] bg-[#FBF3F4] text-[#7A1F2B]"
+                  ? "border-[#2F3337] bg-[#F7F7F8] text-[#2F3337]"
                   : "border-slate-200 bg-white text-slate-700 hover:border-slate-300")
               }
             >
@@ -617,7 +617,7 @@ function StepView({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={def.inputPlaceholder}
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[15px] font-semibold uppercase text-slate-900 outline-none focus:border-[#7A1F2B] focus:ring-2 focus:ring-[#FBE2E6]"
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[15px] font-semibold uppercase text-slate-900 outline-none focus:border-[#2F3337] focus:ring-2 focus:ring-[#EDEEF0]"
         />
       )}
 

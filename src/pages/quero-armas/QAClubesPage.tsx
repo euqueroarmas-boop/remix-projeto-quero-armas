@@ -105,7 +105,7 @@ export default function QAClubesPage() {
             className={
               "h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wide border transition-colors " +
               (statusFilter === opt.key
-                ? "bg-[#7A1F2B] text-white border-[#7A1F2B]"
+                ? "bg-[#2F3337] text-white border-[#2F3337]"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")
             }
           >
@@ -121,7 +121,7 @@ export default function QAClubesPage() {
           value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por nome, CNPJ, cidade, UF..."
           className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
           style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-          onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(210 8% 20%)"}
           onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
         />
       </div>
@@ -129,7 +129,7 @@ export default function QAClubesPage() {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16">
@@ -141,8 +141,8 @@ export default function QAClubesPage() {
           <div className="space-y-2">
             {filtered.map(c => (
               <div key={c.id} className="qa-card qa-hover-lift p-4 flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(352 33% 97%)" }}>
-                  <Building2 className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: "hsl(210 4% 97%)" }}>
+                  <Building2 className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">

@@ -38,7 +38,7 @@ const MAX_PILHA = 4;
 
 const ESTILO_STATUS: Record<string, { cor: string; fundo: string; Icone: typeof CheckCircle2; rotulo: string }> = {
   aprovado: { cor: "#0F7A45", fundo: "#F1FAF4", Icone: CheckCircle2, rotulo: "Aprovado" },
-  rejeitado: { cor: "#7A1F2B", fundo: "#FDF4F5", Icone: XCircle, rotulo: "Rejeitado" },
+  rejeitado: { cor: "#2F3337", fundo: "#F8F9F9", Icone: XCircle, rotulo: "Rejeitado" },
   em_analise: { cor: "#8A6A17", fundo: "#FDFAF1", Icone: Clock3, rotulo: "Em análise" },
 };
 
@@ -183,7 +183,7 @@ export default function AdminNotificacoesOverlay() {
                     role="button"
                     tabIndex={-1}
                     onClick={(e) => { e.stopPropagation(); remover(n.id); }}
-                    className="absolute -top-2 -left-2 z-10 h-6 w-6 rounded-full border border-[#E7E5E0] bg-white shadow-[0_2px_6px_rgba(10,10,10,0.12)] flex items-center justify-center text-[#7A1F2B] hover:bg-[#FDF4F5] transition-colors"
+                    className="absolute -top-2 -left-2 z-10 h-6 w-6 rounded-full border border-[#E7E5E0] bg-white shadow-[0_2px_6px_rgba(10,10,10,0.12)] flex items-center justify-center text-[#2F3337] hover:bg-[#F8F9F9] transition-colors"
                     aria-label="Dispensar notificação"
                   >
                     <X className="h-3.5 w-3.5" />
@@ -196,7 +196,7 @@ export default function AdminNotificacoesOverlay() {
                 <div className="border-t border-[#F0EDE8] mx-3 mb-3 pt-2.5 space-y-2">
                   {n.metadata.motivo_rejeicao && (
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#7A1F2B] mb-0.5">
+                      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-[#2F3337] mb-0.5">
                         Motivo da rejeição
                       </p>
                       <p className="text-[11px] leading-snug text-[#2A2A2A]">
@@ -229,7 +229,7 @@ export default function AdminNotificacoesOverlay() {
                   <button
                     type="button"
                     onClick={() => irParaCadastro(n)}
-                    className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#7A1F2B] hover:underline"
+                    className="mt-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#2F3337] hover:underline"
                   >
                     <ExternalLink className="h-3 w-3" />
                     Ver cadastro do cliente

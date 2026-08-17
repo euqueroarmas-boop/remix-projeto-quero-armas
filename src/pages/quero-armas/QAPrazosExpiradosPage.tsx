@@ -160,13 +160,13 @@ export default function QAPrazosExpiradosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por cliente, serviço, protocolo, CPF ou telefone..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F3337]"
           />
         </div>
         <select
           value={eventoFilter}
           onChange={(e) => setEventoFilter(e.target.value as any)}
-          className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B]"
+          className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2F3337]"
         >
           <option value="TODOS">Todos os eventos</option>
           <option value="NOTIFICAÇÃO">Notificação</option>
@@ -251,7 +251,7 @@ export default function QAPrazosExpiradosPage() {
                         <button
                           type="button"
                           onClick={() => handleCopy("Protocolo", row.protocolo)}
-                          className="inline-flex items-center gap-1 text-slate-700 hover:text-[#7A1F2B]"
+                          className="inline-flex items-center gap-1 text-slate-700 hover:text-[#2F3337]"
                           title={row.protocolo || "Sem protocolo"}
                         >
                           <Copy className="h-3 w-3" />
@@ -329,7 +329,7 @@ function KpiCard({
     rose: "border-rose-200 bg-rose-50 text-rose-700",
     amber: "border-amber-200 bg-amber-50 text-amber-800",
     slate: "border-slate-200 bg-slate-50 text-slate-700",
-    blue: "border-[#E5C2C6] bg-[#FBF3F4] text-[#7A1F2B]",
+    blue: "border-[#D1D3D6] bg-[#F7F7F8] text-[#2F3337]",
   } as const;
 
   return (

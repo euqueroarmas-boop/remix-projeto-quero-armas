@@ -81,7 +81,7 @@ export default function QAKlalPersonaAdmin() {
   return (
     <div className="qa-card p-5 space-y-6">
       <div className="flex items-center gap-2">
-        <Sparkles className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+        <Sparkles className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
         <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
           Personalidade do Klal
         </span>
@@ -95,7 +95,7 @@ export default function QAKlalPersonaAdmin() {
           <div key={s.key}>
             <div className="flex items-center justify-between mb-1">
               <label className="text-[13px] font-semibold text-slate-800">{s.label}</label>
-              <span className="text-[13px] font-bold tabular-nums" style={{ color: "hsl(352 60% 30%)" }}>
+              <span className="text-[13px] font-bold tabular-nums" style={{ color: "hsl(210 8% 20%)" }}>
                 {dados[s.key] as number}%
               </span>
             </div>
@@ -106,7 +106,7 @@ export default function QAKlalPersonaAdmin() {
               step={5}
               value={dados[s.key] as number}
               onChange={(e) => setDados((d) => ({ ...d, [s.key]: Number(e.target.value) }))}
-              className="w-full accent-[#7A1F2B]"
+              className="w-full accent-[#2F3337]"
             />
             <p className="text-[11px] text-slate-400 mt-0.5">{s.ajuda}</p>
           </div>
@@ -154,7 +154,7 @@ export default function QAKlalPersonaAdmin() {
         onClick={salvar}
         disabled={salvando}
         className="inline-flex h-10 items-center gap-2 rounded-xl px-5 text-[12px] font-bold uppercase tracking-[0.14em] text-white disabled:opacity-60"
-        style={{ background: "#7A1F2B" }}
+        style={{ background: "#2F3337" }}
       >
         {salvando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Salvar personalidade

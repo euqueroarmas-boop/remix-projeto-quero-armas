@@ -559,8 +559,8 @@ export default function QAPrecosServicosPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-5">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#7A1F2B]/10 flex items-center justify-center">
-            <DollarSign className="h-5 w-5 text-[#7A1F2B]" />
+          <div className="w-10 h-10 rounded-lg bg-[#2F3337]/10 flex items-center justify-center">
+            <DollarSign className="h-5 w-5 text-[#2F3337]" />
           </div>
           <div>
             <h1 className="text-base md:text-lg font-bold uppercase tracking-tight text-slate-900">
@@ -579,13 +579,13 @@ export default function QAPrecosServicosPage() {
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
               placeholder="BUSCAR SERVIÇO…"
-              className="h-9 w-full md:w-64 pl-8 pr-3 rounded-md border border-slate-200 bg-white text-xs uppercase tracking-wider text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-2 focus:ring-[#7A1F2B]/15"
+              className="h-9 w-full md:w-64 pl-8 pr-3 rounded-md border border-slate-200 bg-white text-xs uppercase tracking-wider text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2F3337]/40 focus:ring-2 focus:ring-[#2F3337]/15"
             />
           </div>
           <button
             type="button"
             onClick={openCreate}
-            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] transition"
+            className="h-9 inline-flex items-center gap-1.5 px-3 rounded-md bg-[#2F3337] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#24272A] transition"
           >
             <Plus className="h-3.5 w-3.5" /> NOVO SERVIÇO
           </button>
@@ -601,7 +601,7 @@ export default function QAPrecosServicosPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 text-[#7A1F2B] animate-spin" />
+          <Loader2 className="h-6 w-6 text-[#2F3337] animate-spin" />
         </div>
       ) : grupos.length === 0 ? (
         <div className="text-center py-20 text-slate-500 text-xs uppercase tracking-wider">
@@ -638,7 +638,7 @@ export default function QAPrecosServicosPage() {
           </div>
           <DragOverlay>
             {activeId ? (
-              <div className="px-3 py-2 rounded-md bg-white border border-[#7A1F2B]/30 shadow-lg text-xs font-bold uppercase text-slate-900">
+              <div className="px-3 py-2 rounded-md bg-white border border-[#2F3337]/30 shadow-lg text-xs font-bold uppercase text-slate-900">
                 {findRow(activeId)?.nome ?? ""}
               </div>
             ) : null}
@@ -646,7 +646,7 @@ export default function QAPrecosServicosPage() {
         </DndContext>
       )}
 
-      <div className="mt-6 p-3 rounded-lg bg-[#7A1F2B]/5 border border-[#7A1F2B]/20 text-[11px] text-[#5e1820]">
+      <div className="mt-6 p-3 rounded-lg bg-[#2F3337]/5 border border-[#2F3337]/20 text-[11px] text-[#24272A]">
         <strong className="uppercase tracking-wider">DICA:</strong> ARRASTE PELO HANDLE ⠿ PARA REORDENAR DENTRO DA CATEGORIA OU MOVER PARA OUTRA. O preço aparece imediatamente
         no cartão de contratação da área do cliente (formato R$ 1.997,00). É também travado no cadastro
         do cliente como valor da contratação — sem disparar cobrança automática.
@@ -670,7 +670,7 @@ export default function QAPrecosServicosPage() {
                     const nome = e.target.value.toUpperCase();
                     setForm((f) => f && { ...f, nome, slug: slugTouched ? f.slug : slugify(nome) });
                   }}
-                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                 />
               </Field>
 
@@ -681,7 +681,7 @@ export default function QAPrecosServicosPage() {
                     setSlugTouched(true);
                     setForm((f) => f && { ...f, slug: slugify(e.target.value) });
                   }}
-                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                 />
               </Field>
 
@@ -690,7 +690,7 @@ export default function QAPrecosServicosPage() {
                   <select
                     value={form.categoria}
                     onChange={(e) => setForm((f) => f && { ...f, categoria: e.target.value.toUpperCase() })}
-                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                   >
                     <option value="">SELECIONE...</option>
                     {categoriasExistentes.map((c) => (
@@ -702,7 +702,7 @@ export default function QAPrecosServicosPage() {
                   <select
                     value={form.tipo}
                     onChange={(e) => setForm((f) => f && { ...f, tipo: e.target.value as "servico" | "produto" })}
-                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                   >
                     <option value="servico">SERVIÇO</option>
                     <option value="produto">PRODUTO</option>
@@ -717,7 +717,7 @@ export default function QAPrecosServicosPage() {
                     onChange={(e) => setForm((f) => f && { ...f, preco: e.target.value })}
                     placeholder="1997,00"
                     inputMode="decimal"
-                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-right text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                   />
                 </Field>
                 <Field label="ORDEM">
@@ -725,7 +725,7 @@ export default function QAPrecosServicosPage() {
                     value={form.display_order}
                     onChange={(e) => setForm((f) => f && { ...f, display_order: e.target.value.replace(/\D/g, "") })}
                     inputMode="numeric"
-                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-right text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                    className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs font-mono text-right text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                   />
                 </Field>
               </div>
@@ -735,7 +735,7 @@ export default function QAPrecosServicosPage() {
                   value={form.descricao_curta}
                   onChange={(e) => setForm((f) => f && { ...f, descricao_curta: e.target.value })}
                   rows={2}
-                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                 />
               </Field>
 
@@ -745,7 +745,7 @@ export default function QAPrecosServicosPage() {
                   onChange={(e) => setForm((f) => f && { ...f, base_legal: e.target.value })}
                   rows={2}
                   placeholder="EX: ART. 10 LEI 10.826/2003 · DECRETO 11.615/2023"
-                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                  className="w-full px-2 py-1.5 rounded-md border border-slate-200 bg-white text-xs text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                 />
               </Field>
 
@@ -755,7 +755,7 @@ export default function QAPrecosServicosPage() {
                     type="checkbox"
                     checked={form.recorrente}
                     onChange={(e) => setForm((f) => f && { ...f, recorrente: e.target.checked })}
-                    className="accent-[#7A1F2B]"
+                    className="accent-[#2F3337]"
                   />
                   RECORRENTE (MENSAL)
                 </label>
@@ -764,7 +764,7 @@ export default function QAPrecosServicosPage() {
                     type="checkbox"
                     checked={form.ativo}
                     onChange={(e) => setForm((f) => f && { ...f, ativo: e.target.checked })}
-                    className="accent-[#7A1F2B]"
+                    className="accent-[#2F3337]"
                   />
                   ATIVO
                 </label>
@@ -784,7 +784,7 @@ export default function QAPrecosServicosPage() {
               type="button"
               onClick={submitForm}
               disabled={submitting}
-              className="h-9 px-4 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+              className="h-9 px-4 rounded-md bg-[#2F3337] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-50"
             >
               {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" /> : <Save className="h-3.5 w-3.5 inline mr-1" />}
               {form?.id ? "SALVAR" : "CRIAR"}
@@ -812,13 +812,13 @@ export default function QAPrecosServicosPage() {
                   onChange={(e) => setNovaCategoria(e.target.value.toUpperCase())}
                   onKeyDown={(e) => { if (e.key === "Enter") adicionarCategoria(); }}
                   placeholder="EX: POLÍCIA FEDERAL / SINARM"
-                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+                  className="h-9 w-full px-2 rounded-md border border-slate-200 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
                 />
               </div>
               <button
                 type="button"
                 onClick={adicionarCategoria}
-                className="h-9 px-3 rounded-md bg-[#7A1F2B] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#5e1820]"
+                className="h-9 px-3 rounded-md bg-[#2F3337] text-white text-[11px] font-bold uppercase tracking-wider hover:bg-[#24272A]"
               >
                 <Plus className="h-3.5 w-3.5 inline mr-1" /> ADD
               </button>
@@ -839,13 +839,13 @@ export default function QAPrecosServicosPage() {
                           value={renaming.to}
                           onChange={(e) => setRenaming({ ...renaming, to: e.target.value.toUpperCase() })}
                           onKeyDown={(e) => { if (e.key === "Enter") void renomearCategoria(); if (e.key === "Escape") setRenaming(null); }}
-                          className="h-8 flex-1 px-2 rounded-md border border-[#7A1F2B]/30 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#7A1F2B] focus:ring-1 focus:ring-[#7A1F2B]/15"
+                          className="h-8 flex-1 px-2 rounded-md border border-[#2F3337]/30 bg-white text-xs uppercase text-slate-900 focus:outline-none focus:border-[#2F3337] focus:ring-1 focus:ring-[#2F3337]/15"
                         />
                         <button
                           type="button"
                           onClick={() => void renomearCategoria()}
                           disabled={catBusy}
-                          className="h-8 px-2 rounded-md bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+                          className="h-8 px-2 rounded-md bg-[#2F3337] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-50"
                         >
                           {catBusy ? <Loader2 className="h-3 w-3 animate-spin" /> : "OK"}
                         </button>
@@ -883,7 +883,7 @@ export default function QAPrecosServicosPage() {
                           type="button"
                           onClick={() => setRenaming({ from: cat, to: cat })}
                           title="Renomear (atualiza todos os serviços)"
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B]"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#2F3337]/10 hover:text-[#2F3337]"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
@@ -906,9 +906,9 @@ export default function QAPrecosServicosPage() {
             </div>
 
             <div className="text-[10px] uppercase tracking-wider text-slate-500 leading-relaxed">
-              <strong className="text-[#7A1F2B]">RENOMEAR</strong> ATUALIZA TODOS OS SERVIÇOS DA CATEGORIA NO BANCO.
+              <strong className="text-[#2F3337]">RENOMEAR</strong> ATUALIZA TODOS OS SERVIÇOS DA CATEGORIA NO BANCO.
               <br />
-              <strong className="text-[#7A1F2B]">EXCLUIR</strong> OCULTA A CATEGORIA SEM APAGAR DADOS — MOVA OS SERVIÇOS ANTES. PODE RESTAURAR DEPOIS.
+              <strong className="text-[#2F3337]">EXCLUIR</strong> OCULTA A CATEGORIA SEM APAGAR DADOS — MOVA OS SERVIÇOS ANTES. PODE RESTAURAR DEPOIS.
             </div>
           </div>
         </DialogContent>
@@ -955,7 +955,7 @@ function CategoriaSection({ categoria, itens, edits, savingId, isDirty, setEdit,
   return (
     <section ref={setDropRef}>
       <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-700 mb-2 flex items-center gap-2">
-        <span className="w-1 h-3 bg-[#7A1F2B] rounded-sm" />
+        <span className="w-1 h-3 bg-[#2F3337] rounded-sm" />
         {categoria}
         <span className="text-[10px] font-normal text-slate-400">({itens.length})</span>
       </h2>
@@ -1033,13 +1033,13 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
   const dirty = isDirty(row);
   const saving = savingId === row.id;
   return (
-    <tr ref={setNodeRef} style={style} className="border-b border-slate-100 last:border-0 hover:bg-[#7A1F2B]/5/40">
+    <tr ref={setNodeRef} style={style} className="border-b border-slate-100 last:border-0 hover:bg-[#2F3337]/5/40">
       <td className="px-2 py-2.5 text-center">
         <button
           type="button"
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-[#7A1F2B]"
+          className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-[#2F3337]"
           aria-label="Arrastar"
           title="Arrastar para reordenar / mover de categoria"
         >
@@ -1059,7 +1059,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
           onChange={(ev) => setEdit(row.id, { preco: ev.target.value })}
           placeholder="0,00"
           inputMode="decimal"
-          className="h-8 w-full px-2 rounded-md border border-slate-200 bg-white text-xs text-slate-900 font-mono text-right focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+          className="h-8 w-full px-2 rounded-md border border-slate-200 bg-white text-xs text-slate-900 font-mono text-right focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
         />
         {row.preco != null && e.preco === undefined && (
           <div className="text-[10px] text-slate-400 mt-0.5 text-right">{fmtBRL(row.preco)}</div>
@@ -1071,7 +1071,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
           onClick={() => setEdit(row.id, { recorrente: !recorrente })}
           className={`inline-flex items-center justify-center h-7 px-2 rounded-md text-[10px] font-bold uppercase tracking-wider border transition ${
             recorrente
-              ? "bg-[#7A1F2B]/10 border-[#7A1F2B]/30 text-[#7A1F2B]"
+              ? "bg-[#2F3337]/10 border-[#2F3337]/30 text-[#2F3337]"
               : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100"
           }`}
         >
@@ -1088,7 +1088,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
             });
           }}
           title="Trilha: Inicial (sem acervo) · Continuidade (já tem arma) · Ambos"
-          className="h-7 w-full px-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-[#7A1F2B]/40 focus:ring-1 focus:ring-[#7A1F2B]/15"
+          className="h-7 w-full px-1.5 rounded-md border border-slate-200 bg-white text-[10px] font-bold uppercase tracking-wider text-slate-700 focus:outline-none focus:border-[#2F3337]/40 focus:ring-1 focus:ring-[#2F3337]/15"
         >
           <option value="inicial">INICIAL</option>
           <option value="continuidade">CONTINUIDADE</option>
@@ -1116,7 +1116,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
             onClick={() => save(row)}
             disabled={!dirty || saving}
             title="Salvar alterações inline"
-            className="inline-flex items-center gap-1 px-2 h-8 rounded-md bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#7A1F2B] disabled:opacity-30 disabled:hover:bg-slate-900 transition"
+            className="inline-flex items-center gap-1 px-2 h-8 rounded-md bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#2F3337] disabled:opacity-30 disabled:hover:bg-slate-900 transition"
           >
             {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
           </button>
@@ -1124,7 +1124,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
             type="button"
             onClick={() => openEdit(row)}
             title="Editar tudo"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B] transition"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#2F3337]/10 hover:text-[#2F3337] transition"
           >
             <Pencil className="h-3.5 w-3.5" />
           </button>
@@ -1132,7 +1132,7 @@ function SortableRow({ row, edits, savingId, isDirty, setEdit, save, openEdit, r
             type="button"
             onClick={() => openDocs(row)}
             title="Documentos exigidos"
-            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#7A1F2B]/10 hover:text-[#7A1F2B] transition"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-md bg-slate-100 text-slate-700 hover:bg-[#2F3337]/10 hover:text-[#2F3337] transition"
           >
             <FileText className="h-3.5 w-3.5" />
           </button>

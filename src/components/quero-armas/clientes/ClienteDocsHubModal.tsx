@@ -1360,7 +1360,7 @@ type FieldAudit = {
 };
 
 const modalTheme = {
-  // Stack Cockpit Z6 Light — papel #F2F2F2, tinta #0A0A0A, bordô #7A1F2B, brass #D6A64B
+  // Stack Cockpit Z6 Light — papel #F2F2F2, tinta #0A0A0A, grafite #2F3337, brass #D6A64B
   "--background": "0 0% 100%",
   "--foreground": "0 0% 4%",
   "--card": "0 0% 100%",
@@ -1431,7 +1431,7 @@ function Field({
 }
 
 const inputClassName =
-  "h-9 rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none transition-all placeholder:text-[#9A9A9A] hover:border-[#0A0A0A]/20 focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0";
+  "h-9 rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none transition-all placeholder:text-[#9A9A9A] hover:border-[#0A0A0A]/20 focus-visible:border-[#2F3337] focus-visible:ring-1 focus-visible:ring-[#2F3337]/30 focus-visible:ring-offset-0";
 
 /**
  * Input de data em formato BR (DD/MM/AAAA) com máscara, que mantém o
@@ -4892,14 +4892,14 @@ export function ClienteDocsHubModal({
         // e o botão de fechar apareciam POR CIMA do modal.
         className="z-[130] w-[calc(100vw-1rem)] max-w-xl md:max-w-[960px] lg:max-w-[1320px] xl:max-w-[1400px] rounded-2xl border border-[#E5E5E5] bg-white p-0 text-[#0A0A0A] shadow-2xl max-h-[92dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden font-sans"
       >
-        <div className="shrink-0 border-b-2 border-[#7A1F2B] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="shrink-0 border-b-2 border-[#2F3337] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#7A1F2B]/10 text-[#7A1F2B]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#2F3337]/10 text-[#2F3337]">
               <ShieldCheck className="h-5 w-5" strokeWidth={2.4} />
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-[#7A1F2B]">
+              <div className="mb-0.5 font-heading text-[10px] font-semibold uppercase tracking-[0.32em] text-[#2F3337]">
                 Hub documental
               </div>
               <h2 className="font-heading text-[22px] font-bold uppercase leading-none tracking-[0.06em] text-[#0A0A0A]">
@@ -4914,8 +4914,8 @@ export function ClienteDocsHubModal({
 
             {grupoBloqueadoTrava ? (
               <div
-                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] px-3 py-1.5 text-[#7A1F2B]"
-                style={{ boxShadow: "0 0 0 2px rgba(122,31,43,0.15)" }}
+                className="hidden sm:flex shrink-0 -rotate-6 items-center gap-1.5 border-2 border-[#2F3337] bg-[#F7F7F8] px-3 py-1.5 text-[#2F3337]"
+                style={{ boxShadow: "0 0 0 2px rgba(47,51,55,0.15)" }}
               >
                 <AlertTriangle className="h-4 w-4" />
                 <span className="font-heading text-[11px] font-bold uppercase tracking-[0.14em]">
@@ -4944,7 +4944,7 @@ export function ClienteDocsHubModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#7A1F2B] bg-[#7A1F2B] text-white transition-colors hover:bg-[#5a1620] hover:text-white"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#2F3337] bg-[#2F3337] text-white transition-colors hover:bg-[#222528] hover:text-white"
               aria-label="Fechar"
             >
               <X className="h-4 w-4" />
@@ -4966,7 +4966,7 @@ export function ClienteDocsHubModal({
                 Dossiê
               </div>
               {classificacao && tipoAtual ? (
-                <span className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+                <span className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#2F3337]">
                   {tipoAtual.short}
                 </span>
               ) : null}
@@ -4978,7 +4978,7 @@ export function ClienteDocsHubModal({
                 "Aguardando classificação"}
             </div>
             {expectedTipoMeta ? (
-              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#7A1F2B]">
+              <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#2F3337]">
                 Exigência:{" "}
                 {ehDocumentoIdentidade(expectedTipoMeta.value, expectedTipoMeta.label)
                   ? "Documento oficial de identidade (CIN, CNH ou RG com CPF)"
@@ -5041,7 +5041,7 @@ export function ClienteDocsHubModal({
                 </div>
               </div>
             ) : grupoBloqueadoTrava ? (
-              <div className="mt-1 flex items-start gap-1.5 border-2 border-[#7A1F2B] bg-[#FBF3F4] p-2 text-[10px] leading-snug text-[#5A1622]">
+              <div className="mt-1 flex items-start gap-1.5 border-2 border-[#2F3337] bg-[#F7F7F8] p-2 text-[10px] leading-snug text-[#222528]">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <div>
                   <div className="font-bold uppercase tracking-[0.08em]">Etapa ainda bloqueada</div>
@@ -5115,7 +5115,7 @@ export function ClienteDocsHubModal({
             {/* Card de arquivo compacto (apenas quando há arquivo) */}
             {file ? (
               <div className="flex items-center gap-2.5 border border-[#E5E5E5] bg-white p-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#F7F7F7] text-[#7A1F2B]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[#F7F7F7] text-[#2F3337]">
                   {file.type.startsWith("image/") ? <ImageIcon className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -5130,7 +5130,7 @@ export function ClienteDocsHubModal({
                 <button
                   type="button"
                   onClick={() => setFile(null)}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                  className="flex h-7 w-7 shrink-0 items-center justify-center border border-[#E5E5E5] bg-white text-[#7A7A7A] transition-colors hover:border-[#2F3337] hover:text-[#2F3337]"
                   aria-label="Remover arquivo"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -5402,7 +5402,7 @@ export function ClienteDocsHubModal({
                 onChange={(event) => update("observacoes", event.target.value)}
                 rows={5}
                 placeholder="Se necessário, adicione detalhes complementares."
-                className="min-h-[148px] md:flex-1 md:h-full rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none"
+                className="min-h-[148px] md:flex-1 md:h-full rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#2F3337] focus-visible:ring-1 focus-visible:ring-[#2F3337]/30 focus-visible:ring-offset-0 resize-none"
               />
             </div>
           </div>
@@ -5448,7 +5448,7 @@ export function ClienteDocsHubModal({
               onChange={(event) => update("observacoes", event.target.value)}
               rows={4}
               placeholder="Se necessário, adicione detalhes complementares."
-              className="min-h-[100px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#7A1F2B] focus-visible:ring-1 focus-visible:ring-[#7A1F2B]/30 focus-visible:ring-offset-0 resize-none w-full"
+              className="min-h-[100px] rounded-sm border border-[#E5E5E5] bg-white text-[12px] text-[#0A0A0A] shadow-none placeholder:text-[#9A9A9A] focus-visible:border-[#2F3337] focus-visible:ring-1 focus-visible:ring-[#2F3337]/30 focus-visible:ring-offset-0 resize-none w-full"
             />
           </div>
 
@@ -5478,8 +5478,8 @@ export function ClienteDocsHubModal({
 
             {/* ── Alerta de documento expirado ── */}
             {validadeIndeterminada && (
-              <div className="rounded-2xl border border-[#7A1F2B]/25 bg-[#FAF6F1] p-3 text-xs text-[#3A3A3A]">
-                <div className="text-[10px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+              <div className="rounded-2xl border border-[#2F3337]/25 bg-[#FAF6F1] p-3 text-xs text-[#3A3A3A]">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-[#2F3337]">
                   Validade indeterminada
                 </div>
                 <p className="mt-1 text-[10px]">
@@ -5558,7 +5558,7 @@ export function ClienteDocsHubModal({
               <div
                 className={
                   conferenciaLocal.conf.veredicto === "rejeitado"
-                    ? "rounded-md border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04] p-3"
+                    ? "rounded-md border border-[#2F3337]/30 bg-[#2F3337]/[0.04] p-3"
                     : conferenciaLocal.conf.veredicto !== "aprovado"
                       ? "rounded-md border border-amber-300 bg-amber-50 p-3"
                       : "rounded-md border border-emerald-300 bg-emerald-50 p-3"
@@ -5571,7 +5571,7 @@ export function ClienteDocsHubModal({
                   className={
                     "mt-1 text-[13px] font-semibold " +
                     (conferenciaLocal.conf.veredicto === "rejeitado"
-                      ? "text-[#7A1F2B]"
+                      ? "text-[#2F3337]"
                       : conferenciaLocal.conf.veredicto !== "aprovado"
                         ? "text-amber-800"
                         : "text-emerald-800")
@@ -5848,7 +5848,7 @@ export function ClienteDocsHubModal({
                       "flex items-center gap-2 text-left font-medium bg-[#F5F5F5] text-[#0A0A0A] cursor-default select-none",
                     )}
                   >
-                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#7A1F2B]" />
+                    <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#2F3337]" />
                     <span className="truncate">{tipoAtual?.label ?? "Aguardando leitura do documento"}</span>
                   </div>
                 </Field>
@@ -6039,7 +6039,7 @@ export function ClienteDocsHubModal({
                 // (que não têm emissão nem vencimento) e a nota fiscal (que tem
                 // emissão impressa e é conferida pelo emitente, mas não vence).
                 // Um texto só descrevia errado o documento que o cliente anexou.
-                <div className="rounded-xl border border-[#7A1F2B]/20 bg-[#7A1F2B]/5 px-3 py-2 text-[11px] leading-snug text-[#7A1F2B]">
+                <div className="rounded-xl border border-[#2F3337]/20 bg-[#2F3337]/5 px-3 py-2 text-[11px] leading-snug text-[#2F3337]">
                   {isNotaFiscalOcupacao(form.tipo_documento) ? (
                     <>
                       Nota fiscal — <strong>não vence</strong>. A conferência é do emitente
@@ -6193,12 +6193,12 @@ export function ClienteDocsHubModal({
           </div>
         </div>
 
-        <div className="shrink-0 border-t-2 border-[#7A1F2B] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
+        <div className="shrink-0 border-t-2 border-[#2F3337] bg-white px-4 py-2.5 sm:px-6 sm:py-3">
           {autoResult?.safe ? (
             <div className="flex">
               <Button
                 onClick={onClose}
-                className="h-11 flex-1 rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#7A1F2B]"
+                className="h-11 flex-1 rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#2F3337]"
               >
                 <CheckCircle2 className="mr-2 h-4 w-4" /> Concluído
               </Button>
@@ -6220,7 +6220,7 @@ export function ClienteDocsHubModal({
               <Button
                 onClick={handleEnviarNovamente}
                 disabled={enviandoNovamente}
-                className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
+                className="h-11 flex-[1.2] rounded-sm bg-[#2F3337] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#222528]"
               >
                 {enviandoNovamente ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -6233,15 +6233,15 @@ export function ClienteDocsHubModal({
           ) : (
             <>
             {bloqueioExtracao() ? (
-              <div className="mb-2 rounded-sm border border-[#7A1F2B]/35 bg-[#7A1F2B]/[0.06] px-3 py-2">
-                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
+              <div className="mb-2 rounded-sm border border-[#2F3337]/35 bg-[#2F3337]/[0.06] px-3 py-2">
+                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#2F3337]">
                   Leitura automática pendente
                 </p>
                 <p className="mt-1 text-[12px] leading-snug text-[#3A3A3A]">{bloqueioExtracao()}</p>
               </div>
             ) : pendingSensitiveKeys().length > 0 ? (
-              <div className="mb-2 rounded-sm border border-[#7A1F2B]/35 bg-[#7A1F2B]/[0.06] px-3 py-2">
-                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#7A1F2B]">
+              <div className="mb-2 rounded-sm border border-[#2F3337]/35 bg-[#2F3337]/[0.06] px-3 py-2">
+                <p className="font-heading text-[10px] font-bold uppercase tracking-[0.2em] text-[#2F3337]">
                   Confirmação obrigatória
                 </p>
                 <p className="mt-1 text-[12px] leading-snug text-[#3A3A3A]">
@@ -6269,7 +6269,7 @@ export function ClienteDocsHubModal({
                   (temApontamento && reconheceApontamento === null) ||
                   (temApontamento && reconheceApontamento === "nao" && !homonimiaSalva)
                 }
-                className="h-11 flex-[1.2] rounded-sm bg-[#7A1F2B] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#5A1622]"
+                className="h-11 flex-[1.2] rounded-sm bg-[#2F3337] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#222528]"
               >
                 {saving ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

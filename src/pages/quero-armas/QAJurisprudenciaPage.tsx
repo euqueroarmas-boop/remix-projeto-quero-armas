@@ -175,7 +175,7 @@ export default function QAJurisprudenciaPage() {
 
   const tabClass = (t: TabMode) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${tabMode === t
-      ? "bg-[#7A1F2B] text-white shadow"
+      ? "bg-[#2F3337] text-white shadow"
       : "bg-[#f1f5f9] text-[#64748b] hover:bg-[#e2e8f0]"
     }`;
 
@@ -194,7 +194,7 @@ export default function QAJurisprudenciaPage() {
             <DialogTrigger asChild>
               <button
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all shadow-md hover:shadow-lg active:scale-[0.97]"
-                style={{ background: "#7A1F2B", color: "#ffffff" }}
+                style={{ background: "#2F3337", color: "#ffffff" }}
               >
                 <Plus className="h-3.5 w-3.5" /> Nova Jurisprudência
               </button>
@@ -271,13 +271,13 @@ export default function QAJurisprudenciaPage() {
                 {/* Tab: Arquivo */}
                 {tabMode === "arquivo" && (
                   <div className="space-y-3">
-                    <div className="border-2 border-dashed border-[#cbd5e1] rounded-xl p-6 text-center hover:border-[#7A1F2B] transition-colors">
+                    <div className="border-2 border-dashed border-[#cbd5e1] rounded-xl p-6 text-center hover:border-[#2F3337] transition-colors">
                       <Upload className="h-8 w-8 mx-auto mb-2 text-[#94a3b8]" />
                       <p className="text-xs text-[#64748b] mb-1">PDF, DOCX ou imagem (até 20MB)</p>
-                      <p className="text-[10px] text-[#7A1F2B] font-medium mb-3">
+                      <p className="text-[10px] text-[#2F3337] font-medium mb-3">
                         📄 Arquivos DOCX com múltiplas decisões serão extraídos automaticamente pela IA
                       </p>
-                      <label className="inline-block cursor-pointer px-4 py-2 rounded-lg text-xs font-semibold bg-[#7A1F2B] text-white hover:bg-[#641722] transition-colors">
+                      <label className="inline-block cursor-pointer px-4 py-2 rounded-lg text-xs font-semibold bg-[#2F3337] text-white hover:bg-[#26292C] transition-colors">
                         Selecionar Arquivo
                         <input
                           type="file"
@@ -294,8 +294,8 @@ export default function QAJurisprudenciaPage() {
                       )}
                     </div>
                     {progressMsg && (
-                      <div className="flex items-center gap-2 p-3 bg-[#FBF3F4] rounded-lg">
-                        <Loader2 className="h-4 w-4 animate-spin text-[#7A1F2B]" />
+                      <div className="flex items-center gap-2 p-3 bg-[#F7F7F8] rounded-lg">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#2F3337]" />
                         <span className="text-xs text-[#1e293b] font-medium">{progressMsg}</span>
                       </div>
                     )}
@@ -334,7 +334,7 @@ export default function QAJurisprudenciaPage() {
                     onClick={handleSave}
                     disabled={saving}
                     className="h-9 px-5 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-all shadow hover:shadow-md active:scale-[0.97] disabled:opacity-60"
-                    style={{ background: "#7A1F2B", color: "#ffffff" }}
+                    style={{ background: "#2F3337", color: "#ffffff" }}
                   >
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
                     {tabMode === "manual" ? "Salvar" : tabMode === "arquivo" ? "Enviar Arquivo" : "Registrar Link"}
@@ -353,7 +353,7 @@ export default function QAJurisprudenciaPage() {
           placeholder="Buscar por tribunal, processo, tema..."
           value={busca}
           onChange={e => setBusca(e.target.value)}
-          className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all focus:ring-2 focus:ring-[#7A1F2B]/20 focus:border-[#7A1F2B]"
+          className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all focus:ring-2 focus:ring-[#2F3337]/20 focus:border-[#2F3337]"
           style={{ borderColor: "#e2e8f0", color: "#1e293b" }}
         />
       </div>
@@ -376,10 +376,10 @@ export default function QAJurisprudenciaPage() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-[13px] flex-wrap">
-                    <span className="font-semibold uppercase text-[#7A1F2B]">{j.tribunal}</span>
+                    <span className="font-semibold uppercase text-[#2F3337]">{j.tribunal}</span>
                     {j.numero_processo && <span className="uppercase text-[#64748b]">• {j.numero_processo}</span>}
                     {j.origem === "upload_docx_ia" && <span className="text-[10px] px-1.5 py-0.5 bg-[#f0fdf4] text-[#15803d] rounded font-medium">🤖 IA</span>}
-                    {j.origem === "upload_arquivo" && <span className="text-[10px] px-1.5 py-0.5 bg-[#FBF3F4] text-[#7A1F2B] rounded font-medium">📎 Arquivo</span>}
+                    {j.origem === "upload_arquivo" && <span className="text-[10px] px-1.5 py-0.5 bg-[#F7F7F8] text-[#2F3337] rounded font-medium">📎 Arquivo</span>}
                     {j.origem === "importacao_link" && <span className="text-[10px] px-1.5 py-0.5 bg-[#fef3c7] text-[#92400e] rounded font-medium">🔗 Link</span>}
                   </div>
                   {j.tema && <div className="text-xs mt-0.5 uppercase text-[#94a3b8]">{j.tema}</div>}

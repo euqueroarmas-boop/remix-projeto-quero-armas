@@ -326,7 +326,7 @@ export default function ColarManifestacaoPFModal({
     }
   };
 
-  const campo = "h-8 w-full rounded-md border border-slate-300 px-2 text-[12px] outline-none focus:border-[#8A1224]";
+  const campo = "h-8 w-full rounded-md border border-slate-300 px-2 text-[12px] outline-none focus:border-[#2F3439]";
   const rotulo = "text-[9px] font-bold uppercase tracking-wider text-slate-500";
 
   return (
@@ -337,7 +337,7 @@ export default function ColarManifestacaoPFModal({
       >
         <div className="mb-3 flex items-start justify-between gap-2">
           <div>
-            <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+            <h3 className="text-[13px] font-bold uppercase tracking-wider text-[#2F3337]">
               Registrar manifestação da Polícia Federal
             </h3>
             <p className="mt-0.5 text-[11px] text-slate-500">
@@ -369,7 +369,7 @@ export default function ColarManifestacaoPFModal({
             onChange={(e) => setTexto(e.target.value)}
             rows={10}
             placeholder="Senhor Requerente, Após análise preliminar do seu requerimento…"
-            className="w-full rounded-md border border-slate-300 p-2 text-[12px] leading-relaxed outline-none focus:border-[#8A1224]"
+            className="w-full rounded-md border border-slate-300 p-2 text-[12px] leading-relaxed outline-none focus:border-[#2F3439]"
           />
           <p className="mt-0.5 text-[10px] text-slate-500">
             {texto.trim().length} caracteres. Mantenha as quebras de linha originais.
@@ -422,7 +422,7 @@ export default function ColarManifestacaoPFModal({
               type="checkbox"
               checked={analisarComIA}
               onChange={(e) => setAnalisarComIA(e.target.checked)}
-              className="h-3.5 w-3.5 accent-[#8A1224]"
+              className="h-3.5 w-3.5 accent-[#2F3439]"
             />
             IA lê o texto e abre as exigências
             {!PEDE_ALGO.has(statusProcesso) && (
@@ -441,7 +441,7 @@ export default function ColarManifestacaoPFModal({
             type="button"
             onClick={salvar}
             disabled={salvando}
-            className="h-8 rounded-md bg-[#8A1224] px-4 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-[#6f0f1e] disabled:opacity-60"
+            className="h-8 rounded-md bg-[#2F3439] px-4 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-[#262A2E] disabled:opacity-60"
           >
             {salvando ? "Registrando…" : "Registrar e avisar o cliente"}
           </button>

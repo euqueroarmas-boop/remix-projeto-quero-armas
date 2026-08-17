@@ -40,7 +40,7 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     description: "Preto absoluto com dourado bordô — identidade Arsenal.",
     bg: "#0A0A0A",
     accent: "#D6A64B",
-    stripe: "linear-gradient(90deg, #D6A64B 0%, #7A1F2B 100%)",
+    stripe: "linear-gradient(90deg, #D6A64B 0%, #2F3337 100%)",
     topMode: "compact",
   },
   {
@@ -77,7 +77,7 @@ export const QA_SIDEBAR_THEMES: QASidebarTheme[] = [
     key: "natal",
     label: "Natal",
     description: "Verde pinheiro com vermelho natalino.",
-    bg: "linear-gradient(180deg, #0E3B1C 0%, #1B5E20 50%, #4A0E12 100%)",
+    bg: "linear-gradient(180deg, #0E3B1C 0%, #1B5E20 50%, #1B1D20 100%)",
     accent: "#E63946",
     stripe: "linear-gradient(90deg, #1B5E20 0%, #E63946 100%)",
     topMode: "hero",

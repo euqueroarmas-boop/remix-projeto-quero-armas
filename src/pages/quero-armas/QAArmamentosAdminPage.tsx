@@ -832,7 +832,7 @@ export default function QAArmamentosAdminPage() {
                 <div className="text-[10px] font-mono font-bold uppercase tracking-[0.25em] text-amber-700">// GALERIA · FABRICANTE</div>
                 <h2 className="text-lg font-bold text-zinc-900 mt-1">{imagensFabricante.length} imagens encontradas</h2>
               </div>
-              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-[#7A1F2B] hover:bg-[#7A1F2B] hover:text-white transition-colors" aria-label="Fechar galeria">
+              <button type="button" onClick={() => setShowAllImagesModal(false)} className="h-11 w-11 shrink-0 grid place-items-center border border-zinc-300 hover:border-[#2F3337] hover:bg-[#2F3337] hover:text-white transition-colors" aria-label="Fechar galeria">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -1142,7 +1142,7 @@ function WeaponCard({
             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (it.imagem ? <RefreshCcw className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />)}
           </Button>
           {it.imagem && (
-            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-[#7A1F2B] hover:bg-[#7A1F2B]" onClick={onLimparFundo} disabled={limpandoFundo} title="Limpar fundo da imagem (remove.bg) — também processa duplicatas com mesma marca/modelo">
+            <Button size="sm" variant="ghost" className="flex-1 h-8 text-zinc-500 hover:text-[#2F3337] hover:bg-[#2F3337]" onClick={onLimparFundo} disabled={limpandoFundo} title="Limpar fundo da imagem (remove.bg) — também processa duplicatas com mesma marca/modelo">
             {limpandoFundo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eraser className="h-3.5 w-3.5" />}
             </Button>
           )}

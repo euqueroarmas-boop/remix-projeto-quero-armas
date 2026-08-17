@@ -150,14 +150,14 @@ export default function ClienteAIPrefill({
 
   if (!open) {
     return (
-      <div className="rounded-xl border border-[#E5C2C6] bg-gradient-to-r from-[#7A1F2B] to-[#641722] px-4 py-3 flex items-center justify-between gap-3">
+      <div className="rounded-xl border border-[#D1D3D6] bg-gradient-to-r from-[#2F3337] to-[#26292C] px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Sparkles className="h-4 w-4 text-[#7A1F2B] shrink-0" />
+          <Sparkles className="h-4 w-4 text-[#2F3337] shrink-0" />
           <div className="min-w-0">
-            <p className="text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+            <p className="text-[12px] font-bold uppercase tracking-wide text-[#2F3337]">
               Preencher cadastro com IA
             </p>
-            <p className="text-[10px] text-[#7A1F2B] truncate">
+            <p className="text-[10px] text-[#2F3337] truncate">
               Envie RG, CIN, CNH, comprovante, CR, CRAF, GTE, contrato, ficha, print ou cole texto livre.
             </p>
           </div>
@@ -165,7 +165,7 @@ export default function ClienteAIPrefill({
         <Button
           size="sm"
           onClick={() => setOpen(true)}
-          className="h-8 bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] uppercase font-semibold gap-1.5"
+          className="h-8 bg-[#2F3337] hover:bg-[#26292C] text-white text-[11px] uppercase font-semibold gap-1.5"
         >
           <Sparkles className="h-3.5 w-3.5" /> Usar IA
         </Button>
@@ -174,11 +174,11 @@ export default function ClienteAIPrefill({
   }
 
   return (
-    <div className="rounded-xl border border-[#E5C2C6] bg-[#FBF3F4] p-4 space-y-3">
+    <div className="rounded-xl border border-[#D1D3D6] bg-[#F7F7F8] p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#7A1F2B]" />
-          <p className="text-[12px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+          <Sparkles className="h-4 w-4 text-[#2F3337]" />
+          <p className="text-[12px] font-bold uppercase tracking-wide text-[#2F3337]">
             Preencher cadastro com IA
           </p>
         </div>
@@ -192,10 +192,10 @@ export default function ClienteAIPrefill({
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => { e.preventDefault(); addFiles(e.dataTransfer.files); }}
         onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-[#E5C2C6] rounded-lg p-4 text-center cursor-pointer hover:border-[#7A1F2B] transition-colors bg-white/60"
+        className="border-2 border-dashed border-[#D1D3D6] rounded-lg p-4 text-center cursor-pointer hover:border-[#2F3337] transition-colors bg-white/60"
       >
-        <UploadCloud className="h-5 w-5 mx-auto text-[#7A1F2B]" />
-        <p className="text-[11px] text-[#7A1F2B] mt-1 font-semibold uppercase">
+        <UploadCloud className="h-5 w-5 mx-auto text-[#2F3337]" />
+        <p className="text-[11px] text-[#2F3337] mt-1 font-semibold uppercase">
           Clique ou arraste arquivos (imagens, PDFs — até {MAX_FILES})
         </p>
         <p className="text-[10px] text-slate-500">
@@ -232,7 +232,7 @@ export default function ClienteAIPrefill({
         onChange={(e) => setText(e.target.value)}
         rows={3}
         placeholder="Cole aqui texto livre, observações internas ou dados cadastrais soltos…"
-        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#7A1F2B] focus:border-[#7A1F2B]"
+        className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2F3337] focus:border-[#2F3337]"
       />
 
       <div className="flex items-center justify-end gap-2">
@@ -249,7 +249,7 @@ export default function ClienteAIPrefill({
           size="sm"
           onClick={run}
           disabled={loading}
-          className="h-8 bg-[#7A1F2B] hover:bg-[#641722] text-white text-[11px] uppercase gap-1.5"
+          className="h-8 bg-[#2F3337] hover:bg-[#26292C] text-white text-[11px] uppercase gap-1.5"
         >
           {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
           {loading ? "Extraindo…" : "Extrair com IA"}
@@ -258,9 +258,9 @@ export default function ClienteAIPrefill({
 
       {/* Resultado para revisão */}
       {result && (
-        <div className="rounded-lg border border-[#E5C2C6] bg-white p-3 space-y-2">
+        <div className="rounded-lg border border-[#D1D3D6] bg-white p-3 space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#2F3337]">
               Dados extraídos — revise antes de aplicar
             </p>
             <Button

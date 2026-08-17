@@ -138,7 +138,7 @@ export default function QAProcessosAuditoriaPage() {
           <Link to="/auditoria" className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition">
             <ArrowLeft className="h-4 w-4 text-slate-700" />
           </Link>
-          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#7A1F2B] text-white">
+          <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-[#2F3337] text-white">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -161,7 +161,7 @@ export default function QAProcessosAuditoriaPage() {
           <button key={r.id}
             onClick={() => setRange(r.id)}
             className={`px-3 h-7 text-[11px] font-bold uppercase rounded-md border transition ${
-              range === r.id ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
+              range === r.id ? "bg-[#2F3337] text-white border-[#2F3337]" : "bg-white text-slate-700 border-slate-200 hover:border-slate-400"
             }`}>{r.label}</button>
         ))}
         <span className="mx-3 h-5 w-px bg-slate-200" />
@@ -216,7 +216,7 @@ export default function QAProcessosAuditoriaPage() {
               return (
                 <button key={p.id} onClick={() => setSelected(p.id)}
                   className={`w-full text-left px-4 py-3 hover:bg-slate-50 transition flex items-center gap-3 ${
-                    selected === p.id ? "bg-slate-50 border-l-2 border-[#7A1F2B]" : ""
+                    selected === p.id ? "bg-slate-50 border-l-2 border-[#2F3337]" : ""
                   }`}>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -280,7 +280,7 @@ export default function QAProcessosAuditoriaPage() {
                         </div>
                         {d.validacao_ia_status && (
                           <div className="mt-1 text-slate-500 flex items-center gap-2 flex-wrap">
-                            <Sparkles className="h-3 w-3 text-[#7A1F2B]" />
+                            <Sparkles className="h-3 w-3 text-[#2F3337]" />
                             <span className="uppercase">IA: {d.validacao_ia_status}</span>
                             {d.validacao_ia_confianca != null && <span className="font-mono">conf {Number(d.validacao_ia_confianca).toFixed(2)}</span>}
                             {d.validacao_ia_modelo && <span className="text-slate-400 uppercase">{d.validacao_ia_modelo}</span>}
@@ -302,7 +302,7 @@ export default function QAProcessosAuditoriaPage() {
                 <ol className="relative border-l-2 border-slate-200 ml-2 space-y-3">
                   {eventosSel.map(ev => (
                     <li key={ev.id} className="ml-4">
-                      <div className="absolute -left-[7px] w-3 h-3 rounded-full bg-[#7A1F2B] border-2 border-white" />
+                      <div className="absolute -left-[7px] w-3 h-3 rounded-full bg-[#2F3337] border-2 border-white" />
                       <div className="text-[10px] font-mono text-slate-400 uppercase">{formatDateTime(ev.created_at)}</div>
                       <div className="text-[12px] font-bold uppercase text-slate-800">{ev.tipo_evento}</div>
                       {ev.descricao && <div className="text-[11px] text-slate-600">{ev.descricao}</div>}

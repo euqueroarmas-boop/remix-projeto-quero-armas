@@ -49,7 +49,7 @@ const EMPTY: FormState = {
   descricao: "",
   bg: "#0A0A0A",
   accent: "#D6A64B",
-  stripe: "linear-gradient(90deg, #D6A64B 0%, #7A1F2B 100%)",
+  stripe: "linear-gradient(90deg, #D6A64B 0%, #2F3337 100%)",
   top_mode: "hero",
   emblem: "",
   hero_image_path: null,
@@ -242,7 +242,7 @@ export default function QASidebarTemasAdmin() {
       <div className="flex items-center justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <ImageIcon className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} />
+            <ImageIcon className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} />
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "hsl(220 10% 45%)" }}>
               Temas da Sidebar (Portal do Cliente)
             </span>
@@ -254,7 +254,7 @@ export default function QASidebarTemasAdmin() {
         <button
           type="button"
           onClick={openNew}
-          className="inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#5e1822]"
+          className="inline-flex items-center gap-1 rounded-md bg-[#2F3337] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#24272A]"
         >
           <Plus className="h-3.5 w-3.5" /> Novo tema
         </button>
@@ -537,7 +537,7 @@ export default function QASidebarTemasAdmin() {
                   type="button"
                   onClick={handleSave}
                   disabled={saving}
-                  className="inline-flex items-center gap-1 rounded-md bg-[#7A1F2B] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#5e1822] disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded-md bg-[#2F3337] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#24272A] disabled:opacity-50"
                 >
                   {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   Salvar tema

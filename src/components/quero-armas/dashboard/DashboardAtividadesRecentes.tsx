@@ -15,9 +15,9 @@ interface AuditRow {
 }
 
 const ENTITY_META: Record<string, { label: string; icon: any; color: string; bg: string }> = {
-  qa_clientes: { label: "Cliente", icon: Users, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4]" },
+  qa_clientes: { label: "Cliente", icon: Users, color: "text-[#2F3337]", bg: "bg-[#F7F7F8]" },
   qa_casos: { label: "Caso", icon: FolderOpen, color: "text-amber-600", bg: "bg-amber-50" },
-  qa_geracoes_pecas: { label: "Peça", icon: PenTool, color: "text-[#7A1F2B]", bg: "bg-[#FBF3F4]" },
+  qa_geracoes_pecas: { label: "Peça", icon: PenTool, color: "text-[#2F3337]", bg: "bg-[#F7F7F8]" },
   qa_documentos_conhecimento: { label: "Documento", icon: FileText, color: "text-emerald-600", bg: "bg-emerald-50" },
   qa_armamentos: { label: "Armamento", icon: ShieldCheck, color: "text-slate-700", bg: "bg-slate-100" },
 };
@@ -86,8 +86,8 @@ export default function DashboardAtividadesRecentes() {
     <div className="qa-card p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(352 33% 97%)" }}>
-            <Activity className="h-3.5 w-3.5" style={{ color: "hsl(352 60% 30%)" }} />
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "hsl(210 4% 97%)" }}>
+            <Activity className="h-3.5 w-3.5" style={{ color: "hsl(210 8% 20%)" }} />
           </div>
           <div>
             <h3 className="text-sm font-semibold" style={{ color: "hsl(220 20% 18%)" }}>Atividades Recentes</h3>
@@ -99,7 +99,7 @@ export default function DashboardAtividadesRecentes() {
         <Link
           to="/auditoria"
           className="flex items-center gap-1 text-xs font-medium hover:underline"
-          style={{ color: "hsl(352 60% 30%)" }}
+          style={{ color: "hsl(210 8% 20%)" }}
         >
           Ver tudo <ArrowRight className="h-3 w-3" />
         </Link>

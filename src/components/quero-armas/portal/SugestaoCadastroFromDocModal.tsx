@@ -13,7 +13,7 @@ import { CheckCircle2, Loader2, MapPin, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const MARROM = "#7A1F2B";
+const MARROM = "#2F3337";
 
 function Campo({
   label,
@@ -298,7 +298,7 @@ export default function SugestaoCadastroFromDocModal({
     <Dialog open={open} onOpenChange={(n) => !n && !salvando && onOpenChange(false)}>
       <DialogContent className="qa-scope w-[calc(100vw-1rem)] max-w-lg rounded-[24px] border border-slate-200 bg-white p-0 text-slate-900 shadow-2xl max-h-[88dvh] overflow-hidden gap-0 flex flex-col [&>button.absolute]:hidden">
         {/* Header */}
-        <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#FBF3F4,#ffffff)" }}>
+        <div className="shrink-0 border-b border-slate-200 px-5 py-4" style={{ background: "linear-gradient(180deg,#F7F7F8,#ffffff)" }}>
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm" style={{ background: MARROM }}>
               <Sparkles className="h-5 w-5" strokeWidth={2.3} />
@@ -334,7 +334,7 @@ export default function SugestaoCadastroFromDocModal({
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-200 bg-white p-3">
                 <div className="flex items-start gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "#FBF3F4", color: MARROM }}>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: "#F7F7F8", color: MARROM }}>
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1 space-y-1.5">

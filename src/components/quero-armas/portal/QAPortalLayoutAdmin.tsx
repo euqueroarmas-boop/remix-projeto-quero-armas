@@ -26,8 +26,8 @@ const RAIL_COLOR_PALETTE = [
   { label: "Rosa claro", hex: "#F8BBD0" },
   { label: "Rosa", hex: "#E91E8C" },
   { label: "Magenta", hex: "#C2185B" },
-  { label: "Bordô", hex: "#7A1F2B" },
-  { label: "Bordô escuro", hex: "#4E0B14" },
+  { label: "Bordô", hex: "#2F3337" },
+  { label: "Bordô escuro", hex: "#1B1E20" },
   // Linha 4 — Amarelo (Y)
   { label: "Amarelo claro", hex: "#FFF9C4" },
   { label: "Amarelo", hex: "#FFEB3B" },
@@ -102,8 +102,8 @@ export default function QAPortalLayoutAdmin() {
       {/* ── Dimensões das colunas ── */}
       <div className="border border-slate-200 rounded-lg overflow-hidden">
         <div className="flex items-center gap-2 bg-slate-50 px-4 py-3 border-b border-slate-200">
-          <Monitor className="h-4 w-4 text-[#7A1F2B]" />
-          <span className="text-xs font-black uppercase tracking-[0.18em] text-[#7A1F2B]">
+          <Monitor className="h-4 w-4 text-[#2F3337]" />
+          <span className="text-xs font-black uppercase tracking-[0.18em] text-[#2F3337]">
             Dimensões das colunas laterais (portal do cliente)
           </span>
         </div>
@@ -117,7 +117,7 @@ export default function QAPortalLayoutAdmin() {
             {/* Esquerda expandida */}
             <div className="flex flex-col gap-1 items-center">
               <div
-                className="rounded border-2 border-[#7A1F2B] bg-[#0A0A0A] flex flex-col items-center justify-center gap-1"
+                className="rounded border-2 border-[#2F3337] bg-[#0A0A0A] flex flex-col items-center justify-center gap-1"
                 style={{ width: 80, height: 120 }}
               >
                 <LayoutTemplate className="h-4 w-4 text-[#D6A64B]" />
@@ -185,7 +185,7 @@ export default function QAPortalLayoutAdmin() {
             <tbody>
               <tr className="border-t border-slate-100">
                 <td className="px-3 py-2 font-semibold text-slate-800">Sidebar esquerda (expandida)</td>
-                <td className="px-3 py-2 text-center font-black text-[#7A1F2B]">{SIDEBAR_LEFT_EXPANDED_PX} px</td>
+                <td className="px-3 py-2 text-center font-black text-[#2F3337]">{SIDEBAR_LEFT_EXPANDED_PX} px</td>
                 <td className="px-3 py-2 text-center text-slate-600">100 vh</td>
                 <td className="px-3 py-2 text-slate-500">190×1080 px · PNG/JPG/WEBP · vertical</td>
               </tr>
@@ -213,8 +213,8 @@ export default function QAPortalLayoutAdmin() {
       {/* ── Paleta de cores do rail direito ── */}
       <div className="border border-slate-200 rounded-lg overflow-hidden">
         <div className="flex items-center gap-2 bg-slate-50 px-4 py-3 border-b border-slate-200">
-          <Palette className="h-4 w-4 text-[#7A1F2B]" />
-          <span className="text-xs font-black uppercase tracking-[0.18em] text-[#7A1F2B]">
+          <Palette className="h-4 w-4 text-[#2F3337]" />
+          <span className="text-xs font-black uppercase tracking-[0.18em] text-[#2F3337]">
             Cor dos ícones — rail direito
           </span>
         </div>
@@ -277,8 +277,8 @@ export default function QAPortalLayoutAdmin() {
                           width: "100%",
                           paddingBottom: "100%",
                           background: c.hex,
-                          borderColor: isSelected ? "#7A1F2B" : "transparent",
-                          boxShadow: isSelected ? "0 0 0 2px #7A1F2B, 0 0 0 4px #fff" : "0 1px 3px rgba(0,0,0,0.18)",
+                          borderColor: isSelected ? "#2F3337" : "transparent",
+                          boxShadow: isSelected ? "0 0 0 2px #2F3337, 0 0 0 4px #fff" : "0 1px 3px rgba(0,0,0,0.18)",
                           outline: "1px solid rgba(0,0,0,0.08)",
                         }}
                       >
@@ -332,7 +332,7 @@ export default function QAPortalLayoutAdmin() {
                 onClick={() => pendingColor && saveColor(pendingColor)}
                 className="flex items-center gap-2 px-4 py-2 rounded text-[12px] font-black uppercase tracking-[0.14em] transition"
                 style={{
-                  background: pendingColor ? "#7A1F2B" : "#e5e7eb",
+                  background: pendingColor ? "#2F3337" : "#e5e7eb",
                   color: pendingColor ? "#fff" : "#9ca3af",
                   cursor: pendingColor ? "pointer" : "not-allowed",
                 }}

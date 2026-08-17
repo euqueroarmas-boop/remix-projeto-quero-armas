@@ -98,7 +98,7 @@ export default function ClienteDestravarCadastro({ cliente }: Props) {
       {/* DIAGNÓSTICO */}
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+          <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#2F3337]">
             Diagnóstico do cadastro
           </h3>
           <Button size="sm" variant="ghost" onClick={carregar} className="h-7">
@@ -144,7 +144,7 @@ export default function ClienteDestravarCadastro({ cliente }: Props) {
 
       {/* AÇÕES GRANULARES */}
       <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
-        <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#7A1F2B]">
+        <h3 className="text-[13px] font-bold uppercase tracking-wide text-[#2F3337]">
           Ações cirúrgicas
         </h3>
 
@@ -254,7 +254,7 @@ function ActionRow({ icon: Icon, title, desc, disabled, busy, onClick }: any) {
     <div className={`flex items-start gap-3 p-3 rounded-lg border ${
       disabled ? "bg-slate-50 border-slate-200 opacity-60" : "bg-white border-slate-300"
     }`}>
-      <Icon className="h-4 w-4 mt-0.5 text-[#7A1F2B] flex-shrink-0" />
+      <Icon className="h-4 w-4 mt-0.5 text-[#2F3337] flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="text-[12px] font-bold text-slate-900">{title}</div>
         <div className="text-[11px] text-slate-600">{desc}</div>

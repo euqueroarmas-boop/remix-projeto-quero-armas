@@ -671,7 +671,7 @@ export default function QAContratosCockpitV1({ cliente }: Props) {
 
 /* ─────────────────────── KPI ─────────────────────── */
 function KpiCard({ tone, label, value, sub }: { tone: Tone; label: string; value: React.ReactNode; sub: string }) {
-  const dot = ({ amber:"bg-[#D6A64B]", blue:"bg-[#3A6FB3]", green:"bg-[#2F8F4A]", bordo:"bg-[#7A1F2B]", gray:"bg-[#8A8A8A]", red:"bg-[#C32E26]" } as Record<Tone,string>)[tone];
+  const dot = ({ amber:"bg-[#D6A64B]", blue:"bg-[#3A6FB3]", green:"bg-[#2F8F4A]", bordo:"bg-[#2F3337]", gray:"bg-[#8A8A8A]", red:"bg-[#C32E26]" } as Record<Tone,string>)[tone];
   return (
     <div className="qa-kpi-card bg-white border border-[#E5E5E5] rounded-sm px-3.5 py-3.5">
       <div className="qa-kpi-card__label qa-kpi-label flex items-center gap-1.5">
@@ -1049,7 +1049,7 @@ function FeaturedContractCard({
           </div>
         </div>
         <div className="mt-2 h-[5px] bg-[#EAEAEA] rounded-full overflow-hidden">
-          <div className="h-full" style={{ width: `${progress}%`, background: progress === 100 ? "#059669" : "#7A1F2B" }} />
+          <div className="h-full" style={{ width: `${progress}%`, background: progress === 100 ? "#059669" : "#2F3337" }} />
         </div>
         <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11px] text-[#7A7A7A]">
           <span><b className="text-[#0A0A0A] font-semibold">Prev. assinatura:</b> até {fmtDateLong(contract.issued_at)}</span>
@@ -1143,7 +1143,7 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#2F3439] p-2 text-white hover:bg-[#262A2E] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -1151,7 +1151,7 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
         {/* header padrão — chips de contexto */}
         <div className="px-6 pt-6 pb-4 pr-14 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+            <span className="inline-flex items-center rounded-full border border-[#2F3439]/20 bg-[#FBFBFB] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#2F3439]">
               Contrato vigente
             </span>
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
@@ -1193,7 +1193,7 @@ function ContractCompletedDialog({ contract, onClose }: { contract: Contract; on
                 },
               ].map((p, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FBFBFB] text-[#2F3439] border border-[#2F3439]/10 flex items-center justify-center text-xs font-bold z-10">
                     {i + 1}
                   </span>
                   <div className="pt-1">

@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 // Worker via CDN para evitar config Vite específica
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-const BORDO = "#7A1F2B";
+const BORDO = "#2F3337";
 const INK3 = "#7A7A7A";
 
 interface Props {
@@ -144,13 +144,13 @@ export default function HubDocPreviewSlot({
             onDrop={onDrop}
             className={cn(
               "flex min-h-[140px] md:min-h-[320px] flex-1 cursor-pointer flex-col items-center justify-center gap-3 md:gap-4 border-2 border-dashed bg-[#FAFAFA] p-5 md:p-8 text-center transition-all",
-              dragOver ? "border-[#7A1F2B] bg-[#7A1F2B]/[0.04]" : "border-[#E5E5E5] hover:border-[#7A1F2B]/60 hover:bg-[#7A1F2B]/[0.02]",
+              dragOver ? "border-[#2F3337] bg-[#2F3337]/[0.04]" : "border-[#E5E5E5] hover:border-[#2F3337]/60 hover:bg-[#2F3337]/[0.02]",
             )}
             style={{ borderRadius: 2 }}
           >
             <div
               className="flex h-10 w-10 md:h-16 md:w-16 items-center justify-center rounded-full"
-              style={{ background: "rgba(122,31,43,0.08)", color: BORDO }}
+              style={{ background: "rgba(47,51,55,0.08)", color: BORDO }}
             >
               <Upload className="h-5 w-5 md:h-7 md:w-7" />
             </div>
@@ -162,7 +162,7 @@ export default function HubDocPreviewSlot({
                 {permiteCamera ? "JPG · PNG · até 20MB" : "SOMENTE PDF ORIGINAL · até 20MB"}
               </div>
               {!permiteCamera && (
-                <div className="mt-1 text-[10px] leading-snug text-[#7A1F2B]">
+                <div className="mt-1 text-[10px] leading-snug text-[#2F3337]">
                   Não aceitamos print, foto ou digitalização do documento.
                 </div>
               )}
@@ -220,7 +220,7 @@ export default function HubDocPreviewSlot({
                   </div>
                 }
                 error={
-                  <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-[#7A1F2B]">
+                  <div className="flex h-full min-h-[360px] flex-col items-center justify-center gap-2 text-[#2F3337]">
                     <FileText className="h-7 w-7" />
                     <span className="font-heading text-[10px] uppercase tracking-[0.22em]">Preview indisponível</span>
                     <span className="text-[11px] text-[#7A7A7A]">{displayName}</span>
@@ -258,7 +258,7 @@ export default function HubDocPreviewSlot({
                 aparecem apenas no carimbo central de 3 segundos (DocResultadoCarimbo). */}
             {extracting && (
               <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-2 bg-white/85 backdrop-blur-sm">
-                <Loader2 className="h-6 w-6 animate-spin text-[#7A1F2B]" />
+                <Loader2 className="h-6 w-6 animate-spin text-[#2F3337]" />
                 <span className="font-heading text-[10px] uppercase tracking-[0.24em] text-[#0A0A0A]">
                   Lendo o documento…
                 </span>

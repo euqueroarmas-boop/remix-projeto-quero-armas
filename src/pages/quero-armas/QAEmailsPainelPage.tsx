@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, Mail, RefreshCw, Search, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const BORDO = "#7A1F2B";
+const BORDO = "#2F3337";
 const VERDE = "#166534";
 const AMBAR = "#8A6100";
 const PAGINA = 50;
@@ -34,7 +34,7 @@ const PRESETS = [
 const corStatus = (s: string | null) => {
   const v = String(s ?? "").toLowerCase();
   if (v === "sent") return { cor: VERDE, fundo: "#EAF5EE" };
-  if (["dlq", "failed", "bounced", "complained"].includes(v)) return { cor: BORDO, fundo: "#F7ECEE" };
+  if (["dlq", "failed", "bounced", "complained"].includes(v)) return { cor: BORDO, fundo: "#F1F1F2" };
   if (v === "suppressed") return { cor: AMBAR, fundo: "#FBF3E2" };
   return { cor: "#4A4A4A", fundo: "#F2F2F2" };
 };
@@ -163,7 +163,7 @@ export default function QAEmailsPainelPage() {
             type="button"
             onClick={() => { setPreset(p.k); setDe(""); setAte(""); setPagina(0); }}
             className={`rounded-full border px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider ${
-              !de && !ate && preset === p.k ? "border-[#7A1F2B] text-[#7A1F2B]" : "border-slate-200 text-slate-500"
+              !de && !ate && preset === p.k ? "border-[#2F3337] text-[#2F3337]" : "border-slate-200 text-slate-500"
             }`}
           >
             {p.label}

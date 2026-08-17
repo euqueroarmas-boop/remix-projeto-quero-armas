@@ -680,7 +680,7 @@ export default function DashboardProgressoClientes() {
                     type="checkbox"
                     checked={visiveis[c.key] !== false}
                     onChange={(e) => setVisiveis((v) => ({ ...v, [c.key]: e.target.checked }))}
-                    className="h-3 w-3 accent-[#7A1F2B]"
+                    className="h-3 w-3 accent-[#2F3337]"
                   />
                   {c.label}
                 </label>
@@ -799,7 +799,7 @@ export default function DashboardProgressoClientes() {
               type="button"
               onClick={() => setSomenteFalhas((v) => !v)}
               className={`rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] transition-colors ${
-                somenteFalhas ? "border-[#7A1F2B] text-[#7A1F2B]" : "border-[#DADADA] text-[#3A3A3A]"
+                somenteFalhas ? "border-[#2F3337] text-[#2F3337]" : "border-[#DADADA] text-[#3A3A3A]"
               }`}
             >
               SOMENTE FALHAS
@@ -897,7 +897,7 @@ export default function DashboardProgressoClientes() {
               onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
               className={`shrink-0 text-[9.5px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border transition-colors ${
                 filtroTrilha === t
-                  ? "border-[#7A1F2B] bg-[#F7E4E7] text-[#7A1F2B] font-bold"
+                  ? "border-[#2F3337] bg-[#ECEDEF] text-[#2F3337] font-bold"
                   : "border-[#CFCCC5] bg-[#FBFBFA] text-[#3A3A3A] hover:border-[#0A0A0A]"
               }`}
             >

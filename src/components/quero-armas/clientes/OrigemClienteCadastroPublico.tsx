@@ -83,7 +83,7 @@ export default function OrigemClienteCadastroPublico({ cliente, onAbrirCadastroP
     <button
       type="button"
       onClick={(e) => { e.stopPropagation(); onAbrirCadastroPublico(id); }}
-      className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#E5C2C6] bg-white text-[#7A1F2B] hover:bg-[#FBF3F4] text-[10px] font-bold uppercase tracking-wider"
+      className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-[#D1D3D6] bg-white text-[#2F3337] hover:bg-[#F7F7F8] text-[10px] font-bold uppercase tracking-wider"
     >
       {label} <ArrowRight className="h-3 w-3" />
     </button>

@@ -41,12 +41,12 @@ export default function BlocoSecao({
           {Icon ? (
             <span
               className="inline-flex items-center justify-center w-6 h-6 rounded-md"
-              style={{ background: "#FBF3F4", color: "#7A1F2B" }}
+              style={{ background: "#F7F7F8", color: "#2F3337" }}
             >
               <Icon className="h-3.5 w-3.5" />
             </span>
           ) : (
-            <span className="inline-block w-1.5 h-4 rounded-sm" style={{ background: "#7A1F2B" }} />
+            <span className="inline-block w-1.5 h-4 rounded-sm" style={{ background: "#2F3337" }} />
           )}
           <h2
             className="text-[11px] font-bold uppercase tracking-[0.14em] truncate"

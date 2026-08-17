@@ -132,15 +132,15 @@ function DraftLines({ text, isStreaming }: { text: string; isStreaming: boolean 
               className={`
                 transition-all duration-300 ease-out
                 ${isHeader
-                  ? "text-[#7A1F2B] font-semibold text-[13px] mt-4 mb-1 tracking-wide"
+                  ? "text-[#2F3337] font-semibold text-[13px] mt-4 mb-1 tracking-wide"
                   : isLast ? "text-slate-700" : "text-slate-600"
                 }
-                ${isLast ? "border-l-2 border-slate-300/50 pl-3 -ml-3 bg-[#FBF3F4] rounded-r" : ""}
+                ${isLast ? "border-l-2 border-slate-300/50 pl-3 -ml-3 bg-[#F7F7F8] rounded-r" : ""}
               `}
             >
               {line}
               {isLast && isStreaming && (
-                <span className="inline-block w-[2px] h-[14px] bg-[#7A1F2B] animate-pulse ml-0.5 align-text-bottom" />
+                <span className="inline-block w-[2px] h-[14px] bg-[#2F3337] animate-pulse ml-0.5 align-text-bottom" />
               )}
             </div>
           );
@@ -224,7 +224,7 @@ export default function DraftingView({
           ) : isError ? (
             <XCircle className="h-4 w-4 text-red-400" />
           ) : (
-            <Sparkles className="h-4 w-4 text-[#7A1F2B] animate-pulse" />
+            <Sparkles className="h-4 w-4 text-[#2F3337] animate-pulse" />
           )}
           <span className="text-sm font-medium text-slate-700">
             {isDone ? "Pronto para copiar e baixar" : isError ? "Erro na geração" : "Redigindo minuta..."}
@@ -250,7 +250,7 @@ export default function DraftingView({
             const stepDone = pipelineIdx > idx || isDone;
             return (
               <div key={step.key} className={`flex items-center gap-1.5 text-[11px] py-0.5 ${
-                isActive ? "text-[#7A1F2B]" : stepDone ? "text-emerald-400/60" : "text-neutral-700"
+                isActive ? "text-[#2F3337]" : stepDone ? "text-emerald-400/60" : "text-neutral-700"
               }`}>
                 {stepDone && !isActive ? (
                   <CheckCircle className="h-3 w-3 shrink-0" />
@@ -273,7 +273,7 @@ export default function DraftingView({
               const isCurrent = currentWritingSection === sec.label && isStreaming;
               return (
                 <div key={sec.key} className={`flex items-center gap-1.5 text-[11px] py-0.5 ${
-                  isCurrent ? "text-[#7A1F2B]" : found ? "text-emerald-400/60" : "text-neutral-700"
+                  isCurrent ? "text-[#2F3337]" : found ? "text-emerald-400/60" : "text-neutral-700"
                 }`}>
                   {found && !isCurrent ? (
                     <CheckCircle className="h-3 w-3 shrink-0" />
@@ -293,8 +293,8 @@ export default function DraftingView({
       {/* Writing indicator */}
       {isStreaming && currentWritingSection && (
         <div className="px-4 pb-2">
-          <div className="text-[11px] text-[#7A1F2B] flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#7A1F2B] animate-pulse" />
+          <div className="text-[11px] text-[#2F3337] flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#2F3337] animate-pulse" />
             Redigindo: {currentWritingSection}
           </div>
         </div>
@@ -319,7 +319,7 @@ export default function DraftingView({
       {streamedText.length === 0 && !isError && (
         <div className="px-4 pb-4">
           <div className="bg-white border border-slate-200 rounded-lg p-8 flex flex-col items-center gap-3">
-            <Loader2 className="h-6 w-6 text-[#7A1F2B] animate-spin" />
+            <Loader2 className="h-6 w-6 text-[#2F3337] animate-spin" />
             <span className="text-[11px] text-slate-400">Preparando geração...</span>
           </div>
         </div>
@@ -379,7 +379,7 @@ export default function DraftingView({
             <Button
               onClick={handleCopyClick}
               disabled={!streamedText}
-              className="h-14 text-base font-medium bg-[#7A1F2B] hover:bg-[#641722] text-white active:scale-[0.98] transition-transform border-0"
+              className="h-14 text-base font-medium bg-[#2F3337] hover:bg-[#26292C] text-white active:scale-[0.98] transition-transform border-0"
             >
               {copied ? (
                 <><Check className="h-5 w-5 mr-2" /> Texto copiado com sucesso</>

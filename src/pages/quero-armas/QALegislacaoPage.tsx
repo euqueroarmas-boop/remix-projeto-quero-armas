@@ -293,7 +293,7 @@ export default function QALegislacaoPage() {
                 <div className="space-y-4 mt-4">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
                     <div className="flex items-start gap-2">
-                      <Paperclip className="h-4 w-4 text-[#7A1F2B] shrink-0 mt-0.5" />
+                      <Paperclip className="h-4 w-4 text-[#2F3337] shrink-0 mt-0.5" />
                       <div className="min-w-0">
                         <p className="text-[13px] font-semibold text-slate-800 uppercase truncate">{savedNorma.titulo}</p>
                         <p className="text-xs text-slate-600 mt-1">
@@ -303,7 +303,7 @@ export default function QALegislacaoPage() {
                       </div>
                     </div>
                   </div>
-                  <label className="block cursor-pointer rounded-lg border-2 border-dashed border-slate-300 bg-white hover:border-[#7A1F2B] hover:bg-slate-50 transition-colors p-6 text-center">
+                  <label className="block cursor-pointer rounded-lg border-2 border-dashed border-slate-300 bg-white hover:border-[#2F3337] hover:bg-slate-50 transition-colors p-6 text-center">
                     <Upload className="h-6 w-6 mx-auto text-slate-400 mb-2" />
                     <p className="text-xs text-slate-700 font-medium">Selecionar PDF(s)</p>
                     <p className="text-[11px] text-slate-500 mt-1">PDF, DOCX ou imagens • múltiplos arquivos permitidos</p>
@@ -346,7 +346,7 @@ export default function QALegislacaoPage() {
           onChange={e => setBusca(e.target.value)}
           className="w-full h-10 pl-10 pr-4 rounded-xl border bg-white text-sm uppercase outline-none transition-all"
           style={{ borderColor: "hsl(220 13% 91%)", color: "hsl(220 20% 18%)" }}
-          onFocus={e => e.currentTarget.style.borderColor = "hsl(352 60% 30%)"}
+          onFocus={e => e.currentTarget.style.borderColor = "hsl(210 8% 20%)"}
           onBlur={e => e.currentTarget.style.borderColor = "hsl(220 13% 91%)"}
         />
       </div>
@@ -354,7 +354,7 @@ export default function QALegislacaoPage() {
       {/* Content */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#7A1F2B] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-slate-200 border-t-[#2F3337] rounded-full animate-spin" />
         </div>
       ) : normas.length === 0 ? (
         <div className="text-center py-16">
@@ -378,7 +378,7 @@ export default function QALegislacaoPage() {
                     {count > 0 && (
                       <span
                         className="inline-flex items-center gap-1 text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded"
-                        style={{ background: "hsl(352 60% 96%)", color: "hsl(352 60% 30%)" }}
+                        style={{ background: "hsl(210 8% 96%)", color: "hsl(210 8% 20%)" }}
                         title="A IA usa o PDF anexado; o texto colado é apenas referência."
                       >
                         <FileText className="h-3 w-3" /> {count} PDF{count > 1 ? "s" : ""} anexado{count > 1 ? "s" : ""}

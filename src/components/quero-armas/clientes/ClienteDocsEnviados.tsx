@@ -890,7 +890,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
         <div className="flex items-center gap-2 text-xs">
-          <ShieldCheck className="h-4 w-4 text-[#7A1F2B]" />
+          <ShieldCheck className="h-4 w-4 text-[#2F3337]" />
           <span className="font-semibold text-slate-700">Hub do Cliente</span>
           <span className="text-slate-400">·</span>
           <span className="text-slate-500">
@@ -911,7 +911,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
                 ? "Acervo completo do cliente, na ordem do protocolo"
                 : "Somente as peças desta aba — cada serviço tem a sua juntada"
             }
-            className="inline-flex items-center gap-1 rounded-md border border-[#7A1F2B] bg-[#7A1F2B] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
+            className="inline-flex items-center gap-1 rounded-md border border-[#2F3337] bg-[#2F3337] px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white disabled:opacity-60"
           >
             {baixandoZip ? <Loader2 className="h-3 w-3 animate-spin" /> : <Archive className="h-3 w-3" />}
             {abaAtiva === "todos" ? "Baixar tudo (ZIP)" : "ZIP desta aba"}
@@ -921,7 +921,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               type="button"
               onClick={() => setModo("arvore")}
               title="Cada exigência do checklist no seu grupo do protocolo, com os reenvios empilhados"
-              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "arvore" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "arvore" ? "bg-[#2F3337] text-white" : "bg-white text-slate-600"}`}
             >
               Árvore de exigências
             </button>
@@ -929,14 +929,14 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               type="button"
               onClick={() => setModo("entrega")}
               title="Ordem cronológica em que os arquivos chegaram"
-              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "entrega" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "entrega" ? "bg-[#2F3337] text-white" : "bg-white text-slate-600"}`}
             >
               Ordem de entrega
             </button>
             <button
               type="button"
               onClick={() => setModo("familia")}
-              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "familia" ? "bg-[#7A1F2B] text-white" : "bg-white text-slate-600"}`}
+              className={`px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${modo === "familia" ? "bg-[#2F3337] text-white" : "bg-white text-slate-600"}`}
             >
               Por família
             </button>
@@ -985,8 +985,8 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               title={aba.semProcesso ? "Serviço contratado — processo ainda não gerado" : undefined}
               className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[9px] font-bold uppercase tracking-wider ${
                 ativa
-                  ? "border-[#7A1F2B] bg-[#7A1F2B] text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                  ? "border-[#2F3337] bg-[#2F3337] text-white"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-[#2F3337] hover:text-[#2F3337]"
               }`}
             >
               {aba.nome}
@@ -1026,7 +1026,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
               const cor = validado
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : rejeitado
-                  ? "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] text-[#7A1F2B]"
+                  ? "border-[#2F3337]/30 bg-[#2F3337]/[0.06] text-[#2F3337]"
                   : "border-amber-200 bg-amber-50 text-amber-700";
               const quando = ct.customer_signature_validated_at || ct.customer_uploaded_at;
               return (
@@ -1259,9 +1259,9 @@ const SITUACAO_UI: Record<SituacaoNo, { label: string; chip: string; borda: stri
   },
   rejeitado: {
     label: "Rejeitado",
-    chip: "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] text-[#7A1F2B]",
-    borda: "border-[#7A1F2B]/40",
-    ponto: "bg-[#7A1F2B]",
+    chip: "border-[#2F3337]/30 bg-[#2F3337]/[0.06] text-[#2F3337]",
+    borda: "border-[#2F3337]/40",
+    ponto: "bg-[#2F3337]",
   },
   cumprida_no_processo: {
     label: "Cumprida no processo",
@@ -1530,8 +1530,8 @@ function VersaoDoc({
       </div>
 
       {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
-        <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
-          <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+        <div className="mt-1.5 rounded border border-[#2F3337]/30 bg-[#2F3337]/[0.06] px-2 py-1.5">
+          <div className="text-[9px] font-bold uppercase tracking-wider text-[#2F3337]">
             Motivo da rejeição
           </div>
           <ul className="mt-0.5 space-y-0.5">
@@ -1539,7 +1539,7 @@ function VersaoDoc({
               ? reprovas
               : [{ motivo: d.motivo_reprovacao, quando: d.reprovado_em }]
             ).map((r: any, i: number) => (
-              <li key={i} className="text-[10px] leading-snug text-[#7A1F2B]">
+              <li key={i} className="text-[10px] leading-snug text-[#2F3337]">
                 {r.quando && (
                   <span className="font-bold">{new Date(r.quando).toLocaleString("pt-BR")} · </span>
                 )}
@@ -1630,7 +1630,7 @@ function LinhaEntrega({
         <span className="inline-flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
           <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Aprovado</span>
           <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Em análise</span>
-          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#7A1F2B]" /> Rejeitado</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2.5 w-2.5 rounded-full bg-[#2F3337]" /> Rejeitado</span>
         </span>
       </div>
       <ol className="space-y-2">
@@ -1641,7 +1641,7 @@ function LinhaEntrega({
           const isAprovado = d.status === "aprovado";
           const isAnalise = d.status === "pendente_aprovacao" || d.status === "em_analise";
           const bolinha = isReprovado
-            ? "bg-[#7A1F2B]"
+            ? "bg-[#2F3337]"
             : isAprovado
               ? "bg-emerald-600"
               : isAnalise
@@ -1658,7 +1658,7 @@ function LinhaEntrega({
           const critico = it.anotacoes.some((a) => a.severidade === "critico");
           const atencao = it.anotacoes.some((a) => a.severidade === "atencao");
           const cls = isReprovado
-            ? "border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.04]"
+            ? "border-[#2F3337]/30 bg-[#2F3337]/[0.04]"
             : critico
               ? "border-red-200 bg-red-50/40"
               : atencao
@@ -1741,8 +1741,8 @@ function LinhaEntrega({
                     </Acao>
                   </div>
                   {isReprovado && (reprovas.length > 0 || d.motivo_reprovacao) && (
-                    <div className="mt-1.5 rounded border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.06] px-2 py-1.5">
-                      <div className="text-[9px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                    <div className="mt-1.5 rounded border border-[#2F3337]/30 bg-[#2F3337]/[0.06] px-2 py-1.5">
+                      <div className="text-[9px] font-bold uppercase tracking-wider text-[#2F3337]">
                         Motivo da rejeição
                       </div>
                       <ul className="mt-1 space-y-0.5">
@@ -1750,7 +1750,7 @@ function LinhaEntrega({
                           ? reprovas
                           : [{ motivo: d.motivo_reprovacao, quando: d.reprovado_em }]
                         ).map((r, i) => (
-                          <li key={i} className="text-[10px] leading-snug text-[#7A1F2B]">
+                          <li key={i} className="text-[10px] leading-snug text-[#2F3337]">
                             {r.quando && (
                               <span className="font-bold">
                                 {new Date(r.quando).toLocaleString("pt-BR")} ·{" "}
@@ -1932,7 +1932,7 @@ function DocRow({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1.5">
                     {isPrincipal && (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border bg-[#7A1F2B]/10 border-[#7A1F2B]/30 text-[9px] font-bold uppercase text-[#7A1F2B]">
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border bg-[#2F3337]/10 border-[#2F3337]/30 text-[9px] font-bold uppercase text-[#2F3337]">
                         Principal
                       </span>
                     )}
@@ -1946,7 +1946,7 @@ function DocRow({
                       <span className="text-[9px] font-bold uppercase">{badge.label}</span>
                     </span>
                     {d.origem === "cliente" && (
-                      <span className="text-[9px] uppercase font-semibold text-[#7A1F2B]">via portal</span>
+                      <span className="text-[9px] uppercase font-semibold text-[#2F3337]">via portal</span>
                     )}
                   </div>
 
@@ -1979,7 +1979,7 @@ function DocRow({
 
                   <div className="text-[9px] text-slate-400 mt-1.5">
                     Enviado em {new Date(d.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
-                    {d.ia_status === "sucesso" && <span className="ml-2 text-[#7A1F2B]">✦ Preenchido com IA</span>}
+                    {d.ia_status === "sucesso" && <span className="ml-2 text-[#2F3337]">✦ Preenchido com IA</span>}
                   </div>
                   {isReprovado && d.motivo_reprovacao && (
                     <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[10px] text-red-700">
@@ -1987,7 +1987,7 @@ function DocRow({
                     </div>
                   )}
                   {reclassificandoId === d.id && (
-                    <div className="mt-2 rounded-md border border-[#7A1F2B]/30 bg-white p-2 space-y-1.5">
+                    <div className="mt-2 rounded-md border border-[#2F3337]/30 bg-white p-2 space-y-1.5">
                       <div className="text-[10px] text-slate-500">
                         Tipo atual: <span className="font-semibold text-slate-700">{TIPO_LABEL[d.tipo_documento] || d.tipo_documento}</span>
                       </div>
@@ -2040,7 +2040,7 @@ function DocRow({
                           onClick={() => { setReclassificandoId(null); setNovoTipoTmp(""); setNovaEmissaoTmp(""); }}>
                           Cancelar
                         </Button>
-                        <Button size="sm" className="h-6 text-[10px] bg-[#7A1F2B] hover:bg-[#63161f]"
+                        <Button size="sm" className="h-6 text-[10px] bg-[#2F3337] hover:bg-[#25282C]"
                           disabled={salvandoTipo || (!novoTipoTmp && !novaEmissaoTmp)}
                           onClick={() => onReclassificar(d.id, d.tipo_documento)}>
                           {salvandoTipo ? <Loader2 className="h-3 w-3 animate-spin" /> : "Salvar correção"}
@@ -2112,7 +2112,7 @@ function DocRow({
                       setNovoTipoTmp("");
                       setNovaEmissaoTmp(isoParaBr(d.tipo_documento === "comprovante_residencia" ? d.data_validade : d.data_emissao));
                     }}
-                    className="h-7 px-2 text-[10px] text-[#7A1F2B] border-[#7A1F2B]/30 hover:bg-[#7A1F2B]/5"
+                    className="h-7 px-2 text-[10px] text-[#2F3337] border-[#2F3337]/30 hover:bg-[#2F3337]/5"
                     title="Alterar tipo do documento (corrige a exigência do processo)"
                   >
                     <Tags className="h-3 w-3" />

@@ -26,7 +26,7 @@ function Resposta({ label, valor }: { label: string; valor: boolean | null }) {
       <span className="text-[11px] uppercase tracking-[0.1em] text-slate-500">{label}</span>
       <span
         className="text-[11px] font-bold uppercase tracking-[0.1em]"
-        style={{ color: sim ? "#7A1F2B" : "#64748B" }}
+        style={{ color: sim ? "#2F3337" : "#64748B" }}
       >
         {valor === null || valor === undefined ? "—" : sim ? "SIM" : "NÃO"}
       </span>
@@ -173,7 +173,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           </div>
         </div>
         {registro.devolucao_motivo ? (
-          <div className="mt-3 rounded-md border border-[#7A1F2B]/30 bg-[#FDF6F7] px-3 py-2 text-[11px] text-[#7A1F2B]">
+          <div className="mt-3 rounded-md border border-[#2F3337]/30 bg-[#F9F9FA] px-3 py-2 text-[11px] text-[#2F3337]">
             <span className="font-bold uppercase tracking-[0.1em]">Devolvido pela equipe: </span>
             {registro.devolucao_motivo}
           </div>
@@ -200,7 +200,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
                 type="button"
                 onClick={() => { setAcaoRevisao("devolver"); setErroRevisao(null); }}
                 className={`h-9 rounded-md px-4 text-[10px] font-bold uppercase tracking-[0.12em] ${
-                  acaoRevisao === "devolver" ? "bg-[#7A1F2B] text-white" : "border border-[#7A1F2B] text-[#7A1F2B] hover:bg-[#FDF6F7]"
+                  acaoRevisao === "devolver" ? "bg-[#2F3337] text-white" : "border border-[#2F3337] text-[#2F3337] hover:bg-[#F9F9FA]"
                 }`}
               >
                 Devolver para ajuste
@@ -213,10 +213,10 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
                   onChange={(e) => setObservacao(e.target.value.toUpperCase())}
                   rows={3}
                   placeholder={acaoRevisao === "devolver" ? "MOTIVO DA DEVOLUÇÃO (OBRIGATÓRIO)" : "OBSERVAÇÃO DA APROVAÇÃO (OPCIONAL)"}
-                  className="w-full rounded-md border border-slate-200 p-2 text-[11px] uppercase text-slate-700 outline-none focus:border-[#7A1F2B]"
+                  className="w-full rounded-md border border-slate-200 p-2 text-[11px] uppercase text-slate-700 outline-none focus:border-[#2F3337]"
                 />
                 {erroRevisao ? (
-                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#7A1F2B]">{erroRevisao}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#2F3337]">{erroRevisao}</p>
                 ) : null}
                 <button
                   type="button"
@@ -297,7 +297,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
                   {p.arquivo_storage_path && (
                     <button
                       onClick={() => abrirArquivo(p.arquivo_storage_path)}
-                      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#7A1F2B] hover:underline"
+                      className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#2F3337] hover:underline"
                     >
                       <ExternalLink className="h-3 w-3" /> Abrir
                     </button>
@@ -378,7 +378,7 @@ export default function ClienteEfetivaNecessidade({ cliente }: { cliente: { id: 
           {registro.dossie_storage_path && (
             <button
               onClick={() => abrirArquivo(registro.dossie_storage_path)}
-              className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#7A1F2B] hover:underline"
+              className="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#2F3337] hover:underline"
             >
               <ShieldCheck className="h-3.5 w-3.5" /> Abrir dossiê assinado
             </button>

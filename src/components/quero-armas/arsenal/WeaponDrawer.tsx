@@ -179,8 +179,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {/* Top bar estilo ARMORY */}
         <div className="relative flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3 backdrop-blur shadow-sm">
           <div className="flex items-center gap-2">
-            <Crosshair className="h-3.5 w-3.5 text-[#7A1F2B]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#7A1F2B]">
+            <Crosshair className="h-3.5 w-3.5 text-[#2F3337]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#2F3337]">
               ARMORY
             </span>
             <span className="ml-2 text-[9px] font-mono text-slate-400">
@@ -204,7 +204,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
               <div className="text-[28px] font-black uppercase tracking-tight leading-none text-slate-900">
                 {displayMarca}
               </div>
-              <div className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.18em] text-[#7A1F2B]">
+              <div className="mt-0.5 text-[14px] font-semibold uppercase tracking-[0.18em] text-[#2F3337]">
                 {displayModelo || displayCalibre}
               </div>
             </div>
@@ -276,8 +276,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {catalog && (
           <div className="mt-5 px-6">
             <div className="mb-2 flex items-center gap-1.5">
-              <Gauge className="h-3.5 w-3.5 text-[#7A1F2B]" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7A1F2B]">
+              <Gauge className="h-3.5 w-3.5 text-[#2F3337]" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#2F3337]">
                 Weapon Details
               </div>
             </div>
@@ -325,8 +325,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {variants.length > 0 && (
           <div className="mt-5 px-6">
             <div className="mb-2 flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5 text-[#7A1F2B]" />
-              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7A1F2B]">
+              <Layers className="h-3.5 w-3.5 text-[#2F3337]" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#2F3337]">
                 Outras opções · {WEAPON_KIND_LABEL[info.kind]}
               </div>
             </div>
@@ -334,7 +334,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
               {variants.map((v) => (
                 <div
                   key={v.id}
-                  className="group relative overflow-hidden rounded-md border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:border-[#7A1F2B]"
+                  className="group relative overflow-hidden rounded-md border border-slate-200 bg-white p-2 shadow-sm transition-colors hover:border-[#2F3337]"
                 >
                   <div className="text-[8px] font-bold uppercase tracking-wider text-slate-400">
                     {v.marca}
@@ -342,7 +342,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                   <div className="text-[11px] font-bold text-slate-900 leading-tight">
                     {v.modelo}
                   </div>
-                  <div className="mt-0.5 text-[9px] font-mono text-[#7A1F2B]">{v.calibre}</div>
+                  <div className="mt-0.5 text-[9px] font-mono text-[#2F3337]">{v.calibre}</div>
                   <div className="mt-1 h-20 overflow-hidden rounded-md" style={{ background: "transparent", backgroundImage: "none" }}>
                     <img
                       src={v.imagem || renderForKind(v.tipo as any)}
@@ -359,8 +359,8 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         {/* Munições compatíveis */}
         <div className="mt-5 px-6">
           <div className="mb-2 flex items-center gap-1.5">
-            <Layers className="h-3.5 w-3.5 text-[#7A1F2B]" />
-            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7A1F2B]">
+            <Layers className="h-3.5 w-3.5 text-[#2F3337]" />
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#2F3337]">
               Estoque · Mesmo calibre
             </div>
           </div>
@@ -385,7 +385,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
         <div className="mt-5 px-6 pb-8">
           <div className="mb-2 flex items-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#7A1F2B]">
+            <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[#2F3337]">
               Documentos da arma
             </div>
           </div>
@@ -405,7 +405,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                 ? "Registro SINARM para defesa pessoal: GTE não é exigível como documento permanente."
                 : "Sem indício confiável (sistema, finalidade, GT/GTE ou nº SIGMA). Revisar o cadastro da arma.";
             const cls = regime === "SIGMA"
-              ? "border-[#7A1F2B]/30 bg-[#FBF3F4] text-[#7A1F2B]"
+              ? "border-[#2F3337]/30 bg-[#F7F7F8] text-[#2F3337]"
               : regime === "SINARM"
                 ? "border-slate-300 bg-slate-50 text-slate-800"
                 : "border-amber-300 bg-amber-50 text-amber-900";
@@ -486,7 +486,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                       type="button"
                       onClick={reverter}
                       disabled={gtSaving}
-                      className="text-[10px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#7A1F2B]"
+                      className="text-[10px] font-bold uppercase tracking-wider text-slate-500 underline hover:text-[#2F3337]"
                     >
                       Reverter declaração
                     </button>
@@ -569,7 +569,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                   className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 shadow-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="rounded-sm bg-[#FBF3F4] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#7A1F2B] border border-[#E5C2C6]">
+                    <span className="rounded-sm bg-[#F7F7F8] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-[#2F3337] border border-[#D1D3D6]">
                       {d.category}
                     </span>
                     <span className="text-[11px] font-semibold text-slate-800">{d.title}</span>
@@ -580,7 +580,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                         <button
                           type="button"
                           onClick={() => viewer.abrirStorage(d.bucket || "qa-documentos", d.path!, { fileName: friendlyName(d.category, d.fileName, d), title: `${d.category} · ${d.title}` })}
-                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#2F3337] hover:text-[#2F3337]"
                           title="Visualizar arquivo original"
                         >
                           <Eye className="h-3 w-3" /> Ver
@@ -588,7 +588,7 @@ export function WeaponDrawer({ open, weapon, relatedDocs, ammoSameCalibre, onClo
                         <button
                           type="button"
                           onClick={() => handleDownload(d)}
-                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#7A1F2B] hover:text-[#7A1F2B]"
+                          className="inline-flex items-center gap-1 rounded border border-slate-300 bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-700 hover:border-[#2F3337] hover:text-[#2F3337]"
                           title={`Baixar ${friendlyName(d.category, d.fileName, d)}`}
                         >
                           <Download className="h-3 w-3" /> Baixar

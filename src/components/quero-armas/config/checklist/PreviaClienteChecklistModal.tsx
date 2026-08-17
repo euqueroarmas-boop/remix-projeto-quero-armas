@@ -107,7 +107,7 @@ export default function PreviaClienteChecklistModal({ servicoId, servicoNome, on
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4" style={{ color: "hsl(352 60% 30%)" }} />
+            <ShieldCheck className="w-4 h-4" style={{ color: "hsl(210 8% 20%)" }} />
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Pré-via do cliente</span>
           </div>
           <button onClick={onClose} className="h-7 w-7 rounded-lg hover:bg-slate-200 flex items-center justify-center">
@@ -194,7 +194,7 @@ export default function PreviaClienteChecklistModal({ servicoId, servicoNome, on
                                     href={link}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#7A1F2B] hover:underline"
+                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#2F3337] hover:underline"
                                   >
                                     <ExternalLink className="w-3 h-3" /> Onde emitir
                                   </a>

@@ -49,11 +49,11 @@ export default function ConfrontoCpfComprovanteModal({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onFechar(); }}>
       <DialogContent
-        className="max-w-md gap-0 overflow-hidden rounded-sm border-2 border-[#7A1F2B] bg-white p-0 [&>button]:hidden"
+        className="max-w-md gap-0 overflow-hidden rounded-sm border-2 border-[#2F3337] bg-white p-0 [&>button]:hidden"
       >
-        <div className="relative border-b-2 border-[#7A1F2B] bg-[#FAFAFA] px-5 py-4 pr-14 sm:pr-16">
+        <div className="relative border-b-2 border-[#2F3337] bg-[#FAFAFA] px-5 py-4 pr-14 sm:pr-16">
           <div className="flex items-center gap-2">
-            <ShieldQuestion className="h-4 w-4 text-[#7A1F2B]" />
+            <ShieldQuestion className="h-4 w-4 text-[#2F3337]" />
             <h2 className="font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-[#0A0A0A]">
               Conferência do titular
             </h2>
@@ -66,7 +66,7 @@ export default function ConfrontoCpfComprovanteModal({
             type="button"
             onClick={onFechar}
             aria-label="Fechar"
-            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-sm bg-[#7A1F2B] text-white transition-colors hover:bg-[#5A1622]"
+            className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-sm bg-[#2F3337] text-white transition-colors hover:bg-[#222528]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -106,7 +106,7 @@ export default function ConfrontoCpfComprovanteModal({
               className="h-11 rounded-sm border-[#D5D5D5] font-mono text-[15px]"
             />
             {erro && (
-              <p className="mt-2 rounded-sm border border-[#7A1F2B] bg-[#FDF2F3] px-2.5 py-2 text-[12px] text-[#7A1F2B]">
+              <p className="mt-2 rounded-sm border border-[#2F3337] bg-[#F7F8F8] px-2.5 py-2 text-[12px] text-[#2F3337]">
                 {erro}
               </p>
             )}
@@ -124,7 +124,7 @@ export default function ConfrontoCpfComprovanteModal({
           <Button
             onClick={() => onConfirmar(valor.replace(/\D/g, ""))}
             disabled={valor.replace(/\D/g, "").length !== 11}
-            className="h-11 flex-[1.3] rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#7A1F2B]"
+            className="h-11 flex-[1.3] rounded-sm bg-[#0A0A0A] font-heading text-[12px] font-bold uppercase tracking-[0.22em] text-white hover:bg-[#2F3337]"
           >
             Confirmar
           </Button>

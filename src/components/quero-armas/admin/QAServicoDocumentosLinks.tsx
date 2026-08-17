@@ -19,7 +19,7 @@ import {
  * editar aqui reflete em todas as exigências que usem o mesmo tipo_documento,
  * incluindo o assistente guiado do cliente que já os consome.
  *
- * Visual: Premium Light (#7A1F2B sobre branco). Linguagem: Equipe Quero Armas.
+ * Visual: Premium Light (#2F3337 sobre branco). Linguagem: Equipe Quero Armas.
  * ============================================================================= */
 
 type LinkRow = {
@@ -140,11 +140,11 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
   }
 
   return (
-    <div className="col-span-12 rounded-lg border border-[#7A1F2B]/20 bg-white p-2.5">
+    <div className="col-span-12 rounded-lg border border-[#2F3337]/20 bg-white p-2.5">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-2">
         <div className="flex items-center gap-2">
-          <Link2 className="h-3.5 w-3.5 text-[#7A1F2B]" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#7A1F2B]">
+          <Link2 className="h-3.5 w-3.5 text-[#2F3337]" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#2F3337]">
             LINKS DE EMISSÃO (REAPROVEITADOS DO CATÁLOGO)
           </span>
         </div>
@@ -152,7 +152,7 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
           type="button"
           onClick={() => void addNew()}
           disabled={creating}
-          className="h-7 px-2 inline-flex items-center gap-1 rounded bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-50"
+          className="h-7 px-2 inline-flex items-center gap-1 rounded bg-[#2F3337] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-50"
         >
           {creating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
           NOVO BOTÃO
@@ -168,7 +168,7 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
 
       {loading ? (
         <div className="py-4 flex items-center justify-center">
-          <Loader2 className="h-4 w-4 animate-spin text-[#7A1F2B]" />
+          <Loader2 className="h-4 w-4 animate-spin text-[#2F3337]" />
         </div>
       ) : rows.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-center text-[11px] uppercase tracking-wider text-slate-500">
@@ -183,33 +183,33 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
               <div
                 key={row.id}
                 className={`rounded-md border bg-white p-2 grid grid-cols-12 gap-2 items-center ${
-                  dirty ? "border-[#7A1F2B]/50" : "border-slate-200"
+                  dirty ? "border-[#2F3337]/50" : "border-slate-200"
                 }`}
               >
                 <input
                   value={m.nome_botao ?? ""}
                   onChange={(e) => patch(row.id, { nome_botao: e.target.value.toUpperCase() })}
                   placeholder="NOME DO BOTÃO"
-                  className="col-span-12 md:col-span-3 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] uppercase font-bold text-slate-900 focus:outline-none focus:border-[#7A1F2B]/40"
+                  className="col-span-12 md:col-span-3 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] uppercase font-bold text-slate-900 focus:outline-none focus:border-[#2F3337]/40"
                 />
                 <input
                   value={m.url ?? ""}
                   onChange={(e) => patch(row.id, { url: e.target.value })}
                   placeholder="https://..."
-                  className="col-span-12 md:col-span-4 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] font-mono text-slate-800 focus:outline-none focus:border-[#7A1F2B]/40"
+                  className="col-span-12 md:col-span-4 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] font-mono text-slate-800 focus:outline-none focus:border-[#2F3337]/40"
                   style={{ textTransform: "none" }}
                 />
                 <input
                   value={m.categoria ?? ""}
                   onChange={(e) => patch(row.id, { categoria: e.target.value || null })}
                   placeholder="CATEGORIA (OPCIONAL)"
-                  className="col-span-6 md:col-span-2 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] uppercase text-slate-800 focus:outline-none focus:border-[#7A1F2B]/40"
+                  className="col-span-6 md:col-span-2 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] uppercase text-slate-800 focus:outline-none focus:border-[#2F3337]/40"
                 />
                 <input
                   type="number"
                   value={m.ordem ?? 0}
                   onChange={(e) => patch(row.id, { ordem: Number(e.target.value) || 0 })}
-                  className="col-span-3 md:col-span-1 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-800 focus:outline-none focus:border-[#7A1F2B]/40"
+                  className="col-span-3 md:col-span-1 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] font-mono text-right text-slate-800 focus:outline-none focus:border-[#2F3337]/40"
                   title="Ordem"
                 />
                 <div className="col-span-3 md:col-span-2 flex items-center justify-end gap-1">
@@ -218,7 +218,7 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
                       type="checkbox"
                       checked={!!m.ativo}
                       onChange={(e) => patch(row.id, { ativo: e.target.checked })}
-                      className="accent-[#7A1F2B]"
+                      className="accent-[#2F3337]"
                     />
                     ATIVO
                   </label>
@@ -237,7 +237,7 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
                     type="button"
                     onClick={() => void saveRow(row)}
                     disabled={!dirty || savingId === row.id}
-                    className="h-7 px-2 inline-flex items-center gap-1 rounded bg-[#7A1F2B] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#5e1820] disabled:opacity-40"
+                    className="h-7 px-2 inline-flex items-center gap-1 rounded bg-[#2F3337] text-white text-[10px] font-bold uppercase tracking-wider hover:bg-[#24272A] disabled:opacity-40"
                   >
                     {savingId === row.id ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -259,7 +259,7 @@ export default function QAServicoDocumentosLinks({ tipoDocumento }: Props) {
                   value={m.descricao ?? ""}
                   onChange={(e) => patch(row.id, { descricao: e.target.value || null })}
                   placeholder="DESCRIÇÃO CURTA (APARECE PARA O CLIENTE)"
-                  className="col-span-12 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] text-slate-800 focus:outline-none focus:border-[#7A1F2B]/40"
+                  className="col-span-12 h-8 px-2 rounded border border-slate-200 bg-white text-[11px] text-slate-800 focus:outline-none focus:border-[#2F3337]/40"
                   style={{ textTransform: "none" }}
                 />
               </div>

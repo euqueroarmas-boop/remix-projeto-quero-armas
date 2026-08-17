@@ -32,9 +32,9 @@ const BTN_BASE =
 const btnMetrica = (asPage: boolean) =>
   asPage ? "h-10 rounded-lg px-4 text-[9.5px] tracking-[0.1em]" : "h-9 rounded-lg text-[9.5px] tracking-[0.1em]";
 /** Ação principal: bordô cheio, como sempre foi. */
-const BTN_BORDO = "bg-[#8A1224] text-white hover:bg-[#6f0f1e]";
+const BTN_BORDO = "bg-[#2F3439] text-white hover:bg-[#262A2E]";
 /** Ação alternativa: bordô em linha (1px, não 2px). */
-const BTN_BORDO_LINHA = "border border-[#8A1224] bg-white text-[#8A1224] hover:bg-[#FFF7F8]";
+const BTN_BORDO_LINHA = "border border-[#2F3439] bg-white text-[#2F3439] hover:bg-[#FBFBFB]";
 /** Download do contrato/procuração: preto, como sempre foi. */
 const BTN_PRETO = "bg-[#0A0A0A] text-white hover:bg-[#1a1a1a]";
 const BTN_VERDE = "bg-emerald-700 text-white hover:bg-emerald-800";
@@ -232,7 +232,7 @@ function TextoComLinks({ texto }: { texto: string }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-semibold text-[#8A1224] underline decoration-[#8A1224]/30 underline-offset-2 hover:decoration-[#8A1224] break-all"
+            className="font-semibold text-[#2F3439] underline decoration-[#2F3439]/30 underline-offset-2 hover:decoration-[#2F3439] break-all"
           >
             {parte}
           </a>
@@ -553,8 +553,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
       }
     }
     return ativo
-      ? "bg-[#8A1224] border-[#8A1224] text-white"
-      : "bg-white border-[#8A1224] text-[#8A1224] hover:bg-[#FFF7F8]";
+      ? "bg-[#2F3439] border-[#2F3439] text-white"
+      : "bg-white border-[#2F3439] text-[#2F3439] hover:bg-[#FBFBFB]";
   };
 
   const primaryLabel =
@@ -613,7 +613,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
         <button
           type="button"
           onClick={onDismiss}
-          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-1.5 text-white hover:bg-[#6f0f1e] transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#2F3439] p-1.5 text-white hover:bg-[#262A2E] transition-colors"
           aria-label="Fechar"
         >
           <X className="h-3.5 w-3.5" />
@@ -657,7 +657,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
               >
                 {primeiroNome ? (
                   <>
-                    <span style={{ color: "#7A1F2B" }}>{primeiroNome.toUpperCase()}</span>, ESTÁ NOS DEVENDO
+                    <span style={{ color: "#2F3337" }}>{primeiroNome.toUpperCase()}</span>, ESTÁ NOS DEVENDO
                     <br />{total === 1 ? "ENVIAR ESTE DOCUMENTO!" : "ENVIAR ESSES DOCUMENTOS!"}
                   </>
                 ) : (
@@ -671,7 +671,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                bloco agora começa na margem do cartão, alinhado com os badges
                e com o conteúdo abaixo. */
             <div className="min-w-0">
-              <p className="font-['Oswald',sans-serif] text-[9px] font-black uppercase tracking-[0.2em] text-[#8A1224]">
+              <p className="font-['Oswald',sans-serif] text-[9px] font-black uppercase tracking-[0.2em] text-[#2F3439]">
                 Checklist guiado
               </p>
               {/* Sem quebra de linha forçada: em telas estreitas ela produzia
@@ -699,7 +699,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 criminais, Ocupação lícita — e não mais a posição dentro dele.
                 "1 de 4 no grupo" competia com "Passo 1 de 4" e não dizia ao
                 cliente em que parte do processo ele estava. */}
-            <span className={`${CHIP} min-w-0 border border-[#8A1224]/20 bg-[#FFF7F8]`} style={{ color: "#7A1F2B" }}>
+            <span className={`${CHIP} min-w-0 border border-[#2F3439]/20 bg-[#FBFBFB]`} style={{ color: "#2F3337" }}>
               {/* Quem encolhe é o NOME do grupo; o "5/7" nunca some, senão o
                   cliente perde a noção de onde está no processo. */}
               <span className="min-w-0 truncate">{activeGrupo}</span>
@@ -709,7 +709,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                   segunda de seis. Escrito "5/7" e não "GRUPO 5 DE 7": a
                   palavra inteira sozinha custava 55px da linha. */}
               {grupoNoProcesso ? (
-                <span className="ml-1 shrink-0 font-bold text-[#8A1224]/70">
+                <span className="ml-1 shrink-0 font-bold text-[#2F3439]/70">
                   · {grupoNoProcesso.posicao}/{grupoNoProcesso.totalGrupos}
                 </span>
               ) : null}
@@ -781,7 +781,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 href={linkEmissaoFinal}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`inline-flex items-center gap-1.5 text-sm font-semibold text-[#7A1F2B] hover:text-[#8A1224] hover:underline underline-offset-2 ${asPage ? "mt-3" : "mt-2"}`}
+                className={`inline-flex items-center gap-1.5 text-sm font-semibold text-[#2F3337] hover:text-[#2F3439] hover:underline underline-offset-2 ${asPage ? "mt-3" : "mt-2"}`}
               >
                 <ExternalLink className="h-4 w-4 shrink-0" />
                 Acessar site pra emissão
@@ -866,7 +866,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
             <ul className="space-y-5 relative">
               {explic.passos.map((p, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="qa-btn-label flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center z-10" style={{ letterSpacing: 0, fontSize: 12 }}>
+                  <span className="qa-btn-label flex-shrink-0 w-8 h-8 rounded-full bg-[#FBFBFB] text-[#2F3439] border border-[#2F3439]/10 flex items-center justify-center z-10" style={{ letterSpacing: 0, fontSize: 12 }}>
                     {i + 1}
                   </span>
                   <p className="qa-body qa-body--soft pt-1">
@@ -880,8 +880,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {/* Observation */}
           {explic.observacao && activeGrupoId !== "antecedentes" && !tipoCredenciado ? (
-            <div className="mt-6 p-4 bg-[#FFF7F8] rounded-sm border border-[#8A1224]/10">
-              <p className="qa-caption" style={{ color: "#7A1F2B" }}>
+            <div className="mt-6 p-4 bg-[#FBFBFB] rounded-sm border border-[#2F3439]/10">
+              <p className="qa-caption" style={{ color: "#2F3337" }}>
                 <TextoComLinks texto={explic.observacao} />
               </p>
             </div>
@@ -889,8 +889,8 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {/* Botões de resposta inline — perguntas pivot */}
           {isPergunta && Array.isArray(active.perguntaOpcoes) && active.perguntaOpcoes.length > 0 ? (
-            <div className="mt-6 rounded-sm border border-[#8A1224]/20 bg-white p-4">
-              <div className="qa-eyebrow mb-3" style={{ color: "#7A1F2B" }}>
+            <div className="mt-6 rounded-sm border border-[#2F3439]/20 bg-white p-4">
+              <div className="qa-eyebrow mb-3" style={{ color: "#2F3337" }}>
                 {active.respostaAtual
                   ? `Resposta registrada: ${String(active.respostaAtual).toUpperCase()}`
                   : "Responda para liberar o próximo passo"}
@@ -923,14 +923,14 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
 
           {/* Escolha do profissional credenciado pela PF — sem sair do guiado. */}
           {tipoCredenciado ? (
-            <div className="mt-4 rounded-sm border border-[#8A1224]/20 bg-[#FFF7F8] p-4">
-              <p className="qa-caption" style={{ color: "#7A1F2B" }}>
+            <div className="mt-4 rounded-sm border border-[#2F3439]/20 bg-[#FBFBFB] p-4">
+              <p className="qa-caption" style={{ color: "#2F3337" }}>
                 {tipoCredenciado === "psicologo"
                   ? "Você optou por fazer os exames fora da instituição. Escolha um psicólogo credenciado pela Polícia Federal perto de você."
                   : "Escolha um instrutor de tiro credenciado pela Polícia Federal perto de você."}
               </p>
               {explic.observacao ? (
-                <p className="qa-caption mt-2" style={{ color: "#7A1F2B" }}>
+                <p className="qa-caption mt-2" style={{ color: "#2F3337" }}>
                   <TextoComLinks texto={explic.observacao} />
                 </p>
               ) : null}
@@ -955,7 +955,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <span className="qa-kpi-label">
                   Resolva um por vez
                 </span>
-                <span className="qa-kpi-label" style={{ color: "#7A1F2B" }}>
+                <span className="qa-kpi-label" style={{ color: "#2F3337" }}>
                   {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
                 </span>
               </div>
@@ -1011,7 +1011,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 <span className="text-[9px] font-bold text-[#6A6A6A] tracking-widest uppercase">
                   Resolva um por vez
                 </span>
-                <span className="text-[9px] font-bold text-[#8A1224] tracking-widest uppercase">
+                <span className="text-[9px] font-bold text-[#2F3439] tracking-widest uppercase">
                   {resumoProcesso.concluidos} de {resumoProcesso.totalObrigatorios} concluídos
                 </span>
               </div>

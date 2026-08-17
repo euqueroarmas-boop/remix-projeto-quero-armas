@@ -273,7 +273,7 @@ export default function QAProcuracaoPrimarioAdmin() {
     <div className="bg-white rounded-2xl border p-4 md:p-5" style={{ borderColor: "hsl(220 15% 90%)" }}>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "hsl(220 20% 18%)" }}>
-          <FileSignature className="h-4 w-4" style={{ color: "hsl(352 60% 30%)" }} /> Procuração — Modelo vigente
+          <FileSignature className="h-4 w-4" style={{ color: "hsl(210 8% 20%)" }} /> Procuração — Modelo vigente
         </h2>
         <Button variant="ghost" size="sm" onClick={() => carregar()} className="h-7 text-xs gap-1">
           <RefreshCw className="w-3 h-3" /> Atualizar
@@ -349,7 +349,7 @@ export default function QAProcuracaoPrimarioAdmin() {
                 <input ref={inputFileRef} type="file" accept=".html,.htm,.md,.txt" className="hidden"
                   onChange={(e) => onArquivoSelecionado(e.target.files?.[0] ?? null)} />
                 <Button size="sm" type="button" onClick={inserirModeloPadrao}
-                  className="h-7 text-xs bg-[#7B1C2E] hover:bg-[#6a1827] text-white gap-1">
+                  className="h-7 text-xs bg-[#2E3236] hover:bg-[#282B2F] text-white gap-1">
                   <Wand2 className="w-3 h-3" /> Modelo padrão
                 </Button>
               </div>
@@ -406,7 +406,7 @@ export default function QAProcuracaoPrimarioAdmin() {
                 <Save className="w-3.5 h-3.5" /> Salvar rascunho
               </Button>
               <Button size="sm" onClick={publicar} disabled={!editorHtml.trim() || publicando}
-                className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-8">
+                className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-8">
                 {publicando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                 {publicando ? "Publicando…" : "Publicar procuração"}
               </Button>
@@ -426,7 +426,7 @@ export default function QAProcuracaoPrimarioAdmin() {
                 placeholder="Digite o nome do cliente…"
                 value={regenBusca}
                 onChange={(e) => onRegenBuscaChange(e.target.value)}
-                className="h-8 w-full rounded border border-slate-300 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#7B1C2E]/40"
+                className="h-8 w-full rounded border border-slate-300 px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#2E3236]/40"
               />
               {regenBuscando && (
                 <Loader2 className="absolute right-2 top-2 w-3.5 h-3.5 animate-spin text-slate-400" />
@@ -453,7 +453,7 @@ export default function QAProcuracaoPrimarioAdmin() {
               size="sm"
               onClick={regenerarProcuracao}
               disabled={regenerando || !regenSelecionado}
-              className="h-8 text-xs gap-1 bg-[#7B1C2E] hover:bg-[#6a1827] text-white"
+              className="h-8 text-xs gap-1 bg-[#2E3236] hover:bg-[#282B2F] text-white"
             >
               {regenerando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
               {regenerando ? "Regenerando…" : "Regenerar procuração"}

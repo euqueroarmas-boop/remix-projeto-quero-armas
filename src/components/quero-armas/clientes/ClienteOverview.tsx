@@ -233,7 +233,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         sublabel: servicosNomes ? `Serviços: ${servicosNomes}${v.forma_pagamento ? ` · ${v.forma_pagamento}` : ""}` : undefined,
         type: "venda",
         icon: CreditCard,
-        color: "hsl(352 60% 30%)",
+        color: "hsl(210 8% 20%)",
         vendaNum,
       });
     });
@@ -462,14 +462,14 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               key={k.id}
               type="button"
               onClick={() => onNavigate(k.tab)}
-              className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all group"
+              className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#2F3337] transition-all group"
               style={{ borderColor: "hsl(220 13% 90%)" }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: k.bg, color: k.color }}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#7A1F2B]" />
+                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-[#2F3337]" />
               </div>
               <div className="text-[10px] font-bold uppercase tracking-[0.14em] mt-3" style={{ color: "hsl(220 10% 50%)" }}>{k.label}</div>
               <div className="text-[24px] font-bold leading-tight mt-0.5" style={{ color: "hsl(220 20% 18%)" }}>{k.value}</div>
@@ -530,7 +530,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
                 <button
                   type="button"
                   onClick={() => onNavigate("servicos")}
-                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] border-[#E5C2C6] bg-white hover:bg-[#FBF3F4]"
+                  className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#2F3337] border-[#D1D3D6] bg-white hover:bg-[#F7F7F8]"
                 >
                   Ver todos <ChevronRight className="h-3 w-3" />
                 </button>
@@ -567,7 +567,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
             <button
               type="button"
               onClick={() => onNavigate("servicos")}
-              className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B] border-[#E5C2C6] bg-white hover:bg-[#FBF3F4]"
+              className="inline-flex items-center gap-1 rounded-md border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#2F3337] border-[#D1D3D6] bg-white hover:bg-[#F7F7F8]"
             >
               Ver todos os passos <ChevronRight className="h-3 w-3" />
             </button>
@@ -584,7 +584,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               <FileText className="h-4 w-4" style={{ color: "#6D28D9" }} />
               <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Documentos e Validades</h3>
             </div>
-            <button onClick={() => onNavigate("hub")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
+            <button onClick={() => onNavigate("hub")} className="text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:underline">
               Gerenciar documentos
             </button>
           </div>
@@ -633,7 +633,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               <Shield className="h-4 w-4" style={{ color: "#1D4ED8" }} />
               <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Arsenal — Revisão</h3>
             </div>
-            <button onClick={() => onNavigate("arsenal")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
+            <button onClick={() => onNavigate("arsenal")} className="text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:underline">
               Ver detalhes
             </button>
           </div>
@@ -668,7 +668,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               <Activity className="h-4 w-4" style={{ color: "#1D4ED8" }} />
               <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Linha do Tempo</h3>
             </div>
-            <button onClick={() => onNavigate("historico")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
+            <button onClick={() => onNavigate("historico")} className="text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:underline">
               Ver todos
             </button>
           </div>
@@ -715,7 +715,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
               <TrendingUp className="h-4 w-4" style={{ color: "#047857" }} />
               <h3 className="text-[11px] font-bold uppercase tracking-[0.14em] truncate" style={{ color: "hsl(220 20% 22%)" }}>Histórico Financeiro</h3>
             </div>
-            <button onClick={() => onNavigate("servicos")} className="text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:underline">
+            <button onClick={() => onNavigate("servicos")} className="text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:underline">
               Ver todos
             </button>
           </div>
@@ -752,7 +752,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
 
       {/* LINHA 5 — Resumo operacional inferior (3 cards compactos) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <button onClick={() => onNavigate("hub")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
+        <button onClick={() => onNavigate("hub")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#2F3337] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#EDE9FE", color: "#6D28D9" }}>
               <Shield className="h-4 w-4" />
@@ -773,7 +773,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
           )}
         </button>
 
-        <button onClick={() => onNavigate("arsenal")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
+        <button onClick={() => onNavigate("arsenal")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#2F3337] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#DBEAFE", color: "#1D4ED8" }}>
               <Crosshair className="h-4 w-4" />
@@ -785,7 +785,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
           </div>
         </button>
 
-        <button onClick={() => onNavigate("dados")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#7A1F2B] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
+        <button onClick={() => onNavigate("dados")} className="text-left rounded-xl border bg-white p-4 shadow-sm hover:shadow-md hover:border-[#2F3337] transition-all" style={{ borderColor: "hsl(220 13% 90%)" }}>
           <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#FFEDD5", color: "#C2410C" }}>
               <Users className="h-4 w-4" />

@@ -8,7 +8,7 @@
  *  - edge qa-doc-acao-equipe  (ações: aprovar | aprovar_e_modelar | rejeitar | signed_url)
  *  - edge qa-modelo-aprovado-criar (promove um documento aprovado a modelo)
  *
- * Visual Premium Light (marca #7A1F2B), terminologia "Equipe Quero Armas"
+ * Visual Premium Light (marca #2F3337), terminologia "Equipe Quero Armas"
  * (nunca "admin"). Documentos sempre abertos via DocumentoViewerModal.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -75,7 +75,7 @@ export default function QAFilaRevisaoHumana() {
     <div className="qa-scope mx-auto w-full max-w-[1400px] px-4 md:px-6">
       <header className="mb-5">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-4 w-4 text-[#7A1F2B]" />
+          <ShieldCheck className="h-4 w-4 text-[#2F3337]" />
           <h2 className="text-[14px] font-bold uppercase tracking-widest text-slate-900">
             Revisão IA · Equipe Quero Armas
           </h2>
@@ -116,7 +116,7 @@ function TabBtn({
       onClick={onClick}
       className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ${
         active
-          ? "bg-white text-[#7A1F2B] shadow-sm border border-[#7A1F2B]/30"
+          ? "bg-white text-[#2F3337] shadow-sm border border-[#2F3337]/30"
           : "text-slate-500 hover:text-slate-700"
       }`}
     >
@@ -322,7 +322,7 @@ function FilaConferencia() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar cliente, serviço ou documento…"
-              className="h-9 w-[280px] rounded-md border border-slate-200 bg-white pl-7 pr-2 text-[12px] uppercase tracking-wide text-slate-700 placeholder:text-slate-400 placeholder:normal-case focus:border-[#7A1F2B] focus:outline-none"
+              className="h-9 w-[280px] rounded-md border border-slate-200 bg-white pl-7 pr-2 text-[12px] uppercase tracking-wide text-slate-700 placeholder:text-slate-400 placeholder:normal-case focus:border-[#2F3337] focus:outline-none"
             />
           </div>
           <button
@@ -412,7 +412,7 @@ function FilaConferencia() {
                             setMotivo("");
                           }}
                           disabled={acaoLoadingId === d.id}
-                          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#7A1F2B]/30 bg-white px-2 text-[10px] font-bold uppercase tracking-wider text-[#7A1F2B] hover:bg-[#7A1F2B]/5 disabled:opacity-50"
+                          className="inline-flex h-8 items-center gap-1 rounded-md border border-[#2F3337]/30 bg-white px-2 text-[10px] font-bold uppercase tracking-wider text-[#2F3337] hover:bg-[#2F3337]/5 disabled:opacity-50"
                         >
                           <XCircle className="h-3 w-3" /> Reprovar
                         </button>
@@ -444,7 +444,7 @@ function FilaConferencia() {
                 className="mt-0.5"
               />
               <div>
-                <div className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-[#2F3337]">
                   Usar este envio como modelo de treino
                 </div>
                 <div className="text-[11px] text-slate-500">
@@ -498,7 +498,7 @@ function FilaConferencia() {
                 onChange={(e) => setMotivo(e.target.value)}
                 rows={4}
                 placeholder="Descreva o ajuste necessário em linguagem simples. Ex.: A foto está cortada. Reenvie em formato A4 com a assinatura visível."
-                className="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-[12px] text-slate-700 placeholder:text-slate-400 focus:border-[#7A1F2B] focus:outline-none"
+                className="mt-1 w-full rounded-md border border-slate-200 bg-white p-2 text-[12px] text-slate-700 placeholder:text-slate-400 focus:border-[#2F3337] focus:outline-none"
               />
               <div className="mt-1 text-[10px] text-slate-400">Mínimo 5 caracteres.</div>
             </div>
@@ -514,7 +514,7 @@ function FilaConferencia() {
                 type="button"
                 onClick={() => void confirmarRejeicao()}
                 disabled={acaoLoadingId === rejeicao.id || motivo.trim().length < 5}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-[#7A1F2B] px-3 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#5e1622] disabled:opacity-50"
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-[#2F3337] px-3 text-[11px] font-bold uppercase tracking-wider text-white hover:bg-[#24272A] disabled:opacity-50"
               >
                 {acaoLoadingId === rejeicao.id ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -672,7 +672,7 @@ function ProcessosDeferidos() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar cliente ou serviço…"
-              className="h-9 w-[260px] rounded-md border border-slate-200 bg-white pl-7 pr-2 text-[12px] uppercase tracking-wide text-slate-700 placeholder:text-slate-400 placeholder:normal-case focus:border-[#7A1F2B] focus:outline-none"
+              className="h-9 w-[260px] rounded-md border border-slate-200 bg-white pl-7 pr-2 text-[12px] uppercase tracking-wide text-slate-700 placeholder:text-slate-400 placeholder:normal-case focus:border-[#2F3337] focus:outline-none"
             />
           </div>
           <button
@@ -685,7 +685,7 @@ function ProcessosDeferidos() {
         </div>
       </div>
 
-      <p className="mb-3 rounded-md border border-[#7A1F2B]/15 bg-[#7A1F2B]/5 px-3 py-2 text-[11px] text-[#7A1F2B]">
+      <p className="mb-3 rounded-md border border-[#2F3337]/15 bg-[#2F3337]/5 px-3 py-2 text-[11px] text-[#2F3337]">
         Ao final de um processo deferido, os documentos aprovados podem virar modelos da IA com um
         clique. Itens já promovidos são automaticamente pulados.
       </p>
@@ -734,7 +734,7 @@ function ProcessosDeferidos() {
                       type="button"
                       onClick={() => void promoverEmLote(p)}
                       disabled={promovendoId === p.id || pendentes === 0}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#7A1F2B] px-2.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-[#5e1622] disabled:opacity-50"
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md bg-[#2F3337] px-2.5 text-[10px] font-bold uppercase tracking-wider text-white hover:bg-[#24272A] disabled:opacity-50"
                     >
                       {promovendoId === p.id ? (
                         <Loader2 className="h-3 w-3 animate-spin" />
@@ -807,7 +807,7 @@ function ModalShell({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[12px] font-bold uppercase tracking-widest text-[#7A1F2B]">{title}</h3>
+          <h3 className="text-[12px] font-bold uppercase tracking-widest text-[#2F3337]">{title}</h3>
           <button
             type="button"
             onClick={onClose}

@@ -213,7 +213,7 @@ export default function DashboardClientesOnline() {
         <div className="flex items-center gap-2.5">
           <span
             className="flex items-center justify-center h-9 w-9 rounded-lg"
-            style={{ background: "hsl(352 60% 96%)", color: "hsl(352 60% 30%)" }}
+            style={{ background: "hsl(210 8% 96%)", color: "hsl(210 8% 20%)" }}
           >
             <Users className="h-4.5 w-4.5" />
           </span>

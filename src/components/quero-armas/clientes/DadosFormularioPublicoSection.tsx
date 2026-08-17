@@ -471,7 +471,7 @@ export default function DadosFormularioPublicoSection({
           actions={
             <Button
               size="sm"
-              className="h-7 text-[10px] bg-[#7A1F2B] hover:bg-[#601521]"
+              className="h-7 text-[10px] bg-[#2F3337] hover:bg-[#24272A]"
               disabled={busy}
               onClick={() => void aplicarPendentes()}
             >

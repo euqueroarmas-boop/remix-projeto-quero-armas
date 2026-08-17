@@ -803,10 +803,10 @@ export default function ClientePecas({ cliente }: Props) {
         )}
 
         {tipoPeca === "recurso_administrativo" && (
-          <div className="space-y-3 rounded-lg border-2 p-3" style={{ borderColor: "#7A1F2B33", background: "#FBF3F4" }}>
+          <div className="space-y-3 rounded-lg border-2 p-3" style={{ borderColor: "#2F333733", background: "#F7F7F8" }}>
             <div className="flex items-center gap-2">
-              <Gavel className="h-3.5 w-3.5" style={{ color: "#7A1F2B" }} />
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7A1F2B" }}>
+              <Gavel className="h-3.5 w-3.5" style={{ color: "#2F3337" }} />
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#2F3337" }}>
                 DECISÃO ADMINISTRATIVA / INDEFERIMENTO
               </span>
               {indeferimentoAnalise && (
@@ -850,7 +850,7 @@ export default function ClientePecas({ cliente }: Props) {
                   disabled={analisandoIndef || indeferimentoTexto.trim().length < 100}
                   onClick={analisarIndeferimento}
                   className="h-8 text-[10px] uppercase font-bold text-white disabled:opacity-40"
-                  style={{ background: "#7A1F2B" }}
+                  style={{ background: "#2F3337" }}
                 >
                   {analisandoIndef ? <Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> : <Scale className="h-3 w-3 mr-1.5" />}
                   ANALISAR INDEFERIMENTO COM IA
@@ -861,22 +861,22 @@ export default function ClientePecas({ cliente }: Props) {
               <div className="space-y-2 rounded-lg border-2 p-2.5 text-[11px] bg-white"
                 style={{ borderColor: "hsl(220 15% 90%)", color: "hsl(220 20% 25%)" }}>
                 {indeferimentoAnalise.resumo_decisao && (
-                  <div><span className="font-bold uppercase" style={{ color: "#7A1F2B" }}>RESUMO:</span> {indeferimentoAnalise.resumo_decisao}</div>
+                  <div><span className="font-bold uppercase" style={{ color: "#2F3337" }}>RESUMO:</span> {indeferimentoAnalise.resumo_decisao}</div>
                 )}
                 {Array.isArray(indeferimentoAnalise.fundamentos_de_indef) && indeferimentoAnalise.fundamentos_de_indef.length > 0 && (
                   <div>
-                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>FUNDAMENTOS DO INDEFERIMENTO ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#2F3337" }}>FUNDAMENTOS DO INDEFERIMENTO ({indeferimentoAnalise.fundamentos_de_indef.length}):</div>
                     <ul className="list-decimal list-inside space-y-0.5">
                       {indeferimentoAnalise.fundamentos_de_indef.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
                   </div>
                 )}
                 {Array.isArray(indeferimentoAnalise.artigos_citados) && indeferimentoAnalise.artigos_citados.length > 0 && (
-                  <div><span className="font-bold uppercase" style={{ color: "#7A1F2B" }}>DISPOSITIVOS CITADOS:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
+                  <div><span className="font-bold uppercase" style={{ color: "#2F3337" }}>DISPOSITIVOS CITADOS:</span> {indeferimentoAnalise.artigos_citados.join("; ")}</div>
                 )}
                 {Array.isArray(indeferimentoAnalise.falhas_logicas) && indeferimentoAnalise.falhas_logicas.length > 0 && (
                   <div>
-                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>FALHAS LÓGICAS:</div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#2F3337" }}>FALHAS LÓGICAS:</div>
                     <ul className="list-disc list-inside space-y-0.5">
                       {indeferimentoAnalise.falhas_logicas.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
@@ -884,7 +884,7 @@ export default function ClientePecas({ cliente }: Props) {
                 )}
                 {Array.isArray(indeferimentoAnalise.vicios_formais) && indeferimentoAnalise.vicios_formais.length > 0 && (
                   <div>
-                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>VÍCIOS FORMAIS:</div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#2F3337" }}>VÍCIOS FORMAIS:</div>
                     <ul className="list-disc list-inside space-y-0.5">
                       {indeferimentoAnalise.vicios_formais.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>
@@ -892,7 +892,7 @@ export default function ClientePecas({ cliente }: Props) {
                 )}
                 {Array.isArray(indeferimentoAnalise.pontos_nao_enfrentados) && indeferimentoAnalise.pontos_nao_enfrentados.length > 0 && (
                   <div>
-                    <div className="font-bold uppercase mb-0.5" style={{ color: "#7A1F2B" }}>PONTOS NÃO ENFRENTADOS:</div>
+                    <div className="font-bold uppercase mb-0.5" style={{ color: "#2F3337" }}>PONTOS NÃO ENFRENTADOS:</div>
                     <ul className="list-disc list-inside space-y-0.5">
                       {indeferimentoAnalise.pontos_nao_enfrentados.map((f: string, i: number) => <li key={i}>{f}</li>)}
                     </ul>

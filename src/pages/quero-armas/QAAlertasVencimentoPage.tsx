@@ -336,7 +336,7 @@ function Group({ title, rows }: { title: string; rows: [string, string][] }) {
 
 function FonteBadge({ fonte }: { fonte: string }) {
   const colors: Record<string, string> = {
-    CR: "bg-[#7A1F2B] text-[#FBF3F4]",
+    CR: "bg-[#2F3337] text-[#F7F7F8]",
     CRAF: "bg-purple-900 text-purple-50",
     DOCUMENTO: "bg-stone-700 text-stone-50",
     AUTORIZACAO: "bg-emerald-900 text-emerald-50",
