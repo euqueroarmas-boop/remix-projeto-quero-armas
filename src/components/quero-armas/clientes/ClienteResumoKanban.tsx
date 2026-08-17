@@ -710,11 +710,13 @@ export default function ClienteResumoKanban({
         doc?.dados_json?.nome_titular ||
         doc?.dados_json?.titular_comprovante_nome ||
         null;
-      const subDoc = titularDoc && !isLaudo
-        ? `__TITULAR__${titularDoc}`
-        : avisoParaTipo(tipo, URG_SUB.documento);
       const validadeDoc = doc?.data_validade_efetiva || doc?.data_validade;
       const diasDoc = daysUntil(validadeDoc);
+      // `diasDoc` entra no aviso: sem ele o texto afirmava "fora da validade"
+      // ao lado de "30 DIAS RESTANTES".
+      const subDoc = titularDoc && !isLaudo
+        ? `__TITULAR__${titularDoc}`
+        : avisoParaTipo(tipo, URG_SUB.documento, diasDoc);
       const isComprovante = tipo === "comprovante_residencia";
       pushUrgent(
         isComprovante
@@ -745,7 +747,7 @@ export default function ClienteResumoKanban({
       if (tipo && tiposNoHub.has(tipo)) return;
       pushUrgent(
         shortName(getNomeDocumentoDisplay(doc, "Documento do processo"), "Documento do processo"),
-        avisoParaTipo(tipo, AVISO_DOC_PROCESSO_SEM_HUB),
+        avisoParaTipo(tipo, AVISO_DOC_PROCESSO_SEM_HUB, daysUntil(doc?.data_validade_efetiva || doc?.data_validade)),
         doc?.data_validade_efetiva || doc?.data_validade,
         "processos",
         "ATUALIZAR AGORA →",

@@ -123,8 +123,22 @@ export const AVISO_GENERICO_DOCUMENTO = "Certidão ou regularidade próxima do v
 export const AVISO_DOC_PROCESSO_SEM_HUB = "Documento entregue no processo com prazo perto do fim.";
 export const AVISO_PRAZO_PROCESSUAL = "Prazo processual crítico · ação imediata na PF.";
 
-export function avisoParaTipo(tipo?: string | null, fallback = AVISO_GENERICO_DOCUMENTO): string {
-  return AVISO_POR_TIPO[norm(tipo)] ?? fallback;
+/**
+ * Aviso do documento. Passando `dias`, a frase respeita o estado real: os
+ * textos das certidões afirmam "fora da validade", o que era exibido junto de
+ * "30 DIAS RESTANTES" — o cartão dizia que o documento venceu e que faltavam
+ * 30 dias ao mesmo tempo. Só quem já venceu (dias < 0) recebe a afirmação; o
+ * resto vira "vence em N dias", preservando a instrução de onde emitir.
+ */
+export function avisoParaTipo(
+  tipo?: string | null,
+  fallback = AVISO_GENERICO_DOCUMENTO,
+  dias?: number | null,
+): string {
+  const base = AVISO_POR_TIPO[norm(tipo)] ?? fallback;
+  if (typeof dias !== "number" || Number.isNaN(dias) || dias < 0) return base;
+  const prazo = dias === 0 ? "vence hoje" : `vence em ${dias} ${dias === 1 ? "dia" : "dias"}`;
+  return base.replace(/\bfora da validade\b/i, prazo);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -121,3 +121,30 @@ describe("notificação no formato do macOS", () => {
     expect(src).toContain("lg:top-[calc(84px+var(--emu-barra,0px))]");
   });
 });
+
+describe("aviso não afirma que venceu quando ainda há prazo", () => {
+  it("troca 'fora da validade' por 'vence em N dias' enquanto há prazo", async () => {
+    const { avisoParaTipo } = await import("../avisosVencimento");
+    const tipo = "antecedentes_federal_sjsp_jef";
+
+    // Era o texto exibido junto de "30 DIAS RESTANTES" — o cartão afirmava
+    // que o documento venceu e que faltavam 30 dias, ao mesmo tempo.
+    expect(avisoParaTipo(tipo)).toContain("fora da validade");
+
+    expect(avisoParaTipo(tipo, undefined, 30)).toContain("vence em 30 dias");
+    expect(avisoParaTipo(tipo, undefined, 30)).not.toContain("fora da validade");
+    // A instrução de onde emitir continua na frase.
+    expect(avisoParaTipo(tipo, undefined, 30)).toContain("portal do TRF3");
+
+    expect(avisoParaTipo(tipo, undefined, 1)).toContain("vence em 1 dia");
+    expect(avisoParaTipo(tipo, undefined, 0)).toContain("vence hoje");
+    // Vencido de verdade mantém a afirmação.
+    expect(avisoParaTipo(tipo, undefined, -3)).toContain("fora da validade");
+  });
+
+  it("não mexe em textos que falam de outra coisa", async () => {
+    const { avisoParaTipo } = await import("../avisosVencimento");
+    // "fora do prazo" e "fora do mês corrente" não são "fora da validade".
+    expect(avisoParaTipo("renda_extrato_inss", undefined, 12)).toContain("fora do mês corrente");
+  });
+});
