@@ -1,0 +1,61 @@
+# Tema da referência HTML gerada a partir do OpenAPI.
+# Cores e fontes espelham os tokens --qa-* de src/index.css.
+#
+#   npx @redocly/cli build-docs docs/api/arsenal-inteligente-produtos.openapi.yaml \
+#     --config docs/api/redocly.yaml -o docs/api/arsenal-inteligente-produtos.html
+#
+# Depois de gerar, rode scripts/api-docs-offline.mjs para embutir fontes e
+# remover as chamadas de CDN (o HTML precisa abrir sem internet).
+
+openapi:
+  hideDownloadButton: true
+  expandResponses: "200,201"
+  jsonSampleExpandLevel: 3
+  theme:
+    colors:
+      primary:
+        main: "#7A1F2B"      # --qa-vermelho
+      success:
+        main: "#0F7A45"      # --qa-verde
+      warning:
+        main: "#8A6A17"      # --qa-ambar
+      error:
+        main: "#7A1F2B"
+      text:
+        primary: "#0A0A0A"   # --qa-tinta
+        secondary: "#3A3A3A" # --qa-tinta-2
+      border:
+        dark: "#DADADA"      # --qa-linha-2
+        light: "#E4E4E4"     # --qa-linha
+      http:
+        get: "#0F7A45"
+        post: "#8A6A17"
+        patch: "#6A6A6A"
+        delete: "#7A1F2B"
+    typography:
+      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif"
+      fontSize: "15px"
+      lineHeight: "1.6"
+      headings:
+        fontFamily: "Oswald, Inter, sans-serif"
+        fontWeight: "600"
+      code:
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+        fontSize: "13px"
+        color: "#7A1F2B"
+        backgroundColor: "#FAF6F6"
+      links:
+        color: "#7A1F2B"
+        visited: "#7A1F2B"
+        hover: "#5B1520"
+    sidebar:
+      backgroundColor: "#F5F6F8"  # --qa-app
+      textColor: "#3A3A3A"
+      activeTextColor: "#7A1F2B"
+      width: "290px"
+    rightPanel:
+      backgroundColor: "#1C1618"  # near-black com viés quente do vermelho
+      textColor: "#F5F6F8"
+      width: "38%"
+    codeBlock:
+      backgroundColor: "#14100F"

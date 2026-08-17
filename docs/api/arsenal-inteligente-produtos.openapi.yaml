@@ -1,0 +1,2082 @@
+openapi: 3.1.0
+
+info:
+  title: Arsenal Inteligente — APIs de Produtos
+  version: "1.0.0"
+  summary: Catálogo de armamentos, acervo do cliente, munições e planos do Arsenal Inteligente.
+  license:
+    name: Proprietário — Quero Armas (uso restrito)
+  contact:
+    name: Equipe Quero Armas
+  description: |
+    Contrato das APIs de **produtos** do módulo Arsenal Inteligente (Quero Armas).
+
+    O backend é **Supabase**. Existem duas superfícies de API, ambas no mesmo host:
+
+    | Superfície | Prefixo | O que é |
+    |---|---|---|
+    | PostgREST | `/rest/v1` | CRUD direto em tabelas e views, gerado automaticamente pelo Postgres |
+    | Edge Functions | `/functions/v1` | Funções Deno com regra de negócio (IA, cobrança, exclusão em cascata) |
+
+    ## Autenticação
+
+    **Toda** requisição precisa de dois cabeçalhos:
+
+    ```http
+    apikey: <SUPABASE_ANON_KEY>
+    Authorization: Bearer <JWT do usuário logado>
+    ```
+
+    - `apikey` é a chave pública (anon) do projeto — é o mesmo valor de
+      `VITE_SUPABASE_PUBLISHABLE_KEY` que o front usa. Pedir ao time Quero Armas.
+    - O `Bearer` é o `access_token` devolvido por `supabase.auth.signInWithPassword`
+      (ou pelo fluxo OTP do portal do cliente). Sem ele o Postgres trata a chamada
+      como papel `anon` e o RLS derruba quase tudo.
+
+    ## RLS (Row Level Security)
+
+    Todas as tabelas têm RLS ligado. Regra geral:
+
+    - **Cliente logado**: enxerga e escreve apenas as linhas do próprio
+      `cliente_id` / `qa_cliente_id` (resolvido por `qa_current_cliente_id(auth.uid())`).
+    - **Staff Quero Armas** (`qa_usuarios_perfis.ativo = true`): enxerga e escreve tudo.
+    - **Exceção**: `qa_armamentos_catalogo` e `qa_arsenal_planos` são de **leitura
+      liberada** (catálogo e tabela de preço são referência pública). Escrita só admin.
+
+    Consequência prática: um `GET` que devolve `[]` normalmente **não** é bug de
+    filtro, é RLS barrando. Confira o JWT antes de abrir chamado.
+
+    ## Convenções do PostgREST
+
+    Os endpoints `/rest/v1/*` aceitam a sintaxe padrão do PostgREST:
+
+    - **Selecionar colunas**: `?select=id,marca,modelo`
+    - **Filtrar**: `?tipo=eq.pistola`, `?calibre=in.(9mm,.380)`, `?marca=ilike.*taurus*`,
+      `?data_validade=lt.2027-01-01`, `?catalogo_id=is.null`
+    - **Ordenar**: `?order=marca.asc,modelo.asc`
+    - **Paginar**: `?limit=50&offset=100` ou header `Range: 0-49`
+    - **Contar**: header `Prefer: count=exact` → devolve `Content-Range: 0-49/2310`
+    - **Devolver o registro gravado**: header `Prefer: return=representation`
+    - **Upsert**: `POST` + header `Prefer: resolution=merge-duplicates`
+    - **Um objeto em vez de array**: header `Accept: application/vnd.pgrst.object+json`
+
+    Os parâmetros de query estão declarados nos endpoints abaixo de forma
+    resumida; qualquer coluna do schema pode ser usada como filtro no mesmo formato
+    `?coluna=operador.valor`.
+
+    ## Erros
+
+    | Status | Quando |
+    |---|---|
+    | 400 | filtro/payload inválido, `CHECK` violado |
+    | 401 | JWT ausente, expirado ou inválido |
+    | 403 | RLS negou, ou a Edge Function exigiu staff e o chamador é cliente |
+    | 404 | recurso não existe (ou RLS escondeu) |
+    | 409 | conflito de unicidade / assinatura já vigente |
+    | 422 | dado obrigatório do cadastro faltando (ex.: CPF) |
+    | 5xx | falha interna, storage ou gateway de IA/Asaas |
+
+    Erro do PostgREST vem no formato `{ "code", "message", "details", "hint" }`.
+    Erro de Edge Function vem no formato `{ "error": "...", "detail"? }`.
+
+servers:
+  - url: https://ogkltfqvzweeqkfmrzts.supabase.co
+    description: Produção (Supabase)
+
+security:
+  - apiKeyAuth: []
+    bearerAuth: []
+
+tags:
+  - name: Catálogo de armamentos
+    description: |
+      Catálogo curado de modelos de arma (o "produto" de referência). Alimenta a
+      ficha técnica, a silhueta e as barras de status da Bancada Tática.
+  - name: Acervo do cliente
+    description: |
+      As armas que o cliente efetivamente possui, consolidadas a partir de CRAF,
+      GTE e cadastro manual.
+  - name: Documentos da arma
+    description: CRAFs e GTEs — a origem documental de cada arma do acervo.
+  - name: Munições
+    description: Estoque de munição por calibre/lote, movimentações e saldo.
+  - name: Planos e assinatura
+    description: Produto comercial — Arsenal Inteligente Premium.
+  - name: Operações (Edge Functions)
+    description: Extração por IA, vínculo com o catálogo e exclusão em cascata.
+
+paths:
+
+  # ─────────────────────────────────────────────────────────────
+  # CATÁLOGO
+  # ─────────────────────────────────────────────────────────────
+  /rest/v1/qa_armamentos_catalogo:
+    get:
+      tags: [Catálogo de armamentos]
+      summary: Lista o catálogo de armamentos
+      description: |
+        Leitura liberada para qualquer usuário autenticado. O app carrega uma vez
+        por sessão com `?ativo=eq.true`.
+
+        Exemplos:
+        ```
+        GET /rest/v1/qa_armamentos_catalogo?ativo=eq.true&select=*
+        GET /rest/v1/qa_armamentos_catalogo?tipo=eq.pistola&calibre=eq.9mm&order=marca.asc
+        GET /rest/v1/qa_armamentos_catalogo?search_tokens=ilike.*GLOCK*&limit=10
+        ```
+      operationId: listarCatalogo
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/PreferCount'
+        - name: id
+          in: query
+          schema: { type: string }
+          example: eq.1f0c2a5e-2d1b-4c8a-9f3e-77b0a1c2d3e4
+        - name: ativo
+          in: query
+          schema: { type: string }
+          example: eq.true
+        - name: tipo
+          in: query
+          description: 'pistola | revolver | espingarda | carabina | fuzil | submetralhadora | outra'
+          schema: { type: string }
+          example: eq.pistola
+        - name: marca
+          in: query
+          schema: { type: string }
+          example: ilike.*taurus*
+        - name: modelo
+          in: query
+          schema: { type: string }
+          example: eq.G2C
+        - name: calibre
+          in: query
+          schema: { type: string }
+          example: in.(9mm,.380)
+        - name: status_revisao
+          in: query
+          schema: { type: string }
+          example: eq.aprovado
+        - name: search_tokens
+          in: query
+          description: Blob normalizado (maiúsculas, sem acento) usado na busca livre.
+          schema: { type: string }
+          example: ilike.*GLOCK 17*
+      responses:
+        '200':
+          description: Lista de armamentos do catálogo.
+          headers:
+            Content-Range:
+              $ref: '#/components/headers/ContentRange'
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmamentoCatalogo' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '400': { $ref: '#/components/responses/ErroPostgrest' }
+    post:
+      tags: [Catálogo de armamentos]
+      summary: Cria um armamento no catálogo (admin)
+      description: Restrito a administradores. Clientes recebem 403 pelo RLS.
+      operationId: criarArmamentoCatalogo
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArmamentoCatalogoInput' }
+      responses:
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmamentoCatalogo' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+        '400': { $ref: '#/components/responses/ErroPostgrest' }
+    patch:
+      tags: [Catálogo de armamentos]
+      summary: Atualiza armamentos do catálogo (admin)
+      description: |
+        **Obrigatório** enviar filtro na query — sem filtro o PostgREST atualiza a
+        tabela inteira.
+
+        ```
+        PATCH /rest/v1/qa_armamentos_catalogo?id=eq.<uuid>
+        ```
+      operationId: atualizarArmamentoCatalogo
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.1f0c2a5e-2d1b-4c8a-9f3e-77b0a1c2d3e4
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArmamentoCatalogoInput' }
+      responses:
+        '200':
+          description: Atualizado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmamentoCatalogo' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+    delete:
+      tags: [Catálogo de armamentos]
+      summary: Remove um armamento do catálogo (admin)
+      description: Prefira `PATCH ativo=false` — remover quebra o vínculo `catalogo_id` de CRAFs/GTEs.
+      operationId: excluirArmamentoCatalogo
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.1f0c2a5e-2d1b-4c8a-9f3e-77b0a1c2d3e4
+      responses:
+        '204': { description: Removido. }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  # ─────────────────────────────────────────────────────────────
+  # ACERVO
+  # ─────────────────────────────────────────────────────────────
+  /rest/v1/qa_cliente_armas:
+    get:
+      tags: [Acervo do cliente]
+      summary: Acervo consolidado do cliente (view, somente leitura)
+      description: |
+        **View** que unifica as armas vindas de CRAF, GTE e cadastro manual, já
+        deduplicadas por número de série / SIGMA. É a fonte que a Bancada Tática
+        usa para desenhar os cards.
+
+        Somente leitura — para escrever, use `qa_cliente_armas_manual` (manual) ou
+        `qa_crafs` / `qa_gtes` (documental).
+
+        ```
+        GET /rest/v1/qa_cliente_armas?qa_cliente_id=eq.1234&order=marca.asc
+        ```
+      operationId: listarAcervoCliente
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/PreferCount'
+        - name: qa_cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: user_id
+          in: query
+          schema: { type: string }
+          example: eq.9b1d...
+        - name: numero_serie
+          in: query
+          schema: { type: string }
+          example: eq.AB123456
+        - name: numero_sigma
+          in: query
+          schema: { type: string }
+          example: eq.1234567
+        - name: tipo_arma
+          in: query
+          schema: { type: string }
+          example: eq.PISTOLA
+        - name: status_documental
+          in: query
+          schema: { type: string }
+          example: eq.regular
+        - name: needs_review
+          in: query
+          schema: { type: string }
+          example: eq.true
+        - name: fonte
+          in: query
+          description: 'De onde a linha veio: CRAF | GTE | MANUAL'
+          schema: { type: string }
+          example: eq.CRAF
+      responses:
+        '200':
+          description: Armas do acervo.
+          headers:
+            Content-Range:
+              $ref: '#/components/headers/ContentRange'
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ClienteArma' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /rest/v1/qa_cliente_armas_manual:
+    get:
+      tags: [Acervo do cliente]
+      summary: Lista as armas cadastradas manualmente
+      operationId: listarArmasManuais
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: id
+          in: query
+          schema: { type: string }
+          example: eq.87
+        - name: qa_cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: needs_review
+          in: query
+          schema: { type: string }
+          example: eq.true
+        - name: origem
+          in: query
+          schema: { type: string }
+          example: eq.manual
+      responses:
+        '200':
+          description: Armas manuais.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmaManual' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Acervo do cliente]
+      summary: Cadastra uma arma manualmente
+      description: |
+        Único campo obrigatório é `qa_cliente_id`. O RLS exige que seja o cliente
+        do próprio JWT (ou staff).
+
+        ```json
+        { "qa_cliente_id": 1234, "marca": "Taurus", "modelo": "G2C",
+          "calibre": "9mm", "numero_serie": "AB123456", "sistema_registro": "SINARM" }
+        ```
+      operationId: criarArmaManual
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArmaManualInput' }
+      responses:
+        '201':
+          description: Criada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmaManual' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+        '400': { $ref: '#/components/responses/ErroPostgrest' }
+    patch:
+      tags: [Acervo do cliente]
+      summary: Edita uma arma manual
+      operationId: atualizarArmaManual
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.87
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArmaManualInput' }
+      responses:
+        '200':
+          description: Atualizada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmaManual' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+    delete:
+      tags: [Acervo do cliente]
+      summary: Remove uma arma manual
+      description: |
+        Remove **apenas** a linha manual. Para apagar a arma inteira (com CRAF, GTE
+        e documentos vinculados), use `POST /functions/v1/qa-cliente-excluir-armamento`.
+      operationId: excluirArmaManual
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.87
+      responses:
+        '204': { description: Removida. }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  /rest/v1/qa_arma_gt_declaracoes:
+    get:
+      tags: [Acervo do cliente]
+      summary: Declarações de Guia de Tráfego por arma
+      description: Histórico de quem declarou GT para qual arma, com reversão registrada.
+      operationId: listarDeclaracoesGT
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - name: qa_cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: weapon_key
+          in: query
+          description: Chave normalizada da arma (série/sigma) usada para casar a declaração.
+          schema: { type: string }
+          example: eq.AB123456
+        - name: status
+          in: query
+          schema: { type: string }
+          example: eq.ativa
+      responses:
+        '200':
+          description: Declarações.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmaGtDeclaracao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Acervo do cliente]
+      summary: Registra uma declaração de GT
+      operationId: criarDeclaracaoGT
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArmaGtDeclaracaoInput' }
+      responses:
+        '201':
+          description: Criada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArmaGtDeclaracao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  # ─────────────────────────────────────────────────────────────
+  # DOCUMENTOS DA ARMA
+  # ─────────────────────────────────────────────────────────────
+  /rest/v1/qa_crafs:
+    get:
+      tags: [Documentos da arma]
+      summary: Lista CRAFs do cliente
+      description: |
+        Certificado de Registro de Arma de Fogo. `catalogo_id` aponta para
+        `qa_armamentos_catalogo` quando a IA já casou a arma com o catálogo.
+
+        Alerta de vencimento: `?data_validade=lt.2027-01-01`.
+      operationId: listarCrafs
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: id
+          in: query
+          schema: { type: string }
+          example: eq.42
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: catalogo_id
+          in: query
+          schema: { type: string }
+          example: is.null
+        - name: numero_arma
+          in: query
+          schema: { type: string }
+          example: eq.AB123456
+        - name: data_validade
+          in: query
+          schema: { type: string }
+          example: lt.2027-01-01
+        - name: sistema_registro
+          in: query
+          description: 'SINARM | SIGMA | REVISAR'
+          schema: { type: string }
+          example: eq.SINARM
+      responses:
+        '200':
+          description: CRAFs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Craf' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Documentos da arma]
+      summary: Cria um CRAF (staff)
+      operationId: criarCraf
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrafInput' }
+      responses:
+        '201':
+          description: Criado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Craf' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+    patch:
+      tags: [Documentos da arma]
+      summary: Edita um CRAF (staff)
+      operationId: atualizarCraf
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.42
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CrafInput' }
+      responses:
+        '200':
+          description: Atualizado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Craf' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  /rest/v1/qa_gtes:
+    get:
+      tags: [Documentos da arma]
+      summary: Lista GTEs do cliente
+      description: Guia de Tráfego Especial. Mesmo padrão de filtros do CRAF.
+      operationId: listarGtes
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: id
+          in: query
+          schema: { type: string }
+          example: eq.7
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: catalogo_id
+          in: query
+          schema: { type: string }
+          example: is.null
+        - name: data_validade
+          in: query
+          schema: { type: string }
+          example: lt.2027-01-01
+      responses:
+        '200':
+          description: GTEs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Gte' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Documentos da arma]
+      summary: Cria uma GTE (staff)
+      operationId: criarGte
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GteInput' }
+      responses:
+        '201':
+          description: Criada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Gte' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  # ─────────────────────────────────────────────────────────────
+  # MUNIÇÕES
+  # ─────────────────────────────────────────────────────────────
+  /rest/v1/qa_municoes_movimentacoes:
+    get:
+      tags: [Munições]
+      summary: Extrato de movimentações de munição
+      description: |
+        Livro-razão do estoque: cada compra é uma `ENTRADA`, cada gasto é uma
+        `SAIDA`. O saldo **não** se edita — ele é derivado daqui pela view
+        `qa_municoes_saldos`.
+      operationId: listarMovimentacoesMunicao
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/PreferCount'
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: tipo
+          in: query
+          description: 'ENTRADA | SAIDA'
+          schema: { type: string }
+          example: eq.SAIDA
+        - name: calibre
+          in: query
+          schema: { type: string }
+          example: eq.9mm
+        - name: lote
+          in: query
+          schema: { type: string }
+          example: eq.L2026-04
+        - name: data_movimentacao
+          in: query
+          schema: { type: string }
+          example: gte.2026-01-01
+        - name: ia_status
+          in: query
+          description: 'pendente | pendente_revisao | processado | erro'
+          schema: { type: string }
+          example: eq.pendente_revisao
+        - name: revisao_obrigatoria
+          in: query
+          schema: { type: string }
+          example: eq.true
+      responses:
+        '200':
+          description: Movimentações.
+          headers:
+            Content-Range:
+              $ref: '#/components/headers/ContentRange'
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoMovimentacao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+    post:
+      tags: [Munições]
+      summary: Lança uma entrada ou saída de munição
+      description: |
+        Obrigatórios: `cliente_id`, `tipo`, `calibre`, `quantidade` (> 0).
+
+        Regra do banco (`CHECK`): quando `tipo = "SAIDA"`, o `motivo` é obrigatório e
+        precisa ser um de `treino`, `competicao`, `baixa_ajuste`, `transferencia`,
+        `legitima_defesa`, `outro`. Motivo fora da lista devolve **400**.
+
+        ```json
+        { "cliente_id": 1234, "tipo": "SAIDA", "calibre": "9mm",
+          "quantidade": 50, "motivo": "treino", "data_movimentacao": "2026-08-17" }
+        ```
+      operationId: criarMovimentacaoMunicao
+      parameters:
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MunicaoMovimentacaoInput' }
+      responses:
+        '201':
+          description: Lançada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoMovimentacao' }
+        '400':
+          description: '`quantidade <= 0`, `tipo` inválido, ou `motivo` ausente/inválido em uma SAIDA.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroPostgrest' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+    patch:
+      tags: [Munições]
+      summary: Corrige uma movimentação
+      operationId: atualizarMovimentacaoMunicao
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.3a7f9c10-1b2c-4d5e-8f90-abcdef123456
+        - $ref: '#/components/parameters/PreferReturn'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MunicaoMovimentacaoInput' }
+      responses:
+        '200':
+          description: Atualizada.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoMovimentacao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+    delete:
+      tags: [Munições]
+      summary: Estorna (apaga) uma movimentação
+      operationId: excluirMovimentacaoMunicao
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: string }
+          example: eq.3a7f9c10-1b2c-4d5e-8f90-abcdef123456
+      responses:
+        '204': { description: Removida. }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+        '403': { $ref: '#/components/responses/SemPermissao' }
+
+  /rest/v1/qa_municoes_saldos:
+    get:
+      tags: [Munições]
+      summary: Saldo consolidado por calibre/marca/lote (view, somente leitura)
+      description: |
+        View derivada de `qa_municoes_movimentacoes`. `saldo = total_entradas - total_saidas`.
+        Não aceita escrita.
+
+        ```
+        GET /rest/v1/qa_municoes_saldos?cliente_id=eq.1234&saldo=gt.0&order=calibre.asc
+        ```
+      operationId: listarSaldosMunicao
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: calibre
+          in: query
+          schema: { type: string }
+          example: eq.9mm
+        - name: saldo
+          in: query
+          schema: { type: string }
+          example: gt.0
+        - name: data_validade
+          in: query
+          schema: { type: string }
+          example: lt.2027-01-01
+      responses:
+        '200':
+          description: Saldos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoSaldo' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /rest/v1/qa_municoes_em_revisao:
+    get:
+      tags: [Munições]
+      summary: Fila de movimentações aguardando revisão humana (view)
+      description: |
+        Notas fiscais lidas por IA que precisam de conferência antes de virar saldo
+        (`revisao_obrigatoria = true` ou `ia_status = "pendente_revisao"`).
+      operationId: listarMunicoesEmRevisao
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+      responses:
+        '200':
+          description: Itens em revisão.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoEmRevisao' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /rest/v1/qa_municoes:
+    get:
+      tags: [Munições]
+      summary: Estoque legado de munição
+      description: |
+        **Legado.** Tabela de estoque absoluto anterior ao modelo de movimentações.
+        Integrações novas devem usar `qa_municoes_movimentacoes` + `qa_municoes_saldos`.
+      deprecated: true
+      operationId: listarMunicoesLegado
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+      responses:
+        '200':
+          description: Estoque legado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/MunicaoLegado' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  # ─────────────────────────────────────────────────────────────
+  # PLANOS E ASSINATURA
+  # ─────────────────────────────────────────────────────────────
+  /rest/v1/qa_arsenal_planos:
+    get:
+      tags: [Planos e assinatura]
+      summary: Plano vigente do Arsenal Premium
+      description: |
+        Tabela de preço do produto. O preço **nunca** é hardcoded no app — sempre
+        lido daqui. Sempre buscar o mais recente com `ativo = true`:
+
+        ```
+        GET /rest/v1/qa_arsenal_planos?ativo=eq.true&order=criado_em.desc&limit=1
+        ```
+      operationId: listarPlanos
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - name: ativo
+          in: query
+          schema: { type: string }
+          example: eq.true
+      responses:
+        '200':
+          description: Planos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArsenalPlano' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /rest/v1/qa_arsenal_assinaturas:
+    get:
+      tags: [Planos e assinatura]
+      summary: Assinaturas do Arsenal Premium
+      description: |
+        Uma linha por período contratado. Para saber se o cliente está liberado hoje:
+
+        ```
+        GET /rest/v1/qa_arsenal_assinaturas?cliente_id=eq.1234&status=eq.ativa&periodo_fim=gte.2026-08-17
+        ```
+
+        Dados de cartão são só rastro (bandeira, 4 últimos dígitos, token da Asaas) —
+        **nunca** há PAN completo nem CVV.
+      operationId: listarAssinaturas
+      parameters:
+        - $ref: '#/components/parameters/Select'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - name: cliente_id
+          in: query
+          schema: { type: string }
+          example: eq.1234
+        - name: status
+          in: query
+          description: 'ativa | pendente | cancelada | expirada'
+          schema: { type: string }
+          example: eq.ativa
+        - name: periodo_fim
+          in: query
+          schema: { type: string }
+          example: gte.2026-08-17
+      responses:
+        '200':
+          description: Assinaturas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ArsenalAssinatura' }
+        '401': { $ref: '#/components/responses/NaoAutenticado' }
+
+  /functions/v1/qa-arsenal-assinar:
+    post:
+      tags: [Planos e assinatura]
+      summary: Adere ou renova o Arsenal Premium
+      description: |
+        Exige JWT de cliente (`verify_jwt = true`). Preço vem de `qa_arsenal_planos`.
+
+        Três desfechos possíveis, distinguidos pelo campo `modo` da resposta:
+
+        - `gratuidade` — CPF elegível ao período de cortesia (3 meses se já tem
+          serviço Quero Armas pago, 1 mês para assinante direto). Não gera cobrança.
+        - `cobranca_pendente` — já existe cobrança em aberto; devolve a mesma
+          `invoice_url` em vez de duplicar.
+        - `cobranca` — gera cobrança nova na Asaas (cartão parcelado, PIX ou boleto).
+
+        `aceite: true` é obrigatório — registra data/hora e IP do aceite do termo.
+        Para `CREDIT_CARD` sem cartão salvo, a resposta é **400** com
+        `{ "error": "cartao_obrigatorio", "step": "card" }`: chame
+        `qa-arsenal-cartao` antes e repita.
+      operationId: arsenalAssinar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArsenalAssinarRequest' }
+            examples:
+              pix:
+                summary: Adesão via PIX
+                value: { forma: PIX, aceite: true }
+              cartao:
+                summary: Adesão via cartão já tokenizado
+                value:
+                  forma: CREDIT_CARD
+                  aceite: true
+                  card_token: 8a3f...
+                  card_brand: VISA
+                  card_last4: "4242"
+      responses:
+        '200':
+          description: Assinatura criada (ou cobrança já pendente reaproveitada).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArsenalAssinarResponse' }
+        '400':
+          description: '`forma_invalida`, `aceite_obrigatorio`, `invalid_json` ou `cartao_obrigatorio`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+              examples:
+                cartaoObrigatorio:
+                  value: { error: cartao_obrigatorio, step: card }
+        '401':
+          description: '`unauthorized` / `invalid_token`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: '`cliente_not_found` — o JWT não está vinculado a um cadastro.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '409':
+          description: '`assinatura_ja_vigente` — devolve `status` e `periodo_fim` da vigente.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '422':
+          description: '`cpf_ausente_no_cadastro`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '502':
+          description: '`asaas_payment_failed` / `asaas_network`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-arsenal-cartao:
+    post:
+      tags: [Planos e assinatura]
+      summary: Tokeniza ou consulta o cartão da assinatura
+      description: |
+        Exige JWT de cliente. Sem corpo (ou com corpo vazio), consulta o cartão já
+        salvo. Com os dados do cartão, tokeniza na Asaas e guarda apenas
+        bandeira + 4 últimos dígitos + token.
+
+        O número do cartão e o CVV **não** trafegam para o banco — só para a Asaas.
+      operationId: arsenalCartao
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ArsenalCartaoRequest' }
+      responses:
+        '200':
+          description: Cartão consultado ou tokenizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArsenalCartaoResponse' }
+        '400':
+          description: '`campos_obrigatorios` — falta nome, número, validade ou CVV.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: '`unauthorized` / `invalid_token`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: '`cliente_not_found`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '404':
+          description: '`sem_assinatura_ativa` ou `token_nao_disponivel`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '422':
+          description: '`cpf_ausente` ou `tokenizacao_falhou` (cartão recusado).'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  # ─────────────────────────────────────────────────────────────
+  # EDGE FUNCTIONS DE OPERAÇÃO
+  # ─────────────────────────────────────────────────────────────
+  /functions/v1/qa-craf-extrair:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Extrai os dados de um CRAF por IA
+      description: |
+        Lê o PDF/imagem já enviado ao bucket `qa-documentos`, roda visão
+        computacional e grava o resultado em
+        `qa_documentos_cliente.ia_dados_extraidos` mais as colunas mapeadas.
+
+        Regra de negócio: se a IA não identificar um **modelo comercial válido**,
+        a resposta traz `modelo_invalido: true` e o documento permanece em
+        `ia_status = "pendente_revisao"` — não vincula à arma automaticamente.
+
+        Permissão: dono do cadastro ou staff. A função valida o JWT internamente.
+      operationId: crafExtrair
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documento_id]
+              properties:
+                documento_id:
+                  type: string
+                  description: ID em `qa_documentos_cliente`.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Extração concluída.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  documento_id: { type: string }
+                  modelo_invalido:
+                    type: boolean
+                    description: 'true = precisa de revisão humana do modelo.'
+                  dados: { $ref: '#/components/schemas/CrafExtraido' }
+        '400':
+          description: '`documento_id requerido` ou documento sem arquivo no storage.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: '`unauthenticated`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: '`forbidden` — não é dono do cadastro nem staff.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '404':
+          description: Documento não encontrado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '500':
+          description: Falha ao baixar do storage ou no gateway de IA.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-gte-extrair:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Extrai os dados de uma GTE por IA
+      description: |
+        Mesmo padrão do CRAF, aplicado à Guia de Tráfego Especial. Além dos campos
+        do documento, devolve a **lista de armas** autorizadas, endereços e clubes,
+        e um bloco `matching` com o resultado da tentativa de casar cada arma da
+        guia com o acervo do cliente.
+      operationId: gteExtrair
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [gte_documento_id]
+              properties:
+                gte_documento_id:
+                  type: string
+                  description: ID em `qa_gte_documentos`.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Extração concluída.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  gte_documento_id: { type: string }
+                  dados: { $ref: '#/components/schemas/GteExtraida' }
+                  matching:
+                    type: object
+                    description: Resultado do casamento das armas da guia com o acervo.
+                    additionalProperties: true
+        '400':
+          description: '`gte_documento_id requerido`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: '`unauthenticated`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: '`forbidden`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '404':
+          description: GTE não encontrada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-autorizacao-extrair:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Extrai os dados de uma Autorização de Compra por IA
+      operationId: autorizacaoExtrair
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [documento_id]
+              properties:
+                documento_id: { type: string }
+              additionalProperties: false
+      responses:
+        '200':
+          description: Extração concluída.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  documento_id: { type: string }
+                  dados:
+                    type: object
+                    description: Campos extraídos da autorização.
+                    additionalProperties: true
+        '400':
+          description: '`documento_id requerido`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: '`unauthenticated`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: '`forbidden`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-classificar-documento-arma:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Classifica que tipo de documento de arma foi enviado
+      description: |
+        Recebe a imagem (data URL) ou o caminho no storage e devolve o tipo do
+        documento (CRAF, GTE, autorização de compra, nota de munição etc.) com grau
+        de confiança, para o app rotear a extração certa.
+
+        Envie **um** dos dois: `imageDataUrl` ou `storage_path`.
+      operationId: classificarDocumentoArma
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                imageDataUrl:
+                  type: string
+                  description: 'Imagem em base64 (`data:image/...;base64,...`).'
+                storage_path:
+                  type: string
+                  description: Caminho do arquivo no bucket `qa-documentos`.
+              additionalProperties: true
+      responses:
+        '200':
+          description: Classificação concluída.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: '`imageDataUrl ou storage_path obrigatório`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: '`Unauthorized`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '402':
+          description: Créditos de IA esgotados.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '404':
+          description: Arquivo não localizado no storage.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '429':
+          description: Rate limit do gateway de IA.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-resolver-arma-craf:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Identifica a arma e vincula ao catálogo (staff)
+      description: |
+        **Somente staff Quero Armas ativo** — cliente recebe 403.
+
+        A partir de um CRAF, de uma GTE ou de um nome livre, a IA extrai
+        marca/modelo/calibre/tipo, procura no catálogo e, se não existir, **cria** a
+        entrada (com `fonte_dados = "ia_gerado"` e `status_revisao = "pendente_revisao"`)
+        e dispara a busca da foto real com fundo removido. Devolve a linha do
+        catálogo já vinculada.
+
+        Envie exatamente um de: `craf_id`, `gte_id` ou `nome_arma`.
+      operationId: resolverArmaCraf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                craf_id:
+                  oneOf: [{ type: integer }, { type: string }]
+                  description: '`qa_crafs.id`'
+                gte_id:
+                  oneOf: [{ type: integer }, { type: string }]
+                  description: '`qa_gtes.id`'
+                nome_arma:
+                  type: string
+                  description: Texto livre, quando não há documento.
+                  example: PISTOLA TAURUS G2C CAL 9MM
+              additionalProperties: false
+      responses:
+        '200':
+          description: Arma resolvida.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  catalog: { $ref: '#/components/schemas/ArmamentoCatalogo' }
+        '401':
+          description: Não autenticado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: Não é staff ativo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '500':
+          description: Falha ao gerar a ficha técnica ou ao inserir no catálogo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+  /functions/v1/qa-cliente-excluir-armamento:
+    post:
+      tags: [Operações (Edge Functions)]
+      summary: Exclui uma arma do acervo em cascata
+      description: |
+        Forma **correta** de apagar uma arma: remove o registro de origem e, junto,
+        os `qa_crafs`, `qa_gtes` e `qa_documentos_cliente` que casam pelo mesmo
+        número de série / SIGMA. Apagar direto na tabela deixa documento órfão.
+
+        Permissão: o `cliente_id` precisa pertencer ao usuário do JWT
+        (via `cliente_auth_links`) ou o chamador precisa ser staff.
+      operationId: excluirArmamentoCliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cliente_id, source, ref_id]
+              properties:
+                cliente_id:
+                  type: integer
+                  example: 1234
+                source:
+                  type: string
+                  enum: [CRAF, GTE, DOC]
+                  description: Onde está o registro de origem.
+                ref_id:
+                  oneOf: [{ type: integer }, { type: string }]
+                  description: ID na tabela indicada por `source`.
+                numero_arma:
+                  type: string
+                  description: Número de série — usado para achar os vinculados.
+                numero_sigma:
+                  type: string
+              additionalProperties: false
+            example:
+              cliente_id: 1234
+              source: CRAF
+              ref_id: 42
+              numero_arma: AB123456
+              numero_sigma: "1234567"
+      responses:
+        '200':
+          description: Exclusão concluída, com a contagem do que saiu.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  removed:
+                    type: object
+                    properties:
+                      crafs: { type: integer }
+                      gtes: { type: integer }
+                      docs: { type: integer }
+              example:
+                ok: true
+                removed: { crafs: 1, gtes: 0, docs: 3 }
+        '400':
+          description: Parâmetros obrigatórios ausentes ou `source` inválido.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '401':
+          description: Não autenticado / sessão inválida.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+        '403':
+          description: Sem permissão para excluir armamento deste cliente.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErroFuncao' }
+
+components:
+
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Chave pública (anon) do projeto Supabase.
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '`access_token` da sessão Supabase do usuário.'
+
+  parameters:
+    Select:
+      name: select
+      in: query
+      description: 'Colunas a retornar. Ex.: `id,marca,modelo,calibre`. Padrão: todas.'
+      schema: { type: string }
+      example: id,marca,modelo,calibre
+    Order:
+      name: order
+      in: query
+      description: 'Ordenação. Ex.: `marca.asc,modelo.asc`, `created_at.desc.nullslast`.'
+      schema: { type: string }
+      example: marca.asc
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1 }
+      example: 50
+    Offset:
+      name: offset
+      in: query
+      schema: { type: integer, minimum: 0 }
+      example: 0
+    PreferCount:
+      name: Prefer
+      in: header
+      description: '`count=exact` para receber o total no header `Content-Range`.'
+      schema: { type: string }
+      example: count=exact
+    PreferReturn:
+      name: Prefer
+      in: header
+      description: '`return=representation` para receber o registro gravado no corpo.'
+      schema: { type: string }
+      example: return=representation
+
+  headers:
+    ContentRange:
+      description: 'Faixa e total, quando `Prefer: count=exact` é enviado. Ex.: `0-49/2310`.'
+      schema: { type: string }
+
+  responses:
+    NaoAutenticado:
+      description: JWT ausente, expirado ou inválido.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErroPostgrest' }
+    SemPermissao:
+      description: RLS negou a operação para este usuário.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErroPostgrest' }
+    ErroPostgrest:
+      description: Requisição inválida (filtro, payload ou `CHECK` do banco).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErroPostgrest' }
+
+  schemas:
+
+    ErroPostgrest:
+      type: object
+      description: Formato de erro do PostgREST.
+      properties:
+        code: { type: string, example: "23514" }
+        message: { type: string, example: 'new row violates check constraint' }
+        details: { type: [string, "null"] }
+        hint: { type: [string, "null"] }
+
+    ErroFuncao:
+      type: object
+      description: Formato de erro das Edge Functions.
+      properties:
+        error: { type: string, example: forbidden }
+        detail: { type: string }
+        detalhe: { type: string }
+        step: { type: string }
+
+    ArmamentoCatalogo:
+      type: object
+      description: Modelo de arma no catálogo curado (produto de referência).
+      properties:
+        id: { type: string, format: uuid }
+        marca: { type: string, example: Taurus }
+        modelo: { type: string, example: G2C }
+        apelido: { type: [string, "null"] }
+        tipo:
+          type: string
+          enum: [pistola, revolver, espingarda, carabina, fuzil, submetralhadora, outra]
+        calibre: { type: string, example: 9mm }
+        capacidade_carregador: { type: [integer, "null"], example: 12 }
+        peso_gramas: { type: [integer, "null"] }
+        comprimento_cano_mm: { type: [integer, "null"] }
+        alcance_efetivo_m: { type: [integer, "null"] }
+        velocidade_projetil_ms: { type: [integer, "null"] }
+        origem: { type: [string, "null"], example: Brasil }
+        classificacao_legal: { type: [string, "null"], example: Uso permitido }
+        descricao: { type: [string, "null"] }
+        stat_dano: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_precisao: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_alcance: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_cadencia: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_mobilidade: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_controle: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        search_tokens:
+          type: [string, "null"]
+          description: Blob normalizado (maiúsculas, sem acento) usado no match por nome livre.
+        imagem: { type: [string, "null"], description: Imagem principal em uso. }
+        imagem_url: { type: [string, "null"] }
+        imagens: { type: array, items: { type: string } }
+        imagem_status:
+          type: string
+          description: Estado do pipeline de imagem (pendente, gerada, aprovada, rejeitada).
+        imagem_aprovada: { type: boolean }
+        imagem_fonte: { type: [string, "null"] }
+        imagem_enviada_em: { type: [string, "null"], format: date-time }
+        imagem_enviada_por: { type: [string, "null"], format: uuid }
+        imagem_gerada_em: { type: [string, "null"], format: date-time }
+        imagem_validada_em: { type: [string, "null"], format: date-time }
+        imagem_validacao_motivo: { type: [string, "null"] }
+        tem_fundo_transparente: { type: boolean }
+        manual_url: { type: [string, "null"] }
+        fonte_dados:
+          type: string
+          description: 'Origem da ficha: `curado`, `ia_gerado`, etc.'
+        fonte_url: { type: [string, "null"] }
+        status_revisao:
+          type: string
+          description: '`aprovado` | `pendente_revisao` | `rejeitado`'
+        revisado_em: { type: [string, "null"], format: date-time }
+        revisado_por: { type: [string, "null"], format: uuid }
+        observacoes: { type: [string, "null"] }
+        ativo: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArmamentoCatalogoInput:
+      type: object
+      description: Campos aceitos na escrita. `marca`, `modelo`, `tipo` e `calibre` são obrigatórios no POST.
+      required: [marca, modelo, tipo, calibre]
+      properties:
+        marca: { type: string }
+        modelo: { type: string }
+        apelido: { type: [string, "null"] }
+        tipo:
+          type: string
+          enum: [pistola, revolver, espingarda, carabina, fuzil, submetralhadora, outra]
+        calibre: { type: string }
+        capacidade_carregador: { type: [integer, "null"] }
+        peso_gramas: { type: [integer, "null"] }
+        comprimento_cano_mm: { type: [integer, "null"] }
+        alcance_efetivo_m: { type: [integer, "null"] }
+        velocidade_projetil_ms: { type: [integer, "null"] }
+        origem: { type: [string, "null"] }
+        classificacao_legal: { type: [string, "null"] }
+        descricao: { type: [string, "null"] }
+        stat_dano: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_precisao: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_alcance: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_cadencia: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_mobilidade: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        stat_controle: { type: [integer, "null"], minimum: 0, maximum: 100 }
+        search_tokens: { type: [string, "null"] }
+        imagem: { type: [string, "null"] }
+        imagem_url: { type: [string, "null"] }
+        manual_url: { type: [string, "null"] }
+        fonte_dados: { type: string }
+        fonte_url: { type: [string, "null"] }
+        status_revisao: { type: string }
+        observacoes: { type: [string, "null"] }
+        ativo: { type: boolean }
+
+    ClienteArma:
+      type: object
+      description: Linha do acervo consolidado (view `qa_cliente_armas`, somente leitura).
+      properties:
+        arma_uid:
+          type: [string, "null"]
+          description: Chave estável da arma na consolidação (dedup por série/SIGMA).
+        qa_cliente_id: { type: [integer, "null"] }
+        user_id: { type: [string, "null"], format: uuid }
+        fonte:
+          type: [string, "null"]
+          description: 'De onde a linha veio: `CRAF`, `GTE` ou `MANUAL`.'
+        tipo_arma: { type: [string, "null"], example: PISTOLA }
+        marca: { type: [string, "null"] }
+        modelo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        numero_serie: { type: [string, "null"] }
+        numero_craf: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_sinarm: { type: [string, "null"] }
+        numero_autorizacao_compra: { type: [string, "null"] }
+        sistema:
+          type: [string, "null"]
+          description: 'Regime de registro: SINARM (PF) ou SIGMA (Exército).'
+        status_documental: { type: [string, "null"] }
+        needs_review:
+          type: [boolean, "null"]
+          description: 'true = dado veio da IA e ainda não foi conferido.'
+        created_at: { type: [string, "null"], format: date-time }
+        updated_at: { type: [string, "null"], format: date-time }
+
+    ArmaManual:
+      type: object
+      description: Arma cadastrada à mão pelo cliente ou pela equipe.
+      properties:
+        id: { type: integer }
+        qa_cliente_id: { type: integer }
+        user_id: { type: [string, "null"], format: uuid }
+        origem: { type: string, description: 'Como a linha entrou: manual, importação ou IA.' }
+        tipo_arma: { type: [string, "null"] }
+        marca: { type: [string, "null"] }
+        modelo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        numero_serie: { type: [string, "null"] }
+        numero_craf: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_sinarm: { type: [string, "null"] }
+        numero_cad_sinarm: { type: [string, "null"], example: 2022/905178870-50 }
+        numero_registro_sigma: { type: [string, "null"] }
+        numero_autorizacao_compra: { type: [string, "null"] }
+        sistema: { type: [string, "null"] }
+        sistema_registro:
+          type: [string, "null"]
+          description: 'Regime canônico: `SINARM` | `SIGMA` | `REVISAR`.'
+        status_documental: { type: [string, "null"] }
+        needs_review: { type: boolean }
+        dados_extraidos_json:
+          type: [object, "null"]
+          description: Payload bruto da extração por IA, quando houve.
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArmaManualInput:
+      type: object
+      required: [qa_cliente_id]
+      properties:
+        qa_cliente_id: { type: integer, example: 1234 }
+        user_id: { type: [string, "null"], format: uuid }
+        origem: { type: string }
+        tipo_arma: { type: [string, "null"] }
+        marca: { type: [string, "null"] }
+        modelo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        numero_serie: { type: [string, "null"] }
+        numero_craf: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_sinarm: { type: [string, "null"] }
+        numero_cad_sinarm: { type: [string, "null"] }
+        numero_registro_sigma: { type: [string, "null"] }
+        numero_autorizacao_compra: { type: [string, "null"] }
+        sistema: { type: [string, "null"] }
+        sistema_registro: { type: [string, "null"], enum: [SINARM, SIGMA, REVISAR, null] }
+        status_documental: { type: [string, "null"] }
+        needs_review: { type: boolean }
+        dados_extraidos_json: { type: [object, "null"], additionalProperties: true }
+
+    ArmaGtDeclaracao:
+      type: object
+      description: Declaração de Guia de Tráfego vinculada a uma arma.
+      properties:
+        id: { type: integer }
+        qa_cliente_id: { type: integer }
+        arma_manual_id: { type: [integer, "null"] }
+        weapon_key: { type: string, description: Chave normalizada da arma (série/SIGMA). }
+        marca: { type: [string, "null"] }
+        modelo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        numero_serie: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_sinarm: { type: [string, "null"] }
+        origem: { type: string }
+        status: { type: string, description: 'Ex.: `ativa`, `revertida`.' }
+        declarado_em: { type: string, format: date-time }
+        declarado_por: { type: [string, "null"], format: uuid }
+        revertido_em: { type: [string, "null"], format: date-time }
+        revertido_por: { type: [string, "null"], format: uuid }
+        metadados_json: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArmaGtDeclaracaoInput:
+      type: object
+      required: [qa_cliente_id, weapon_key]
+      properties:
+        qa_cliente_id: { type: integer }
+        weapon_key: { type: string }
+        arma_manual_id: { type: [integer, "null"] }
+        marca: { type: [string, "null"] }
+        modelo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        numero_serie: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_sinarm: { type: [string, "null"] }
+        origem: { type: string }
+        status: { type: string }
+        metadados_json: { type: object, additionalProperties: true }
+
+    Craf:
+      type: object
+      description: Certificado de Registro de Arma de Fogo.
+      properties:
+        id: { type: integer }
+        cliente_id: { type: [integer, "null"] }
+        id_legado: { type: [integer, "null"] }
+        catalogo_id:
+          type: [string, "null"]
+          format: uuid
+          description: FK para `qa_armamentos_catalogo` quando a arma já foi identificada.
+        documento_origem_id:
+          type: [string, "null"]
+          description: FK para `qa_documentos_cliente` (o arquivo enviado).
+        nome_craf: { type: [string, "null"] }
+        nome_arma: { type: [string, "null"], description: Descrição livre da arma como consta no CRAF. }
+        arma_especie: { type: [string, "null"], example: PISTOLA }
+        numero_arma: { type: [string, "null"], description: Número de série. }
+        numero_sigma: { type: [string, "null"] }
+        numero_cad_sinarm: { type: [string, "null"] }
+        numero_registro_sigma: { type: [string, "null"] }
+        sistema_registro: { type: [string, "null"], enum: [SINARM, SIGMA, REVISAR, null] }
+        data_validade: { type: [string, "null"], format: date }
+        arquivo_nome: { type: [string, "null"] }
+        arquivo_mime: { type: [string, "null"] }
+        arquivo_storage_path: { type: [string, "null"], description: Caminho no bucket `qa-documentos`. }
+
+    CrafInput:
+      type: object
+      properties:
+        cliente_id: { type: [integer, "null"] }
+        catalogo_id: { type: [string, "null"], format: uuid }
+        documento_origem_id: { type: [string, "null"] }
+        nome_craf: { type: [string, "null"] }
+        nome_arma: { type: [string, "null"] }
+        arma_especie: { type: [string, "null"] }
+        numero_arma: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        numero_cad_sinarm: { type: [string, "null"] }
+        numero_registro_sigma: { type: [string, "null"] }
+        sistema_registro: { type: [string, "null"] }
+        data_validade: { type: [string, "null"], format: date }
+        arquivo_nome: { type: [string, "null"] }
+        arquivo_mime: { type: [string, "null"] }
+        arquivo_storage_path: { type: [string, "null"] }
+
+    Gte:
+      type: object
+      description: Guia de Tráfego Especial.
+      properties:
+        id: { type: integer }
+        cliente_id: { type: [integer, "null"] }
+        id_legado: { type: [integer, "null"] }
+        catalogo_id: { type: [string, "null"], format: uuid }
+        nome_gte: { type: [string, "null"] }
+        nome_arma: { type: [string, "null"] }
+        numero_arma: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        data_validade: { type: [string, "null"], format: date }
+
+    GteInput:
+      type: object
+      properties:
+        cliente_id: { type: [integer, "null"] }
+        catalogo_id: { type: [string, "null"], format: uuid }
+        nome_gte: { type: [string, "null"] }
+        nome_arma: { type: [string, "null"] }
+        numero_arma: { type: [string, "null"] }
+        numero_sigma: { type: [string, "null"] }
+        data_validade: { type: [string, "null"], format: date }
+
+    MunicaoMovimentacao:
+      type: object
+      description: Lançamento de entrada ou saída de munição.
+      properties:
+        id: { type: string, format: uuid }
+        cliente_id: { type: integer }
+        tipo: { type: string, enum: [ENTRADA, SAIDA] }
+        calibre: { type: string, example: 9mm }
+        marca: { type: [string, "null"], example: CBC }
+        lote: { type: [string, "null"] }
+        quantidade: { type: integer, minimum: 1 }
+        motivo:
+          type: [string, "null"]
+          enum: [treino, competicao, baixa_ajuste, transferencia, legitima_defesa, outro, null]
+          description: Obrigatório quando `tipo = SAIDA`.
+        data_movimentacao: { type: string, format: date }
+        data_fabricacao: { type: [string, "null"], format: date }
+        data_validade: { type: [string, "null"], format: date }
+        observacao: { type: [string, "null"] }
+        documento_url: { type: [string, "null"], description: Nota fiscal / comprovante. }
+        documento_nome: { type: [string, "null"] }
+        documento_origem_id: { type: [string, "null"] }
+        documento_revisado_em: { type: [string, "null"], format: date-time }
+        documento_revisado_por: { type: [string, "null"], format: uuid }
+        ia_status: { type: string, description: 'Ex.: `pendente`, `pendente_revisao`, `processado`.' }
+        ia_dados_extraidos: { type: [object, "null"], additionalProperties: true }
+        revisao_obrigatoria: { type: boolean }
+        created_by: { type: [string, "null"], format: uuid }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    MunicaoMovimentacaoInput:
+      type: object
+      required: [cliente_id, tipo, calibre, quantidade]
+      properties:
+        cliente_id: { type: integer, example: 1234 }
+        tipo: { type: string, enum: [ENTRADA, SAIDA] }
+        calibre: { type: string, example: 9mm }
+        quantidade: { type: integer, minimum: 1, example: 50 }
+        marca: { type: [string, "null"] }
+        lote: { type: [string, "null"] }
+        motivo:
+          type: [string, "null"]
+          enum: [treino, competicao, baixa_ajuste, transferencia, legitima_defesa, outro, null]
+        data_movimentacao: { type: string, format: date, description: 'Padrão: hoje.' }
+        data_fabricacao: { type: [string, "null"], format: date }
+        data_validade: { type: [string, "null"], format: date }
+        observacao: { type: [string, "null"] }
+        documento_url: { type: [string, "null"] }
+        documento_nome: { type: [string, "null"] }
+        documento_origem_id: { type: [string, "null"] }
+        ia_status: { type: string }
+        ia_dados_extraidos: { type: [object, "null"], additionalProperties: true }
+        revisao_obrigatoria: { type: boolean }
+
+    MunicaoSaldo:
+      type: object
+      description: Saldo consolidado por calibre/marca/lote (view, somente leitura).
+      properties:
+        cliente_id: { type: [integer, "null"] }
+        calibre: { type: [string, "null"] }
+        marca: { type: [string, "null"] }
+        lote: { type: [string, "null"] }
+        saldo: { type: [integer, "null"], description: '`total_entradas - total_saidas`.' }
+        total_entradas: { type: [integer, "null"] }
+        total_saidas: { type: [integer, "null"] }
+        data_fabricacao: { type: [string, "null"], format: date }
+        data_validade: { type: [string, "null"], format: date }
+        ultima_movimentacao: { type: [string, "null"], format: date-time }
+
+    MunicaoEmRevisao:
+      type: object
+      description: Movimentação lida por IA aguardando conferência (view, somente leitura).
+      properties:
+        id: { type: [string, "null"], format: uuid }
+        cliente_id: { type: [integer, "null"] }
+        tipo: { type: [string, "null"] }
+        calibre: { type: [string, "null"] }
+        marca: { type: [string, "null"] }
+        lote: { type: [string, "null"] }
+        quantidade: { type: [integer, "null"] }
+        data_movimentacao: { type: [string, "null"], format: date }
+        documento_url: { type: [string, "null"] }
+        documento_nome: { type: [string, "null"] }
+        ia_status: { type: [string, "null"] }
+        ia_dados_extraidos: { type: [object, "null"], additionalProperties: true }
+        revisao_obrigatoria: { type: [boolean, "null"] }
+        created_at: { type: [string, "null"], format: date-time }
+
+    MunicaoLegado:
+      type: object
+      description: Estoque absoluto legado (substituído por movimentações + saldos).
+      deprecated: true
+      properties:
+        id: { type: string, format: uuid }
+        cliente_id: { type: integer }
+        calibre: { type: string }
+        marca: { type: [string, "null"] }
+        quantidade: { type: integer }
+        data_fabricacao: { type: [string, "null"], format: date }
+        observacao: { type: [string, "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ArsenalPlano:
+      type: object
+      description: Tabela de preço do Arsenal Inteligente Premium.
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string, example: Arsenal Inteligente Premium }
+        descricao: { type: [string, "null"] }
+        valor_anual: { type: number, example: 297 }
+        parcelas_max: { type: integer, example: 12 }
+        ativo: { type: boolean }
+        criado_em: { type: [string, "null"], format: date-time }
+        atualizado_em: { type: [string, "null"], format: date-time }
+
+    ArsenalAssinatura:
+      type: object
+      description: Período contratado do Arsenal Premium por um cliente.
+      properties:
+        id: { type: string, format: uuid }
+        cliente_id: { type: integer }
+        cpf: { type: string }
+        status: { type: string, description: 'Ex.: `ativa`, `pendente`, `cancelada`.' }
+        valor_anual: { type: number }
+        periodo_inicio: { type: string, format: date }
+        periodo_fim: { type: string, format: date }
+        forma_pagamento: { type: [string, "null"], enum: [CREDIT_CARD, PIX, BOLETO, null] }
+        origem_gratuidade:
+          type: [string, "null"]
+          description: Preenchido quando o período foi concedido como cortesia.
+        aceite_contrato_em: { type: [string, "null"], format: date-time }
+        aceite_contrato_ip: { type: [string, "null"] }
+        cancelamento_solicitado_em: { type: [string, "null"], format: date-time }
+        card_verificado: { type: boolean }
+        asaas_payment_id: { type: [string, "null"] }
+        asaas_invoice_url: { type: [string, "null"] }
+        asaas_verificacao_payment_id: { type: [string, "null"] }
+        asaas_credit_card_token: { type: [string, "null"] }
+        asaas_credit_card_brand: { type: [string, "null"], example: VISA }
+        asaas_credit_card_last4: { type: [string, "null"], example: "4242" }
+        asaas_credit_card_holder: { type: [string, "null"] }
+        asaas_credit_card_expiry: { type: [string, "null"] }
+        criado_em: { type: string, format: date-time }
+        atualizado_em: { type: string, format: date-time }
+
+    ArsenalAssinarRequest:
+      type: object
+      required: [forma, aceite]
+      properties:
+        forma: { type: string, enum: [CREDIT_CARD, PIX, BOLETO] }
+        aceite:
+          type: boolean
+          const: true
+          description: Aceite do termo de adesão. Precisa ser `true`.
+        verificacao_id: { type: string }
+        card_token: { type: string }
+        card_brand: { type: string }
+        card_last4: { type: string }
+        card_holder: { type: string }
+        card_expiry: { type: string }
+      additionalProperties: false
+
+    ArsenalAssinarResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        modo:
+          type: string
+          enum: [gratuidade, cobranca_pendente, cobranca]
+        assinatura_id: { type: string, format: uuid }
+        periodo_fim: { type: string, format: date }
+        meses_gratis: { type: integer, description: Só no modo `gratuidade`. }
+        forma: { type: string, description: Só no modo `cobranca`. }
+        valor_anual: { type: number }
+        parcelas: { type: integer }
+        invoice_url: { type: [string, "null"] }
+        bank_slip_url: { type: [string, "null"] }
+        pix_payload: { type: [string, "null"], description: Copia-e-cola do PIX. }
+        pix_encoded_image: { type: [string, "null"], description: QR code em base64. }
+        due_date: { type: string, format: date }
+        card_brand: { type: [string, "null"] }
+        card_last4: { type: [string, "null"] }
+
+    ArsenalCartaoRequest:
+      type: object
+      description: Sem corpo = consulta o cartão salvo. Com os campos = tokeniza um novo.
+      properties:
+        holderName: { type: string }
+        number: { type: string, description: Não é persistido — vai só para a Asaas. }
+        expiryMonth: { type: string }
+        expiryYear: { type: string }
+        ccv: { type: string, description: Não é persistido. }
+      additionalProperties: true
+
+    ArsenalCartaoResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        brand: { type: [string, "null"], example: VISA }
+        last4: { type: [string, "null"], example: "4242" }
+        holder: { type: [string, "null"] }
+        expiry: { type: [string, "null"] }
+
+    CrafExtraido:
+      type: object
+      description: Campos que a IA extrai de um CRAF.
+      properties:
+        numero_craf: { type: string }
+        data_emissao: { type: string, description: DD/MM/AAAA }
+        data_validade: { type: string, description: DD/MM/AAAA }
+        orgao_emissor: { type: string }
+        numero_serie: { type: string }
+        sigma_ou_sinarm: { type: string }
+        numero_cad_sinarm: { type: string, example: 2022/905178870-50 }
+        numero_registro_sigma: { type: string }
+        sistema_registro: { type: string, enum: [SINARM, SIGMA, REVISAR] }
+        marca: { type: string }
+        modelo:
+          type: string
+          description: Modelo comercial. Vem vazio quando a IA não identifica — nunca genérico.
+        calibre: { type: string }
+        modelo_invalido: { type: boolean }
+
+    GteExtraida:
+      type: object
+      description: Campos que a IA extrai de uma GTE.
+      properties:
+        numero_gte: { type: string }
+        orgao_emissor: { type: string }
+        requerente_nome: { type: string }
+        requerente_cpf: { type: string }
+        data_emissao: { type: string, description: DD/MM/AAAA }
+        data_validade: { type: string, description: DD/MM/AAAA }
+        endereco_origem: { type: string }
+        endereco_destino: { type: string }
+        armas:
+          type: array
+          items:
+            type: object
+            properties:
+              marca: { type: string }
+              modelo: { type: string }
+              calibre: { type: string }
+              especie: { type: string, example: Pistola }
+              numero_serie: { type: string }
+              numero_sigma: { type: string }
+        enderecos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo: { type: string, example: destino }
+              endereco: { type: string }
+        clubes:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
