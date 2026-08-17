@@ -69,7 +69,14 @@ export default function EmuAcessoCard({ clienteId, clienteNome, clienteEmail }: 
         },
       });
       if (error || !data?.ok) {
-        toast.error((data as { error?: string } | null)?.error || error?.message || "Não foi possível abrir o espelho.");
+        // "Failed to send a request" = o navegador nem alcançou a função. Não é
+        // erro de permissão nem de dados: a edge function não está publicada.
+        const msg = String(error?.message || "");
+        if (/failed to send|fetch/i.test(msg)) {
+          toast.error("A função qa-emu-sessao ainda não foi publicada no Supabase. Publique o projeto e tente de novo.");
+          return;
+        }
+        toast.error((data as { error?: string } | null)?.error || msg || "Não foi possível abrir o espelho.");
         return;
       }
       const s = data.sessao as {
