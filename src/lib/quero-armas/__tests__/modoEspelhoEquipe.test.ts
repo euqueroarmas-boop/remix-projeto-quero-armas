@@ -124,8 +124,15 @@ describe("modo espelho — compra é o único bloqueio", () => {
   it("bloqueia venda, item, assinatura e aceite no banco", () => {
     const sql = r(MIGRATION);
     for (const t of ["qa_vendas", "qa_itens_venda", "qa_contract_signatures", "qa_contract_aceites_log"]) {
-      expect(sql).toContain(`CREATE TRIGGER qa_emu_block_compra\n  BEFORE INSERT OR UPDATE OR DELETE ON public.${t}`);
+      expect(sql).toContain(`'${t}'`);
     }
+    expect(sql).toContain("CREATE TRIGGER qa_emu_block_compra BEFORE INSERT OR UPDATE OR DELETE");
+  });
+
+  it("estoura em vez de deixar passar se a tabela de compra sumir ou virar view", () => {
+    const sql = r(MIGRATION);
+    expect(sql).toContain("Bloqueio de compra não pôde ser instalado");
+    expect(sql).toContain("RAISE EXCEPTION");
   });
 
   it("fecha o flanco das edge functions de checkout (service_role burla o trigger)", () => {
@@ -151,10 +158,22 @@ describe("modo espelho — o cliente vê quem mexeu", () => {
   });
 
   it("instala o rastro nas tabelas do portal", () => {
-    for (const t of ["qa_clientes", "qa_documentos_cliente", "qa_processos", "qa_cliente_armas", "qa_procuracoes"]) {
+    for (const t of ["qa_clientes", "qa_documentos_cliente", "qa_processos", "qa_crafs", "qa_procuracoes"]) {
       expect(sql).toContain(`'${t}'`);
     }
     expect(sql).toContain("CREATE TRIGGER qa_emu_rastro AFTER INSERT OR UPDATE OR DELETE");
+  });
+
+  it("usa as tabelas-base do acervo, nunca a view qa_cliente_armas", () => {
+    // Postgres recusa gatilho de linha em view — foi o que derrubou o bloco.
+    expect(sql).toContain("'qa_cliente_armas_manual'");
+    expect(sql).not.toMatch(/'qa_cliente_armas'/);
+    expect(sql).toContain("'qa_crafs'");
+  });
+
+  it("pula relação que não for tabela em vez de abortar o bloco inteiro", () => {
+    expect(sql).toContain("IF k NOT IN ('r', 'p') THEN");
+    expect(sql).toContain("não é tabela (relkind=%) — pulando");
   });
 
   it("a janela expira sozinha — sessão esquecida não trava nada", () => {

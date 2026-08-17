@@ -126,25 +126,31 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS qa_emu_block_compra ON public.qa_vendas;
-CREATE TRIGGER qa_emu_block_compra
-  BEFORE INSERT OR UPDATE OR DELETE ON public.qa_vendas
-  FOR EACH ROW EXECUTE FUNCTION public.qa_emu_bloqueia_compra();
+-- Aqui NÃO passamos batido: se uma dessas relações não for tabela de verdade,
+-- o bloqueio não pegaria e a compra passaria calada. Melhor estourar na hora.
+DO $$
+DECLARE t text; k "char";
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'qa_vendas', 'qa_itens_venda', 'qa_contract_signatures', 'qa_contract_aceites_log'
+  ]
+  LOOP
+    SELECT c.relkind INTO k
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public' AND c.relname = t;
 
-DROP TRIGGER IF EXISTS qa_emu_block_compra ON public.qa_itens_venda;
-CREATE TRIGGER qa_emu_block_compra
-  BEFORE INSERT OR UPDATE OR DELETE ON public.qa_itens_venda
-  FOR EACH ROW EXECUTE FUNCTION public.qa_emu_bloqueia_compra();
+    IF k IS NULL OR k NOT IN ('r', 'p') THEN
+      RAISE EXCEPTION
+        'Bloqueio de compra não pôde ser instalado: public.% não é tabela (relkind=%).',
+        t, COALESCE(k::text, 'inexistente');
+    END IF;
 
-DROP TRIGGER IF EXISTS qa_emu_block_compra ON public.qa_contract_signatures;
-CREATE TRIGGER qa_emu_block_compra
-  BEFORE INSERT OR UPDATE OR DELETE ON public.qa_contract_signatures
-  FOR EACH ROW EXECUTE FUNCTION public.qa_emu_bloqueia_compra();
-
-DROP TRIGGER IF EXISTS qa_emu_block_compra ON public.qa_contract_aceites_log;
-CREATE TRIGGER qa_emu_block_compra
-  BEFORE INSERT OR UPDATE OR DELETE ON public.qa_contract_aceites_log
-  FOR EACH ROW EXECUTE FUNCTION public.qa_emu_bloqueia_compra();
+    EXECUTE format('DROP TRIGGER IF EXISTS qa_emu_block_compra ON public.%I', t);
+    EXECUTE format(
+      'CREATE TRIGGER qa_emu_block_compra BEFORE INSERT OR UPDATE OR DELETE ON public.%I
+         FOR EACH ROW EXECUTE FUNCTION public.qa_emu_bloqueia_compra()', t);
+  END LOOP;
+END $$;
 
 -- ---------------------------------------------------------------------
 -- 4. Rastro automático — o cliente vê que foi a EQUIPE
@@ -157,7 +163,7 @@ LANGUAGE sql IMMUTABLE SET search_path = public AS $$
     WHEN 'qa_documentos_cliente'          THEN 'Documentos'
     WHEN 'qa_processos'                   THEN 'Processo'
     WHEN 'qa_processo_documentos'         THEN 'Documentos do processo'
-    WHEN 'qa_cliente_armas'               THEN 'Acervo (armas)'
+    WHEN 'qa_cliente_armas_manual'        THEN 'Acervo (armas)'
     WHEN 'qa_crafs'                       THEN 'CRAF'
     WHEN 'qa_gtes'                        THEN 'Guia de Tráfego'
     WHEN 'qa_filiacoes'                   THEN 'Filiação a clube'
@@ -254,22 +260,39 @@ END;
 $$;
 
 -- Aplica o rastro nas tabelas que o cliente enxerga no portal.
+--
+-- ATENÇÃO ao montar esta lista: `qa_cliente_armas` é uma VIEW (une qa_crafs
+-- com qa_cliente_armas_manual) e Postgres não aceita gatilho de linha em view.
+-- Por isso entram as duas tabelas de base, não a view. O guard de relkind
+-- abaixo protege contra o mesmo tropeço no futuro: view/matview é pulada com
+-- aviso em vez de derrubar o bloco inteiro.
 DO $$
-DECLARE t text;
+DECLARE t text; k "char";
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'qa_clientes', 'qa_documentos_cliente', 'qa_processos', 'qa_processo_documentos',
-    'qa_cliente_armas', 'qa_crafs', 'qa_gtes', 'qa_filiacoes', 'qa_cadastro_cr',
+    'qa_cliente_armas_manual', 'qa_crafs', 'qa_gtes', 'qa_filiacoes', 'qa_cadastro_cr',
     'qa_exames_cliente', 'qa_efetiva_necessidade', 'qa_efetiva_necessidade_provas',
     'qa_procuracoes'
   ]
   LOOP
-    IF to_regclass('public.' || t) IS NOT NULL THEN
-      EXECUTE format('DROP TRIGGER IF EXISTS qa_emu_rastro ON public.%I', t);
-      EXECUTE format(
-        'CREATE TRIGGER qa_emu_rastro AFTER INSERT OR UPDATE OR DELETE ON public.%I
-           FOR EACH ROW EXECUTE FUNCTION public.qa_emu_registra_acao()', t);
+    SELECT c.relkind INTO k
+      FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+     WHERE n.nspname = 'public' AND c.relname = t;
+
+    IF k IS NULL THEN
+      RAISE NOTICE 'Rastro do espelho: public.% não existe — pulando.', t;
+      CONTINUE;
     END IF;
+    IF k NOT IN ('r', 'p') THEN
+      RAISE NOTICE 'Rastro do espelho: public.% não é tabela (relkind=%) — pulando.', t, k;
+      CONTINUE;
+    END IF;
+
+    EXECUTE format('DROP TRIGGER IF EXISTS qa_emu_rastro ON public.%I', t);
+    EXECUTE format(
+      'CREATE TRIGGER qa_emu_rastro AFTER INSERT OR UPDATE OR DELETE ON public.%I
+         FOR EACH ROW EXECUTE FUNCTION public.qa_emu_registra_acao()', t);
   END LOOP;
 END $$;
 
