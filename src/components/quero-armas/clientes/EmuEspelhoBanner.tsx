@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, Loader2, PenLine, X } from "lucide-react";
@@ -19,6 +19,7 @@ export default function EmuEspelhoBanner({ onEncerrar }: { onEncerrar?: () => vo
   const [sessao, setSessao] = useState<EmuSessao | null>(null);
   const [restante, setRestante] = useState(0);
   const [encerrando, setEncerrando] = useState(false);
+  const barraRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // `getEmuSessao` já adota o `?emu=` da URL quando preciso — quem chegar
@@ -27,6 +28,27 @@ export default function EmuEspelhoBanner({ onEncerrar }: { onEncerrar?: () => vo
     setSessao(s);
     setRestante(segundosRestantes(s));
   }, []);
+
+  // A faixa é sticky e empurra o conteúdo normal, mas elementos `fixed`
+  // (avatar, rail de ícones, avisos) se posicionam pela janela e passariam por
+  // baixo dela — era o que cortava o avatar. Publicamos a altura real numa
+  // variável CSS para que cada um desça o tanto certo.
+  useEffect(() => {
+    const raiz = document.documentElement;
+    if (!sessao || !barraRef.current) {
+      raiz.style.removeProperty("--emu-barra");
+      return;
+    }
+    const el = barraRef.current;
+    const aplicar = () => raiz.style.setProperty("--emu-barra", `${el.offsetHeight}px`);
+    aplicar();
+    const obs = new ResizeObserver(aplicar);
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      raiz.style.removeProperty("--emu-barra");
+    };
+  }, [sessao]);
 
   // Contagem regressiva. Ao zerar, o banco já ignora a janela — então a aba
   // avisa e sai do espelho em vez de fingir que ainda está valendo.
@@ -89,6 +111,7 @@ export default function EmuEspelhoBanner({ onEncerrar }: { onEncerrar?: () => vo
     // cliente (o "bem-vindo" ficava atrás da faixa). Sticky ocupa a própria
     // altura, empurra o conteúdo e continua visível ao rolar.
     <div
+      ref={barraRef}
       className="sticky top-0 z-[130] flex flex-wrap items-center justify-between gap-2 px-3 py-2"
       style={{ background: "#7A1F2B", color: "#fff" }}
     >

@@ -280,7 +280,11 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
     // Bloco no alto à direita, encostado à esquerda do rail de ícones (56px)
     // e, no desktop, abaixo do avatar fixo. Antes ficava centralizado com
     // ~380px, tomando quase toda a largura no celular.
-    <div className="fixed top-2 right-[64px] z-[200] w-[70vw] max-w-[260px] lg:top-[84px] lg:right-[72px] lg:w-[260px]">
+    // Medidas do banner de notificação do macOS: 344px de largura, cantos de
+    // 16px, ícone de 38px e duas linhas de texto. `--emu-barra` desce o bloco
+    // quando a tarja do modo espelho está na tela; fora dele a variável não
+    // existe e o calc resolve para o valor original.
+    <div className="fixed right-[64px] z-[200] w-[calc(100vw-80px)] max-w-[344px] top-[calc(0.5rem+var(--emu-barra,0px))] lg:right-[72px] lg:w-[344px] lg:top-[calc(84px+var(--emu-barra,0px))]">
       <div style={{ paddingBottom: atras.length * DESLOCAMENTO_CASCATA }}>
         <div className="relative">
           {/* Cartões de trás — sem interação, só a borda aparecendo. */}
@@ -292,7 +296,7 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
               <div
                 key={n.id}
                 aria-hidden
-                className="absolute inset-0 overflow-hidden rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_4px_14px_-8px_rgba(0,0,0,0.28)] px-3 py-2.5 pr-8 pointer-events-none"
+                className="absolute inset-0 overflow-hidden rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_4px_14px_-8px_rgba(0,0,0,0.28)] px-3.5 py-3 pr-9 pointer-events-none"
                 style={{
                   transform: `translate(${-nivel * 4}px, ${nivel * DESLOCAMENTO_CASCATA}px) scale(${1 - nivel * 0.02})`,
                   transformOrigin: "top center",
@@ -300,13 +304,13 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
                   opacity: Math.max(0.45, 1 - nivel * 0.18),
                 }}
               >
-                <div className="flex items-start gap-2.5">
+                <div className="flex items-start gap-3">
                   <span
-                    className={`shrink-0 mt-0.5 h-6 w-6 rounded-[9px] flex items-center justify-center ${
+                    className={`shrink-0 h-[38px] w-[38px] rounded-[11px] flex items-center justify-center ${
                       urgenteAtras ? "bg-[#7A1F2B]" : "bg-black/80"
                     }`}
                   >
-                    <IconeAtras className="w-3.5 h-3.5 text-white" />
+                    <IconeAtras className="w-[18px] h-[18px] text-white" />
                   </span>
                   <div className="min-w-0">
                     <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">
@@ -331,7 +335,7 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
               transition: dx ? "none" : "transform 160ms ease, opacity 160ms ease",
               touchAction: "pan-y",
             }}
-            className="relative z-20 rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_-8px_rgba(0,0,0,0.28)] px-3 py-2.5 pr-8 animate-in slide-in-from-top-2 fade-in"
+            className="relative z-20 rounded-2xl border border-black/5 bg-white/80 backdrop-blur-xl shadow-[0_8px_30px_-8px_rgba(0,0,0,0.28)] px-3.5 py-3 pr-9 animate-in slide-in-from-top-2 fade-in"
           >
             <button
               onClick={() => fechar(frente)}
@@ -340,13 +344,13 @@ export default function NotificacaoEngineOverlay({ clienteId, bloqueado = false 
             >
               <X className="w-3.5 h-3.5" />
             </button>
-            <div className="flex items-start gap-2.5">
+            <div className="flex items-start gap-3">
               <span
-                className={`shrink-0 mt-0.5 h-6 w-6 rounded-[9px] flex items-center justify-center ${
+                className={`shrink-0 h-[38px] w-[38px] rounded-[11px] flex items-center justify-center ${
                   urgente ? "bg-[#7A1F2B]" : "bg-black/80"
                 }`}
               >
-                <IconeFrente className="w-3.5 h-3.5 text-white" />
+                <IconeFrente className="w-[18px] h-[18px] text-white" />
               </span>
               <div className="min-w-0">
                 <p className="text-[13px] leading-tight font-semibold text-black tracking-[-0.01em]">

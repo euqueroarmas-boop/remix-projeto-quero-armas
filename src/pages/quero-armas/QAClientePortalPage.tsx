@@ -3951,7 +3951,7 @@ export default function QAClientePortalPage() {
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
-      <div className="hidden lg:block" style={{ position: 'fixed', top: 16, right: 72, zIndex: 55 }}>
+      <div className="hidden lg:block" style={{ position: 'fixed', top: 'calc(16px + var(--emu-barra, 0px))', right: 72, zIndex: 55 }}>
         <button
           type="button"
           onClick={() => setAvatarDropOpen((v) => !v)}
@@ -4000,8 +4000,8 @@ export default function QAClientePortalPage() {
       />
       {/* ═══ SIDEBAR ESQUERDO — apenas desktop (mobile usa só o rail direito) ═══ */}
       <aside
-        className="hidden lg:flex fixed top-0 bottom-0 left-0 z-50 w-[200px] max-w-[200px] flex-col text-[#E8E8E8] overflow-hidden"
-        style={{ background: sidebarTheme.bg, overscrollBehavior: "none" }}
+        className="hidden lg:flex fixed bottom-0 left-0 z-50 w-[200px] max-w-[200px] flex-col text-[#E8E8E8] overflow-hidden"
+        style={{ top: "var(--emu-barra, 0px)", background: sidebarTheme.bg, overscrollBehavior: "none" }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* stripe removida conforme solicitado */}
@@ -4046,8 +4046,8 @@ export default function QAClientePortalPage() {
 
       {/* ═══ RAIL DIREITO — nav icon-only, navegação única em todas as larguras ═══ */}
       <aside
-        className="flex fixed top-0 right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
-        style={{ background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
+        className="flex fixed right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
+        style={{ top: "var(--emu-barra, 0px)", background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
         {/* Avatar (mobile) — mesmo formato squircle do ícone do WhatsApp */}
@@ -4197,7 +4197,11 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      <main className={`qa-portal-main max-w-[1540px] mx-auto px-4 lg:px-8 mr-[56px] ${isLockedSection ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pb-6 pt-[26px]"}`}>
+      {/* `mx-auto` com `mr-[56px]` brigavam: a margem direita fixa anulava a
+          centralização, então em tela larga o conteúdo era empurrado para a
+          direita e sobrava uma faixa branca à esquerda. Sem teto de largura, o
+          conteúdo acompanha a tela — o `mr` continua reservando o rail. */}
+      <main className={`qa-portal-main w-full px-4 lg:px-8 mr-[56px] ${isLockedSection ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pb-6 pt-[26px]"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}

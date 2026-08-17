@@ -602,15 +602,23 @@ export function isVencimentoCicloCurto(tipo?: string | null): boolean {
   // PF, senão o pedido é marcado como EXPIRADO. A régua de ciclo curto
   // (crítico ≤4, atenção ≤9) é exatamente a faixa combinada para a badge —
   // 15–10 verde, 9–5 amarelo, 4–0 vermelho.
-  const curtoPorNatureza =
-    isComprovanteEndereco(t) || t.startsWith("antecedentes_") || ehRequerimentoSinarm(t);
-  if (!curtoPorNatureza) return false;
+  // O CATÁLOGO DECIDE PRIMEIRO. Antes o código só chegava aqui se o tipo já
+  // pertencesse a uma das três famílias abaixo — ou seja, uma certidão
+  // cadastrada no banco com validade de 30 dias caía na régua padrão (amarelo
+  // em 30) e nascia amarela no mesmo dia em que foi emitida. Isso contrariava
+  // o que este próprio comentário promete desde sempre: quando o catálogo tem
+  // o tipo, é ele quem manda; a lista local é só o que sobra.
   const regra = getRegraValidade(t);
   if (regra) {
     if (regra.perpetuo || regra.validade_dias <= 0) return false;
     const dias = regra.unidade === "meses" ? regra.validade_dias * 30 : regra.validade_dias;
     return dias <= CICLO_CURTO_VALIDADE_MAX_DIAS;
   }
+
+  // Sem regra no catálogo (ou catálogo ainda não carregado): conhecimento local.
+  const curtoPorNatureza =
+    isComprovanteEndereco(t) || t.startsWith("antecedentes_") || ehRequerimentoSinarm(t);
+  if (!curtoPorNatureza) return false;
   return !isCertidao90Dias(t);
 }
 
