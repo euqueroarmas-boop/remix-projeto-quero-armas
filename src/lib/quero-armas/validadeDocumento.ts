@@ -350,6 +350,10 @@ export function isCertidao90Dias(tipo?: string | null): boolean {
     "antecedentes_federal_trf3_regional",
     "antecedentes_federal_trf3",
     "antecedentes_federal_trf",
+    // Distribuição criminal da Justiça Federal (genérica, sem região no
+    // código). É emitida pela mesma Justiça Federal dos TRFs — 90 dias. Sem
+    // esta linha o `startsWith("antecedentes_")` a jogava no ciclo curto.
+    "antecedentes_federal",
     "trf3",
     "certidao_criminal_tjmsp",
     "certidao_crimes_militares_stm",

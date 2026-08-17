@@ -148,3 +148,44 @@ describe("aviso não afirma que venceu quando ainda há prazo", () => {
     expect(avisoParaTipo("renda_extrato_inss", undefined, 12)).toContain("fora do mês corrente");
   });
 });
+
+describe("Justiça Federal (TRFs, Seção Judiciária, JEF) são 90 dias", () => {
+  afterEach(() => setCatalogoValidade([]));
+
+  const FEDERAIS_90 = [
+    "antecedentes_federal",
+    "antecedentes_federal_trf1_regional",
+    "antecedentes_federal_trf2_regional",
+    "antecedentes_federal_trf3_regional",
+    "antecedentes_federal_trf4_regional",
+    "antecedentes_federal_trf5_regional",
+    "antecedentes_federal_trf6_regional",
+    "antecedentes_federal_sjsp_jef",
+  ];
+
+  it("nenhuma delas é ciclo curto no fallback local", () => {
+    // `antecedentes_federal` (genérica) não casava com /trf\d?/ e caía no
+    // ciclo curto por começar com "antecedentes_".
+    for (const t of FEDERAIS_90) {
+      expect(isVencimentoCicloCurto(t), t).toBe(false);
+      expect(faixaVencimento(30, t), t).toBe("warn"); // régua padrão
+      expect(faixaVencimento(60, t), t).toBe("ok");
+    }
+  });
+
+  it("catálogo com 30 dias derruba a regra — por isso o dado precisa estar certo", () => {
+    // Documenta a consequência de o catálogo mandar: dado errado vira
+    // comportamento errado. É o motivo de os seis TRFs terem de ir para 90.
+    const t = "antecedentes_federal_trf3_regional";
+    setCatalogoValidade([
+      { tipo_documento: t, validade_dias: 30, unidade: "dias", alerta_dias: 0, perpetuo: false } as never,
+    ]);
+    expect(isVencimentoCicloCurto(t)).toBe(true);
+
+    setCatalogoValidade([
+      { tipo_documento: t, validade_dias: 90, unidade: "dias", alerta_dias: 0, perpetuo: false } as never,
+    ]);
+    expect(isVencimentoCicloCurto(t)).toBe(false);
+    expect(faixaVencimento(30, t)).toBe("warn");
+  });
+});

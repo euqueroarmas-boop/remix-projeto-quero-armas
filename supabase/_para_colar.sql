@@ -1,21 +1,45 @@
 -- ############################################################################
--- PARA COLAR NO SQL EDITOR DO SUPABASE — Bloco 9 (17/08/2026)
+-- PARA COLAR NO SQL EDITOR DO SUPABASE — Bloco 10 (17/08/2026)
 -- ----------------------------------------------------------------------------
--- INCREMENTAL sobre o Bloco 8 (v2), que ja foi aplicado com sucesso.
--- Guarda o processo ESCOLHIDO na lista, e nao so o nome digitado.
+-- Certidoes da JUSTICA FEDERAL valem 90 dias. Os seis TRFs regionais estavam
+-- cadastrados com 30, e desde que o catalogo passou a mandar na regua de cores
+-- eles viraram "ciclo curto" (verde ate 10 dias) — errado.
 -- Reexecutavel.
 -- ############################################################################
 
-ALTER TABLE public.qa_emu_sessoes
-  ADD COLUMN IF NOT EXISTS processo_id uuid;
+-- 1) TRFs regionais (1 a 6): 30 -> 90 dias.
+UPDATE public.qa_validade_documentos
+   SET validade_dias = 90, unidade = 'dias'
+ WHERE tipo_documento IN (
+   'antecedentes_federal_trf1_regional',
+   'antecedentes_federal_trf2_regional',
+   'antecedentes_federal_trf3_regional',
+   'antecedentes_federal_trf4_regional',
+   'antecedentes_federal_trf5_regional',
+   'antecedentes_federal_trf6_regional'
+ );
 
-CREATE INDEX IF NOT EXISTS qa_emu_sessoes_processo_idx
-  ON public.qa_emu_sessoes (processo_id)
-  WHERE processo_id IS NOT NULL;
+-- 2) Distribuicao criminal da Justica Federal (generica, sem regiao no codigo).
+--    E emitida pela MESMA Justica Federal dos TRFs, entao deve ser 90 tambem —
+--    e o resto do catalogo ja concorda: certidao_antecedente_federal,
+--    certidao_justica_federal e certidao_negativa_jf estao todas com 90.
+--    Se na sua operacao esta especifica for de 30 dias, NAO rode este comando.
+UPDATE public.qa_validade_documentos
+   SET validade_dias = 90, unidade = 'dias'
+ WHERE tipo_documento = 'antecedentes_federal';
 
 -- ############################################################################
--- CONFERENCIA — deve devolver 1 linha: processo_id | uuid | YES
+-- CONFERENCIA — as 8 linhas devem sair com 90 dias / regua padrao.
 -- ############################################################################
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = 'qa_emu_sessoes' AND column_name = 'processo_id';
+SELECT tipo_documento,
+       validade_dias,
+       unidade,
+       CASE
+         WHEN perpetuo OR validade_dias <= 0 THEN 'sem vencimento'
+         WHEN (CASE WHEN unidade = 'meses' THEN validade_dias * 30 ELSE validade_dias END) <= 31
+           THEN 'CICLO CURTO (30/9/4)  <-- ERRADO PARA FEDERAL'
+         ELSE 'regua padrao (30/10)'
+       END AS regua_aplicada
+FROM public.qa_validade_documentos
+WHERE tipo_documento LIKE 'antecedentes_federal%'
+ORDER BY tipo_documento;
