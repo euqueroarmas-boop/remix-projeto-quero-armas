@@ -6,9 +6,13 @@
 // de espelho e cuida dos avisos ao cliente. Como auth.uid() continua sendo o do
 // operador, toda alteração já nasce atribuída a ele — os gatilhos
 // `qa_emu_rastro` gravam isso na linha do tempo que o cliente vê.
+//
+// AUTOCONTIDA DE PROPÓSITO: sem imports de `../_shared/*`. O Lovable não
+// publica funções que chegam pelo GitHub, então esta precisa poder ser colada
+// inteira no painel do Supabase — e lá não existe a pasta _shared. As duas
+// dependências (guarda de staff e envio de e-mail) estão inline abaixo,
+// espelhando qaAuth.ts e sendTransactional.ts.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { requireQAStaff } from "../_shared/qaAuth.ts";
-import { sendTransactional } from "../_shared/sendTransactional.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,6 +33,87 @@ function json(data: unknown, status = 200) {
 
 function esc(v: unknown) {
   return String(v ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// ---------------------------------------------------------------------------
+// Guarda de staff (espelha _shared/qaAuth.ts)
+// ---------------------------------------------------------------------------
+type StaffGuard =
+  | { ok: true; userId: string; email: string | null }
+  | { ok: false; response: Response };
+
+/**
+ * Valida o JWT batendo em /auth/v1/user (evita o "Auth session missing!" do
+ * supabase-js fora do navegador) e exige perfil ATIVO em qa_usuarios_perfis.
+ */
+async function requireQAStaff(req: Request): Promise<StaffGuard> {
+  const authHeader = req.headers.get("Authorization") || "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return { ok: false, response: json({ error: "Unauthorized" }, 401) };
+  }
+  const token = authHeader.slice("Bearer ".length).trim();
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const anon = Deno.env.get("SUPABASE_ANON_KEY")!;
+  const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  let userId = "";
+  let email: string | null = null;
+  try {
+    const resp = await fetch(`${url}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: anon },
+    });
+    if (!resp.ok) {
+      const detail = await resp.text().catch(() => "");
+      return { ok: false, response: json({ error: "Invalid token", detail: detail || `status ${resp.status}` }, 401) };
+    }
+    const u = await resp.json();
+    userId = String(u?.id || "");
+    email = u?.email ?? null;
+    if (!userId) return { ok: false, response: json({ error: "Invalid token", detail: "no user id" }, 401) };
+  } catch (e) {
+    return { ok: false, response: json({ error: "Invalid token", detail: (e as Error)?.message || "fetch failed" }, 401) };
+  }
+
+  const adminClient = createClient(url, service);
+  const { data: perfilRow } = await adminClient
+    .from("qa_usuarios_perfis")
+    .select("perfil, ativo")
+    .eq("user_id", userId)
+    .eq("ativo", true)
+    .maybeSingle();
+  if (!perfilRow) return { ok: false, response: json({ error: "Forbidden: no active QA profile" }, 403) };
+
+  return { ok: true, userId, email };
+}
+
+// ---------------------------------------------------------------------------
+// E-mail transacional (espelha _shared/sendTransactional.ts)
+// ---------------------------------------------------------------------------
+async function sendTransactional(args: {
+  templateName: string;
+  recipientEmail: string;
+  idempotencyKey: string;
+  templateData?: Record<string, unknown>;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const sb = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data, error } = await sb.functions.invoke("send-transactional-email", {
+      body: {
+        templateName: args.templateName,
+        recipientEmail: args.recipientEmail,
+        idempotencyKey: args.idempotencyKey,
+        templateData: args.templateData ?? {},
+      },
+    });
+    if (error) return { ok: false, error: error.message };
+    const ok = Boolean(data?.success || data?.queued);
+    return { ok, error: ok ? undefined : String(data?.error || data?.reason || "E-mail não enfileirado") };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
 }
 
 const P = "font-size:14px;line-height:1.6;color:#222;margin:0 0 14px";

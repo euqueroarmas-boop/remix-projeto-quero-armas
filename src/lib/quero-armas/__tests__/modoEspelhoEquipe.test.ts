@@ -231,6 +231,18 @@ describe("modo espelho — edge function", () => {
   it("exige staff ativo e motivo", () => {
     expect(src).toContain("const guard = await requireQAStaff(req);");
     expect(src).toContain('if (motivo.length < 5) return json({ error: "motivo_required" }, 400);');
+    // A guarda continua sendo perfil ATIVO em qa_usuarios_perfis, agora inline.
+    expect(src).toContain('.from("qa_usuarios_perfis")');
+    expect(src).toContain('.eq("ativo", true)');
+  });
+
+  it("é autocontida — o painel do Supabase não tem a pasta _shared", () => {
+    // O Lovable não publica funções vindas do GitHub; esta precisa poder ser
+    // colada inteira no painel, e lá `../_shared/*` não resolve.
+    expect(src).not.toMatch(/^import .* from "\.\.\/_shared\//m);
+    const imports = src.split("\n").filter((l) => l.startsWith("import "));
+    expect(imports).toHaveLength(1);
+    expect(imports[0]).toContain("@supabase/supabase-js");
   });
 
   it("não emite magic link nem troca a sessão do operador", () => {
