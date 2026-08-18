@@ -106,6 +106,7 @@ import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFot
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, grupoDaPendenciaDoItem, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import { protocoloDoProcesso } from "@/components/quero-armas/processos/processoConstants";
+import JuntadaAssinaturaPanel from "@/components/quero-armas/portal/JuntadaAssinaturaPanel";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
@@ -2413,7 +2414,9 @@ export default function QAClientePortalPage() {
             ? "Abrir o roteiro do requerimento"
             : ehCredencialGovBr(rawTipo)
               ? "Liberar o acesso ao gov.br"
-              : undefined,
+              : ehJuntadaAssinada(rawTipo)
+                ? "Baixar e assinar o dossiê"
+                : undefined,
         // A efetiva necessidade roda DENTRO do pop-up guiado: os seus passos
         // são itens do mesmo checklist, não um segundo pop-up por cima.
         //
@@ -2437,6 +2440,15 @@ export default function QAClientePortalPage() {
             />
           ) : ehCredencialGovBr(rawTipo) ? (
             <AcessoGovBrPanel onConcluido={() => setDocsReloadKey((k) => k + 1)} />
+          ) : ehJuntadaAssinada(rawTipo) && doc?.processo_id ? (
+            <JuntadaAssinaturaPanel
+              processoId={String(doc.processo_id)}
+              onEntregar={() => {
+                setEditDocTipo(hubTipo);
+                setShowAddDoc(true);
+                setShowContratoPopup(false);
+              }}
+            />
           ) : ehRequerimentoSinarm(rawTipo) && cliente ? (
             <RequerimentoSinarmRoteiro
               cliente={cliente}
@@ -2523,6 +2535,14 @@ export default function QAClientePortalPage() {
         String(rawTipo ?? "").trim().toLowerCase(),
       );
 
+
+    /**
+     * Juntada assinada (Bloco 3). O dossiê único que vai para a Polícia
+     * Federal precisa da assinatura do requerente no gov.br. Este passo sempre
+     * existiu no checklist — o que faltava era ENTREGAR o arquivo ao cliente.
+     */
+    const ehJuntadaAssinada = (rawTipo: string) =>
+      String(rawTipo ?? "").trim().toLowerCase() === "juntada_assinada";
 
     const ehDocDeTitularTerceiro = (rawTipo: string) => {
       const t = rawTipo.toLowerCase();

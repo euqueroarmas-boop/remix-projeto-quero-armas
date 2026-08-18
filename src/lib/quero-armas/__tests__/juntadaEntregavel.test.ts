@@ -131,3 +131,55 @@ describe("a migration cria a tabela com as travas certas", () => {
     expect(bloco).not.toContain("WITH CHECK");
   });
 });
+
+describe("o cliente recebe a juntada para assinar", () => {
+  const painel = r("src/components/quero-armas/portal/JuntadaAssinaturaPanel.tsx");
+  const portal = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+
+  it("o passo juntada_assinada tem corpo próprio no guiado", () => {
+    expect(portal).toMatch(/const ehJuntadaAssinada = \(rawTipo: string\)/);
+    expect(portal).toContain("<JuntadaAssinaturaPanel");
+    expect(portal).toContain("Baixar e assinar o dossiê");
+  });
+
+  it("o painel lê a juntada vigente do processo", () => {
+    expect(painel).toContain('from("qa_processo_juntadas")');
+    expect(painel).toMatch(/\.order\("versao", \{ ascending: false \}\)/);
+  });
+
+  it("baixa por blob — nunca expõe URL do Supabase", () => {
+    // mem://constraints/no-supabase-url-leak
+    //
+    // A aferição roda sobre o CÓDIGO, sem os comentários: o cabeçalho do
+    // painel cita `window.open(signedUrl)` justamente para explicar por que
+    // não se usa, e casar com essa linha reprovaria o arquivo correto.
+    const codigo = painel
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+      .join("\n");
+    expect(codigo).toMatch(/URL\.createObjectURL/);
+    expect(codigo).toMatch(/\.from\(juntada\.bucket\)/);
+    expect(codigo).toMatch(/\.download\(juntada\.storage_path\)/);
+    expect(codigo).not.toMatch(/createSignedUrl/);
+    expect(codigo).not.toMatch(/window\.open/);
+  });
+
+  it("libera o blob depois do download (sem vazar memória)", () => {
+    expect(painel).toMatch(/revokeObjectURL/);
+  });
+
+  it("explica os três passos e manda ao assinador do gov.br", () => {
+    expect(painel).toContain("assinador.iti.br");
+    expect(painel).toContain("O que fazer agora");
+  });
+
+  it("avisa para enviar o arquivo ASSINADO, não o baixado", () => {
+    // Erro clássico: o cliente assina e devolve o original.
+    expect(painel).toMatch(/n\u00e3o o mesmo que voc\u00ea baixou/);
+  });
+
+  it("quando a equipe ainda não montou, diz isso em vez de mostrar botão morto", () => {
+    expect(painel).toMatch(/if \(!juntada\)/);
+    expect(painel).toContain("ainda está sendo montado");
+  });
+});
