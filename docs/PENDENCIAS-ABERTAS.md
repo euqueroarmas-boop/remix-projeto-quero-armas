@@ -93,6 +93,51 @@ Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsen
 
 ---
 
+## 🔴 TERCEIRA AUDITORIA (18/08, tarde) — quatro furos novos, no FIM do fluxo
+
+Os 18 originais e os 4 da reauditoria continuam fechados (reconferidos). Esta
+passada olhou só o trecho protocolo → decisão → entrega, e achou quatro.
+
+### 1. A petição que o cliente aprova não entra no dossiê da PF
+
+O ciclo novo funciona: a equipe envia, o cliente lê, ajusta, aprova. E acaba
+ali. O PDF único que vai para a delegacia é montado a partir dos DOCUMENTOS do
+processo, e a petição aprovada não é um documento — vive só na tabela de
+gerações. Não há botão que a transforme em peça do dossiê, e o tipo
+`peticao_efetiva_necessidade` existe apenas no mapa de ordenação: nenhum
+documento do sistema pode nascer com ele.
+
+Consequência: ou alguém baixa o DOCX, converte e sobe à mão como "documento
+complementar", ou o processo é protocolado sem a petição — depois de o cliente
+ter aprovado uma peça que nunca foi usada.
+
+### 2. Responder a notificação da PF não desliga o alarme de 10 dias
+
+O contador só é fechado por `data_recurso_administrativo`. Responder a uma
+notificação não é recurso — é o caminho MAIS COMUM — e não escreve nada. Então,
+depois de a equipe responder no prazo, o painel segue mandando "prazo VENCIDO
+há N dias", todo dia, para o cliente e para a equipe.
+
+É exatamente o caso do Edmar (fechado na 1ª auditoria), no outro ramo: lá o
+gatilho era o indeferimento, aqui é a notificação. O ramo do indeferimento foi
+consertado; o da notificação, não.
+
+### 3. O protocolo aceita dossiê velho
+
+A trava exige que EXISTA uma juntada. Não exige que ela seja a mais recente.
+Documento aprovado depois da montagem — ou petição aprovada depois — não
+invalida o PDF já montado, e o botão de protocolar continua liberado. Vai para
+a PF o dossiê da versão anterior, sem aviso.
+
+### 4. Nada encerra o serviço depois da entrega
+
+Deferido + documento entregue + cliente confirmou o recebimento = fim real do
+serviço. Mas `concluido` (processo) e `finalizado` (solicitação) só são
+alcançáveis por alguém clicando à mão. Na prática todo processo entregue fica
+eternamente em "DEFERIDO" — e o cliente nunca vê o serviço fechar.
+
+---
+
 ## ✅ Reauditoria de 18/08 — o que foi encontrado e fechado
 
 Reconferência dos 18 furos originais: **todos fechados**. A reauditoria achou
