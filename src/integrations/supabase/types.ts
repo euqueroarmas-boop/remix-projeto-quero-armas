@@ -7733,37 +7733,37 @@ export type Database = {
       }
       qa_geracoes_pecas: {
         Row: {
-          caso_id: string | null
-          cliente_id: number | null
-          correcoes_ia_alertas_json: Json
-          correcoes_ia_usadas_json: Json
-          created_at: string
-          documentos_referencia_json: Json | null
           aprovacao_accept_language: string | null
           aprovacao_hash: string | null
           aprovacao_ip: string | null
           aprovacao_user_agent: string | null
           aprovada_cliente_em: string | null
+          caso_id: string | null
+          cliente_id: number | null
+          correcoes_ia_alertas_json: Json
+          correcoes_ia_usadas_json: Json
+          created_at: string
           devolucao_motivo: string | null
           devolvida_em: string | null
+          documentos_referencia_json: Json | null
           docx_path: string | null
           editada_pelo_cliente: boolean
+          entrada_caso: string | null
           enviada_cliente_em: string | null
           enviada_cliente_por: string | null
-          processo_id: string | null
-          status_cliente: string
-          texto_final: string | null
-          entrada_caso: string | null
           foco: string | null
           fundamentos_utilizados_json: Json | null
           id: string
           jurisprudencias_utilizadas_json: Json | null
           minuta_gerada: string | null
           normas_utilizadas_json: Json | null
+          processo_id: string | null
           profundidade: string | null
           score_confianca: number | null
           status: string
+          status_cliente: string
           status_revisao: string | null
+          texto_final: string | null
           tipo_peca: string
           titulo_geracao: string
           tom: string | null
@@ -7772,37 +7772,37 @@ export type Database = {
           versao: number
         }
         Insert: {
-          caso_id?: string | null
-          cliente_id?: number | null
-          correcoes_ia_alertas_json?: Json
-          correcoes_ia_usadas_json?: Json
-          created_at?: string
-          documentos_referencia_json?: Json | null
           aprovacao_accept_language?: string | null
           aprovacao_hash?: string | null
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
+          caso_id?: string | null
+          cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
+          created_at?: string
           devolucao_motivo?: string | null
           devolvida_em?: string | null
+          documentos_referencia_json?: Json | null
           docx_path?: string | null
           editada_pelo_cliente?: boolean
+          entrada_caso?: string | null
           enviada_cliente_em?: string | null
           enviada_cliente_por?: string | null
-          processo_id?: string | null
-          status_cliente?: string
-          texto_final?: string | null
-          entrada_caso?: string | null
           foco?: string | null
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          processo_id?: string | null
           profundidade?: string | null
           score_confianca?: number | null
           status?: string
+          status_cliente?: string
           status_revisao?: string | null
+          texto_final?: string | null
           tipo_peca: string
           titulo_geracao: string
           tom?: string | null
@@ -7811,37 +7811,37 @@ export type Database = {
           versao?: number
         }
         Update: {
-          caso_id?: string | null
-          cliente_id?: number | null
-          correcoes_ia_alertas_json?: Json
-          correcoes_ia_usadas_json?: Json
-          created_at?: string
-          documentos_referencia_json?: Json | null
           aprovacao_accept_language?: string | null
           aprovacao_hash?: string | null
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
+          caso_id?: string | null
+          cliente_id?: number | null
+          correcoes_ia_alertas_json?: Json
+          correcoes_ia_usadas_json?: Json
+          created_at?: string
           devolucao_motivo?: string | null
           devolvida_em?: string | null
+          documentos_referencia_json?: Json | null
           docx_path?: string | null
           editada_pelo_cliente?: boolean
+          entrada_caso?: string | null
           enviada_cliente_em?: string | null
           enviada_cliente_por?: string | null
-          processo_id?: string | null
-          status_cliente?: string
-          texto_final?: string | null
-          entrada_caso?: string | null
           foco?: string | null
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          processo_id?: string | null
           profundidade?: string | null
           score_confianca?: number | null
           status?: string
+          status_cliente?: string
           status_revisao?: string | null
+          texto_final?: string | null
           tipo_peca?: string
           titulo_geracao?: string
           tom?: string | null
@@ -7862,6 +7862,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_geracoes_pecas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
             referencedColumns: ["id"]
           },
         ]
@@ -10578,6 +10585,13 @@ export type Database = {
           venda_id?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_processos_deferimento_documento_id_fkey"
+            columns: ["deferimento_documento_id"]
+            isOneToOne: false
+            referencedRelation: "qa_documentos_cliente"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "qa_processos_servico_id_fkey"
             columns: ["servico_id"]
