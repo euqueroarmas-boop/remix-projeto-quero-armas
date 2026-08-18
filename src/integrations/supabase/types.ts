@@ -6906,7 +6906,13 @@ export type Database = {
           aprovado_em: string | null
           aprovado_por: string | null
           aprovado_por_nome: string | null
+          bo_aguardando_desde: string | null
+          bo_destrava_motivo: string | null
+          bo_destravado_em: string | null
+          bo_destravado_por: string | null
+          bo_destravado_por_nome: string | null
           bo_pendente_registro: boolean
+          bo_quer_outro: boolean | null
           bo_registro_confirmado_em: string | null
           cliente_id: number
           contexto_risco: string | null
@@ -6928,6 +6934,7 @@ export type Database = {
           tem_acao_criminal: boolean | null
           tem_bo: boolean | null
           tem_inquerito: boolean | null
+          teses_geradas_em: string | null
           texto_bo: string | null
           texto_bo_editado_pelo_cliente: boolean
           texto_bo_gerado_em: string | null
@@ -6944,7 +6951,13 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           aprovado_por_nome?: string | null
+          bo_aguardando_desde?: string | null
+          bo_destrava_motivo?: string | null
+          bo_destravado_em?: string | null
+          bo_destravado_por?: string | null
+          bo_destravado_por_nome?: string | null
           bo_pendente_registro?: boolean
+          bo_quer_outro?: boolean | null
           bo_registro_confirmado_em?: string | null
           cliente_id: number
           contexto_risco?: string | null
@@ -6966,6 +6979,7 @@ export type Database = {
           tem_acao_criminal?: boolean | null
           tem_bo?: boolean | null
           tem_inquerito?: boolean | null
+          teses_geradas_em?: string | null
           texto_bo?: string | null
           texto_bo_editado_pelo_cliente?: boolean
           texto_bo_gerado_em?: string | null
@@ -6982,7 +6996,13 @@ export type Database = {
           aprovado_em?: string | null
           aprovado_por?: string | null
           aprovado_por_nome?: string | null
+          bo_aguardando_desde?: string | null
+          bo_destrava_motivo?: string | null
+          bo_destravado_em?: string | null
+          bo_destravado_por?: string | null
+          bo_destravado_por_nome?: string | null
           bo_pendente_registro?: boolean
+          bo_quer_outro?: boolean | null
           bo_registro_confirmado_em?: string | null
           cliente_id?: number
           contexto_risco?: string | null
@@ -7004,6 +7024,7 @@ export type Database = {
           tem_acao_criminal?: boolean | null
           tem_bo?: boolean | null
           tem_inquerito?: boolean | null
+          teses_geradas_em?: string | null
           texto_bo?: string | null
           texto_bo_editado_pelo_cliente?: boolean
           texto_bo_gerado_em?: string | null
@@ -7178,6 +7199,78 @@ export type Database = {
             columns: ["efetiva_necessidade_id"]
             isOneToOne: false
             referencedRelation: "qa_efetiva_necessidade"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qa_efetiva_teses: {
+        Row: {
+          confirmada_em: string | null
+          created_at: string
+          efetiva_necessidade_id: string
+          id: string
+          ordem: number
+          prova_id: string | null
+          registro_confirmado_em: string | null
+          resumo: string | null
+          texto_bo: string | null
+          texto_bo_editado_pelo_cliente: boolean
+          texto_bo_gerado_em: string | null
+          titulo: string
+          titulo_editado_pelo_cliente: boolean
+          updated_at: string
+          vinculo_confirmado_em: string | null
+          vinculo_origem: string | null
+        }
+        Insert: {
+          confirmada_em?: string | null
+          created_at?: string
+          efetiva_necessidade_id: string
+          id?: string
+          ordem?: number
+          prova_id?: string | null
+          registro_confirmado_em?: string | null
+          resumo?: string | null
+          texto_bo?: string | null
+          texto_bo_editado_pelo_cliente?: boolean
+          texto_bo_gerado_em?: string | null
+          titulo: string
+          titulo_editado_pelo_cliente?: boolean
+          updated_at?: string
+          vinculo_confirmado_em?: string | null
+          vinculo_origem?: string | null
+        }
+        Update: {
+          confirmada_em?: string | null
+          created_at?: string
+          efetiva_necessidade_id?: string
+          id?: string
+          ordem?: number
+          prova_id?: string | null
+          registro_confirmado_em?: string | null
+          resumo?: string | null
+          texto_bo?: string | null
+          texto_bo_editado_pelo_cliente?: boolean
+          texto_bo_gerado_em?: string | null
+          titulo?: string
+          titulo_editado_pelo_cliente?: boolean
+          updated_at?: string
+          vinculo_confirmado_em?: string | null
+          vinculo_origem?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_efetiva_teses_efetiva_necessidade_id_fkey"
+            columns: ["efetiva_necessidade_id"]
+            isOneToOne: false
+            referencedRelation: "qa_efetiva_necessidade"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qa_efetiva_teses_prova_id_fkey"
+            columns: ["prova_id"]
+            isOneToOne: false
+            referencedRelation: "qa_efetiva_necessidade_provas"
             referencedColumns: ["id"]
           },
         ]
