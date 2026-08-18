@@ -3,10 +3,12 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
-> **PENDENTE: 3 funções** do trabalho de classificação do requerimento
-> (commits `4624a10` e `6872970`, feitos em outra sessão). Elas NÃO entraram em
-> nenhuma leva de deploy — ver a seção "Leva 8" no fim. Todo o resto da
-> auditoria está publicado e todas as migrations aplicadas.
+> **NÃO HÁ NADA PENDENTE.** As 8 levas estão publicadas e as 9 migrations
+> aplicadas e conferidas. Este documento vira registro histórico: use-o como
+> modelo quando houver uma leva nova.
+>
+> **Horário:** todos os registros abaixo estão em BRT (São Paulo), convenção
+> firmada pelo titular em 18/08/2026.
 
 O push para a `main` publica o front. **Edge function não sai junto** — precisa
 de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
@@ -25,7 +27,7 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | **Leva 5** | 5 funções (resposta à notificação) · publicada em **18/08 às 12:54 BRT** |
 | **Leva 6** | 1 função (`qa-processo-prazo-alertas`) · publicada em **18/08 às 13:07 BRT** |
 | **Leva 7** | 2 funções (fila de conferência + fim do serviço) · publicada em **18/08 às 18:44 BRT** |
-| **Leva 8** | 3 funções (classificação do requerimento) · **PENDENTE** |
+| **Leva 8** | 3 funções (classificação do requerimento) · publicada em **18/08 às 18:48 BRT** |
 
 ### Migrations — todas aplicadas e conferidas
 
@@ -140,7 +142,7 @@ compartilhado em runtime. O caso mais comum é o registry de templates de e-mail
 
 ---
 
-## Leva 8 — PENDENTE · classificação do requerimento
+## Leva 8 — classificação do requerimento · 18/08, 18:48 BRT
 
 Trabalho feito em **outra sessão** (commits `4624a10` às 19:02 UTC e `6872970`
 às 19:24 UTC de 18/08). Ficou de fora de todas as levas desta auditoria porque
@@ -152,34 +154,18 @@ os comandos de deploy foram montados a partir do que ESTA sessão alterou.
 | `qa-extract-documents` | parser do requerimento roda antes da IA; conferência campo a campo contra o cadastro |
 | `qa-processo-doc-validar-ia` | acompanha a reclassificação |
 
-**Por que importa:** o formulário que abre o processo de posse traz um número de
-18 dígitos e nenhum classificador tinha esse tipo na lista. A IA devolvia
+**Por que importava:** o formulário que abre o processo de posse traz um número
+de 18 dígitos e nenhum classificador tinha esse tipo na lista. A IA devolvia
 "PROTOCOLO DO PROCESSO" com 98% de confiança, o slot pedia o requerimento, e o
 Hub carimbava REPROVADO em cima do documento certo. O cliente reenviava e dava o
-mesmo erro. Enquanto não subir, o laço continua.
+mesmo erro, sem fim.
+
+**Lição do processo, não do código:** estas três escaparam de sete levas porque
+os comandos de deploy foram montados a partir do que UMA sessão alterou, e não
+do que a `main` acumulou. O jeito certo de fechar uma leva é comparar o
+repositório com a última publicação — `git diff --name-only <ref>..HEAD --
+supabase/functions/` — e não a memória de quem escreveu.
 
 Nenhum arquivo de `_shared/` foi tocado nesses dois commits — não há efeito
 cascata sobre outras funções.
 
-**Comando:**
-
-```
-Faça o deploy das edge functions abaixo. Elas já estão no repositório (branch
-main, commit 6872970) — o código NÃO deve ser alterado, apenas publicado.
-
-Alteradas:
-- qa-classificar-documento-arma
-- qa-extract-documents
-- qa-processo-doc-validar-ia
-
-São 3. Elas ensinam o sistema a reconhecer o REQUERIMENTO DE AQUISIÇÃO DE ARMA
-DE FOGO, que era classificado como "protocolo do processo" e fazia o Hub
-reprovar o documento correto — o cliente reenviava e dava o mesmo erro.
-
-Restrições:
-- Não altere nenhum arquivo em supabase/functions/, src/ ou supabase/migrations/.
-- Não crie migration nova.
-- Não mexa em nenhuma outra função.
-
-Ao terminar, me diga o horário da publicação.
-```
