@@ -1,8 +1,11 @@
 # ACORDO DE CONFIDENCIALIDADE E NÃO DIVULGAÇÃO (NDA)
 
 > **Assinar ANTES de conceder qualquer acesso, inclusive o swagger.**
+> Retroativo a **14/08/2026** — cobre a página de vendas que ele já começou.
 > Duas vias, assinatura eletrônica com certificado ou assinatura física com
 > reconhecimento de firma. Guardar cópia com data.
+>
+> Versão pronta para assinatura, em Word: `NDA-programador.docx`.
 
 ---
 
@@ -35,10 +38,17 @@ correlatos, doravante "Sistema".
 desenvolvedora e eventual líder técnica, e para tanto precisará revelar-lhe
 informações confidenciais.
 
-1.3. Este Acordo tem por objeto regular o tratamento dessas informações,
+1.3. As Partes declaram que as tratativas e os trabalhos entre elas tiveram
+início em **14 de agosto de 2026**, razão pela qual o presente Acordo produz
+efeitos **desde aquela data**, ficando expressamente ratificados todos os atos
+praticados, todas as informações trocadas e todos os trabalhos realizados
+desde então, como se este instrumento houvesse sido celebrado naquela data.
+
+1.4. Este Acordo tem por objeto regular o tratamento dessas informações,
 **e não constitui contrato de trabalho, contrato de prestação de serviços,
-sociedade, promessa de sociedade, promessa de participação societária ou
-promessa de contratação de qualquer natureza.**
+sociedade, promessa de sociedade, promessa de participação societária,
+promessa de contratação ou promessa de patrocínio de visto ou residência em
+país estrangeiro, de qualquer natureza.**
 
 ---
 
@@ -93,11 +103,17 @@ opor, e revelará apenas o estritamente exigido.
 a) manter sigilo absoluto sobre a Informação Confidencial;
 b) **usá-la exclusivamente para a finalidade do item 1.2**, e para nenhuma
    outra, direta ou indiretamente;
-c) não reproduzir, copiar, transcrever, fotografar, filmar, gravar tela,
-   exportar, espelhar, clonar ou baixar Informação Confidencial fora dos
-   ambientes e ferramentas indicados pela DIVULGADORA;
-d) não manter cópia local, pessoal ou em nuvem particular de código-fonte,
-   base de dados ou documentação;
+c) operar somente nos ambientes, contas, repositórios e ferramentas
+   indicados por escrito pela DIVULGADORA, sendo-lhe vedado reproduzir,
+   copiar, transcrever, fotografar, filmar, gravar tela, exportar, espelhar,
+   clonar ou baixar Informação Confidencial fora deles;
+d) não manter cópia pessoal, avulsa, arquivada ou de segurança de
+   código-fonte, base de dados ou documentação, seja em equipamento próprio,
+   em mídia removível, em nuvem particular, em conta pessoal de repositório
+   ou em histórico de aplicativo de mensagens, **ressalvada exclusivamente a
+   cópia de trabalho obtida a partir do repositório oficial da DIVULGADORA**
+   e mantida enquanto vigentes as tratativas ou o contrato, a qual deverá ser
+   eliminada na forma da Cláusula 7;
 e) não revelar a Informação Confidencial a terceiros, incluindo seu atual
    empregador, colegas, sócios, familiares e prestadores, salvo autorização
    prévia e escrita da DIVULGADORA;
@@ -128,13 +144,27 @@ acesso à Informação Confidencial, autorizada ou não, como se seus fossem.
 DIVULGADORA. Este Acordo **não transfere, licencia nem cede** qualquer
 direito de propriedade intelectual, uso, exploração ou representação.
 
-4.2. Toda contribuição, sugestão, correção, trecho de código, esquema ou
-documento que a RECEPTORA venha a produzir a partir da Informação
-Confidencial, ainda que antes da assinatura de contrato de prestação de
-serviços, **pertence exclusivamente à DIVULGADORA desde a criação**, ficando
-desde já cedidos, em caráter total, definitivo, irrevogável, irretratável,
-gratuito e mundial, todos os direitos patrimoniais dela decorrentes, na
-forma dos arts. 49 e seguintes da Lei 9.610/98 e do art. 4º da Lei 9.609/98.
+4.2. Todo e qualquer trabalho, contribuição, sugestão, correção, trecho de
+código, esquema, layout, texto, página, interface ou documento que a RECEPTORA
+tenha produzido **desde 14 de agosto de 2026**, ou venha a produzir,
+relacionado ao Sistema ou dele derivado, ainda que antes da assinatura de
+contrato de prestação de serviços e **ainda que desenvolvido em
+infraestrutura, conta ou provedor próprios da RECEPTORA**, **pertence
+exclusivamente à DIVULGADORA desde a criação**, ficando desde já cedidos, em
+caráter total, definitivo, irrevogável, irretratável, exclusivo, gratuito e
+mundial, todos os direitos patrimoniais dele decorrentes, na forma dos arts.
+49 e seguintes da Lei 9.610/98 e do art. 4º da Lei 9.609/98.
+
+4.3. A RECEPTORA obriga-se a entregar à DIVULGADORA, mediante simples
+solicitação e sem custo, o código-fonte e todos os arquivos de tais trabalhos,
+a **transferi-los para os repositórios, contas e provedores indicados pela
+DIVULGADORA**, e a assinar os documentos necessários ao registro e à defesa
+desses direitos, inclusive perante o INPI e órgãos estrangeiros equivalentes.
+
+4.4. A RECEPTORA garante que tais trabalhos são de sua criação original, que
+não incorporam material de terceiros ou de seu atual ou anterior empregador, e
+que não violam direitos de terceiros, respondendo integral e regressivamente
+por qualquer reivindicação nesse sentido.
 
 ---
 
@@ -161,9 +191,9 @@ conduta sua.
 
 ## CLÁUSULA 6 — PRAZO
 
-6.1. Este Acordo vigora a partir da assinatura e as obrigações de sigilo
-subsistem por **5 (cinco) anos** contados do término de qualquer relação
-entre as Partes.
+6.1. Este Acordo vigora a partir de **14 de agosto de 2026**, na forma do
+item 1.3, e as obrigações de sigilo subsistem por **5 (cinco) anos** contados
+do término de qualquer relação entre as Partes.
 
 6.2. Quanto a **segredos de negócio, código-fonte e dados pessoais**, o dever
 de sigilo é **por prazo indeterminado**, enquanto a informação mantiver valor
@@ -178,9 +208,9 @@ até **24 (vinte e quatro) horas** do término das tratativas ou de qualquer
 contrato entre as Partes, a RECEPTORA deverá:
 
 a) devolver todo material físico e eletrônico recebido;
-b) eliminar em definitivo cópias locais, clones de repositório, exportações,
-   anotações, prints e backups, inclusive em nuvem pessoal e em histórico de
-   ferramentas de mensagem;
+b) eliminar em definitivo a cópia de trabalho e quaisquer clones de
+   repositório, exportações, anotações, capturas de tela e backups, inclusive
+   em nuvem pessoal e em histórico de aplicativos de mensagem;
 c) encerrar sessões ativas e desconectar dispositivos;
 d) firmar **declaração escrita de eliminação**, especificando o que havia e o
    que foi eliminado.
@@ -193,10 +223,9 @@ registros de acesso.
 ## CLÁUSULA 8 — PENALIDADES
 
 8.1. O descumprimento de qualquer obrigação deste Acordo sujeita a RECEPTORA
-ao pagamento de multa não compensatória de **R$ `[[VALOR — sugestão:
-100.000,00]]` (`[[valor por extenso]]`) por evento de violação**, sem
-prejuízo da indenização por perdas e danos efetivamente apurados, lucros
-cessantes e danos à imagem.
+ao pagamento de multa não compensatória de **R$ 100.000,00 (cem mil reais) por
+evento de violação**, sem prejuízo da indenização por perdas e danos
+efetivamente apurados, lucros cessantes e danos à imagem.
 
 8.2. A violação autoriza a DIVULGADORA a buscar tutela de urgência para fazer
 cessar o uso indevido, independentemente da multa.
@@ -213,14 +242,20 @@ invasão de dispositivo informático (art. 154-A do Código Penal).
 9.1. Este Acordo não gera vínculo empregatício, societário ou de
 exclusividade, nem obriga qualquer das Partes a celebrar contrato futuro.
 
-9.2. A tolerância quanto a qualquer descumprimento não implica renúncia,
+9.2. Quaisquer números, percentuais, metas, projeções de faturamento ou
+estimativas de valor mencionados verbalmente entre as Partes possuem caráter
+meramente ilustrativo e **não constituem promessa, garantia ou obrigação**.
+
+9.3. A tolerância quanto a qualquer descumprimento não implica renúncia,
 novação ou alteração deste Acordo.
 
-9.3. A nulidade de uma cláusula não contamina as demais.
+9.4. A nulidade de uma cláusula não contamina as demais.
 
-9.4. Este Acordo obriga as Partes, seus herdeiros e sucessores.
+9.5. Este Acordo obriga as Partes, seus herdeiros e sucessores, e poderá ser
+cedido pela DIVULGADORA a sociedade do mesmo grupo, controlada, controladora,
+sucessora ou constituída no exterior, independentemente de anuência.
 
-9.5. Fica eleito o foro da Comarca de `[[CIDADE/UF]]`, com renúncia a
+9.6. Fica eleito o foro da Comarca de `[[CIDADE/UF]]`, com renúncia a
 qualquer outro.
 
 E por estarem justas e acordadas, as Partes assinam o presente em 2 (duas)
