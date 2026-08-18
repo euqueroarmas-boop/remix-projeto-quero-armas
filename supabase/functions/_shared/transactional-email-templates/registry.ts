@@ -67,6 +67,7 @@ import { template as exigenciaPfRespondida } from './exigencia-pf-respondida.tsx
 import { template as pecaProntaAprovacao } from './peca-pronta-aprovacao.tsx'
 import { template as pecaDecididaEquipe } from './peca-decidida-equipe.tsx'
 import { template as recursoProtocolado } from './recurso-protocolado.tsx'
+import { template as processoDeferido } from './processo-deferido.tsx'
 import { template as cadastroAtualizado } from './cadastro-atualizado.tsx'
 import { template as certidaoRejeitada } from './certidao-rejeitada.tsx'
 import { template as provaRecebida } from './prova-recebida.tsx'
@@ -180,6 +181,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'peca-pronta-aprovacao': pecaProntaAprovacao,
   'peca-decidida-equipe': pecaDecididaEquipe,
   'recurso-protocolado': recursoProtocolado,
+  'processo-deferido': processoDeferido,
   'cadastro-atualizado': cadastroAtualizado,
   'certidao-rejeitada': certidaoRejeitada,
   'prova-recebida': provaRecebida,

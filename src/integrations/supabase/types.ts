@@ -10463,6 +10463,12 @@ export type Database = {
           created_at: string
           data_criacao: string
           data_validacao: string | null
+          deferimento_data: string | null
+          deferimento_documento_id: string | null
+          deferimento_numero: string | null
+          deferimento_registrado_em: string | null
+          deferimento_registrado_por: string | null
+          deferimento_visto_cliente_em: string | null
           etapa_liberada_ate: number
           id: string
           mes_protocolo_alvo: string | null
@@ -10497,6 +10503,12 @@ export type Database = {
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
+          deferimento_data?: string | null
+          deferimento_documento_id?: string | null
+          deferimento_numero?: string | null
+          deferimento_registrado_em?: string | null
+          deferimento_registrado_por?: string | null
+          deferimento_visto_cliente_em?: string | null
           etapa_liberada_ate?: number
           id?: string
           mes_protocolo_alvo?: string | null
@@ -10531,6 +10543,12 @@ export type Database = {
           created_at?: string
           data_criacao?: string
           data_validacao?: string | null
+          deferimento_data?: string | null
+          deferimento_documento_id?: string | null
+          deferimento_numero?: string | null
+          deferimento_registrado_em?: string | null
+          deferimento_registrado_por?: string | null
+          deferimento_visto_cliente_em?: string | null
           etapa_liberada_ate?: number
           id?: string
           mes_protocolo_alvo?: string | null

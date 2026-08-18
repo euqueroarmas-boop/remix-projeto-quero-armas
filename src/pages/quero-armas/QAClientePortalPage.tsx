@@ -108,6 +108,7 @@ import { grupoDaPendencia as grupoDaPendenciaHelper, grupoDaPendenciaDoItem, ord
 import { protocoloDoProcesso } from "@/components/quero-armas/processos/processoConstants";
 import JuntadaAssinaturaPanel from "@/components/quero-armas/portal/JuntadaAssinaturaPanel";
 import PecaAprovacaoPanel, { type PecaParaAprovar } from "@/components/quero-armas/portal/PecaAprovacaoPanel";
+import DeferimentoEntregaPanel from "@/components/quero-armas/portal/DeferimentoEntregaPanel";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
@@ -1158,7 +1159,7 @@ export default function QAClientePortalPage() {
         // contrato validado grava id_legado — buscamos pelas duas chaves.
         const { data: procsData } = await supabase
           .from("qa_processos" as any)
-          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json, protocolo_numero, protocolo_orgao, protocolo_data, protocolo_observacao, protocolo_registrado_em")
+          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json, protocolo_numero, protocolo_orgao, protocolo_data, protocolo_observacao, protocolo_registrado_em, deferimento_documento_id, deferimento_visto_cliente_em, deferimento_data")
           .in("cliente_id", Array.from(new Set([clienteIdReal, clienteIdVendas])))
           // Processos órfãos (cancelados/arquivados pela reconciliação porque
           // o admin removeu a venda/contrato) NUNCA devem aparecer ao cliente.
@@ -2204,6 +2205,50 @@ export default function QAClientePortalPage() {
           setShowAddDoc(true);
           setShowContratoPopup(false);
         },
+      });
+    }
+
+    // 1.2) DEFERIMENTO — O ÚNICO PASSO DA FILA QUE NÃO COBRA NADA.
+    //
+    // Vem primeiro entre os passos do processo porque é a única boa notícia do
+    // fluxo, e porque o cliente que acabou de ser deferido não deve abrir a
+    // área e encontrar cobrança de outro serviço antes de receber o que
+    // comprou. Sai da fila quando ele confirma o recebimento.
+    for (const p of (processos ?? []) as Array<{
+      id?: string; servico_id?: number; servico_nome?: string;
+      deferimento_documento_id?: string | null; deferimento_visto_cliente_em?: string | null;
+    }>) {
+      if (!p?.deferimento_documento_id || p.deferimento_visto_cliente_em) continue;
+      const servicoLabel =
+        getQAServiceDisplayName({
+          ...catalogoByServicoId[Number(p.servico_id)],
+          servico_id: p.servico_id,
+          servico_nome: p.servico_nome,
+        }) || p.servico_nome || null;
+      items.push({
+        id: `deferimento:${p.id}`,
+        kind: "documento",
+        servicoId: p.servico_id ?? null,
+        servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: p.id ?? null,
+        label: "Seu documento saiu — baixe aqui",
+        tipo: "deferimento_entrega",
+        rawTipo: "deferimento_entrega",
+        fallbackNome: "Documento deferido",
+        contexto: "Processo concluído",
+        grupoProprio: "exigencias_pf",
+        ordemGrupoPropria: -1,
+        onPrimary: () => {},
+        onEntregar: () => {},
+        corpo: (
+          <DeferimentoEntregaPanel
+            processoId={String(p.id)}
+            documentoId={String(p.deferimento_documento_id)}
+            servicoLabel={servicoLabel}
+            onConfirmado={() => setDocsReloadKey((k) => k + 1)}
+          />
+        ),
       });
     }
 

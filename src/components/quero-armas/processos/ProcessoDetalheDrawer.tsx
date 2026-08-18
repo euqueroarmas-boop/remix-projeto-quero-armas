@@ -868,6 +868,75 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [recursoForm, setRecursoForm] = useState({ numero: "", data: new Date().toISOString().slice(0, 10) });
   const [salvandoRecurso, setSalvandoRecurso] = useState(false);
 
+  /**
+   * Deferimento: qual documento do Hub é o RESULTADO deste processo.
+   *
+   * Até 18/08/2026 `deferido` era só um rótulo — sem e-mail, sem entrega, sem
+   * baixa do serviço, sem Arsenal. O documento entra pelo Hub (com validade,
+   * que é o que aciona o monitoramento de vencimento) e aqui é amarrado ao
+   * processo e entregue ao cliente.
+   */
+  const [deferModal, setDeferModal] = useState(false);
+  const [docsResultado, setDocsResultado] = useState<Array<{
+    id: string; tipo_documento: string; nome_documento: string | null; data_validade: string | null;
+  }>>([]);
+  const [deferForm, setDeferForm] = useState({
+    documento_id: "", numero: "", data: new Date().toISOString().slice(0, 10),
+  });
+  const [salvandoDefer, setSalvandoDefer] = useState(false);
+
+  const TIPOS_RESULTADO = ["autorizacao_compra", "cr", "craf", "gte", "gt", "porte_arma", "registro_arma"];
+
+  const carregarDocsResultado = useCallback(async () => {
+    const cid = processo?.cliente_id;
+    if (!cid) return;
+    const { data } = await supabase
+      .from("qa_documentos_cliente")
+      .select("id, tipo_documento, nome_documento, data_validade")
+      .eq("qa_cliente_id", cid)
+      .in("tipo_documento", TIPOS_RESULTADO)
+      .neq("status", "excluido")
+      .order("created_at", { ascending: false })
+      .limit(20);
+    setDocsResultado((data as typeof docsResultado) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [processo?.cliente_id]);
+
+  const confirmarDeferimento = async () => {
+    if (!processo?.id) return;
+    if (!deferForm.documento_id) {
+      toast.error("Escolha o documento que a PF liberou. Sem ele, isto vira só um rótulo de novo.");
+      return;
+    }
+    setSalvandoDefer(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-processo-deferir", {
+        body: {
+          processo_id: processo.id,
+          acao: "registrar",
+          documento_id: deferForm.documento_id,
+          numero: deferForm.numero.trim() || undefined,
+          data_deferimento: deferForm.data || undefined,
+        },
+      });
+      if (error) throw error;
+      const resp = (data ?? {}) as { error?: string; baixa_venda_ok?: boolean; baixa_aviso?: string | null };
+      if (resp.error) throw new Error(resp.error);
+      toast.success("Deferimento registrado. O documento já está na área do cliente.");
+      if (!resp.baixa_venda_ok) {
+        toast.warning("Registrado, mas o item da venda não recebeu baixa. " + (resp.baixa_aviso ?? ""), { duration: 12000 });
+      }
+      setDeferModal(false);
+      setDeferForm({ documento_id: "", numero: "", data: new Date().toISOString().slice(0, 10) });
+      await carregar();
+      onUpdated?.();
+    } catch (e) {
+      toast.error("Não deu para registrar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setSalvandoDefer(false);
+    }
+  };
+
   const carregarRecurso = useCallback(async () => {
     if (!processoId) return;
     const { data } = await supabase
@@ -1737,6 +1806,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   >
                     <FileSignature className="h-3 w-3" />
                     {gerandoRecurso ? "GERANDO…" : "GERAR RELATO DO RECURSO"}
+                  </button>
+                )}
+                {/*
+                  REGISTRAR DEFERIMENTO. O fluxo terminava numa palavra: sem
+                  e-mail, sem entrega do documento, sem baixa do serviço, sem
+                  Arsenal. Para um serviço chamado "Autorização de Compra", o
+                  produto final não tinha lugar no sistema.
+                */}
+                {equipeMode && ["protocolado", "em_analise_orgao", "notificado", "recurso_administrativo"].includes(String(processo?.status ?? "").toLowerCase()) && (
+                  <button
+                    onClick={() => { void carregarDocsResultado(); setDeferModal(true); }}
+                    className="ml-2 h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-700 hover:bg-emerald-800"
+                    title="Saiu a decisão favorável: entrega o documento ao cliente e dá baixa no serviço"
+                  >
+                    <ShieldCheck className="h-3 w-3" />
+                    REGISTRAR DEFERIMENTO
                   </button>
                 )}
                 {equipeMode && processo?.status === "pronto_para_protocolar" && (
@@ -3334,6 +3419,88 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         source={viewer.source}
         title={viewer.title}
       />
+
+      {/* Modal — Registrar deferimento */}
+      {deferModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-700" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">REGISTRAR DEFERIMENTO</h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DOCUMENTO LIBERADO PELO ÓRGÃO
+                </label>
+                <select
+                  value={deferForm.documento_id}
+                  onChange={(e) => setDeferForm((f) => ({ ...f, documento_id: e.target.value }))}
+                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                >
+                  <option value="">— escolha —</option>
+                  {docsResultado.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {(d.nome_documento || d.tipo_documento.replace(/_/g, " ")).toUpperCase()}
+                      {d.data_validade ? ` · vence ${formatDate(d.data_validade)}` : " · SEM VALIDADE"}
+                    </option>
+                  ))}
+                </select>
+                {docsResultado.length === 0 && (
+                  <p className="mt-1 text-[10px] uppercase tracking-wide text-amber-700 leading-snug">
+                    NENHUM DOCUMENTO DE RESULTADO NO HUB DESTE CLIENTE. SUBA A AUTORIZAÇÃO
+                    (OU O CR) PELO HUB DE DOCUMENTOS ANTES, COM A DATA DE VALIDADE.
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  NÚMERO (OPCIONAL)
+                </label>
+                <input
+                  type="text"
+                  value={deferForm.numero}
+                  onChange={(e) => setDeferForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DATA DO DEFERIMENTO
+                </label>
+                <input
+                  type="date"
+                  value={deferForm.data}
+                  onChange={(e) => setDeferForm((f) => ({ ...f, data: e.target.value }))}
+                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+              </div>
+              {/* A validade é o que aciona o monitoramento — sem ela o cliente
+                  recebe o papel e perde o prazo dele. */}
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+                O DOCUMENTO ESCOLHIDO É ENTREGUE AO CLIENTE E FICA NO ARSENAL. SE ELE TIVER
+                VALIDADE, O MONITORAMENTO DE VENCIMENTO COMEÇA AUTOMATICAMENTE.
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                onClick={() => setDeferModal(false)}
+                disabled={salvandoDefer}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarDeferimento}
+                disabled={salvandoDefer}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-emerald-700 hover:bg-emerald-800 disabled:opacity-60"
+              >
+                {salvandoDefer ? "REGISTRANDO..." : "REGISTRAR E ENTREGAR"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal — Protocolo do recurso */}
       {protocoloRecursoModal && recurso && (

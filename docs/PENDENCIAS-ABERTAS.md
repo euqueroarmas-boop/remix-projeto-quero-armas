@@ -1,7 +1,7 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
 Índice único do que ficou em aberto. Atualizado em 18/08/2026.
-Fases entregues: F1–F10. Resta F11.
+**Escopo de ataque CONCLUÍDO: F1–F11.**
 
 ---
 
@@ -75,11 +75,10 @@ Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsen
 
 ---
 
-## ⬜ Escopo de ataque — o que falta
+## ✅ Escopo de ataque — concluído
 
-| Frente | O quê |
-|---|---|
-| **F11** | Deferimento e entrega da autorização. Hoje "deferido" é só uma etiqueta: sem e-mail, sem passo para entregar o documento ao cliente, sem baixa do serviço, sem registro no Arsenal. Para um serviço chamado "Autorização de Compra", o produto final não tem lugar no sistema. |
+As 11 frentes foram entregues entre 17 e 18/08/2026. O que resta neste arquivo
+são conferências e uma decisão do usuário, não desenvolvimento.
 
 ---
 
