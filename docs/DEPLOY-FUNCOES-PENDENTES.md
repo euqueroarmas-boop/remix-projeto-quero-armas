@@ -3,7 +3,7 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
-> **NÃO HÁ NADA PENDENTE.** As 8 levas estão publicadas e as 9 migrations
+> **NÃO HÁ NADA PENDENTE.** As 9 levas estão publicadas e as 9 migrations
 > aplicadas e conferidas. Este documento vira registro histórico: use-o como
 > modelo quando houver uma leva nova.
 >
@@ -28,6 +28,7 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | **Leva 6** | 1 função (`qa-processo-prazo-alertas`) · publicada em **18/08 às 13:07 BRT** |
 | **Leva 7** | 2 funções (fila de conferência + fim do serviço) · publicada em **18/08 às 18:44 BRT** |
 | **Leva 8** | 3 funções (classificação do requerimento) · publicada em **18/08 às 18:48 BRT** |
+| **Leva 9** | 1 função (`qa-vencimentos-alertas`) · publicada em **18/08 às 20:36 BRT** |
 
 ### Migrations — todas aplicadas e conferidas
 
@@ -169,3 +170,25 @@ supabase/functions/` — e não a memória de quem escreveu.
 Nenhum arquivo de `_shared/` foi tocado nesses dois commits — não há efeito
 cascata sobre outras funções.
 
+
+---
+
+## Leva 9 — aviso de vencimento do dossiê · 18/08, 20:36 BRT
+
+`qa-vencimentos-alertas` passou a vigiar também `qa_processo_documentos` (o
+checklist do processo), sob a fonte `DOSSIE`. Antes ela só olhava o Hub, e os
+dois pontos que enxergam validade no processo são reativos — disparam no clique
+de montar a juntada, quando o processo já deveria estar indo para a delegacia.
+
+## Como fechar uma leva sem esquecer nada
+
+O erro que produziu a leva 8 foi montar o comando pelo que UMA sessão alterou.
+O jeito certo é perguntar ao repositório:
+
+```
+git diff --name-only <commit-da-ultima-leva>..HEAD -- supabase/functions/ \
+  | sed 's|supabase/functions/||' | cut -d/ -f1 | sort -u
+```
+
+Marcos de referência: leva 7 = `36119e9`, leva 8 = `6872970`, leva 9 = `d7babbf`.
+Se a lista voltar vazia, não há deploy pendente.
