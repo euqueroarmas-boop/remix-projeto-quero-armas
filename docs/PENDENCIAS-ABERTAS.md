@@ -5,28 +5,47 @@
 
 ---
 
-## 🔴 Conferências pendentes do deploy de 18/08/2026 (00:08 BRT)
+## 🔴 Deploy da leva 2 — pendente
 
-As 13 edge functions foram publicadas em lote. Duas verificações não puderam ser
-fechadas por SQL e continuam abertas.
+**9 funções ainda não publicadas.** Lista, comando e ordem em
+`docs/DEPLOY-FUNCOES-PENDENTES.md`. Não há SQL pendente: as 5 migrations da
+sessão estão aplicadas e conferidas.
 
-### 1. Template `exigencia-pf-respondida` está no ar?
+Enquanto não subir: o front já está na `main` e já chama as quatro funções novas
+(`qa-peca-enviar-cliente`, `qa-peca-aprovar-cliente`, `qa-recurso-protocolar`,
+`qa-processo-deferir`). Os botões existem no painel e devolvem erro de função não
+encontrada.
 
-**Como conferir:** abrir o painel de preview de e-mails e procurar
-**"Exigência da PF respondida (equipe)"**.
+---
 
-**Por que importa:** é o único item que pode ter quebrado no deploy sem dar
-sinal nenhum. O template é novo e vive no registry, que é embutido no bundle de
-`send-transactional-email`. Se o registry não pegou, todo aviso de exigência da
-PF falha em runtime por template inexistente — e isso só apareceria no momento
-em que a Polícia Federal notificasse um cliente, que é justamente quando o
-prazo de 10 dias começa a correr.
+## 🔴 Conferência dos templates de e-mail — CINCO, numa tela só
 
-**Se não estiver lá:** republicar `send-transactional-email`,
+**Como conferir:** abrir o painel de preview de e-mails e procurar os cinco.
+
+| Template | Leva | Quem recebe |
+|---|---|---|
+| Exigência da PF respondida (equipe) | 1 (publicada) | equipe |
+| Petição pronta para aprovação (cliente) | 2 (pendente) | cliente |
+| Petição decidida pelo cliente (equipe) | 2 (pendente) | equipe |
+| Recurso protocolado (cliente) | 2 (pendente) | cliente |
+| Processo deferido — documento entregue (cliente) | 2 (pendente) | cliente |
+
+O primeiro dá para conferir agora. Os outros quatro só depois do deploy da leva 2
+— mas é a mesma tela, uma olhada só.
+
+**Por que importa:** é o item que quebra em SILÊNCIO. Os templates vivem no
+registry, que é embutido no bundle de `send-transactional-email`. Se o registry
+não pegou, o envio falha em runtime por template inexistente — sem erro visível
+para quem clicou. Só se descobre no disparo real: quando a PF notifica um
+cliente, quando a equipe devolve uma petição, quando um processo é deferido.
+
+**Se algum não estiver lá:** republicar `send-transactional-email`,
 `preview-transactional-email`, `qa-enviar-email-template` e
 `qa-send-all-templates-preview`.
 
-### 2. O prazo do recurso parou de alarmar de verdade?
+---
+
+## 🔴 O prazo do recurso parou de alarmar de verdade?
 
 A consulta de conferência (`supabase/_conferencia_pos_deploy.sql`, seção A)
 devolveu **"PRAZO FECHADO (correto)"** para Edmar Souza Zeferino (indeferido
@@ -60,6 +79,10 @@ Na conferência de 18/08 as seções B, C e D voltaram vazias:
 
 Repetir a conferência quando qualquer um dos dois aparecer:
 `supabase/_conferencia_pos_deploy.sql`.
+
+**Passivo do deferimento:** os 3 processos já deferidos estão sem documento
+entregue — são exatamente os dois clientes legados da pendência abaixo. Não é
+caso novo: some junto com a exclusão.
 
 ---
 
