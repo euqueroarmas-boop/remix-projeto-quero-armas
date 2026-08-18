@@ -1,4 +1,4 @@
-# PENDÊNCIA — excluir os serviços de dois clientes legados
+# PENDÊNCIA — deferidos anteriores à automação, presos no checklist
 
 **Status:** aguardando decisão do usuário sobre três blocos-limite.
 **Aberta em:** 18/08/2026, durante a auditoria de ponta a ponta do fluxo de posse/autorização.
@@ -20,10 +20,48 @@ documentos das armas.
 
 ## Quem são
 
-| Cliente | id | CPF |
-|---|---|---|
-| Eduardo Rizek Elias | 183 | 301.647.088-80 |
-| Wilker Soares Fonseca | 164 | 016.180.651-14 |
+| Cliente | id | CPF | Situação |
+|---|---|---|---|
+| Eduardo Rizek Elias | 183 | 301.647.088-80 | excluir os serviços (decidido) |
+| Wilker Soares Fonseca | 164 | 016.180.651-14 | excluir os serviços (decidido) |
+| Gilberto Raimundo da Silva Neto | — | — | **decisão em aberto** — ver abaixo |
+
+### O terceiro caso — Gilberto Raimundo da Silva Neto
+
+Achado em 18/08/2026, ao conferir o furo 2 da terceira auditoria. Processo
+`2ecee2ec-814b-4d5a-9da3-8a36a21aa632`, serviço 48 (AQUISIÇÃO / REGISTRO / POSSE),
+item de venda 434.
+
+O que o dado mostra:
+
+- item da venda: **DEFERIDO em 29/06/2026**, dez dias depois da notificação de
+  19/06. Correu certo, e antes da automação;
+- `qa_processos.status`: **`aguardando_documentos`**, sem número de protocolo,
+  com **18 itens de checklist abertos**;
+- nenhuma manifestação da PF registrada, nenhuma exigência, nenhum evento de
+  protocolo ou deferimento no histórico;
+- um cron reexplode esse checklist **duas vezes por dia desde 10/08** — as
+  únicas linhas do histórico dele são esse ruído.
+
+**O que isso causa hoje:** se ele entrar na área do cliente, vê uma lista de 18
+pendências de um processo que já foi concedido. O alarme de prazo **não** o
+atinge mais (o item está deferido, e a correção de 18/08 passou a considerar os
+dois vocabulários de status) — mas o checklist continua.
+
+**Diferença em relação aos outros dois:** Eduardo e Wilker tiveram a exclusão
+dos serviços decidida pelo titular. Para o Gilberto **não há decisão ainda**. As
+saídas possíveis:
+
+1. **Fechar o processo** — levar `qa_processos` a `deferido`/`concluido` e
+   registrar o documento entregue, usando o fluxo novo (`qa-processo-deferir`).
+   Preserva o histórico e tira o checklist da frente dele. É o caminho que
+   trata o caso como o que ele é: um serviço entregue.
+2. **Excluir os serviços**, como nos outros dois, se ele também for virar só
+   cadastro.
+
+A opção 1 depende de existir o documento do deferimento (autorização/CR) para
+anexar. Sem ele, `qa-processo-deferir` recusa — de propósito: sem documento, o
+deferimento volta a ser só um rótulo.
 
 ## Inventário levantado (18/08/2026)
 

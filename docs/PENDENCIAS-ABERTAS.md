@@ -40,6 +40,21 @@ cliente, quando a equipe devolve uma petição, quando um processo é deferido.
 
 ---
 
+## ✅ Furos 1 e 2 da terceira auditoria — fechados em 18/08
+
+| Furo | Situação |
+|---|---|
+| 1. A petição aprovada não entrava no dossiê da PF | ✅ vira PDF (via do órgão + via lacrada) e entra no checklist · publicado 12:19 |
+| 2. Responder a notificação não fechava o prazo de 10 dias | ✅ `qa-manifestacao-responder` + coluna nova · publicado 12:54 |
+| — Achado ao conferir o 2: prazo alarmava caso já deferido | ✅ o motor passou a aceitar os dois vocabulários de status |
+| — Achado ao conferir o 2: a coluna nova não era lida por leitor nenhum | ✅ ligada nos cinco leitores, com teste que trava a lista |
+
+**Restam os furos 3 e 4:** o protocolo aceita dossiê velho (não exige que a
+juntada seja a mais recente) e nada leva o processo a `concluido` nem a
+solicitação a `finalizado` depois da entrega confirmada pelo cliente.
+
+---
+
 ## 🔴 O prazo do recurso parou de alarmar de verdade?
 
 A consulta de conferência (`supabase/_conferencia_pos_deploy.sql`, seção A)
@@ -81,15 +96,25 @@ caso novo: some junto com a exclusão.
 
 ---
 
-## 🟡 Excluir os serviços de dois clientes legados
+## 🟡 Deferidos anteriores à automação, presos no checklist — TRÊS clientes
 
-Levantamento completo — inventário, mapa de chaves estrangeiras, gatilhos de
-DELETE e a ordem correta do script — em
-**`docs/PENDENCIA-EXCLUSAO-SERVICOS-LEGADOS.md`**.
+Levantamento completo em **`docs/PENDENCIA-EXCLUSAO-SERVICOS-LEGADOS.md`**.
 
-Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsenal
-(3). E uma quarta sobre auditoria (8 eventos de status, 3 acessos à senha GOV,
-1 documento-modelo da IA) — a recomendação é manter tudo.
+**Eduardo Rizek Elias (183) e Wilker Soares Fonseca (164):** exclusão dos
+serviços já decidida pelo titular. Aguarda três decisões-limite: exames (4),
+procuração (1), CR + assinaturas do Arsenal (3). E uma quarta sobre auditoria
+(8 eventos de status, 3 acessos à senha GOV, 1 documento-modelo da IA) — a
+recomendação é manter tudo.
+
+**Gilberto Raimundo da Silva Neto — decisão em aberto.** Apareceu em 18/08 na
+conferência do furo 2. O item da venda dele está DEFERIDO desde 29/06, mas o
+processo no sistema segue em `aguardando_documentos`, com 18 itens de checklist
+abertos e um cron reexplodindo essa lista duas vezes por dia desde 10/08. Se ele
+entrar na área do cliente, vê 18 pendências de um serviço já concedido. O alarme
+de prazo não o atinge mais.
+
+Duas saídas: fechar o processo pelo fluxo novo (`qa-processo-deferir`, exige o
+documento do deferimento em mãos) ou excluir os serviços, como nos outros dois.
 
 ---
 
