@@ -1,22 +1,27 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
-**Versão final, 18/08/2026.** Cobre os commits `d55dd5d` → `HEAD` na `main`
-(escopo de ataque F1–F11, concluído).
+**Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
+`main` (escopo de ataque F1–F11 + reauditoria).
+
+> **NÃO HÁ NADA PENDENTE.** Todas as edge functions da auditoria estão
+> publicadas e todas as migrations estão aplicadas e conferidas. Este documento
+> vira registro histórico: use-o como modelo quando houver uma leva nova.
 
 O push para a `main` publica o front. **Edge function não sai junto** — precisa
 de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 
 ---
 
-## Estado atual
+## Estado final
 
 | | |
 |---|---|
-| **Migrations** | 5 criadas · **5 aplicadas** · nada pendente |
-| **Leva 1** | 13 funções · **publicada** em 18/08 às 00:08 BRT |
-| **Leva 2** | 9 funções · **pendente** ← é o que este documento entrega |
+| **Migrations** | 7 criadas · **7 aplicadas** · todas conferidas |
+| **Leva 1** | 13 funções · publicada em **18/08 às 00:08 BRT** |
+| **Leva 2** | 9 funções · publicada em **18/08 às 01:20 BRT** |
+| **Leva 3** | 1 função (`qa-export-docx`) · publicada em **18/08 às 11:22 BRT** |
 
-### Migrations — todas já aplicadas
+### Migrations — todas aplicadas e conferidas
 
 | Arquivo | O que faz | Conferido |
 |---|---|---|
@@ -25,12 +30,19 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | `20260818120000` | Tabela `qa_processo_juntadas` | ✅ 2 policies |
 | `20260818130000` | Ciclo de aprovação da peça | ✅ 2 peças, ambas `nao_enviada` |
 | `20260818140000` | Colunas de deferimento em `qa_processos` | ✅ 3 deferidos, 0 não confirmados |
-
-**Não há SQL pendente.** Pode publicar as funções direto.
+| `20260818150000` | Gatilho que espelha o status do processo na solicitação | ✅ conferência voltou **zero linhas** |
+| `20260818160000` | `qa_geracoes_own` deixa de ser `FOR ALL` | ✅ 5 policies, sem INSERT/DELETE para `authenticated` |
 
 ---
 
-## Leva 2 — 9 funções
+## Histórico das levas
+
+### Leva 1 — 13 funções · 18/08, 00:08 BRT
+
+F1–F7: prazos processuais, grupos de checklist, escopo da efetiva necessidade,
+juntada versionada, exigências da PF, gate de conclusão do checklist.
+
+### Leva 2 — 9 funções · 18/08, 01:20 BRT
 
 **Novas (4)** — primeiro deploy:
 
@@ -41,86 +53,31 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | `qa-recurso-protocolar` | painel da equipe | equipe |
 | `qa-processo-deferir` | painel + portal | equipe e cliente |
 
-**Alterada (1):**
-
-- `qa-processo-checar-conclusao-checklist` — ganhou o gate que impede o processo
-  de virar `pronto_para_protocolar` com petição aguardando ou devolvida. (Já foi
-  publicada na leva 1 com o gate da efetiva necessidade; esta é a segunda
-  alteração.)
+**Alterada (1):** `qa-processo-checar-conclusao-checklist` — gate que impede o
+processo de virar `pronto_para_protocolar` com petição aguardando ou devolvida.
 
 **Arrastadas pelo registry (4)** — quatro templates novos
 (`peca-pronta-aprovacao`, `peca-decidida-equipe`, `recurso-protocolado`,
-`processo-deferido`). O registry é embutido no bundle de cada uma:
+`processo-deferido`), embutidos no bundle de cada uma:
+`send-transactional-email`, `preview-transactional-email`,
+`qa-enviar-email-template`, `qa-send-all-templates-preview`.
 
-- `send-transactional-email`
-- `preview-transactional-email`
-- `qa-enviar-email-template`
-- `qa-send-all-templates-preview`
+### Leva 3 — 1 função · 18/08, 11:22 BRT
 
-> **Só o registry mudou em `_shared` depois da leva 1.** Nenhum outro módulo
-> compartilhado foi tocado, então nenhuma outra função precisa ser republicada.
-
----
-
-## Comando para o Lovable
-
-```
-Faça o deploy das edge functions abaixo. Elas já estão no repositório (branch
-main) — o código NÃO deve ser alterado, apenas publicado.
-
-Novas (primeiro deploy):
-- qa-peca-enviar-cliente
-- qa-peca-aprovar-cliente
-- qa-recurso-protocolar
-- qa-processo-deferir
-
-Alterada:
-- qa-processo-checar-conclusao-checklist
-
-Precisam ser republicadas porque o registry de templates mudou (quatro templates
-novos: peca-pronta-aprovacao, peca-decidida-equipe, recurso-protocolado,
-processo-deferido). O registry é embutido no bundle de cada uma:
-- send-transactional-email
-- preview-transactional-email
-- qa-enviar-email-template
-- qa-send-all-templates-preview
-
-São 9 no total. Publique todas na mesma leva.
-
-Restrições:
-- Não altere nenhum arquivo em supabase/functions/, src/ ou supabase/migrations/.
-- Não crie migration nova. Todo o SQL já foi aplicado à mão no SQL Editor.
-- Nenhuma das novas precisa de entrada no config.toml: todas fazem a própria
-  guarda (requireQAStaff nas de equipe; dono do processo via qa_clientes.user_id
-  ou cliente_auth_links nas do cliente), e o padrão verify_jwt = true serve.
-
-Ao terminar, me diga quais funções foram publicadas e o horário de cada uma.
-```
-
-## Alternativa pelo Supabase CLI
-
-```bash
-supabase functions deploy \
-  qa-peca-enviar-cliente \
-  qa-peca-aprovar-cliente \
-  qa-recurso-protocolar \
-  qa-processo-deferir \
-  qa-processo-checar-conclusao-checklist \
-  send-transactional-email \
-  preview-transactional-email \
-  qa-enviar-email-template \
-  qa-send-all-templates-preview \
-  --project-ref ogkltfqvzweeqkfmrzts
-```
+`qa-export-docx` — passou a exportar o texto que o cliente aprovou
+(`texto_final`) em vez da minuta original (`minuta_gerada`). Sem isso, a correção
+feita pelo cliente na petição não chegava ao documento protocolado: pior do que
+não ter ciclo de aprovação, porque criava a falsa garantia de que chegava.
 
 ---
 
 ## Conferência depois do deploy
 
-### 1. Os quatro templates novos estão no ar
+### 1. Os cinco templates novos estão no ar — **ainda em aberto**
 
 Abra o preview de e-mails e confirme que aparecem:
 
+- **Exigência da PF respondida (equipe)**
 - **Petição pronta para aprovação (cliente)**
 - **Petição decidida pelo cliente (equipe)**
 - **Recurso protocolado (cliente)**
@@ -128,6 +85,10 @@ Abra o preview de e-mails e confirme que aparecem:
 
 É o item que quebra em silêncio: se o registry não pegou, os envios falham em
 runtime por template inexistente, e só se descobre na hora do disparo real.
+
+**Se algum não estiver lá:** republicar `send-transactional-email`,
+`preview-transactional-email`, `qa-enviar-email-template` e
+`qa-send-all-templates-preview`.
 
 ### 2. As pontas do fluxo, com um caso real
 
@@ -155,23 +116,16 @@ SELECT 'D JUNTADA', j.processo_id::text, 'v' || j.versao || ' · ' || j.paginas 
 ORDER BY 1, 2;
 ```
 
-### 3. Ainda pendente da leva 1
+### 3. Ainda pendente — prazo do recurso
 
-Duas conferências continuam abertas — ver `docs/PENDENCIAS-ABERTAS.md`:
-
-- template `exigencia-pf-respondida` no ar (mesma checagem do item 1 acima);
-- prova definitiva de que o prazo do recurso parou de alarmar (painel de prazos
-  ou `qa-processo-prazo-alertas` com `{"dry_run": true}`).
+Prova definitiva de que o prazo do recurso parou de alarmar: painel de prazos no
+dashboard, ou `qa-processo-prazo-alertas` com `{"dry_run": true}`. Ver
+`docs/PENDENCIAS-ABERTAS.md`.
 
 ---
 
-## Por que tudo junto
+## Regra permanente
 
-- As quatro funções novas referenciam os templates novos. Sem o
-  `send-transactional-email` na mesma leva, o envio falha por template
-  inexistente e o e-mail some — sem erro visível para quem clicou.
-- O front já está na `main` e já chama as quatro. Enquanto não subirem, os
-  botões existem e devolvem erro de função não encontrada.
-- O gate da petição vive em `qa-processo-checar-conclusao-checklist`. Publicar
-  `qa-peca-enviar-cliente` sem ela deixa a petição na fila do cliente **sem**
-  travar o protocolo — o pior dos dois mundos.
+Mudança em `supabase/functions/_shared/` obriga a republicar **todas** as
+funções que importam o arquivo — o módulo é embutido no bundle de cada uma, não
+compartilhado em runtime. O caso mais comum é o registry de templates de e-mail.

@@ -1,20 +1,15 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 18/08/2026.
-**Escopo de ataque CONCLUÍDO: F1–F11.**
+Índice único do que ficou em aberto. Atualizado em 18/08/2026, 11:22 BRT.
+**Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
 
-## 🔴 Deploy da leva 2 — pendente
+## ✅ Deploy — nada pendente
 
-**9 funções ainda não publicadas.** Lista, comando e ordem em
-`docs/DEPLOY-FUNCOES-PENDENTES.md`. Não há SQL pendente: as 5 migrations da
-sessão estão aplicadas e conferidas.
-
-Enquanto não subir: o front já está na `main` e já chama as quatro funções novas
-(`qa-peca-enviar-cliente`, `qa-peca-aprovar-cliente`, `qa-recurso-protocolar`,
-`qa-processo-deferir`). Os botões existem no painel e devolvem erro de função não
-encontrada.
+As 23 edge functions da auditoria estão publicadas (leva 1 às 00:08, leva 2 às
+01:20, `qa-export-docx` às 11:22 BRT) e as **7 migrations** estão aplicadas e
+conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
 
 ---
 
@@ -22,16 +17,16 @@ encontrada.
 
 **Como conferir:** abrir o painel de preview de e-mails e procurar os cinco.
 
-| Template | Leva | Quem recebe |
-|---|---|---|
-| Exigência da PF respondida (equipe) | 1 (publicada) | equipe |
-| Petição pronta para aprovação (cliente) | 2 (pendente) | cliente |
-| Petição decidida pelo cliente (equipe) | 2 (pendente) | equipe |
-| Recurso protocolado (cliente) | 2 (pendente) | cliente |
-| Processo deferido — documento entregue (cliente) | 2 (pendente) | cliente |
+| Template | Quem recebe |
+|---|---|
+| Exigência da PF respondida (equipe) | equipe |
+| Petição pronta para aprovação (cliente) | cliente |
+| Petição decidida pelo cliente (equipe) | equipe |
+| Recurso protocolado (cliente) | cliente |
+| Processo deferido — documento entregue (cliente) | cliente |
 
-O primeiro dá para conferir agora. Os outros quatro só depois do deploy da leva 2
-— mas é a mesma tela, uma olhada só.
+As funções que carregam o registry já estão todas publicadas — é uma olhada só,
+numa tela só.
 
 **Por que importa:** é o item que quebra em SILÊNCIO. Os templates vivem no
 registry, que é embutido no bundle de `send-transactional-email`. Se o registry
@@ -107,8 +102,8 @@ mais quatro, dois deles criados pelas próprias correções:
 |---|---|
 | DOCX exportava `minuta_gerada`, ignorando a correção do cliente (criado pela F9) | ✅ corrigido |
 | Aprovar o último documento não promovia o processo na hora | ✅ corrigido |
-| **Segunda verdade:** processo avança e `status_servico` da solicitação fica parado | ✅ gatilho + backfill (SQL `20260818150000`) |
-| `qa_geracoes_own` era `FOR ALL` — usuário logado podia inserir peça | ✅ SQL `20260818160000` |
+| **Segunda verdade:** processo avança e `status_servico` da solicitação fica parado | ✅ gatilho + backfill (`20260818150000`) · conferência voltou **zero linhas** em 18/08 |
+| `qa_geracoes_own` era `FOR ALL` — usuário logado podia inserir peça | ✅ `20260818160000` · conferido: 5 policies, sem INSERT/DELETE para `authenticated` |
 
 **Fechado sem código — não era furo:** o `etapaDoTipo` manda tipo desconhecido
 para a etapa 1. Conferido na reauditoria: a fila do guiado **não filtra por
