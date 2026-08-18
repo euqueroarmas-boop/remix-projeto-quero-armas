@@ -63,6 +63,7 @@ import { template as acervoConforme } from './acervo-conforme.tsx'
 import { template as documentoEmDia } from './documento-em-dia.tsx'
 import { template as processoParadoCobranca } from './processo-parado-cobranca.tsx'
 import { template as exigenciaCumprida } from './exigencia-cumprida.tsx'
+import { template as exigenciaPfRespondida } from './exigencia-pf-respondida.tsx'
 import { template as cadastroAtualizado } from './cadastro-atualizado.tsx'
 import { template as certidaoRejeitada } from './certidao-rejeitada.tsx'
 import { template as provaRecebida } from './prova-recebida.tsx'
@@ -172,6 +173,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'documento-em-dia': documentoEmDia,
   'processo-parado-cobranca': processoParadoCobranca,
   'exigencia-cumprida': exigenciaCumprida,
+  'exigencia-pf-respondida': exigenciaPfRespondida,
   'cadastro-atualizado': cadastroAtualizado,
   'certidao-rejeitada': certidaoRejeitada,
   'prova-recebida': provaRecebida,

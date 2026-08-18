@@ -159,9 +159,15 @@ Deno.serve(async (req) => {
     // negado por repetição.
     const { data: docs } = await admin
       .from("qa_processo_documentos")
-      .select("tipo_documento, nome_documento, status")
+      .select("id, tipo_documento, nome_documento, status, regra_validacao")
       .eq("processo_id", processoId);
-    const lista = (docs ?? []) as Array<{ tipo_documento: string; nome_documento?: string; status?: string }>;
+    const lista = (docs ?? []) as Array<{
+      id: string;
+      tipo_documento: string;
+      nome_documento?: string;
+      status?: string;
+      regra_validacao?: Record<string, unknown> | null;
+    }>;
     const jaEntregues = lista
       .filter((d) => JA_CUMPRIDO.has(String(d.status ?? "").toLowerCase()))
       .map((d) => `${d.tipo_documento}${d.nome_documento ? ` (${d.nome_documento})` : ""}`);
@@ -299,10 +305,98 @@ Deno.serve(async (req) => {
     }
 
     // ── EXIGÊNCIAS NO CHECKLIST ───────────────────────────────────────────
-    // Só entram as que ainda não existem no processo. Reexecutar não duplica,
-    // e um documento que o cliente já cumpriu não volta para a fila.
-    const jaNoProcesso = new Map(lista.map((d) => [String(d.tipo_documento), String(d.status ?? "")]));
-    const aCriar = elementos.filter((e) => !jaNoProcesso.has(e.tipo_documento));
+    //
+    // ATÉ 18/08/2026 ISTO ERA UM SUMIDOURO. A regra era "só entram as que ainda
+    // não existem no processo" — e a PF pede de novo o tempo todo: o
+    // comprovante de residência venceu, a certidão saiu com nome divergente, o
+    // laudo é de outro ano. Quando já havia uma linha daquele tipo, a exigência
+    // era descartada em silêncio, contada como `ja_existentes`. O cliente nunca
+    // era cobrado, e os 10 dias corriam até o requerimento ser arquivado.
+    //
+    // Agora há três destinos:
+    //   • não existe linha do tipo            → cria
+    //   • existe, mas cumprida ou de outro
+    //     ciclo                               → REABRE como pendência da PF
+    //   • já está pendente por causa DESTA
+    //     mesma manifestação                  → não mexe (idempotência)
+    const primeiraPorTipo = new Map<string, typeof lista[number]>();
+    for (const d of lista) {
+      const t = String(d.tipo_documento);
+      if (!primeiraPorTipo.has(t)) primeiraPorTipo.set(t, d);
+    }
+
+    const aCriar: typeof elementos = [];
+    const aReabrir: Array<{ elemento: typeof elementos[number]; linha: typeof lista[number] }> = [];
+
+    for (const e of elementos) {
+      const existente = primeiraPorTipo.get(e.tipo_documento);
+      if (!existente) { aCriar.push(e); continue; }
+      const regraAtual = (existente.regra_validacao ?? {}) as Record<string, unknown>;
+      const jaDestaManifestacao = String(regraAtual.manifestacao_id ?? "") === manifestacaoId;
+      const cumprida = JA_CUMPRIDO.has(String(existente.status ?? "").toLowerCase());
+      if (jaDestaManifestacao && !cumprida) continue;
+      aReabrir.push({ elemento: e, linha: existente });
+    }
+
+    let reabertas = 0;
+    for (const { elemento: e, linha } of aReabrir) {
+      const regraAtual = (linha.regra_validacao ?? {}) as Record<string, unknown>;
+      // As condicionais saem: o que a PF exige é incondicional. Uma linha com
+      // `exige_quando` insatisfeito voltaria invisível para o cliente — o mesmo
+      // silêncio, por outra porta.
+      const {
+        exige_quando: _eq,
+        dispensa_quando: _dq,
+        depende_de: _dd,
+        ...regraPreservada
+      } = regraAtual;
+
+      const { error: reErr } = await admin
+        .from("qa_processo_documentos")
+        .update({
+          status: "pendente",
+          obrigatorio: e.obrigatorio,
+          nome_documento: e.titulo,
+          data_validacao: null,
+          motivo_rejeicao:
+            "A Polícia Federal pediu este documento novamente. Envie a versão atual.",
+          instrucoes: [e.por_que, e.como_conseguir].filter(Boolean).join(" "),
+          observacoes_cliente: e.por_que || null,
+          etapa: "complementar",
+          ordem: 1,
+          regra_validacao: {
+            ...regraPreservada,
+            grupo_checklist: "exigencias_pf",
+            ordem_grupo_checklist: 1,
+            origem: "manifestacao_pf",
+            manifestacao_id: manifestacaoId,
+            delegado_nome: preencher.delegado_nome ?? m.delegado_nome ?? null,
+            rotulo_tipo: rotuloTipoExigenciaPF(e.tipo_documento),
+            reaberta_em: new Date().toISOString(),
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", linha.id);
+      if (reErr) {
+        console.error("[manifestacao-analisar] exigência não reaberta", linha.id, reErr.message);
+        continue;
+      }
+      reabertas++;
+      await admin.from("qa_processo_eventos").insert({
+        processo_id: processoId,
+        documento_id: linha.id,
+        tipo_evento: "exigencia_pf_reaberta",
+        descricao:
+          `A PF PEDIU NOVAMENTE: ${String(e.titulo).toUpperCase()} ` +
+          `(estava "${linha.status ?? "sem status"}")`,
+        ator: "sistema_ia",
+        dados_json: {
+          manifestacao_id: manifestacaoId,
+          tipo_documento: e.tipo_documento,
+          status_anterior: linha.status ?? null,
+        },
+      });
+    }
 
     let criadas = 0;
     if (aCriar.length > 0) {
@@ -350,13 +444,18 @@ Deno.serve(async (req) => {
       processo_id: processoId,
       tipo_evento: "manifestacao_pf_analisada",
       descricao:
-        `IA leu a manifestação da PF: ${elementos.length} elemento(s) novo(s) apontado(s), ${criadas} exigência(s) criada(s).`,
+        `IA leu a manifestação da PF: ${elementos.length} elemento(s) apontado(s), ` +
+        `${criadas} exigência(s) criada(s), ${reabertas} reaberta(s).`,
       ator: "sistema_ia",
       dados_json: {
         manifestacao_id: manifestacaoId,
         natureza: analise.natureza ?? null,
         tipos: elementos.map((e) => e.tipo_documento),
-        ja_existiam: elementos.length - criadas,
+        criadas,
+        reabertas,
+        // O que sobra aqui já estava pendente por causa desta mesma
+        // manifestação — nada a fazer, e é o único caso legítimo de "ignorar".
+        ja_pendentes: elementos.length - criadas - reabertas,
       },
     });
 
@@ -366,7 +465,8 @@ Deno.serve(async (req) => {
       resumo_para_cliente: analise.resumo_para_cliente ?? "",
       elementos_novos: elementos,
       exigencias_criadas: criadas,
-      exigencias_ja_existentes: elementos.length - criadas,
+      exigencias_reabertas: reabertas,
+      exigencias_ja_pendentes: elementos.length - criadas - reabertas,
     });
   } catch (err) {
     console.error("qa-manifestacao-analisar:", err);

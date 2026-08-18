@@ -481,6 +481,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           body: { processo_id: processoId, documento_id: docId, evento: eventoEmail, motivo },
         }).catch((e) => console.warn("notificação:", e));
       }
+      // EXIGÊNCIA DA PF APROVADA À MÃO. A IA manda para revisão humana com
+      // frequência justamente nas exigências da PF, e quem aprova é a equipe —
+      // sem passar por edge nenhuma. Sem esta chamada, aprovar o último item de
+      // uma notificação não registrava que a delegacia já pode ser respondida.
+      if (novoStatus === "aprovado") {
+        void supabase.functions
+          .invoke("qa-exigencia-pf-checar", {
+            body: { processo_id: processoId, documento_id: docId },
+          })
+          .catch((e) => console.warn("[drawer] checar exigência PF falhou:", e));
+      }
+
       const toastMsg =
         novoStatus === "aprovado" ? "Documento aprovado." :
         novoStatus === "invalido" ? "Documento rejeitado." :

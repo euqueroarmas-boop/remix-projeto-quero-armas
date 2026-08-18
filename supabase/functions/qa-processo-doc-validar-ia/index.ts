@@ -2090,6 +2090,20 @@ Deno.serve(async (req) => {
       } catch (e) { console.warn("[validar-ia] notificação falhou:", e); }
     }
 
+    // Exigência da PF aprovada: se era a ÚLTIMA daquela notificação, a equipe
+    // pode devolver o material à delegacia. É o gatilho que faltava — o
+    // e-mail `exigencia-cumprida` existia e só disparava pelo pré-piloto.
+    if (novoStatus === "aprovado") {
+      try {
+        const { avisarCumprimentoExigenciaPF } = await import("../_shared/notificarExigenciaPF.ts");
+        await avisarCumprimentoExigenciaPF({
+          admin: supabase,
+          processoId: String(processo_id),
+          documentoId: String(documento_id),
+        });
+      } catch (e) { console.warn("[validar-ia] aviso de exigência PF falhou:", e); }
+    }
+
     // Após cada validação que resultou em status terminal, checa se o
     // processo virou pronto_para_protocolar (idempotente, fire-and-forget).
     try {

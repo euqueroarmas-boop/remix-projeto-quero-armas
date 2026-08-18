@@ -418,6 +418,29 @@ Deno.serve(async (req) => {
       );
     } catch (_) {}
 
+    // ── EXIGÊNCIA DA POLÍCIA FEDERAL ────────────────────────────────────
+    // Documento comum gera só o sininho do admin (gatilho no banco). Exigência
+    // da PF é outra coisa: corre prazo fatal de 10 dias e o requerimento é
+    // arquivado se ninguém responder. O cliente ter reagido é o momento em que
+    // a bola volta para a equipe — e até 18/08/2026 esse momento era invisível.
+    // `storage_path` na chave: reenvio depois de recusa precisa avisar de novo.
+    try {
+      // @ts-ignore EdgeRuntime
+      (globalThis as any).EdgeRuntime?.waitUntil(
+        (async () => {
+          const { avisarEntregaExigenciaPF } = await import("../_shared/notificarExigenciaPF.ts");
+          await avisarEntregaExigenciaPF({
+            admin: supabase,
+            processoId: String(processo_id),
+            documentoId: String(documentoIdAlvo),
+            chaveExtra: String(storage_path),
+          });
+        })().catch((e: unknown) =>
+          console.warn("[upload] aviso de exigência PF falhou:", (e as Error)?.message ?? e),
+        ),
+      );
+    } catch (_) {}
+
     return json({
       success: true,
       documento: docRow,

@@ -300,12 +300,28 @@ export default function ColarManifestacaoPFModal({
             { body: { manifestacao_id: manifestacaoId } },
           );
           if (iaErr) throw iaErr;
-          const criadas = Number((r as { exigencias_criadas?: number } | null)?.exigencias_criadas ?? 0);
-          const apontados = ((r as { elementos_novos?: unknown[] } | null)?.elementos_novos ?? []).length;
-          if (criadas > 0) {
-            toast.success(`IA abriu ${criadas} exigência(s) no checklist do cliente.`);
+          const resp = (r ?? {}) as {
+            exigencias_criadas?: number;
+            exigencias_reabertas?: number;
+            elementos_novos?: unknown[];
+          };
+          const criadas = Number(resp.exigencias_criadas ?? 0);
+          // REABERTA não é o mesmo que ignorada. A PF pede de novo o tempo
+          // todo — comprovante vencido, certidão com nome divergente — e antes
+          // de 18/08/2026 essas exigências eram descartadas caladas porque já
+          // existia uma linha do mesmo tipo. Agora voltam para a fila, e a
+          // equipe precisa ver isso no toast.
+          const reabertas = Number(resp.exigencias_reabertas ?? 0);
+          const apontados = (resp.elementos_novos ?? []).length;
+          const total = criadas + reabertas;
+          if (total > 0) {
+            const partes = [
+              criadas > 0 ? `${criadas} nova(s)` : null,
+              reabertas > 0 ? `${reabertas} reaberta(s)` : null,
+            ].filter(Boolean).join(" · ");
+            toast.success(`IA colocou ${total} exigência(s) na fila do cliente — ${partes}.`);
           } else if (apontados > 0) {
-            toast.info("IA leu o texto: o que a PF pediu já está no checklist.");
+            toast.info("IA leu o texto: o que a PF pediu já está pendente na fila do cliente.");
           } else {
             toast.info("IA leu o texto e não encontrou documento novo a pedir.");
           }
