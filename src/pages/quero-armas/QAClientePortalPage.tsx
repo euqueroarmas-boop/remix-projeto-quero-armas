@@ -41,7 +41,7 @@ import AcessoGovBrPanel from "@/components/quero-armas/portal/AcessoGovBrPanel";
 import ProtocoloStatusPanel, { type ManifestacaoPF } from "@/components/quero-armas/portal/ProtocoloStatusPanel";
 import LinhaDoTempoProcessoPF from "@/components/quero-armas/portal/LinhaDoTempoProcessoPF";
 import AvisoExigenciaPF from "@/components/quero-armas/portal/AvisoExigenciaPF";
-import type { RecursoParaAprovar } from "@/components/quero-armas/portal/RecursoAprovacaoPanel";
+import RecursoAprovacaoPanel, { type RecursoParaAprovar } from "@/components/quero-armas/portal/RecursoAprovacaoPanel";
 
 /** Status em que o processo já está com a Polícia Federal. Ver `processoNaPF`. */
 const STATUS_PROCESSO_NA_PF = [
@@ -1869,6 +1869,32 @@ export default function QAClientePortalPage() {
     return () => { vivo = false; };
   }, [processoNaPF, recursoReloadKey]);
 
+  /**
+   * Recursos esperando a aprovação do cliente, em QUALQUER processo dele.
+   *
+   * O carregamento acima serve à linha do tempo e olha só o processo que está
+   * na PF. A fila do guiado precisa de todos: cliente com dois processos
+   * indeferidos tinha o segundo recurso invisível.
+   */
+  const [recursosParaAprovar, setRecursosParaAprovar] = useState<
+    Array<RecursoParaAprovar & { processo_id: string | null }>
+  >([]);
+  useEffect(() => {
+    const ids = (processos ?? []).map((p: { id?: string }) => String(p?.id)).filter(Boolean);
+    if (ids.length === 0) { setRecursosParaAprovar([]); return; }
+    let vivo = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_processo_recursos" as never)
+        .select("id, processo_id, status, narrativa_gerada, narrativa_final, aprovado_em, editada_pelo_cliente, provas_json")
+        .in("processo_id", ids)
+        .in("status", ["rascunho", "aguardando_aprovacao"])
+        .order("created_at", { ascending: false });
+      if (vivo) setRecursosParaAprovar((data as unknown as Array<RecursoParaAprovar & { processo_id: string | null }>) ?? []);
+    })();
+    return () => { vivo = false; };
+  }, [processos, recursoReloadKey]);
+
   // Se o escopo selecionado deixar de existir (processo removido), volta a "todos".
   useEffect(() => {
     if (!portalScopes.some((s) => s.id === selectedScopeId)) {
@@ -2181,6 +2207,56 @@ export default function QAClientePortalPage() {
       });
     }
 
+    // 1.3) RECURSO ESPERANDO A APROVAÇÃO DELE — PRAZO FATAL DE 10 DIAS.
+    //
+    // Vem na frente de tudo (menos contrato/procuração) porque é o item com o
+    // relógio mais curto do fluxo: a PF negou, corre prazo de 10 dias, e a peça
+    // do recurso não é escrita enquanto o cliente não confirmar que os fatos
+    // são dele.
+    //
+    // Até 18/08/2026 esta aprovação vivia dentro da linha do tempo do processo,
+    // fora da fila do guiado — e só para o processo que estivesse "na PF".
+    // Cliente com dois processos indeferidos tinha o segundo recurso invisível.
+    for (const rec of recursosParaAprovar) {
+      const proc = (processos ?? []).find(
+        (p: { id?: string }) => String(p?.id) === String(rec.processo_id),
+      ) as { id?: string; servico_id?: number; servico_nome?: string } | undefined;
+      const servicoLabel = proc
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(proc.servico_id)],
+            servico_id: proc.servico_id,
+            servico_nome: proc.servico_nome,
+          }) || proc.servico_nome || null)
+        : null;
+      items.push({
+        id: `recurso:${rec.id}`,
+        kind: "documento",
+        servicoId: proc?.servico_id ?? null,
+        servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: rec.processo_id ?? null,
+        label: "Ler e aprovar o seu recurso",
+        tipo: "recurso_aprovacao",
+        rawTipo: "recurso_aprovacao",
+        fallbackNome: "Recurso administrativo",
+        contexto: "Resposta à Polícia Federal",
+        grupoProprio: "exigencias_pf",
+        ordemGrupoPropria: 0,
+        onPrimary: () => {},
+        onEntregar: () => {},
+        corpo: (
+          <RecursoAprovacaoPanel
+            recurso={rec}
+            delegadoNome={avisoPF?.delegadoNome ?? null}
+            onAprovado={() => {
+              setRecursoReloadKey((k) => k + 1);
+              setDocsReloadKey((k) => k + 1);
+            }}
+          />
+        ),
+      });
+    }
+
     // 1.4) PETIÇÃO ESPERANDO A APROVAÇÃO DELE.
     //
     // Vem antes do checklist de propósito: ela é o documento que decide o
@@ -2188,7 +2264,9 @@ export default function QAClientePortalPage() {
     // (gate em qa-processo-checar-conclusao-checklist). Pedir certidão a quem
     // tem uma petição parada esperando leitura é cobrar a coisa errada.
     for (const peca of pecasParaAprovar) {
-      const proc = (processos ?? []).find((p: any) => String(p?.id) === String(peca.processo_id));
+      const proc = (processos ?? []).find(
+        (p: { id?: string }) => String(p?.id) === String(peca.processo_id),
+      ) as { id?: string; servico_id?: number; servico_nome?: string } | undefined;
       const servicoLabel = proc
         ? (getQAServiceDisplayName({
             ...catalogoByServicoId[Number(proc.servico_id)],
@@ -3037,7 +3115,7 @@ export default function QAClientePortalPage() {
     // popup guiado. A sequência por grupo continua na ordenação, mas sem
     // esconder os demais grupos atrás de uma fila paralela.
     return decorados.map((d) => d.it);
-  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos, pecasParaAprovar]);
+  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos, pecasParaAprovar, recursosParaAprovar]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
@@ -5019,6 +5097,13 @@ export default function QAClientePortalPage() {
                   onAbrirDetalhe={() => setProtocoloAberto(String(processoNaPF.id))}
                   recurso={recursoPF}
                   onRecursoAprovado={() => setRecursoReloadKey((k) => k + 1)}
+                  // A aprovação mora na fila do guiado. Este botão leva direto
+                  // ao passo, já aberto — sem obrigar o cliente a procurá-lo.
+                  onAbrirAprovacaoRecurso={
+                    recursoPF
+                      ? () => abrirPendenciasGuiadas({ pinnedId: `recurso:${recursoPF.id}`, pularGateCadastral: true })
+                      : undefined
+                  }
                 />
               )}
               <CockpitZ6MeusProcessos {...cockpitProps} />

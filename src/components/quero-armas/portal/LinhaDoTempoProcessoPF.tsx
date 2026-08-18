@@ -30,7 +30,7 @@ import {
   janelaMandadoSeguranca,
   linkWhatsAppMS,
 } from "@/lib/quero-armas/mandadoSeguranca";
-import RecursoAprovacaoPanel, { type RecursoParaAprovar } from "./RecursoAprovacaoPanel";
+import { type RecursoParaAprovar } from "./RecursoAprovacaoPanel";
 import type { ManifestacaoPF } from "./ProtocoloStatusPanel";
 
 export interface LinhaDoTempoProcessoPFProps {
@@ -53,6 +53,8 @@ export interface LinhaDoTempoProcessoPFProps {
    */
   recurso?: RecursoParaAprovar | null;
   onRecursoAprovado?: () => void;
+  /** Abre a fila do pop-up guiado direto no passo de aprovação do recurso. */
+  onAbrirAprovacaoRecurso?: () => void;
 }
 
 const TIPO_ROTULO: Record<string, string> = {
@@ -102,11 +104,17 @@ export default function LinhaDoTempoProcessoPF({
   onAbrirDetalhe,
   recurso,
   onRecursoAprovado,
+  onAbrirAprovacaoRecurso,
 }: LinhaDoTempoProcessoPFProps) {
   // Do mais ANTIGO para o mais recente — é o que "linha do tempo" quer dizer.
   const cronologica = [...manifestacoes].sort((a, b) =>
     dataDoDegrau(a).localeCompare(dataDoDegrau(b)),
   );
+
+  // Existe recurso escrito esperando o cliente? A aprovação em si mora na fila
+  // do guiado; aqui só decide se o aviso aparece.
+  const recursoPendente =
+    !!recurso && ["rascunho", "aguardando_aprovacao"].includes(String(recurso.status ?? ""));
 
   // A janela do MS nasce da própria manifestação que negou o recurso. Ler daqui
   // (e não da venda) mantém o painel do cliente independente do que a equipe
@@ -180,17 +188,40 @@ export default function LinhaDoTempoProcessoPF({
       </ol>
 
       {/*
-        O RECURSO VEM ANTES DO RESTO. Existindo texto para o cliente aprovar,
-        isso é a coisa mais importante da tela — corre prazo de 10 dias, e a
-        peça não é escrita enquanto ele não confirmar que os fatos são dele.
+        O RECURSO É APROVADO NA FILA DO GUIADO, NÃO AQUI.
+        (18/08/2026 — mem://constraints/quero-armas-popup-guiado-canal-do-cliente)
+
+        Antes o painel de aprovação era renderizado dentro desta linha do tempo.
+        Funcionava, mas o cliente só o encontrava se abrisse o processo que
+        estivesse "na PF" — e era o único passo do fluxo fora da fila. Agora ele
+        vive no guiado, com prazo e prioridade máxima; aqui fica só o aviso de
+        que existe algo esperando, com o caminho para lá.
       */}
-      {recurso && (
-        <div className="px-4 pb-1">
-          <RecursoAprovacaoPanel
-            recurso={recurso}
-            delegadoNome={negouRecurso?.delegado_nome ?? cronologica[cronologica.length - 1]?.delegado_nome ?? null}
-            onAprovado={onRecursoAprovado}
-          />
+      {recursoPendente && (
+        <div className="px-4 pb-3">
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+            <div className="flex items-start gap-2">
+              <FileText className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-amber-900">
+                  O seu recurso está escrito e esperando você ler
+                </p>
+                <p className="text-sm text-amber-800 mt-1 leading-relaxed">
+                  Precisamos que você confirme que os fatos são os seus antes de protocolar.
+                  Recurso protocolado com fato errado não se conserta.
+                </p>
+                {onAbrirAprovacaoRecurso && (
+                  <button
+                    type="button"
+                    onClick={onAbrirAprovacaoRecurso}
+                    className="mt-2 h-9 px-4 inline-flex items-center gap-2 rounded-lg text-sm font-bold text-white bg-[#8A1224] hover:bg-[#73101E]"
+                  >
+                    Ler e aprovar agora
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

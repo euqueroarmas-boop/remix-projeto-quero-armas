@@ -86,11 +86,6 @@ Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsen
 
 ## Regras firmadas durante a auditoria
 
-- **A aprovação do RECURSO ainda vive fora do guiado.** `RecursoAprovacaoPanel`
-  é renderizado dentro de `LinhaDoTempoProcessoPF`, não na fila do pop-up. É um
-  desvio anterior à regra de 18/08 — funciona, mas deveria migrar para o guiado
-  como a petição (F9) já nasceu. Trabalho pequeno, sem urgência.
-
 - **Pop-up guiado é o canal do cliente.** Toda comunicação e toda exigência
   passa por ele. Ver mem://constraints/quero-armas-popup-guiado-canal-do-cliente.
 - **Deploy de edge function não sai no push.** Lista e comando em

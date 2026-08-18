@@ -218,3 +218,61 @@ describe("os templates existem e estão registrados", () => {
     expect(tpl).toMatch(/status="(critico|alerta|ok)"/);
   });
 });
+
+// ============================================================================
+// Fecho do bloco: a aprovação do RECURSO também migrou para o guiado.
+// ----------------------------------------------------------------------------
+// Era o único passo do fluxo que o cliente aprovava fora da fila — o painel
+// vivia dentro da linha do tempo do processo. Dois problemas: contrariava a
+// regra de 18/08 (o guiado é o canal), e o carregamento só olhava o processo
+// que estivesse "na PF", então cliente com dois processos indeferidos tinha o
+// segundo recurso invisível. Corre prazo fatal de 10 dias.
+// ============================================================================
+
+describe("a aprovação do recurso migrou para o guiado", () => {
+  const portal = r("src/pages/quero-armas/QAClientePortalPage.tsx");
+  const linha = r("src/components/quero-armas/portal/LinhaDoTempoProcessoPF.tsx");
+
+  it("o recurso entra na fila do guiado como item próprio", () => {
+    expect(portal).toContain("<RecursoAprovacaoPanel");
+    expect(portal).toMatch(/id: `recurso:\$\{rec\.id\}`/);
+  });
+
+  it("carrega recursos de TODOS os processos, não só o que está na PF", () => {
+    expect(portal).toMatch(/setRecursosParaAprovar/);
+    expect(portal).toMatch(/\.in\("status", \["rascunho", "aguardando_aprovacao"\]\)/);
+  });
+
+  it("vem na frente da petição — é o item com o relógio mais curto", () => {
+    const posRecurso = portal.indexOf("1.3) RECURSO ESPERANDO A APROVAÇÃO DELE");
+    const posPeca = portal.indexOf("1.4) PETIÇÃO ESPERANDO A APROVAÇÃO DELE");
+    expect(posRecurso).toBeGreaterThan(-1);
+    expect(posRecurso).toBeLessThan(posPeca);
+  });
+
+  it("entra no grupo de prioridade máxima (exigências da PF)", () => {
+    const bloco = portal.slice(portal.indexOf("id: `recurso:${rec.id}`"), portal.indexOf("1.4) PETIÇÃO"));
+    expect(bloco).toMatch(/grupoProprio: "exigencias_pf"/);
+  });
+
+  it("a linha do tempo NÃO renderiza mais o painel de aprovação", () => {
+    expect(linha).not.toContain("<RecursoAprovacaoPanel");
+    // O tipo continua importado — a linha do tempo ainda recebe o recurso para
+    // decidir se mostra o aviso.
+    expect(linha).toMatch(/import \{ type RecursoParaAprovar \}/);
+  });
+
+  it("mas continua avisando que existe recurso esperando, com caminho para a fila", () => {
+    expect(linha).toMatch(/recursoPendente/);
+    expect(linha).toContain("Ler e aprovar agora");
+    expect(linha).toMatch(/onAbrirAprovacaoRecurso/);
+  });
+
+  it("o aviso só aparece enquanto o recurso não foi aprovado", () => {
+    expect(linha).toMatch(/\["rascunho", "aguardando_aprovacao"\]\.includes\(String\(recurso\.status/);
+  });
+
+  it("o botão abre a fila JÁ no passo do recurso", () => {
+    expect(portal).toMatch(/pinnedId: `recurso:\$\{recursoPF\.id\}`/);
+  });
+});
