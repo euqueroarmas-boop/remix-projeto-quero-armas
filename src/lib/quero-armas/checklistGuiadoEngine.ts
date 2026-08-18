@@ -32,6 +32,7 @@ import { ordemGrupoChecklist } from "./simuladorChecklist";
 import { filtrarIdentidadeUnica } from "./identidadeUnica";
 import { colapsarParesLaudo } from "./paresEquivalentes";
 import { mesclarRespostasCadastro } from "./respostasCadastro";
+import { ehRevisaoHumana } from "@/lib/quero-armas/statusRevisaoHumana";
 
 export interface GuiaProcesso {
   id: string;
@@ -819,7 +820,7 @@ export interface ProgressoGuia {
 export function progressoGuia(carga: CargaProcesso): ProgressoGuia {
   const obrig = itensObrigatoriosGuia(carga);
   const cumpridos = obrig.filter((d) => itemCumpridoGuia(d, carga.respostas)).length;
-  const emRevisao = obrig.filter((d) => d.status === "em_revisao_humana").length;
+  const emRevisao = obrig.filter((d) => ehRevisaoHumana(d.status)).length;
   return { total: obrig.length, cumpridos, emRevisao };
 }
 
@@ -1000,7 +1001,9 @@ export async function aguardarValidacaoIAGuia(
     const iaTerminou = !ia || (ia !== "fila" && ia !== "processando");
     if (st && !STATUS_EM_VOO.has(st) && iaTerminou) return last;
     // status terminal explícito mesmo que ia ainda em flag
-    if (st && (st === "aprovado" || st === "invalido" || st === "divergente" || st === "dispensado_grupo" || st === "em_revisao_humana"))
+    // `revisao_humana` é terminal para o polling: a IA já decidiu que não
+    // decide. Faltava aqui, e o guiado seguia esperando até o timeout.
+    if (st && (st === "aprovado" || st === "invalido" || st === "divergente" || st === "dispensado_grupo" || ehRevisaoHumana(st)))
       return last;
     await new Promise((r) => setTimeout(r, interval));
   }

@@ -6,6 +6,7 @@ import { getStatusProcesso, getStatusDocumento, formatDate, formatDateTime, STAT
 import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
 import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
 import QASincronizarExigenciasBtn from "@/components/quero-armas/admin/QASincronizarExigenciasBtn";
+import { ehRevisaoHumana } from "@/lib/quero-armas/statusRevisaoHumana";
 
 interface ProcessoRow {
   id: string;
@@ -127,7 +128,7 @@ export default function QAProcessosPage() {
   const kpis = useMemo(() => {
     const total = processos.length;
     const pendentes = processos.filter((p) => p.status === "aguardando_documentos").length;
-    const revisao = processos.filter((p) => p.status === "em_revisao_humana").length;
+    const revisao = processos.filter((p) => ehRevisaoHumana(p.status)).length;
     const aprovados = processos.filter((p) => p.status === "aprovado" || p.status === "concluido" || p.status === "em_andamento").length;
     const bloqueados = processos.filter((p) => p.status === "bloqueado").length;
     let vencidos = 0;

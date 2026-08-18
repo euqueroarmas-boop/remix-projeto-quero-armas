@@ -5,6 +5,7 @@ import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkl
 import { getStatusProcesso, formatDate, protocoloDoProcesso } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
+import { ehRevisaoHumana, STATUS_REVISAO_HUMANA } from "@/lib/quero-armas/statusRevisaoHumana";
 
 /* =============================================================================
  * ClienteProcessosSection — Estilo Catálogo Light
@@ -61,7 +62,7 @@ const prazoDot = (dias: number | null) => {
 /** Mapeia status para micro-dot RGB discreto (8px). */
 const statusDotColor = (status: string) => {
   const green = new Set(["concluido", "aprovado", "pronto_para_protocolar", "deferido", "protocolado", "em_analise_orgao", "em_validacao_ia"]);
-  const yellow = new Set(["em_revisao_humana", "em_andamento", "aguardando_documentos"]);
+  const yellow = new Set([...STATUS_REVISAO_HUMANA, "em_andamento", "aguardando_documentos"]);
   const red = new Set(["aguardando_pagamento", "indeferido", "bloqueado", "cancelado"]);
   if (green.has(status)) return "#28C840";
   if (yellow.has(status)) return "#FEBC2E";
@@ -121,7 +122,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
         if (p.status === "aguardando_pagamento") acao = "AGUARDANDO PAGAMENTO";
         else if (p.status === "aguardando_documentos" || pendentes > 0) acao = `${pendentes} DOC(S) PENDENTE(S)`;
         else if (p.status === "em_validacao_ia") acao = "VALIDANDO AUTOMATICAMENTE";
-        else if (p.status === "em_revisao_humana") acao = "AGUARDE REVISÃO";
+        else if (ehRevisaoHumana(p.status)) acao = "AGUARDE REVISÃO";
         else if (p.status === "aprovado") acao = "DOCUMENTAÇÃO APROVADA";
         else if (p.status === "concluido") acao = "PROCESSO CONCLUÍDO";
 

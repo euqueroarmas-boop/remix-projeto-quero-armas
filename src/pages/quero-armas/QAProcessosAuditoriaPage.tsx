@@ -172,7 +172,7 @@ export default function QAProcessosAuditoriaPage() {
           <option value="aguardando_pagamento">AGUARDANDO PAGAMENTO</option>
           <option value="aguardando_documentos">AGUARDANDO DOCUMENTOS</option>
           <option value="em_validacao_ia">VALIDAÇÃO AUTOMÁTICA</option>
-          <option value="em_revisao_humana">EM REVISÃO HUMANA</option>
+          <option value="revisao_humana">EM REVISÃO HUMANA</option>
           <option value="aprovado">APROVADO</option>
           <option value="em_andamento">EM ANDAMENTO</option>
           <option value="concluido">CONCLUÍDO</option>

@@ -26,6 +26,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { STATUS_REVISAO_HUMANA, STATUS_EM_VALIDACAO_IA, ehTravadoNaIA, MINUTOS_LIMITE_VALIDACAO_IA } from "@/lib/quero-armas/statusRevisaoHumana";
 import DocumentoViewerModal, {
   useDocumentoViewer,
 } from "@/components/quero-armas/DocumentoViewerModal";
@@ -127,7 +128,12 @@ function TabBtn({
 }
 
 // ---------------------------------------------------------------------------
-// Bloco 4.1 — Fila de Conferência (status = em_revisao_humana)
+// Bloco 4.1 — Fila de Conferência
+// ----------------------------------------------------------------------------
+// QUARTA AUDITORIA (18/08/2026): esta fila filtrava `em_revisao_humana`, uma
+// grafia que NENHUM código do sistema escreve. A IA grava `revisao_humana`.
+// A fila estava vazia por construção — desde sempre. Ver
+// `src/lib/quero-armas/statusRevisaoHumana.ts`.
 // ---------------------------------------------------------------------------
 function FilaConferencia() {
   const [loading, setLoading] = useState(true);
@@ -153,12 +159,22 @@ function FilaConferencia() {
         .select(
           "id, cliente_id, processo_id, tipo_documento, nome_documento, status, motivo_rejeicao, arquivo_storage_key, data_envio, updated_at, usado_como_modelo, validacao_ia_confianca, validacao_ia_status, decisao_ia"
         )
-        .eq("status", "em_revisao_humana")
+        .in(
+          "status",
+          // Duas populações, uma fila. A segunda é o documento cuja validação
+          // de IA morreu no meio (`processando` parado): ele fica no MESMO
+          // ponto cego — cliente o vê resolvido, equipe não o vê em lugar
+          // nenhum, e o processo não avança. Filtrado por tempo mais abaixo,
+          // porque validação em curso é normal; validação parada não é.
+          [...STATUS_REVISAO_HUMANA, ...STATUS_EM_VALIDACAO_IA] as unknown as string[],
+        )
         .order("updated_at", { ascending: false })
         .limit(300);
       if (error) throw error;
 
-      const rows = (data ?? []) as DocRow[];
+      const rows = ((data ?? []) as DocRow[]).filter(
+        (d) => !STATUS_EM_VALIDACAO_IA.includes(String(d.status ?? "").toLowerCase()) || ehTravadoNaIA(d),
+      );
       const cliIds = Array.from(new Set(rows.map((d) => d.cliente_id).filter((v): v is number => v != null)));
       const procIds = Array.from(new Set(rows.map((d) => d.processo_id).filter(Boolean))) as string[];
       const [cliRes, procRes] = await Promise.all([
@@ -342,7 +358,7 @@ function FilaConferencia() {
             Nenhum documento aguardando a equipe
           </div>
           <div className="text-[11px] text-slate-500">
-            A IA está dando conta sozinha — ótimo sinal de treino consistente.
+            A IA está dando conta sozinha, e nenhuma validação travou no meio.
           </div>
         </div>
       ) : (
@@ -365,8 +381,12 @@ function FilaConferencia() {
                     ? `${Math.round(d.validacao_ia_confianca * 100)}%`
                     : "—";
                 const enviado = d.data_envio ? new Date(d.data_envio).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
+                // Travado na IA não é o mesmo caso que "a IA pediu ajuda": ali
+                // ninguém decidiu nada e o documento precisa voltar para a fila
+                // de validação, não ser aprovado ou rejeitado às cegas.
+                const travado = ehTravadoNaIA(d);
                 return (
-                  <tr key={d.id} className="hover:bg-slate-50/60">
+                  <tr key={d.id} className={travado ? "bg-orange-50/60 hover:bg-orange-50" : "hover:bg-slate-50/60"}>
                     <td className="px-3 py-2 font-medium uppercase text-slate-800">
                       {d.cliente_nome ?? `Cliente #${d.cliente_id ?? "?"}`}
                     </td>
@@ -376,6 +396,11 @@ function FilaConferencia() {
                       <div className="text-[10px] text-slate-400">{d.tipo_documento}</div>
                     </td>
                     <td className="px-3 py-2">
+                      {travado && (
+                        <div className="mb-1 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-800">
+                          VALIDAÇÃO TRAVADA · +{MINUTOS_LIMITE_VALIDACAO_IA}MIN
+                        </div>
+                      )}
                       <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
                         <AlertCircle className="h-3 w-3" /> Em revisão · {conf}
                       </div>

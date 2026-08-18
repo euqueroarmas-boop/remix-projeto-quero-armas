@@ -165,6 +165,58 @@ eternamente em "DEFERIDO" — e o cliente nunca vê o serviço fechar.
 
 ---
 
+## ✅ QUARTA AUDITORIA (18/08, tarde) — o status fantasma
+
+Reconferência dos 18 furos originais, dos 4 da reauditoria e dos 4 da terceira:
+todos fechados. Esta passada olhou o lado da EQUIPE — a fila da Carol — e achou
+um furo que estava aberto desde sempre.
+
+### A fila de conferência estava vazia por construção
+
+Quando a IA não tem confiança para decidir, ela grava o documento como
+`revisao_humana`. A **Fila de Conferência** — a tela em que a equipe revisa
+exatamente isso — filtrava `em_revisao_humana`, com prefixo. **Nenhum código do
+sistema escreve essa grafia.** A fila nunca mostrou um único documento.
+
+**Por que passou tanto tempo:** o dicionário de exibição traduz as duas grafias
+para "em análise". O documento aparecia certo em toda tela que mostra rótulo. O
+erro só existia onde alguém comparava a string crua — e string crua não tem
+rótulo para denunciar.
+
+**O efeito era um ponto cego perfeito:**
+
+- o cliente não vê o documento como pendência (correto — a bola não é dele);
+- a equipe não o vê em fila nenhuma (a fila estava vazia);
+- o checador de conclusão o conta como NÃO cumprido, então o processo nunca
+  vira `pronto_para_protocolar`.
+
+Ninguém tem o que fazer e nada anda. Só se descobria abrindo o processo certo e
+olhando documento por documento.
+
+**Mesmo defeito em outros quatro lugares:** o contador de "em revisão" do
+guiado, o KPI da página de processos, o rótulo da seção de processos do cliente
+e o filtro da auditoria — todos comparavam a grafia fantasma e davam sempre
+zero.
+
+### O segundo ponto cego: validação de IA que morre no meio
+
+`qa-processo-doc-validar-ia` marca `em_analise` + `processando` **antes** de
+chamar o modelo. Se o runtime derruba a função por tempo (PDF grande, modelo
+lento), o `catch` que mandaria o documento para revisão humana nunca roda — e a
+linha fica `processando` para sempre, no mesmo ponto cego.
+
+A fila passa a mostrar esses casos também, com etiqueta própria
+(`VALIDAÇÃO TRAVADA`), separados de "a IA pediu ajuda": ali ninguém decidiu
+nada, e aprovar ou rejeitar às cegas seria pior que deixar na fila.
+
+### O que fecha isso para sempre
+
+`src/lib/quero-armas/statusRevisaoHumana.ts` passa a ser o único lugar que sabe
+as grafias, e um teste varre `src/` procurando comparação crua com a grafia
+fantasma. Se voltar, a suíte quebra.
+
+---
+
 ## 🟡 Passivo dos furos 3 e 4 (não é falha — é caso real que falta)
 
 - **Furo 3 sem caso para testar:** hoje não há processo em
