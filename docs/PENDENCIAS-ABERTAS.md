@@ -203,7 +203,7 @@ descobriria. Agora avisa.
 ## ✅ QUARTA AUDITORIA (18/08, tarde) — o status fantasma
 
 Reconferência dos 18 furos originais, dos 4 da reauditoria e dos 4 da terceira:
-todos fechados. Esta passada olhou o lado da EQUIPE — a fila da Carol — e achou
+todos fechados. Esta passada olhou o lado da EQUIPE — a fila de conferência — e achou
 um furo que estava aberto desde sempre.
 
 ### A fila de conferência estava vazia por construção
