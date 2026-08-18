@@ -165,6 +165,50 @@ eternamente em "DEFERIDO" — e o cliente nunca vê o serviço fechar.
 
 ---
 
+## ✅ SEXTA AUDITORIA (18/08, noite) — o dossiê vencia sem aviso prévio
+
+Reconferência de tudo: 18 originais + 4 da reauditoria + 4 da terceira + 2 da
+quarta + 2 da quinta. Todos fechados. Esta passada auditou o código da leva 8
+(classificação do requerimento, escrito em outra sessão) e o ciclo de validade
+dos documentos.
+
+### O que foi conferido e está CERTO
+
+- **Leva 8 / requerimento.** O tipo novo entra no grupo `requerimento` do
+  checklist, está nas 18 listas por serviço, ocupa o lugar 1.0 do dossiê e tem
+  entrada no catálogo do Hub. A conferência campo a campo roda no
+  `ClienteDocsHubModal` em `mode="portal"` — ou seja, **alcança o cliente**, não
+  só a equipe. Cheguei a suspeitar do contrário e conferi: está correto.
+- **Condição profissional.** Profissão não reconhecida gera o item
+  `renda_definir_condicao` em vez de omitir a comprovação de renda.
+- **Falha da IA.** Erro ou resposta vazia manda o documento para revisão
+  humana, nunca deixa preso em análise.
+
+### O furo: aviso de vencimento só existia para o Hub
+
+A rotina de alertas de vencimento olhava `qa_documentos_cliente` (o Hub) e
+**nunca** `qa_processo_documentos` (o checklist do processo). Os dois únicos
+pontos que enxergam validade no processo são REATIVOS:
+
+- `qa-montar-juntada` recusa montar o dossiê e reabre as linhas;
+- `qa-processo-checar-conclusao-checklist` barra a promoção.
+
+Os dois disparam no clique de montar a juntada — no momento em que o processo
+deveria estar indo para a delegacia. O cliente era mandado reemitir certidão
+exatamente ali.
+
+Certidão de antecedentes e comprovante de residência vivem ~30 dias. Processo
+que demora dois meses juntando laudo e exame de tiro chega ao protocolo com
+metade da papelada fora do prazo.
+
+**Corrigido:** a rotina ganhou a fonte `DOSSIE`. Avisa na virada de faixa, com o
+mesmo texto do documento comum e a frase de onde emitir a via nova. Só processo
+antes do protocolo, só documento que de fato entra no dossiê, e com trava para
+o mesmo papel não avisar duas vezes (Hub + checklist). As travas reativas
+continuam de pé — o aviso não substitui a trava.
+
+---
+
 ## ✅ QUINTA AUDITORIA (18/08, noite) — a fila destravada não fechava o ciclo
 
 Reconferência de tudo: 18 furos originais + 4 da reauditoria + 4 da terceira + 2

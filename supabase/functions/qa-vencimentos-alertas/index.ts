@@ -17,6 +17,7 @@ import { comoResolverDocumento, nomeDocumentoCanonico } from "../_shared/nomeDoc
  *   - CRAF (qa_crafs.data_validade)
  *   - DOCUMENTOS com validade (qa_documentos_cliente.data_validade)
  *   - AUTORIZAÇÕES de compra (qa_documentos_cliente, tipo_documento ILIKE 'autoriza%')
+ *   - DOSSIÊ: documentos do CHECKLIST DO PROCESSO (qa_processo_documentos)
  *
  * NÃO substitui ainda:
  *   - qa-gte-alertas
@@ -41,7 +42,7 @@ const MARCOS = MARCOS_PADRAO;
 const PORTAL_LINK = "https://www.euqueroarmas.com.br/area-do-cliente";
 const REMETENTE = "arsenalinteligente@notificacao.euqueroarmas.com.br";
 
-type Fonte = "CR" | "CRAF" | "DOCUMENTO" | "AUTORIZACAO";
+type Fonte = "CR" | "CRAF" | "DOCUMENTO" | "AUTORIZACAO" | "DOSSIE";
 
 interface Candidato {
   fonte: Fonte;
@@ -124,15 +125,24 @@ function buildSubject(
   return `⚠️ ${fonte} ${titulo} vence em ${dias} dia(s)`;
 }
 
+/** Como a fonte é NOMEADA para o cliente. "sua DOSSIE" não é português. */
+function rotuloFonte(f: Fonte): string {
+  if (f === "DOSSIE") return "documentação do processo";
+  if (f === "DOCUMENTO") return "documentação";
+  if (f === "AUTORIZACAO") return "autorização de compra";
+  return f;
+}
+
 function buildResumo(c: Candidato, nome: string): string {
   const v = brDate(c.data_validade);
+  const f = rotuloFonte(c.fonte);
   if (c.dias < 0) {
-    return `Olá ${nome}, sua ${c.fonte} (${c.titulo}) está VENCIDA desde ${v} (${Math.abs(c.dias)} dia(s) de atraso).`;
+    return `Olá ${nome}, sua ${f} (${c.titulo}) está VENCIDA desde ${v} (${Math.abs(c.dias)} dia(s) de atraso).`;
   }
   if (c.marco === 0) {
-    return `Olá ${nome}, sua ${c.fonte} (${c.titulo}) vence HOJE (${v}).`;
+    return `Olá ${nome}, sua ${f} (${c.titulo}) vence HOJE (${v}).`;
   }
-  return `Olá ${nome}, sua ${c.fonte} (${c.titulo}) vence em ${c.dias} dia(s) — ${v}.`;
+  return `Olá ${nome}, sua ${f} (${c.titulo}) vence em ${c.dias} dia(s) — ${v}.`;
 }
 
 serve(async (req) => {
@@ -291,6 +301,93 @@ serve(async (req) => {
       }
     }
 
+    // 4.5) DOSSIÊ — documentos do CHECKLIST DO PROCESSO
+    //
+    // SEXTA AUDITORIA (18/08/2026). Nada vigiava a validade dos documentos que
+    // vivem no checklist do processo: esta rotina só olhava o Hub
+    // (`qa_documentos_cliente`). Os dois pontos que enxergam vencimento no
+    // processo são REATIVOS e disparam tarde demais:
+    //
+    //   • `qa-montar-juntada` recusa montar o dossiê e reabre as linhas;
+    //   • `qa-processo-checar-conclusao-checklist` barra a promoção.
+    //
+    // Ou seja: a equipe descobria no clique de montar a juntada, e o cliente
+    // era mandado reemitir certidão no exato momento em que o processo deveria
+    // estar indo para a delegacia. Certidão e comprovante de residência vivem
+    // ~30 dias; um processo que demorou dois meses juntando laudo e exame de
+    // tiro chega no protocolo com metade da papelada fora do prazo. Avisar
+    // ANTES é a diferença entre reemitir com calma e refazer o dossiê inteiro.
+    {
+      const { data: procs } = await sb
+        .from("qa_processos")
+        .select("id, cliente_id, status");
+      // Só processo ANTES do protocolo: depois disso o dossiê já foi entregue e
+      // cobrar validade de documento protocolado é cobrar o que não se usa mais.
+      const POS_PROTOCOLO = new Set([
+        "protocolado", "em_analise_orgao", "notificado", "recurso_administrativo",
+        "deferido", "indeferido", "concluido", "cancelado",
+      ]);
+      const processoDoCliente = new Map<string, number>();
+      for (const p of (procs || []) as Array<{ id: string; cliente_id: number; status: string | null }>) {
+        if (POS_PROTOCOLO.has(String(p.status ?? "").toLowerCase())) continue;
+        processoDoCliente.set(p.id, p.cliente_id);
+      }
+
+      if (processoDoCliente.size > 0) {
+        const { data: pdocs } = await sb
+          .from("qa_processo_documentos")
+          .select("id, cliente_id, processo_id, tipo_documento, nome_documento, status, data_validade, data_validade_efetiva")
+          .in("processo_id", [...processoDoCliente.keys()]);
+
+        // O MESMO PAPEL NÃO AVISA DUAS VEZES. Quase toda linha do checklist é
+        // satisfeita por reaproveitamento do Hub, e o bloco 3 já cobriu essas.
+        // Sem esta chave, o cliente receberia dois e-mails da mesma certidão.
+        const jaCobertoPeloHub = new Set(
+          candidatos
+            .filter((c) => c.fonte === "DOCUMENTO")
+            .map((c) => `${c.cliente_id}|${String(c.titulo).toLowerCase()}`),
+        );
+
+        // Só entra o que CONTA para o dossiê: pendente vencido não é problema
+        // de validade, é problema de envio, e já aparece como pendência.
+        const CONTA_NO_DOSSIE = new Set([
+          "aprovado", "entregue_pelo_hub", "dispensado_por_reaproveitamento",
+        ]);
+
+        for (const r of (pdocs || []) as Array<Record<string, string | null>>) {
+          const clienteId = processoDoCliente.get(String(r.processo_id));
+          if (!clienteId) continue;
+          if (!CONTA_NO_DOSSIE.has(String(r.status ?? "").toLowerCase())) continue;
+          const validade = r.data_validade_efetiva || r.data_validade;
+          if (!validade) continue;
+          const tipo = String(r.tipo_documento || "").toLowerCase();
+          // Tratados por rotinas próprias, com regra de negócio diferente.
+          if (tipo.includes("gte") || tipo.includes("exame") || tipo.includes("laudo")) continue;
+
+          const titulo = nomeDocumentoCanonico(
+            r as Record<string, unknown>,
+            String(r.nome_documento || r.tipo_documento || "Documento"),
+          );
+          if (jaCobertoPeloHub.has(`${clienteId}|${titulo.toLowerCase()}`)) continue;
+
+          const d = diasRestantes(validade);
+          const m = pickMarcoFaixa(d, tipo);
+          if (m === null) continue;
+          candidatos.push({
+            fonte: "DOSSIE",
+            ref_id: `procdoc:${r.id}`,
+            cliente_id: clienteId,
+            titulo,
+            data_validade: validade,
+            dias: d,
+            marco: m,
+            faixa: faixaDoMarco(d, tipo),
+            comoResolver: comoResolverDocumento(r as Record<string, unknown>),
+          });
+        }
+      }
+    }
+
     // 5) Filtrar contra dedupe table
     const refIds = candidatos.map((c) => c.ref_id);
     const { data: jaEnviados } = refIds.length
@@ -388,7 +485,7 @@ serve(async (req) => {
               vencimento: vencimentoBR,
               portalUrl: PORTAL_LINK,
             };
-          } else if (c.fonte === "DOCUMENTO" && c.faixa && c.dias >= 0) {
+          } else if ((c.fonte === "DOCUMENTO" || c.fonte === "DOSSIE") && c.faixa && c.dias >= 0) {
             // VIRADA DE FAIXA — o texto nomeia o documento, diz o prazo real e
             // fecha com onde emitir a via nova. Um e-mail por virada.
             templateName = "documento-mudanca-faixa";
