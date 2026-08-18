@@ -3,42 +3,56 @@
 -- ----------------------------------------------------------------------------
 -- Somente leitura. Nada aqui altera dado.
 --
--- (A) O que os dois clientes têm hoje, bloco a bloco.
--- (B) O mapa REAL de chaves estrangeiras que penduram em qa_processos e
---     qa_vendas, direto do catálogo do banco — o repositório não é fonte da
---     verdade deste projeto, e um DELETE montado a partir dele ou quebra no
---     meio ou deixa órfão.
+-- A primeira versão deste arquivo listava tabela por tabela, à mão, e quebrou
+-- em `qa_contracts.qa_cliente_id` (a coluna real é `cliente_id`). Adivinhar
+-- nome de coluna a partir do repositório não funciona neste projeto — o banco
+-- é a fonte da verdade. Agora a consulta varre o próprio catálogo.
 -- ============================================================================
 
--- ── (A) INVENTÁRIO DOS DOIS CLIENTES ────────────────────────────────────────
+-- ── (A0) OS DOIS CLIENTES ───────────────────────────────────────────────────
+SELECT id, nome_completo, cpf, email, created_at
+  FROM public.qa_clientes
+ WHERE regexp_replace(COALESCE(cpf,''), '\D', '', 'g')
+       IN ('30164708880','01618065114')
+ ORDER BY nome_completo;
+
+
+-- ── (A1) INVENTÁRIO AUTOMÁTICO ──────────────────────────────────────────────
+-- Varre TODA tabela do schema public que tenha `cliente_id` ou `qa_cliente_id`
+-- e conta as linhas dos dois clientes. Sem lista fixa: o que existir aparece.
 WITH alvo AS (
-  SELECT id, nome_completo, cpf
+  SELECT array_agg(id)::bigint[] AS ids
     FROM public.qa_clientes
    WHERE regexp_replace(COALESCE(cpf,''), '\D', '', 'g')
          IN ('30164708880','01618065114')
+),
+tabelas AS (
+  SELECT c.table_name, c.column_name
+    FROM information_schema.columns c
+    JOIN information_schema.tables t
+      ON t.table_schema = c.table_schema
+     AND t.table_name   = c.table_name
+   WHERE c.table_schema = 'public'
+     AND t.table_type   = 'BASE TABLE'
+     AND c.column_name IN ('cliente_id', 'qa_cliente_id')
+     AND c.data_type   IN ('integer', 'bigint', 'smallint')
+),
+contagem AS (
+  SELECT t.table_name AS tabela,
+         t.column_name AS coluna,
+         (xpath(
+            '/row/c/text()',
+            query_to_xml(
+              format('SELECT count(*) AS c FROM public.%I WHERE %I = ANY(%L::bigint[])',
+                     t.table_name, t.column_name, (SELECT ids FROM alvo)),
+              false, true, '')
+          ))[1]::text::bigint AS linhas
+    FROM tabelas t
 )
-SELECT a.nome_completo, a.id AS cliente_id, x.bloco, x.qtd
-  FROM alvo a
-  CROSS JOIN LATERAL (
-    VALUES
-      ('01 vendas',              (SELECT count(*) FROM public.qa_vendas               v WHERE v.cliente_id = a.id)),
-      ('02 itens de venda',      (SELECT count(*) FROM public.qa_itens_venda          i
-                                    WHERE i.venda_id IN (SELECT COALESCE(v.id_legado, v.id) FROM public.qa_vendas v WHERE v.cliente_id = a.id))),
-      ('03 processos',           (SELECT count(*) FROM public.qa_processos            p WHERE p.cliente_id = a.id)),
-      ('04 processos SEM venda', (SELECT count(*) FROM public.qa_processos            p WHERE p.cliente_id = a.id AND p.venda_id IS NULL)),
-      ('05 docs de processo',    (SELECT count(*) FROM public.qa_processo_documentos  d WHERE d.cliente_id = a.id)),
-      ('06 solicitacoes',        (SELECT count(*) FROM public.qa_solicitacoes_servico s WHERE s.cliente_id = a.id)),
-      ('07 contratos',           (SELECT count(*) FROM public.qa_contracts            c WHERE c.qa_cliente_id = a.id)),
-      ('08 docs do Hub',         (SELECT count(*) FROM public.qa_documentos_cliente   h WHERE h.qa_cliente_id = a.id)),
-      ('09 armas do arsenal',    (SELECT count(*) FROM public.qa_cliente_armas        w WHERE w.cliente_id = a.id)),
-      ('10 CRAFs',               (SELECT count(*) FROM public.qa_crafs                r WHERE r.cliente_id = a.id)),
-      ('11 GTEs',                (SELECT count(*) FROM public.qa_gtes                 g WHERE g.cliente_id = a.id)),
-      ('12 CR',                  (SELECT count(*) FROM public.qa_cadastro_cr          k WHERE k.cliente_id = a.id)),
-      ('13 exames',              (SELECT count(*) FROM public.qa_exames_cliente       e WHERE e.cliente_id = a.id)),
-      ('14 efetiva necessidade', (SELECT count(*) FROM public.qa_efetiva_necessidade  n WHERE n.cliente_id = a.id))
-  ) AS x(bloco, qtd)
- WHERE x.qtd > 0
- ORDER BY a.nome_completo, x.bloco;
+SELECT tabela, coluna, linhas
+  FROM contagem
+ WHERE linhas > 0
+ ORDER BY linhas DESC, tabela;
 
 
 -- ── (B) MAPA REAL DE FKs QUE PENDURAM EM qa_processos E qa_vendas ───────────
