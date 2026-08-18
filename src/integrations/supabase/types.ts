@@ -7739,8 +7739,6 @@ export type Database = {
           aprovacao_ip: string | null
           aprovacao_user_agent: string | null
           aprovada_cliente_em: string | null
-          lacre_storage_path: string | null
-          peticao_storage_path: string | null
           caso_id: string | null
           cliente_id: number | null
           correcoes_ia_alertas_json: Json
@@ -7758,8 +7756,10 @@ export type Database = {
           fundamentos_utilizados_json: Json | null
           id: string
           jurisprudencias_utilizadas_json: Json | null
+          lacre_storage_path: string | null
           minuta_gerada: string | null
           normas_utilizadas_json: Json | null
+          peticao_storage_path: string | null
           processo_id: string | null
           profundidade: string | null
           score_confianca: number | null
@@ -7781,8 +7781,6 @@ export type Database = {
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
-          lacre_storage_path?: string | null
-          peticao_storage_path?: string | null
           caso_id?: string | null
           cliente_id?: number | null
           correcoes_ia_alertas_json?: Json
@@ -7800,8 +7798,10 @@ export type Database = {
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
+          lacre_storage_path?: string | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          peticao_storage_path?: string | null
           processo_id?: string | null
           profundidade?: string | null
           score_confianca?: number | null
@@ -7823,8 +7823,6 @@ export type Database = {
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
-          lacre_storage_path?: string | null
-          peticao_storage_path?: string | null
           caso_id?: string | null
           cliente_id?: number | null
           correcoes_ia_alertas_json?: Json
@@ -7842,8 +7840,10 @@ export type Database = {
           fundamentos_utilizados_json?: Json | null
           id?: string
           jurisprudencias_utilizadas_json?: Json | null
+          lacre_storage_path?: string | null
           minuta_gerada?: string | null
           normas_utilizadas_json?: Json | null
+          peticao_storage_path?: string | null
           processo_id?: string | null
           profundidade?: string | null
           score_confianca?: number | null
