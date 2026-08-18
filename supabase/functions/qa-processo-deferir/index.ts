@@ -110,20 +110,64 @@ Deno.serve(async (req) => {
         return json({ ok: true, ja_confirmado: true });
       }
       const agora = new Date().toISOString();
-      await admin.from("qa_processos")
-        .update({ deferimento_visto_cliente_em: agora, updated_at: agora })
-        .eq("id", processoId);
+
+      // ── AQUI O SERVIÇO ACABA ────────────────────────────────────────
+      // Furo 4 da terceira auditoria (18/08/2026): `concluido` existia no
+      // vocabulário, o gatilho de espelho já sabia traduzi-lo para
+      // `finalizado` na solicitação — e NENHUM código levava o processo até
+      // lá. Só o clique manual no seletor. Na prática todo processo entregue
+      // ficava eternamente em "DEFERIDO", e o cliente nunca via o serviço
+      // fechar: ele confirmava o recebimento e a tela dele continuava igual.
+      //
+      // O ato terminal é este: documento registrado pela equipe + recebimento
+      // confirmado por quem contratou. Não há passo depois.
+      //
+      // Só sai de `deferido`. Um processo que voltou a andar por outro motivo
+      // (correção de deferimento, reabertura) não é arrastado para o fim
+      // porque o cliente clicou numa fila antiga.
+      const statusProcesso = String((processo as { status?: string }).status ?? "");
+      let concluido = false;
+      if (statusProcesso === "deferido") {
+        const { error: fimErr } = await admin
+          .from("qa_processos")
+          .update({
+            status: "concluido",
+            deferimento_visto_cliente_em: agora,
+            updated_at: agora,
+          })
+          .eq("id", processoId)
+          // Guarda contra corrida: se o status mudou entre a leitura e agora,
+          // a gravação não acontece e o processo segue vivo, como deve.
+          .eq("status", "deferido");
+        if (fimErr) {
+          console.warn("[processo-deferir] não concluiu:", fimErr.message);
+        } else {
+          concluido = true;
+        }
+      }
+      if (!concluido) {
+        // Confirmação registrada de qualquer jeito: ela é do cliente e não
+        // pode se perder porque o status não colaborou.
+        await admin.from("qa_processos")
+          .update({ deferimento_visto_cliente_em: agora, updated_at: agora })
+          .eq("id", processoId);
+      }
+
       await admin.from("qa_processo_eventos").insert({
         processo_id: processoId,
-        tipo_evento: "deferimento_recebido_pelo_cliente",
-        descricao: "CLIENTE CONFIRMOU O RECEBIMENTO DO DOCUMENTO DEFERIDO",
+        tipo_evento: concluido ? "processo_concluido" : "deferimento_recebido_pelo_cliente",
+        descricao: concluido
+          ? "CLIENTE CONFIRMOU O RECEBIMENTO — SERVIÇO CONCLUÍDO"
+          : "CLIENTE CONFIRMOU O RECEBIMENTO DO DOCUMENTO DEFERIDO",
         ator: ehStaff ? "equipe_operacional" : "cliente",
         dados_json: {
           documento_id: (processo as { deferimento_documento_id?: string }).deferimento_documento_id ?? null,
+          status_anterior: statusProcesso,
+          concluido,
           ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null,
         },
       });
-      return json({ ok: true, confirmado_em: agora });
+      return json({ ok: true, confirmado_em: agora, concluido });
     }
 
     // ── AÇÃO DA EQUIPE: registrar o deferimento ─────────────────────────

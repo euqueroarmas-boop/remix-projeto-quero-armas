@@ -48,10 +48,12 @@ cliente, quando a equipe devolve uma petição, quando um processo é deferido.
 | 2. Responder a notificação não fechava o prazo de 10 dias | ✅ `qa-manifestacao-responder` + coluna nova · publicado 12:54 |
 | — Achado ao conferir o 2: prazo alarmava caso já deferido | ✅ o motor passou a aceitar os dois vocabulários de status |
 | — Achado ao conferir o 2: a coluna nova não era lida por leitor nenhum | ✅ ligada nos cinco leitores, com teste que trava a lista |
+| 3. O protocolo aceitava dossiê velho | ✅ trava + aviso do que mudou desde a montagem |
+| 4. Nada encerrava o serviço depois da entrega | ✅ o cliente confirmar o recebimento leva a `concluido` → `finalizado` |
 
-**Restam os furos 3 e 4:** o protocolo aceita dossiê velho (não exige que a
-juntada seja a mais recente) e nada leva o processo a `concluido` nem a
-solicitação a `finalizado` depois da entrega confirmada pelo cliente.
+**Os quatro furos da terceira auditoria estão fechados.** Os furos 3 e 4 não
+exigem SQL: o 3 é front, o 4 é a edge do deferimento mais o gatilho de espelho
+que já está no ar.
 
 ---
 
@@ -160,6 +162,20 @@ Deferido + documento entregue + cliente confirmou o recebimento = fim real do
 serviço. Mas `concluido` (processo) e `finalizado` (solicitação) só são
 alcançáveis por alguém clicando à mão. Na prática todo processo entregue fica
 eternamente em "DEFERIDO" — e o cliente nunca vê o serviço fechar.
+
+---
+
+## 🟡 Passivo dos furos 3 e 4 (não é falha — é caso real que falta)
+
+- **Furo 3 sem caso para testar:** hoje não há processo em
+  `pronto_para_protocolar`, então a trava do dossiê velho não pôde ser vista em
+  operação. Ela se prova no primeiro protocolo real: montar a juntada, aprovar
+  qualquer documento depois, e o botão de protocolar tem que recusar.
+- **Furo 4 e os três deferidos antigos:** o encerramento automático só dispara
+  quando o cliente confirma o recebimento pelo pop-up guiado. Os 3 processos
+  deferidos antes da automação (Eduardo, Wilker, Gilberto) não têm documento de
+  deferimento registrado, logo não têm o que confirmar — eles se resolvem pela
+  pendência de exclusão/fechamento acima, não por este fluxo.
 
 ---
 

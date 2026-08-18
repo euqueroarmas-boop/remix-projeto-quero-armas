@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
+import { estadoDaJuntada } from "@/lib/quero-armas/juntadaAtual";
 import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO, transicoesPermitidas } from "./processoConstants";
@@ -1140,6 +1141,24 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   }, [processoId]);
 
   useEffect(() => { void carregarJuntada(); }, [carregarJuntada]);
+
+  /**
+   * A juntada montada ainda representa o processo de hoje?
+   *
+   * Furo 3 da terceira auditoria: a trava do protocolo só exigia que a juntada
+   * EXISTISSE. Documento reenviado e reaprovado depois da montagem — ou petição
+   * aprovada depois — não invalidava o PDF já montado, e o botão de protocolar
+   * seguia liberado. Ia para a delegacia o dossiê da versão anterior.
+   */
+  const juntadaEstado = useMemo(
+    () => estadoDaJuntada({
+      montadaEm: juntada?.montada_em ?? null,
+      documentos: docs,
+      pecas,
+    }),
+    [juntada?.montada_em, docs, pecas],
+  );
+  const juntadaDesatualizada = !!juntada && !juntadaEstado.atual;
   /** Caixa onde a equipe cola o que a PF escreveu no SINARM. */
   const [manifestacaoAberta, setManifestacaoAberta] = useState(false);
   const [gerandoRecurso, setGerandoRecurso] = useState(false);
@@ -1208,6 +1227,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     // fica escrito na auditoria.
     if (!juntada && !protocoloSemJuntada) {
       toast.error("Monte a juntada antes de protocolar — ou marque que o dossiê foi entregue por fora.");
+      return;
+    }
+    // DOSSIÊ VELHO É PIOR QUE DOSSIÊ NENHUM: ninguém desconfia dele.
+    // Documento aprovado depois da montagem não está no PDF que seria
+    // entregue. Remontar é um clique; refazer o dossiê depois de uma
+    // exigência da PF são mais 10 dias de prazo.
+    if (juntadaDesatualizada && !protocoloSemJuntada) {
+      toast.error(
+        `A juntada está desatualizada: ${juntadaEstado.mudancas.length} item(ns) ` +
+        "mudaram depois que ela foi montada. Remonte antes de protocolar.",
+        { duration: 9000 },
+      );
       return;
     }
     setSalvandoProtocolo(true);
@@ -3321,6 +3352,33 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
                         MONTADA EM {formatDateTime(juntada.montada_em)}
                       </p>
+                      {/*
+                        O aviso vem ANTES do botão de abrir, de propósito: quem
+                        chega aqui está prestes a protocolar, e "42 páginas"
+                        tem cara de coisa pronta mesmo quando não é.
+                      */}
+                      {juntadaDesatualizada && (
+                        <div className="mt-2 rounded-lg border border-orange-300 bg-orange-50 px-3 py-2">
+                          <p className="text-[10px] uppercase tracking-wider font-bold text-orange-900">
+                            DESATUALIZADA — {juntadaEstado.mudancas.length} ITEM(NS) MUDARAM DEPOIS DA MONTAGEM
+                          </p>
+                          <ul className="mt-1 space-y-0.5">
+                            {juntadaEstado.mudancas.slice(0, 5).map((m, i) => (
+                              <li key={i} className="text-[10px] text-orange-800 leading-snug">
+                                • {m.rotulo} — {formatDateTime(m.em)}
+                              </li>
+                            ))}
+                            {juntadaEstado.mudancas.length > 5 && (
+                              <li className="text-[10px] text-orange-700">
+                                e mais {juntadaEstado.mudancas.length - 5}…
+                              </li>
+                            )}
+                          </ul>
+                          <p className="text-[10px] uppercase tracking-wide text-orange-700 mt-1.5">
+                            REMONTE ANTES DE PROTOCOLAR — O PDF ATUAL NÃO CONTÉM ESSES ITENS.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() =>
@@ -3869,6 +3927,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <p className="text-[10px] uppercase tracking-wide text-emerald-700 mt-0.5">
                     MONTADA EM {formatDateTime(juntada.montada_em)}
                   </p>
+                  {juntadaDesatualizada && (
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-orange-800 mt-1 leading-snug">
+                      ATENÇÃO: {juntadaEstado.mudancas.length} ITEM(NS) MUDARAM DEPOIS DA MONTAGEM.
+                      ESTE PDF NÃO OS CONTÉM.
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2">
