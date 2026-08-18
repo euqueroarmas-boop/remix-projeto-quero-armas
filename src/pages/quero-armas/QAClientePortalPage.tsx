@@ -105,6 +105,7 @@ import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
 import { grupoDaPendencia as grupoDaPendenciaHelper, grupoDaPendenciaDoItem, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { protocoloDoProcesso } from "@/components/quero-armas/processos/processoConstants";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
@@ -1143,7 +1144,7 @@ export default function QAClientePortalPage() {
         // contrato validado grava id_legado — buscamos pelas duas chaves.
         const { data: procsData } = await supabase
           .from("qa_processos" as any)
-          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
+          .select("id, cliente_id, venda_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json, protocolo_numero, protocolo_orgao, protocolo_data, protocolo_observacao, protocolo_registrado_em")
           .in("cliente_id", Array.from(new Set([clienteIdReal, clienteIdVendas])))
           // Processos órfãos (cancelados/arquivados pela reconciliação porque
           // o admin removeu a venda/contrato) NUNCA devem aparecer ao cliente.
@@ -4451,9 +4452,12 @@ export default function QAClientePortalPage() {
         />
         {protocoloAberto && (() => {
           const proc = processos.find((p) => String(p?.id) === protocoloAberto);
-          const protocolo =
-            (proc?.respostas_questionario_json as Record<string, Record<string, string>> | null)
-              ?.protocolo ?? {};
+          // Coluna primeiro, JSON legado como retaguarda — ver
+          // `protocoloDoProcesso` e a migration 20260818110000.
+          const protocolo = protocoloDoProcesso(proc as never);
+          const protocoloLegado =
+            ((proc?.respostas_questionario_json as Record<string, Record<string, string>> | null)
+              ?.protocolo ?? {}) as Record<string, string>;
           return (
             <div
               className="fixed inset-0 z-[70] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
@@ -4477,14 +4481,14 @@ export default function QAClientePortalPage() {
                   </button>
                 </div>
                 <ProtocoloStatusPanel
-                  numeroProtocolo={protocolo?.numero_protocolo ?? null}
-                  dataProtocolo={protocolo?.data_protocolo ?? null}
+                  numeroProtocolo={protocolo.numero}
+                  dataProtocolo={protocolo.data}
                   delegacia={
                     // O admin grava só `orgao: "POLICIA_FEDERAL"` — genérico
                     // demais para responder "em qual delegacia está o meu
                     // processo". A unidade real é a circunscrição do endereço
                     // do cliente, a mesma que ele selecionou no SINARM.
-                    protocolo?.unidade_pf ??
+                    protocoloLegado?.unidade_pf ??
                     rotuloCircunscricao(circunscricaoCliente) ??
                     "Polícia Federal"
                   }
@@ -4893,19 +4897,20 @@ export default function QAClientePortalPage() {
 
           // O ESPAÇO SÓ DO PROCESSO QUE ESTÁ NA PF vem ACIMA da lista, sem
           // tocar nela: o Cockpit Z6 é layout canônico e não se mexe.
-          const protocoloPF =
-            (processoNaPF?.respostas_questionario_json as Record<string, Record<string, string>> | null)
-              ?.protocolo ?? {};
+          const protocoloPF = protocoloDoProcesso(processoNaPF as never);
+          const protocoloPFLegado =
+            ((processoNaPF?.respostas_questionario_json as Record<string, Record<string, string>> | null)
+              ?.protocolo ?? {}) as Record<string, string>;
 
           return (
             <div>
               {processoNaPF && (
                 <LinhaDoTempoProcessoPF
                   servico={processoNaPF.servico_nome ?? null}
-                  numeroProtocolo={protocoloPF?.numero_protocolo ?? null}
-                  dataProtocolo={protocoloPF?.data_protocolo ?? null}
+                  numeroProtocolo={protocoloPF.numero}
+                  dataProtocolo={protocoloPF.data}
                   delegacia={
-                    protocoloPF?.unidade_pf ??
+                    protocoloPFLegado?.unidade_pf ??
                     rotuloCircunscricao(circunscricaoCliente) ??
                     "Polícia Federal"
                   }

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { registrarStatusEvento } from "@/lib/quero-armas/registrarStatusEvento";
 import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
-import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO } from "./processoConstants";
+import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO, transicoesPermitidas } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
 import SaudeChecklistPanel from "./SaudeChecklistPanel";
@@ -168,7 +168,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     try {
       const { data: p, error: pErr } = await supabase
         .from("qa_processos")
-        .select("id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo")
+        .select("id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, observacoes_admin, condicao_profissional, respostas_questionario_json, etapa_liberada_ate, primeiro_doc_aprovado_em, prazo_critico_data, prazo_critico_doc_id, observacao_prazo, protocolo_numero, protocolo_orgao, protocolo_data, protocolo_observacao, protocolo_registrado_em")
         .eq("id", processoId)
         .maybeSingle();
       if (pErr) throw pErr;
@@ -552,11 +552,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         usuario_id: (await supabase.auth.getUser()).data.user?.id ?? null,
         detalhes: { contexto: "ProcessoDetalheDrawer.equipeSetProcessoStatus" },
       });
+      // Os gatilhos apontavam para `aprovado` e `em_revisao_humana` — dois dos
+      // quatro status que o banco recusa. Ou seja: o e-mail de documentação
+      // aprovada nunca teve como sair por aqui.
       const eventoEmail =
-        novoStatus === "aprovado" ? "documentacao_aprovada" :
+        novoStatus === "validado" ? "documentacao_aprovada" :
         novoStatus === "concluido" ? "processo_concluido" :
         novoStatus === "bloqueado" ? "processo_bloqueado" :
-        novoStatus === "em_revisao_humana" ? "revisao_humana" : null;
+        novoStatus === "revisao_humana" ? "revisao_humana" : null;
       if (eventoEmail) {
         supabase.functions.invoke("qa-processo-notificar", {
           body: { processo_id: processoId, evento: eventoEmail },
@@ -784,6 +787,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     observacao: "",
   });
   const [salvandoProtocolo, setSalvandoProtocolo] = useState(false);
+  /** Escape consciente para o órgão que não devolve número na hora. */
+  const [protocoloSemNumero, setProtocoloSemNumero] = useState(false);
 
   /**
    * Monta a JUNTADA — o PDF único que vai para a delegacia.
@@ -849,27 +854,45 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
   const confirmarMarcarProtocolado = async () => {
     if (!processo) return;
+    if (!protocoloForm.numero.trim() && !protocoloSemNumero) {
+      toast.error("Informe o número do protocolo — ou marque que o órgão não forneceu.");
+      return;
+    }
     setSalvandoProtocolo(true);
     try {
       const statusAnterior = processo.status;
       const agora = new Date().toISOString();
-      const respostasAtuais: Record<string, any> =
-        (processo.respostas_questionario_json as any) ?? {};
+      const numero = protocoloForm.numero.trim().toUpperCase() || null;
       const protocoloPayload = {
-        numero_protocolo: protocoloForm.numero.trim().toUpperCase() || null,
+        numero_protocolo: numero,
         orgao: protocoloForm.orgao,
         data_protocolo: protocoloForm.data || null,
         observacao: protocoloForm.observacao.trim() || null,
         registrado_em: agora,
       };
+      // ESCRITA ATÔMICA, EM COLUNA.
+      //
+      // Até 18/08/2026 o protocolo era gravado dentro de
+      // `respostas_questionario_json`, lido do estado do componente (carregado
+      // quando a gaveta abriu) e regravado inteiro por cima. Outros dez pontos
+      // do sistema fazem o mesmo ler-alterar-gravar nesse blob: uma validação
+      // de IA terminando junto apagava o protocolo, ou o protocolo apagava as
+      // respostas do checklist — e resposta apagada RESSUSCITA pendência num
+      // processo que já está na delegacia.
+      //
+      // As colunas são a verdade agora. O JSON segue sendo escrito como
+      // espelho para telas ainda não migradas, mas via RPC de merge no banco,
+      // nunca com um objeto montado a partir de estado velho.
       const { error } = await supabase
         .from("qa_processos")
         .update({
           status: "protocolado",
-          respostas_questionario_json: {
-            ...respostasAtuais,
-            protocolo: protocoloPayload,
-          },
+          protocolo_numero: numero,
+          protocolo_orgao: protocoloForm.orgao,
+          protocolo_data: protocoloForm.data || null,
+          protocolo_observacao: protocoloForm.observacao.trim() || null,
+          protocolo_registrado_em: agora,
+          protocolo_registrado_por: (await supabase.auth.getUser()).data.user?.id ?? null,
           updated_at: agora,
         })
         .eq("id", processo.id);
@@ -937,6 +960,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         data: new Date().toISOString().slice(0, 10),
         observacao: "",
       });
+      setProtocoloSemNumero(false);
       await carregar();
       onUpdated?.();
     } catch (e: any) {
@@ -1324,7 +1348,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   useEffect(() => {
     if (!processo?.id) return;
     const statusAtual = String((processo as any).status || "").toLowerCase();
-    if (["pronto_para_protocolar", "protocolado", "em_analise_orgao", "deferido", "indeferido", "concluido", "cancelado"].includes(statusAtual)) return;
+    if ([
+      "aguardando_pagamento", "aguardando_assinatura",
+      "pronto_para_protocolar", "protocolado", "em_analise_orgao",
+      "notificado", "recurso_administrativo",
+      "deferido", "indeferido", "concluido", "cancelado", "bloqueado",
+    ].includes(statusAtual)) return;
     (async () => {
       try {
         const { data } = await supabase.functions.invoke("qa-processo-checar-conclusao-checklist", {
@@ -2658,20 +2687,56 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </div>
                 </div>
               )}
+              {/*
+                SÓ AS TRANSIÇÕES LEGAIS.
+
+                Até 18/08/2026 este bloco listava o mapa inteiro de status —
+                inclusive quatro que o CHECK do banco recusa (erro de constraint
+                na cara do operador) e `protocolado`, que gravava direto e
+                pulava número, órgão, data, evento de auditoria e o e-mail ao
+                cliente. Agora o seletor pergunta à máquina de estados para onde
+                ESTE processo pode ir, e protocolar só acontece pelo modal.
+              */}
               <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">ALTERAR STATUS DO PROCESSO</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {Object.entries(STATUS_PROCESSO).map(([k, v]) => (
-                    <button
-                      key={k}
-                      onClick={() => equipeSetProcessoStatus(k)}
-                      disabled={processo?.status === k}
-                      className={`h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border ${processo?.status === k ? `${v.bg} ${v.text} ${v.border}` : "border-slate-200 text-slate-700 hover:bg-slate-50 bg-white"} disabled:cursor-not-allowed`}
-                    >
-                      {v.label}
-                    </button>
-                  ))}
+                <div className="flex items-baseline justify-between gap-3 mb-3">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">ALTERAR STATUS DO PROCESSO</h4>
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                    ATUAL: {getStatusProcesso(String(processo?.status ?? "")).label}
+                  </span>
                 </div>
+                {(() => {
+                  const destinos = transicoesPermitidas(processo?.status);
+                  if (destinos.length === 0) {
+                    return (
+                      <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                        PROCESSO ENCERRADO — NÃO HÁ PRÓXIMO STATUS.
+                      </p>
+                    );
+                  }
+                  return (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {destinos.map((k) => {
+                          const v = STATUS_PROCESSO[k];
+                          return (
+                            <button
+                              key={k}
+                              onClick={() => equipeSetProcessoStatus(k)}
+                              className="h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 bg-white"
+                            >
+                              {v.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {processo?.status === "pronto_para_protocolar" && (
+                        <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400 leading-relaxed">
+                          PARA PROTOCOLAR, USE "MARCAR COMO PROTOCOLADO" NO TOPO — É LÁ QUE ENTRAM O NÚMERO, O ÓRGÃO E O AVISO AO CLIENTE.
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Documentos do processo — gestão direta pela Equipe Quero Armas */}
@@ -2937,7 +3002,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
-                  NÚMERO DO PROTOCOLO (OPCIONAL)
+                  NÚMERO DO PROTOCOLO
                 </label>
                 <input
                   type="text"
@@ -2946,6 +3011,25 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   placeholder="EX.: 2026.0001234-56"
                   className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
+                {/*
+                  O número deixou de ser opcional. É por ele que o cliente
+                  acompanha o processo no site da PF e que a equipe reencontra o
+                  caso quando ele manda mensagem — protocolar sem número entrega
+                  ao cliente um "protocolado" que ele não consegue conferir em
+                  lugar nenhum. Quando o órgão realmente não devolve número na
+                  hora, a saída é marcar abaixo, não deixar em branco calado.
+                */}
+                <label className="mt-2 flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={protocoloSemNumero}
+                    onChange={(e) => setProtocoloSemNumero(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 accent-amber-600"
+                  />
+                  <span className="text-[10px] uppercase tracking-wide font-bold text-amber-700 leading-snug">
+                    O ÓRGÃO NÃO FORNECEU NÚMERO — REGISTRAR ASSIM MESMO
+                  </span>
+                </label>
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">

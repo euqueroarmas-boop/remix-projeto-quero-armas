@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer, Activity } from "lucide-react";
-import { getStatusProcesso, formatDate } from "./processoConstants";
+import { getStatusProcesso, formatDate, protocoloDoProcesso } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 
@@ -80,7 +80,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
     try {
       const { data: procs, error } = await supabase
         .from("qa_processos")
-        .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json")
+        .select("id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, prazo_critico_data, prazo_critico_doc_id, primeiro_doc_aprovado_em, respostas_questionario_json, protocolo_numero, protocolo_orgao, protocolo_data, protocolo_observacao, protocolo_registrado_em")
         .eq("cliente_id", clienteId)
         // Processos cancelados/arquivados pela reconciliação (sem venda/contrato real)
         // NUNCA devem aparecer para o cliente final. Apenas staff vê na auditoria.
@@ -209,7 +209,7 @@ export function ClienteProcessosSection({ clienteId, processoIdFiltro = null }: 
         const prTone = prazoDot(dias);
         const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
         const sDot = statusDotColor(p.status);
-        const protocolo = p.respostas_questionario_json?.protocolo?.numero_protocolo || p.respostas_questionario_json?.protocolo?.numero || null;
+        const protocolo = protocoloDoProcesso(p as never).numero;
 
         return (
           <button

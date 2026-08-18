@@ -49,9 +49,16 @@ const EM_ANALISE = new Set([
 // Status macro do processo que ainda contam como "checklist em curso" e
 // portanto podem ser promovidos a `pronto_para_protocolar`. Qualquer outro
 // status já avançou no fluxo (protocolado, deferido, etc.) e NÃO deve voltar.
+// Precisa cobrir TODO status de "checklist em curso" do CHECK do banco.
+// `validado` e `em_analise_interna` faltavam: a equipe marcava a documentação
+// como aprovada e o processo virava um beco sem saída — a promoção automática
+// recusava para sempre, e com ela o e-mail de "documentação completa" ao
+// cliente e o aviso à equipe. Os dois primeiros da segunda linha são valores
+// legados que nunca constaram do CHECK; ficam por segurança e são inofensivos.
 const STATUS_PROMOVIVEIS = new Set([
-  "aguardando_documentos", "documentos_pendentes", "em_documentacao",
-  "em_validacao", "pendente_cliente", "revisao_humana",
+  "aguardando_documentos", "em_validacao", "revisao_humana",
+  "pendente_cliente", "em_analise_interna", "validado",
+  "documentos_pendentes", "em_documentacao",
 ]);
 
 const TEAM_EMAIL = "eu@queroarmas.com.br";

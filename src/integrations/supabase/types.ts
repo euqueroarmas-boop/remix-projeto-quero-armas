@@ -10289,6 +10289,12 @@ export type Database = {
           prazo_critico_data: string | null
           prazo_critico_doc_id: string | null
           primeiro_doc_aprovado_em: string | null
+          protocolo_data: string | null
+          protocolo_numero: string | null
+          protocolo_observacao: string | null
+          protocolo_orgao: string | null
+          protocolo_registrado_em: string | null
+          protocolo_registrado_por: string | null
           respostas_questionario_json: Json
           servico_id: number | null
           servico_nome: string
@@ -10317,6 +10323,12 @@ export type Database = {
           prazo_critico_data?: string | null
           prazo_critico_doc_id?: string | null
           primeiro_doc_aprovado_em?: string | null
+          protocolo_data?: string | null
+          protocolo_numero?: string | null
+          protocolo_observacao?: string | null
+          protocolo_orgao?: string | null
+          protocolo_registrado_em?: string | null
+          protocolo_registrado_por?: string | null
           respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome: string
@@ -10345,6 +10357,12 @@ export type Database = {
           prazo_critico_data?: string | null
           prazo_critico_doc_id?: string | null
           primeiro_doc_aprovado_em?: string | null
+          protocolo_data?: string | null
+          protocolo_numero?: string | null
+          protocolo_observacao?: string | null
+          protocolo_orgao?: string | null
+          protocolo_registrado_em?: string | null
+          protocolo_registrado_por?: string | null
           respostas_questionario_json?: Json
           servico_id?: number | null
           servico_nome?: string
