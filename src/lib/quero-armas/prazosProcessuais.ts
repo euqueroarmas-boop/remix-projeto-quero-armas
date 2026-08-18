@@ -10,9 +10,14 @@
  *   - data_restituicao             → RESTITUIÇÃO             (10 dias · Lei 9.784/99)
  *   - data_indeferimento_recurso   → MANDADO DE SEGURANÇA    (120 dias · art. 23 Lei 12.016/09)
  *
- * Evento que FECHA prazo:
- *   - data_recurso_administrativo  → recurso protocolado: o prazo de 10 dias
- *                                    deixa de correr (não vira alarme).
+ * Eventos que FECHAM prazo:
+ *   - data_recurso_administrativo  → recurso protocolado: fecha o prazo aberto
+ *                                    por notificação, indeferimento ou
+ *                                    restituição.
+ *   - data_resposta_notificacao    → resposta entregue à PF: fecha o prazo da
+ *                                    NOTIFICAÇÃO e da RESTITUIÇÃO. NÃO fecha
+ *                                    indeferimento — de indeferimento só se
+ *                                    sai recorrendo.
  *
  * Regra de prioridade: se houver `data_indeferimento_recurso`, ela SOBREPÕE
  * qualquer outro evento (já se esgotou a via administrativa, agora corre o
@@ -96,6 +101,10 @@ export interface ItemComPrazo {
   /** Opcional — se preenchida e for posterior à notificação/indeferimento,
    * o recurso já foi protocolado e o prazo de 10 dias não corre mais. */
   data_recurso_administrativo?: string | null;
+  /** Resposta à notificação entregue à PF. Fecha o prazo de NOTIFICAÇÃO e de
+   * RESTITUIÇÃO — os dois eventos que se resolvem respondendo, e não
+   * recorrendo. */
+  data_resposta_notificacao?: string | null;
   /** Indeferimento do recurso administrativo. Inicia IMEDIATAMENTE o prazo
    *  decadencial de 120 dias para impetração de Mandado de Segurança. */
   data_indeferimento_recurso?: string | null;
@@ -108,6 +117,7 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dRest = normalizeDateISO(item.data_restituicao);
   const dIndefRec = normalizeDateISO(item.data_indeferimento_recurso);
   const dRecurso = normalizeDateISO(item.data_recurso_administrativo);
+  const dResposta = normalizeDateISO(item.data_resposta_notificacao);
 
   // Status finais cancelam o prazo (já não corre): deferido, concluído,
   // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
@@ -150,6 +160,25 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
     // O indeferimento do recurso NÃO passa por aqui: ele é PRIORIDADE 1 acima
     // e abre os 120 dias do Mandado de Segurança.
     if (dRecurso && dRecurso >= ativo.data) return null;
+
+    // RESPONDER A NOTIFICAÇÃO TAMBÉM FECHA O PRAZO.
+    //
+    // Terceira auditoria (18/08/2026): o único fechador era o recurso. Só que
+    // responder a uma notificação NÃO é recorrer — e é o caminho mais comum de
+    // todos. O resultado era o mesmo alarme falso que a primeira auditoria
+    // encontrou no ramo do indeferimento, intacto no ramo da notificação: a
+    // equipe respondia dentro do prazo e o cron seguia mandando "VENCIDO há N
+    // dias" para o cliente e para a equipe, todo dia, para sempre.
+    //
+    // Só vale para NOTIFICAÇÃO e RESTITUIÇÃO. Indeferimento não se resolve
+    // respondendo: dele só se sai recorrendo, e fechá-lo aqui esconderia um
+    // prazo que ainda corre — o erro oposto, e mais caro.
+    if (
+      dResposta && dResposta >= ativo.data &&
+      (ativo.evento === "NOTIFICAÇÃO" || ativo.evento === "RESTITUIÇÃO")
+    ) {
+      return null;
+    }
   }
 
   const dataLimite = addDaysISO(ativo.data, prazoTotal);

@@ -8596,6 +8596,7 @@ export type Database = {
           data_notificacao: string | null
           data_protocolo: string | null
           data_recurso_administrativo: string | null
+          data_resposta_notificacao: string | null
           data_ultima_atualizacao: string | null
           data_vencimento: string | null
           fabricante: string | null
@@ -8634,6 +8635,7 @@ export type Database = {
           data_notificacao?: string | null
           data_protocolo?: string | null
           data_recurso_administrativo?: string | null
+          data_resposta_notificacao?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
           fabricante?: string | null
@@ -8672,6 +8674,7 @@ export type Database = {
           data_notificacao?: string | null
           data_protocolo?: string | null
           data_recurso_administrativo?: string | null
+          data_resposta_notificacao?: string | null
           data_ultima_atualizacao?: string | null
           data_vencimento?: string | null
           fabricante?: string | null
@@ -10338,6 +10341,9 @@ export type Database = {
           prazo_limite: string | null
           processo_id: string
           registrado_por: string | null
+          respondida_em: string | null
+          respondida_por: string | null
+          respondida_protocolo: string | null
           status_processo: string | null
           texto: string
           tipo: string
@@ -10359,6 +10365,9 @@ export type Database = {
           prazo_limite?: string | null
           processo_id: string
           registrado_por?: string | null
+          respondida_em?: string | null
+          respondida_por?: string | null
+          respondida_protocolo?: string | null
           status_processo?: string | null
           texto: string
           tipo?: string
@@ -10380,6 +10389,9 @@ export type Database = {
           prazo_limite?: string | null
           processo_id?: string
           registrado_por?: string | null
+          respondida_em?: string | null
+          respondida_por?: string | null
+          respondida_protocolo?: string | null
           status_processo?: string | null
           texto?: string
           tipo?: string

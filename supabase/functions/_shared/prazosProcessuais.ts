@@ -79,6 +79,10 @@ export interface ItemComPrazo {
   data_indeferimento?: string | null;
   data_restituicao?: string | null;
   data_recurso_administrativo?: string | null;
+  /** Resposta à notificação entregue à PF. Fecha o prazo de NOTIFICAÇÃO e de
+   * RESTITUIÇÃO — os dois eventos que se resolvem respondendo, e não
+   * recorrendo. */
+  data_resposta_notificacao?: string | null;
   data_indeferimento_recurso?: string | null;
 }
 
@@ -88,6 +92,7 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dRest = normalizeDateISO(item.data_restituicao);
   const dIndefRec = normalizeDateISO(item.data_indeferimento_recurso);
   const dRecurso = normalizeDateISO(item.data_recurso_administrativo);
+  const dResposta = normalizeDateISO(item.data_resposta_notificacao);
 
   const statusUpper = (item.status || "").toString().toUpperCase();
   const FINALIZADOS = ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"];
@@ -125,6 +130,25 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
     // O indeferimento do recurso NÃO passa por aqui: ele é PRIORIDADE 1 acima
     // e abre os 120 dias do Mandado de Segurança.
     if (dRecurso && dRecurso >= ativo.data) return null;
+
+    // RESPONDER A NOTIFICAÇÃO TAMBÉM FECHA O PRAZO.
+    //
+    // Terceira auditoria (18/08/2026): o único fechador era o recurso. Só que
+    // responder a uma notificação NÃO é recorrer — e é o caminho mais comum de
+    // todos. O resultado era o mesmo alarme falso que a primeira auditoria
+    // encontrou no ramo do indeferimento, intacto no ramo da notificação: a
+    // equipe respondia dentro do prazo e o cron seguia mandando "VENCIDO há N
+    // dias" para o cliente e para a equipe, todo dia, para sempre.
+    //
+    // Só vale para NOTIFICAÇÃO e RESTITUIÇÃO. Indeferimento não se resolve
+    // respondendo: dele só se sai recorrendo, e fechá-lo aqui esconderia um
+    // prazo que ainda corre — o erro oposto, e mais caro.
+    if (
+      dResposta && dResposta >= ativo.data &&
+      (ativo.evento === "NOTIFICAÇÃO" || ativo.evento === "RESTITUIÇÃO")
+    ) {
+      return null;
+    }
   }
 
   const dataLimite = addDaysISO(ativo.data, prazoTotal);

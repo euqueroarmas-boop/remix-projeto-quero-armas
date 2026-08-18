@@ -890,6 +890,29 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [salvandoRecurso, setSalvandoRecurso] = useState(false);
 
   /**
+   * Manifestação da PF ainda em aberto — a notificação que precisa de resposta.
+   *
+   * Enquanto `respondida_em` for nulo, o prazo de 10 dias corre. Registrar a
+   * entrega é o que desliga o alarme: até 18/08/2026 nada no sistema marcava
+   * esse ato, e o cron seguia mandando "VENCIDO há N dias" para o cliente e
+   * para a equipe num processo respondido dentro do prazo.
+   */
+  const [manifestacaoPF, setManifestacaoPF] = useState<{
+    id: string;
+    tipo: string;
+    data_documento: string | null;
+    prazo_limite: string | null;
+    respondida_em: string | null;
+    respondida_protocolo: string | null;
+  } | null>(null);
+  const [respostaModal, setRespostaModal] = useState(false);
+  const [respostaForm, setRespostaForm] = useState({
+    protocolo: "",
+    data: new Date().toISOString().slice(0, 10),
+  });
+  const [salvandoResposta, setSalvandoResposta] = useState(false);
+
+  /**
    * Deferimento: qual documento do Hub é o RESULTADO deste processo.
    *
    * Até 18/08/2026 `deferido` era só um rótulo — sem e-mail, sem entrega, sem
@@ -971,6 +994,64 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   }, [processoId]);
 
   useEffect(() => { void carregarRecurso(); }, [carregarRecurso]);
+
+  const carregarManifestacao = useCallback(async () => {
+    if (!processoId) return;
+    const { data } = await supabase
+      .from("qa_processo_manifestacoes_pf")
+      .select("id, tipo, data_documento, prazo_limite, respondida_em, respondida_protocolo")
+      .eq("processo_id", processoId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setManifestacaoPF((data as typeof manifestacaoPF) ?? null);
+  }, [processoId]);
+
+  useEffect(() => { void carregarManifestacao(); }, [carregarManifestacao]);
+
+  const confirmarRespostaPF = async () => {
+    if (!processoId) return;
+    setSalvandoResposta(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-manifestacao-responder", {
+        body: {
+          processo_id: processoId,
+          manifestacao_id: manifestacaoPF?.id,
+          protocolo: respostaForm.protocolo.trim() || undefined,
+          data_resposta: respostaForm.data || undefined,
+        },
+      });
+      if (error) throw error;
+      const resp = (data ?? {}) as {
+        error?: string;
+        prazo_fechado?: boolean;
+        prazo_aviso?: string;
+        exigencias_abertas?: number;
+      };
+      if (resp.error) throw new Error(resp.error);
+
+      toast.success("Resposta registrada. O prazo parou de correr e o cliente foi avisado.");
+      // O aviso do prazo é o que a equipe PRECISA ver: sem ele, a resposta
+      // fica registrada e o alarme continua tocando sem ninguém entender.
+      if (resp.prazo_fechado === false) {
+        toast.warning(resp.prazo_aviso ?? "O prazo não foi fechado na venda. Confira à mão.");
+      }
+      if ((resp.exigencias_abertas ?? 0) > 0) {
+        toast.warning(
+          `Atenção: ${resp.exigencias_abertas} exigência(s) da PF continuam abertas no checklist.`,
+        );
+      }
+      setRespostaModal(false);
+      setRespostaForm({ protocolo: "", data: new Date().toISOString().slice(0, 10) });
+      await carregarManifestacao();
+      await carregar();
+      onUpdated?.();
+    } catch (e) {
+      toast.error("Não deu para registrar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setSalvandoResposta(false);
+    }
+  };
 
   const confirmarProtocoloRecurso = async () => {
     if (!recurso) return;
@@ -2983,6 +3064,61 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </div>
               )}
               {/*
+                A RESPOSTA À PF FECHA O PRAZO.
+
+                O motor de prazos só tinha um fechador: o recurso. Responder a
+                uma notificação não é recorrer — e é o caminho mais comum de
+                todos. Sem este registro, a equipe respondia no prazo e o cron
+                continuava mandando "VENCIDO há N dias" para o cliente e para a
+                equipe, todo dia, para sempre.
+              */}
+              {manifestacaoPF &&
+                !["decisao", "indeferimento", "deferimento"].includes(
+                  String(manifestacaoPF.tipo ?? "").toLowerCase(),
+                ) && (
+                <div className={`bg-white border rounded-xl p-4 ${
+                  manifestacaoPF.respondida_em ? "border-slate-200" : "border-amber-300"
+                }`}>
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                    RESPOSTA À POLÍCIA FEDERAL
+                  </h4>
+                  {manifestacaoPF.respondida_em ? (
+                    <div>
+                      <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                        ENTREGUE
+                        {manifestacaoPF.respondida_protocolo
+                          ? ` · Nº ${manifestacaoPF.respondida_protocolo}`
+                          : ""}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                        EM {formatDateTime(manifestacaoPF.respondida_em)} · PRAZO CUMPRIDO
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                          AGUARDANDO A ENTREGA NA PF
+                        </p>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">
+                          {manifestacaoPF.prazo_limite
+                            ? `PRAZO ATÉ ${manifestacaoPF.prazo_limite.split("-").reverse().join("/")}`
+                            : "ENQUANTO NÃO FOR REGISTRADA, O PRAZO CONTINUA CORRENDO"}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setRespostaModal(true)}
+                        className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700"
+                      >
+                        <FileSignature className="h-3 w-3" />
+                        REGISTRAR A RESPOSTA ENTREGUE
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/*
                 O RECURSO GANHA NÚMERO E FIM.
 
                 `numero_protocolo` e `protocolado_em` existem na tabela desde
@@ -3585,6 +3721,72 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       )}
 
       {/* Modal — Protocolo do recurso */}
+      {/* Modal — Registrar a resposta entregue à PF */}
+      {respostaModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-amber-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                RESPOSTA ENTREGUE À PF
+              </h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Registre quando a resposta à notificação foi entregue na Polícia Federal.
+              </p>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DATA DA ENTREGA
+                </label>
+                <input
+                  type="date"
+                  value={respostaForm.data}
+                  onChange={(e) => setRespostaForm((f) => ({ ...f, data: e.target.value }))}
+                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  Nº DO PROTOCOLO (OPCIONAL)
+                </label>
+                <input
+                  type="text"
+                  value={respostaForm.protocolo}
+                  onChange={(e) => setRespostaForm((f) => ({ ...f, protocolo: e.target.value.toUpperCase() }))}
+                  placeholder="EX.: 2026.0001234-56"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                />
+              </div>
+              {/*
+                A data é o dado que importa: é ela, comparada com a data da
+                notificação, que decide se a resposta foi tempestiva.
+              */}
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+                ESTA DATA FECHA O PRAZO DE 10 DIAS NO PAINEL E NO E-MAIL DE ALERTA. USE A DATA
+                REAL DA ENTREGA, NÃO A DE HOJE, SE FOREM DIFERENTES.
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                onClick={() => setRespostaModal(false)}
+                disabled={salvandoResposta}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarRespostaPF}
+                disabled={salvandoResposta}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60"
+              >
+                {salvandoResposta ? "REGISTRANDO..." : "REGISTRAR"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {protocoloRecursoModal && recurso && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
           <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
