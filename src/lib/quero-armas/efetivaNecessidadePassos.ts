@@ -11,6 +11,14 @@
 // O estado de cada passo é derivado do registro em `qa_efetiva_necessidade`
 // (+ provas anexadas) — nada de estado local de componente.
 // ============================================================================
+import {
+  aguardandoOutroBo,
+  tesesConfirmadas,
+  type EfetivaTeseLike,
+  type RegistroLacoBo,
+} from "./efetivaTeses";
+
+export type { EfetivaTeseLike };
 
 export type EfetivaPassoId =
   | "tem_bo"
@@ -20,6 +28,7 @@ export type EfetivaPassoId =
   | "relato"
   | "contexto"
   | "revisao"
+  | "teses"
   | "entender_bo"
   | "registrar_bo"
   | "enviar_bo"
@@ -39,6 +48,7 @@ export const EFETIVA_PASSO_ROTULO: Record<EfetivaPassoId, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração do relato",
+  teses: "Suas frentes de risco",
   entender_bo: "Antes de ir à delegacia, entenda o boletim",
   registrar_bo: "Registrar o boletim na delegacia",
   enviar_bo: "Enviar o boletim registrado",
@@ -53,6 +63,9 @@ export const PASSOS_BASE: EfetivaPassoId[] = [
   "relato",
   "contexto",
   "revisao",
+  // Regra do usuário (17/08/2026): antes de mandar alguém à delegacia, ele lê
+  // as frentes de risco que separamos do relato dele e confirma cada título.
+  "teses",
 ];
 
 export const PASSOS_BO: EfetivaPassoId[] = [
@@ -63,7 +76,7 @@ export const PASSOS_BO: EfetivaPassoId[] = [
 ];
 
 /**
- * A ORDEM CANÔNICA dos passos — 11, sempre, para todo mundo.
+ * A ORDEM CANÔNICA dos passos — 12, sempre, para todo mundo.
  *
  * Furo real (15/08/2026, cliente Mizael): existiam DUAS listas de passos. O
  * checklist usava esta (11 itens) e o wizard montava a dele a partir do
@@ -79,7 +92,7 @@ export const EFETIVA_PASSOS_IDS: EfetivaPassoId[] = [...PASSOS_BASE, ...PASSOS_B
 /** Mesmo mínimo aplicado no wizard quando não há nenhuma prova documental. */
 export const EFETIVA_RELATO_MINIMO = 1000;
 
-export interface EfetivaRegistroLike {
+export interface EfetivaRegistroLike extends RegistroLacoBo {
   tem_bo?: boolean | null;
   tem_inquerito?: boolean | null;
   tem_acao_criminal?: boolean | null;
@@ -284,15 +297,18 @@ export function avaliarSuficienciaBo(
 
 /**
  * Lista viva de passos com o estado de cumprimento de cada um.
- * A efetiva necessidade tem SEMPRE 10 passos: os 7 do questionário +
- * os 3 do boletim de ocorrência (registrar, enviar, defesa final).
- * Os passos de BO já nascem concluídos quando o cliente entregou o BO.
+ * A efetiva necessidade tem SEMPRE 12 passos: os 7 do questionário, a
+ * confirmação das teses e os 4 do boletim de ocorrência (entender, registrar,
+ * enviar, defesa final). Os passos de BO já nascem concluídos quando o cliente
+ * entregou o BO.
  */
 export function calcularPassosEfetiva(
   registro: EfetivaRegistroLike | null | undefined,
   provas: EfetivaProvaLike[] = [],
   /** Ciência do BO já registrada (tabela `qa_cliente_ciencias`). */
   cienciaBoAceita = false,
+  /** Teses de defesa separadas do relato (tabela `qa_efetiva_teses`). */
+  teses: EfetivaTeseLike[] = [],
 ): EfetivaPasso[] {
   const reg = registro ?? {};
   const ids = EFETIVA_PASSOS_IDS;
@@ -315,6 +331,11 @@ export function calcularPassosEfetiva(
   // aceite anterior do cliente gravado. É isso que faz o checklist retroceder
   // para o grupo "Efetiva necessidade" em vez de seguir para os laudos.
   const devolvida = efetivaFoiDevolvida(reg);
+  const listaTeses = teses ?? [];
+  // Disse que vai abrir outro boletim: o passo do envio TRAVA aqui até o
+  // documento chegar. Sair sem ele só por chamado com a equipe (destrava
+  // gravada em `bo_destravado_em`). Regra do usuário (17/08/2026).
+  const esperandoOutroBo = aguardandoOutroBo(reg);
 
   const concluido = (id: EfetivaPassoId): boolean => {
     switch (id) {
@@ -329,6 +350,12 @@ export function calcularPassosEfetiva(
         return contexto.length > 0;
       case "revisao":
         return narrativa.length > 0;
+      case "teses":
+        // Sem tese nenhuma (registro antigo, ou IA que não separou nada) o
+        // passo não pode virar pendência eterna: quem responde por ele é a
+        // existência do relato, como era antes de 17/08/2026.
+        if (listaTeses.length === 0) return narrativa.length > 0;
+        return tesesConfirmadas(listaTeses).length === listaTeses.length;
       case "entender_bo":
         return cienciaBoAceita || boEntregue;
       case "registrar_bo":
@@ -345,7 +372,9 @@ export function calcularPassosEfetiva(
           !textoBoRefeitoAposRegistro(reg)
         );
       case "enviar_bo":
-        return boEntregue;
+        // O laço dos boletins: enquanto ele disser que vai abrir mais um, o
+        // passo continua em aberto — mesmo com boletim já anexado.
+        return boEntregue && !esperandoOutroBo;
       case "defesa_final":
         return (
           !devolvida &&

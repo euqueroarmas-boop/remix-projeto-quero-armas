@@ -34,20 +34,32 @@ REGRAS ABSOLUTAS:
 - Se houver FATOS ACRESCENTADOS DEPOIS, incorpore-os ao relato no lugar cronológico correto. NUNCA descarte fatos já narrados: o relato novo contém tudo o que havia antes MAIS o que foi acrescentado.
 - BOLETINS ANTIGOS = REITERAÇÃO. Amarre-os no relato como sequência ("desde DD/MM/AAAA venho registrando ocorrências..."), demonstrando que o problema se repete há tempo. Destaque o FATO MAIS RECENTE narrado pelo cliente e correlacione-o expressamente aos boletins anteriores. NUNCA afirme que um boletim antigo, sozinho, comprova ameaça atual.
 
-VOCÊ PRODUZ DOIS TEXTOS, nesta ordem exata e com estes marcadores literais em linha própria:
+VOCÊ PRODUZ, nesta ordem exata e com estes marcadores literais em linha própria:
 
 ===RELATO===
-(o relato completo descrito acima)
+(o relato completo descrito acima — UM só, reunindo todos os fatos)
 
-===BO===
-(o texto para o requerente registrar boletim de ocorrência)
+===TESE===
+TITULO: (nome curto do núcleo de risco, no máximo 60 caracteres, nas palavras do cliente)
+RESUMO: (uma ou duas linhas explicando ao cliente o que entra nesta tese)
+BO: (o texto que ele leva à delegacia PARA ESTA TESE)
 
-REGRAS DO TEXTO ===BO=== (completamente diferentes das acima):
+Repita o bloco ===TESE=== quantas vezes forem os núcleos de risco. Sempre pelo menos um.
+
+COMO SEPARAR AS TESES (regra central):
+- Uma TESE é um núcleo de risco autônomo: pessoas envolvidas, lugar e motivo próprios. Exemplos de núcleos distintos: conflito familiar ou de vizinhança; risco vindo da atividade profissional; assalto/furto no trajeto ou no estabelecimento; ameaça de terceiro por dívida ou disputa.
+- Fatos que envolvem as MESMAS pessoas e o MESMO motivo são UMA tese só, mesmo em datas diferentes (isso é reiteração, não tese nova).
+- Fatos com pessoas e motivos DIFERENTES são teses DIFERENTES, ainda que tenham acontecido no mesmo período.
+- Cada bloco BO tem de se sustentar sozinho: ele NÃO pode citar, aludir ou depender de nada que esteja em outra tese. Quem lê um boletim não pode perceber que existe outro. É proibido escrever "além do que já relatei", "conforme outro boletim" ou equivalente.
+- Se o cliente só tem um núcleo de risco, produza UMA tese. Não invente uma segunda para preencher.
+- É PROIBIDO criar tese com fato que o cliente não contou.
+
+REGRAS DO TEXTO BO (completamente diferentes das do relato):
 - MÁXIMO 500 CARACTERES, contados. Se passar, corte fatos secundários até caber.
 - Primeira pessoa, frases curtas, palavras do dia a dia. Tem de parecer escrito à mão pelo próprio cidadão, com naturalidade — jamais parecer texto de IA, de advogado ou de formulário.
 - PROIBIDO: "outrossim", "venho por meio deste", "supracitado", "consoante", citação de lei ou artigo, pedido de deferimento, menção a arma de fogo, a porte, a posse, a processo na Polícia Federal ou a este sistema.
-- Conteúdo, nesta ordem: quem eu sou e o que faço; o que está acontecendo agora ou acabou de acontecer (o fato NOVO, o mais recente e concreto); por que temo pela minha vida, pela minha integridade ou pela da minha família; e que estou comunicando à delegacia para que sejam tomadas as providências cabíveis.
-- Deve transmitir situação de risco atual e prestes a se consumar — medo, pânico, temor real — sem exagero teatral e sem inventar fato nenhum.
+- Conteúdo, nesta ordem: quem eu sou e o que faço; o que está acontecendo agora ou acabou de acontecer NESTA frente (o fato mais recente e concreto dela); por que temo pela minha vida, pela minha integridade ou pela da minha família; e que estou comunicando à delegacia para que sejam tomadas as providências cabíveis.
+- Deve transmitir situação de risco atual e prestes a se consumar — medo, pânico, temor real — sem exagero teatral e sem inventar fato nenhum. Quando o risco vier da atividade do cliente, descreva concretamente a exposição dessa atividade (horário, deslocamento, valores, local ermo, atendimento ao público) como parte do que o coloca em perigo hoje.
 - Um único bloco de texto corrido, sem títulos, sem marcadores, sem markdown, sem assinatura.`;
 
 /** Prazo legal de representação — abaixo disso o boletim sustenta sozinho. */
@@ -123,16 +135,76 @@ function limitarBo(texto: string): string {
   return (ultimoPonto > 200 ? corte.slice(0, ultimoPonto + 1) : corte).trim();
 }
 
-/** A IA devolve os dois textos separados por marcadores literais. */
-function separarBlocos(bruto: string): { narrativa: string; textoBo: string } {
-  const m = bruto.match(/===\s*RELATO\s*===([\s\S]*?)===\s*BO\s*===([\s\S]*)$/i);
-  if (m) {
-    return { narrativa: m[1].trim(), textoBo: limitarBo(m[2]) };
+interface TeseGerada {
+  titulo: string;
+  resumo: string;
+  textoBo: string;
+}
+
+/** Título curto: cabe na tela do celular e no cabeçalho do card. */
+const LIMITE_TITULO = 90;
+
+/**
+ * A IA devolve o relato e, depois, um bloco ===TESE=== por núcleo de risco.
+ *
+ * O formato antigo (um único ===BO===) continua sendo aceito: enquanto houver
+ * resposta em cache ou um modelo teimoso, o cliente não pode ficar sem texto.
+ */
+function separarBlocos(bruto: string): { narrativa: string; teses: TeseGerada[] } {
+  const texto = String(bruto ?? "");
+  const iRelato = texto.search(/===\s*RELATO\s*===/i);
+  const iPrimeiraTese = texto.search(/===\s*TESE\s*===/i);
+  const iBoLegado = texto.search(/===\s*BO\s*===/i);
+
+  const fimNarrativa = [iPrimeiraTese, iBoLegado].filter((i) => i >= 0).sort((a, b) => a - b)[0];
+  const narrativa = texto
+    .slice(iRelato >= 0 ? iRelato : 0, fimNarrativa === undefined ? texto.length : fimNarrativa)
+    .replace(/^===\s*RELATO\s*===/i, "")
+    .trim();
+
+  const teses: TeseGerada[] = [];
+  const blocos = texto.split(/===\s*TESE\s*===/i).slice(1);
+  for (const bloco of blocos) {
+    const titulo = (bloco.match(/^\s*TITULO\s*:\s*(.+)$/im)?.[1] ?? "").trim();
+    const resumo = (bloco.match(/^\s*RESUMO\s*:\s*(.+)$/im)?.[1] ?? "").trim();
+    const bo = (bloco.match(/^\s*BO\s*:\s*([\s\S]*)$/im)?.[1] ?? "").trim();
+    const textoBo = limitarBo(bo);
+    if (!textoBo) continue;
+    teses.push({
+      titulo: (titulo || "Situação relatada").slice(0, LIMITE_TITULO),
+      resumo: resumo.slice(0, 400),
+      textoBo,
+    });
   }
-  // Sem marcadores. NÃO é "fica para a próxima rodada": não existe próxima
-  // rodada automática. Quem chama trata a ausência — com nova tentativa e,
-  // se ainda assim faltar, com o texto de reserva montado aqui no servidor.
-  return { narrativa: bruto.replace(/^===\s*RELATO\s*===/i, "").trim(), textoBo: "" };
+
+  // Formato antigo: um bloco ===BO=== solto vira a tese única.
+  if (teses.length === 0 && iBoLegado >= 0) {
+    const textoBo = limitarBo(texto.slice(iBoLegado).replace(/^===\s*BO\s*===/i, ""));
+    if (textoBo) teses.push({ titulo: "Situação relatada", resumo: "", textoBo });
+  }
+
+  return { narrativa, teses };
+}
+
+/* ── Comparação de títulos, para não duplicar tese já confirmada ─────────── */
+function palavrasChave(valor: string | null | undefined): Set<string> {
+  const out = new Set<string>();
+  const limpo = String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ");
+  for (const p of limpo.split(/\s+/)) if (p.length >= 4) out.add(p);
+  return out;
+}
+
+function mesmaTese(a: string | null | undefined, b: string | null | undefined): boolean {
+  const pa = palavrasChave(a);
+  const pb = palavrasChave(b);
+  if (pa.size === 0 || pb.size === 0) return false;
+  let comuns = 0;
+  for (const p of pa) if (pb.has(p)) comuns += 1;
+  return comuns / Math.min(pa.size, pb.size) >= 0.5;
 }
 
 /**
@@ -295,7 +367,8 @@ Deno.serve(async (req) => {
     let bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
     if (!bruto) return json({ error: "A IA não devolveu texto. Tente novamente." }, 502);
 
-    let { narrativa, textoBo: textoBoBruto } = separarBlocos(bruto);
+    let { narrativa, teses: tesesGeradas } = separarBlocos(bruto);
+    let textoBoBruto = tesesGeradas[0]?.textoBo ?? "";
 
     // Boletim antigo vale como reiteração: só entregamos texto para registrar
     // um BO novo quando a regra realmente exige.
@@ -306,18 +379,22 @@ Deno.serve(async (req) => {
      * frente. O cliente perdia o texto (às vezes um texto que já existia e
      * estava certo) e ficava sem como registrar o boletim.                 */
     if (precisaNovoBo && !textoBoBruto) {
-      console.warn("[qa-efetiva-narrativa] sem bloco ===BO=== na 1a tentativa; repetindo");
+      console.warn("[qa-efetiva-narrativa] sem bloco ===TESE=== na 1a tentativa; repetindo");
       const retry = await chamarIa(
-        "A sua resposta anterior veio SEM o bloco ===BO===. Reescreva a resposta INTEIRA, " +
-          "obrigatoriamente com os dois marcadores literais ===RELATO=== e ===BO===, cada um em " +
-          "linha própria, e com o texto do boletim em no máximo 500 caracteres.",
+        "A sua resposta anterior veio SEM os blocos ===TESE===. Reescreva a resposta INTEIRA, " +
+          "obrigatoriamente com o marcador ===RELATO=== e, depois dele, um bloco ===TESE=== por " +
+          "núcleo de risco, cada marcador em linha própria, cada bloco com as linhas TITULO:, " +
+          "RESUMO: e BO:, e o texto do boletim em no máximo 500 caracteres.",
       );
       if (retry.ok) {
         payload = await retry.json();
         bruto = String(payload?.choices?.[0]?.message?.content ?? "").trim();
         const segundo = separarBlocos(bruto);
         if (segundo.narrativa) narrativa = segundo.narrativa;
-        if (segundo.textoBo) textoBoBruto = segundo.textoBo;
+        if (segundo.teses.length) {
+          tesesGeradas = segundo.teses;
+          textoBoBruto = segundo.teses[0].textoBo;
+        }
       }
     }
 
@@ -365,11 +442,89 @@ Deno.serve(async (req) => {
     }
 
     if (precisaNovoBo && !textoBoBruto) {
-      console.error("[qa-efetiva-narrativa] IA nao devolveu ===BO===; usando texto de reserva", {
+      console.error("[qa-efetiva-narrativa] IA nao devolveu ===TESE===; usando texto de reserva", {
         registro_id,
         usou_anterior: Boolean(textoBoAnterior),
       });
     }
+
+    /* ── As teses de defesa: uma frente de risco, um boletim ───────────────
+     * Regra do usuário (17/08/2026): a IA PROPÕE as frentes, o cliente confirma
+     * os títulos. Uma tese que ele já confirmou — ou que já tem boletim
+     * anexado — MANDA sobre o que a IA acabou de devolver: ela nunca é apagada
+     * nem reescrita por uma regeração. O que a rodada nova traz de diferente
+     * entra como frente adicional.                                          */
+    const { data: tesesExistentes } = await sb
+      .from("qa_efetiva_teses")
+      .select("*")
+      .eq("efetiva_necessidade_id", registro_id)
+      .order("ordem", { ascending: true });
+
+    const existentes = (tesesExistentes ?? []) as any[];
+    const travadas = existentes.filter(
+      (t) => t.prova_id || t.confirmada_em || t.registro_confirmado_em,
+    );
+    const propostas: TeseGerada[] = tesesGeradas.length
+      ? tesesGeradas
+      : (textoBo ? [{ titulo: "Situação relatada", resumo: "", textoBo }] : []);
+
+    if (propostas.length) {
+      if (travadas.length === 0) {
+        await sb.from("qa_efetiva_teses").delete().eq("efetiva_necessidade_id", registro_id);
+        const { error: erroTeses } = await sb.from("qa_efetiva_teses").insert(
+          propostas.map((t, i) => ({
+            efetiva_necessidade_id: registro_id,
+            ordem: i + 1,
+            titulo: t.titulo,
+            resumo: t.resumo || null,
+            texto_bo: t.textoBo,
+            texto_bo_gerado_em: agora,
+          })),
+        );
+        if (erroTeses) console.error("[qa-efetiva-narrativa] teses:", erroTeses.message);
+      } else {
+        let ordem = existentes.reduce((m, t) => Math.max(m, Number(t.ordem ?? 0)), 0);
+        for (const p of propostas) {
+          const igual = existentes.find((t) => mesmaTese(t.titulo, p.titulo));
+          if (igual) {
+            // Texto ajustado pelo cliente, ou boletim já registrado nesta
+            // frente: não se toca. Fora isso, o texto acompanha o relato novo.
+            if (!igual.prova_id && !igual.texto_bo_editado_pelo_cliente) {
+              await sb
+                .from("qa_efetiva_teses")
+                .update({
+                  texto_bo: p.textoBo,
+                  texto_bo_gerado_em:
+                    p.textoBo === igual.texto_bo ? igual.texto_bo_gerado_em : agora,
+                  resumo: igual.resumo ?? p.resumo ?? null,
+                  updated_at: agora,
+                })
+                .eq("id", igual.id);
+            }
+            continue;
+          }
+          ordem += 1;
+          await sb.from("qa_efetiva_teses").insert({
+            efetiva_necessidade_id: registro_id,
+            ordem,
+            titulo: p.titulo,
+            resumo: p.resumo || null,
+            texto_bo: p.textoBo,
+            texto_bo_gerado_em: agora,
+          });
+        }
+      }
+      await sb
+        .from("qa_efetiva_necessidade")
+        .update({ teses_geradas_em: agora })
+        .eq("id", registro_id);
+    }
+
+    const { data: tesesFinais } = await sb
+      .from("qa_efetiva_teses")
+      .select("*")
+      .eq("efetiva_necessidade_id", registro_id)
+      .order("ordem", { ascending: true });
 
     return json({
       ok: true,
@@ -377,6 +532,7 @@ Deno.serve(async (req) => {
       texto_bo: textoBo,
       narrativa_gerada_em: agora,
       texto_bo_gerado_em: textoBoGeradoEm,
+      teses: tesesFinais ?? [],
     });
   } catch (e) {
     console.error("[qa-efetiva-narrativa]", e);

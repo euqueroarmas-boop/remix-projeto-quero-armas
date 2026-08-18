@@ -40,6 +40,14 @@ import {
   temFatoNovoForaDoTexto,
   textoBoRefeitoAposRegistro,
 } from "@/lib/quero-armas/efetivaNecessidadePassos";
+import {
+  aguardandoOutroBo,
+  casarProvaComTese,
+  descreverCasamento,
+  tesesPendentes,
+  type CasamentoTese,
+  type EfetivaTeseLike,
+} from "@/lib/quero-armas/efetivaTeses";
 
 interface Props {
   open: boolean;
@@ -80,7 +88,17 @@ interface Prova {
   naturezas: string[] | null;
   arquivo_nome: string | null;
   leitura_por: string | null;
+  /* Campos lidos do documento — é com eles que o boletim é casado com a frente
+   * de risco a que pertence, sem o cliente ter de adivinhar nada. */
+  relato: string | null;
+  local_fato: string | null;
+  vitima_nome: string | null;
+  created_at: string | null;
 }
+
+/** Colunas da prova que a tela precisa — inclusive as do casamento por tese. */
+const COLUNAS_PROVA =
+  "id, tipo, numero, data_fato, naturezas, arquivo_nome, leitura_por, relato, local_fato, vitima_nome, created_at";
 
 interface Acrescimo {
   id: string;
@@ -162,6 +180,7 @@ type PassoTipo =
   | "relato"
   | "contexto"
   | "revisao"
+  | "teses"
   | "entender_bo"
   | "registrar_bo"
   | "enviar_bo"
@@ -184,6 +203,7 @@ const PASSOS_BASE: Passo[] = [
   { id: "relato", tipo: "relato", titulo: "Conte o que está acontecendo" },
   { id: "contexto", tipo: "contexto", titulo: "O que, na sua rotina, aumenta o risco?" },
   { id: "revisao", tipo: "revisao", titulo: "Revisão e geração do relato" },
+  { id: "teses", tipo: "teses", titulo: "Confira as suas frentes de risco" },
 ];
 
 /**
@@ -206,13 +226,19 @@ const TRILHA_ROTULO: Record<string, string> = {
   relato: "Seu relato",
   contexto: "Rotina de risco",
   revisao: "Revisão e geração",
+  teses: "Frentes de risco",
   entender_bo: "Entenda o BO",
   registrar_bo: "Registrar o BO",
   enviar_bo: "Enviar o BO",
   defesa_final: "Defesa final",
 };
 
-const PASSO_REVISAO = PASSOS_BASE.length - 1;
+/* Índices por id — somar um passo à lista não pode mexer em quem retoma o
+ * fluxo pelo meio. Antes eram contas sobre `PASSOS_BASE.length`. */
+const indiceBase = (id: string) => PASSOS_BASE.findIndex((p) => p.id === id);
+const PASSO_REVISAO = indiceBase("revisao");
+const PASSO_RELATO = indiceBase("relato");
+const PASSO_CONTEXTO = indiceBase("contexto");
 
 /**
  * Trilha numerada — mesma linguagem visual da lista de passos do pop-up
@@ -299,6 +325,37 @@ export default function EfetivaNecessidadeModal({
   const [textoBoGeradoEm, setTextoBoGeradoEm] = useState<string | null>(null);
   const [textoBoTocado, setTextoBoTocado] = useState(false);
   const [editandoBo, setEditandoBo] = useState(false);
+  /* ── Teses de defesa: uma frente de risco, um boletim ──────────────────
+   * Regra do usuário (17/08/2026). A IA propõe as frentes a partir do que o
+   * cliente contou; ele confirma ou reescreve os títulos, leva um texto por
+   * frente à delegacia e volta com um boletim para cada uma.               */
+  const [teses, setTeses] = useState<EfetivaTeseLike[]>([]);
+  const [tituloEditado, setTituloEditado] = useState<Record<string, string>>({});
+  const [textoTeseEditado, setTextoTeseEditado] = useState<Record<string, string>>({});
+  const [teseEmEdicao, setTeseEmEdicao] = useState<string | null>(null);
+  const [salvandoTese, setSalvandoTese] = useState<string | null>(null);
+  /** Boletim recém-anexado esperando o cliente confirmar a qual frente pertence. */
+  const [casamento, setCasamento] = useState<{ prova: Prova; sugestao: CasamentoTese } | null>(null);
+  const [confirmandoVinculo, setConfirmandoVinculo] = useState(false);
+  /** Resposta do cliente à pergunta "quer abrir outro boletim?". */
+  const [boQuerOutro, setBoQuerOutro] = useState<boolean | null>(null);
+  const [boAguardandoDesde, setBoAguardandoDesde] = useState<string | null>(null);
+  const [boDestravadoEm, setBoDestravadoEm] = useState<string | null>(null);
+  const [respondendoQuerOutro, setRespondendoQuerOutro] = useState(false);
+  /**
+   * Travado esperando o próximo boletim? Fica AQUI, junto do estado que ele
+   * lê, porque as travas do "aprovar" e do "Próximo" dependem dele — e elas
+   * são declaradas antes das contas derivadas do fim do componente.
+   */
+  const esperandoOutroBo = useMemo(
+    () =>
+      aguardandoOutroBo({
+        bo_quer_outro: boQuerOutro,
+        bo_aguardando_desde: boAguardandoDesde,
+        bo_destravado_em: boDestravadoEm,
+      }),
+    [boQuerOutro, boAguardandoDesde, boDestravadoEm],
+  );
   const [acrescimos, setAcrescimos] = useState<Acrescimo[]>([]);
   /** Quando o texto atual foi montado — base da pergunta "quer refazer?". */
   const [narrativaGeradaEm, setNarrativaGeradaEm] = useState<string | null>(null);
@@ -372,6 +429,9 @@ export default function EfetivaNecessidadeModal({
         setBoRegistradoEm(reg.bo_registro_confirmado_em ?? null);
         setTextoBoGeradoEm(reg.texto_bo_gerado_em ?? null);
         setNarrativaGeradaEm(reg.narrativa_gerada_em ?? null);
+        setBoQuerOutro(typeof reg.bo_quer_outro === "boolean" ? reg.bo_quer_outro : null);
+        setBoAguardandoDesde(reg.bo_aguardando_desde ?? null);
+        setBoDestravadoEm(reg.bo_destravado_em ?? null);
         if (reg.narrativa_final || reg.narrativa_gerada) {
           setPassoIndex(PASSO_REVISAO);
           setMaxVisitado(PASSO_REVISAO);
@@ -382,10 +442,17 @@ export default function EfetivaNecessidadeModal({
           );
           const destino = iPergunta >= 0
             ? iPergunta
-            : String(reg.relato_cliente ?? "").trim() ? PASSOS_BASE.length - 2 : PASSOS_BASE.length - 3;
+            : String(reg.relato_cliente ?? "").trim() ? PASSO_CONTEXTO : PASSO_RELATO;
           setPassoIndex(destino);
           setMaxVisitado(destino);
         }
+
+        const { data: ts } = await supabase
+          .from("qa_efetiva_teses" as any)
+          .select("*")
+          .eq("efetiva_necessidade_id", reg.id)
+          .order("ordem");
+        if (!cancelado) setTeses((ts ?? []) as unknown as EfetivaTeseLike[]);
 
         const { data: acs } = await supabase
           .from("qa_efetiva_necessidade_acrescimos" as any)
@@ -411,7 +478,7 @@ export default function EfetivaNecessidadeModal({
 
         const { data: ps } = await supabase
           .from("qa_efetiva_necessidade_provas" as any)
-          .select("id, tipo, numero, data_fato, naturezas, arquivo_nome, leitura_por")
+          .select(COLUNAS_PROVA)
           .eq("efetiva_necessidade_id", reg.id)
           .order("created_at");
         if (!cancelado) setProvas((ps ?? []) as unknown as Prova[]);
@@ -512,6 +579,14 @@ export default function EfetivaNecessidadeModal({
       // texto novo, o que já estava na tela continua valendo.
       setTextoBo((atual) => String(data.texto_bo ?? "").trim() || atual);
       setNarrativaGeradaEm(String(data.narrativa_gerada_em ?? new Date().toISOString()));
+      // As frentes de risco vêm junto com o relato. Tese já confirmada por ele
+      // ou já coberta por um boletim volta intacta — o servidor não a reescreve.
+      if (Array.isArray(data.teses)) {
+        setTeses(data.teses as EfetivaTeseLike[]);
+        setTituloEditado({});
+        setTextoTeseEditado({});
+        setTeseEmEdicao(null);
+      }
       // A data do texto do BO só avança quando o texto muda de verdade. É ela
       // que reabre o passo do registro se o cliente já tinha declarado o BO.
       if (data.texto_bo_gerado_em !== undefined) {
@@ -564,6 +639,146 @@ export default function EfetivaNecessidadeModal({
     }
   }, [registroId, novoAcrescimo, acrescimos.length]);
 
+  /* ── Teses: a IA propõe, o cliente confirma ou reescreve ────────────────
+   * Regra do usuário (17/08/2026): quem dá o nome à frente de risco é o
+   * cliente. A confirmação fica gravada com data — é ela que libera o caminho
+   * da delegacia.                                                          */
+  const confirmarTese = useCallback(async (tese: EfetivaTeseLike) => {
+    const id = String(tese.id ?? "");
+    if (!id) return;
+    const tituloNovo = (tituloEditado[id] ?? tese.titulo ?? "").trim().slice(0, 90);
+    const textoNovo = (textoTeseEditado[id] ?? tese.texto_bo ?? "").trim().slice(0, LIMITE_BO);
+    if (!tituloNovo) {
+      toast.error("Dê um nome para esta frente de risco antes de confirmar.");
+      return;
+    }
+    setSalvandoTese(id);
+    try {
+      const agora = new Date().toISOString();
+      const mudouTitulo = tituloNovo !== String(tese.titulo ?? "").trim();
+      const mudouTexto = textoNovo !== String(tese.texto_bo ?? "").trim();
+      const patch: Record<string, unknown> = {
+        titulo: tituloNovo,
+        texto_bo: textoNovo || null,
+        confirmada_em: agora,
+        updated_at: agora,
+      };
+      if (mudouTitulo) patch.titulo_editado_pelo_cliente = true;
+      if (mudouTexto) {
+        patch.texto_bo_editado_pelo_cliente = true;
+        patch.texto_bo_gerado_em = agora;
+      }
+      const { error } = await supabase
+        .from("qa_efetiva_teses" as any)
+        .update(patch)
+        .eq("id", id);
+      if (error) throw error;
+      setTeses((lista) =>
+        lista.map((t) => (String(t.id) === id ? { ...t, ...(patch as EfetivaTeseLike) } : t)),
+      );
+      setTeseEmEdicao(null);
+      onPassoConcluido?.();
+    } catch (e) {
+      console.error("[efetiva necessidade] confirmar tese:", e);
+      toast.error("Não foi possível salvar esta frente. Tente novamente.");
+    } finally {
+      setSalvandoTese(null);
+    }
+  }, [tituloEditado, textoTeseEditado, onPassoConcluido]);
+
+  /**
+   * O boletim anexado encaixa nesta frente? O sistema propõe pelo que leu do
+   * documento (número, natureza, relato) e o CLIENTE confirma depois de ler.
+   * Nada é gravado sem esse aceite.
+   */
+  const confirmarVinculo = useCallback(async (teseId: string) => {
+    if (!casamento || !teseId || !registroId) return;
+    setConfirmandoVinculo(true);
+    try {
+      const agora = new Date().toISOString();
+      const automatico = String(casamento.sugestao.tese.id ?? "") === teseId;
+      const { error } = await supabase
+        .from("qa_efetiva_teses" as any)
+        .update({
+          prova_id: casamento.prova.id,
+          vinculo_confirmado_em: agora,
+          vinculo_origem: automatico ? "automatico" : "cliente",
+          registro_confirmado_em: agora,
+          updated_at: agora,
+        })
+        .eq("id", teseId);
+      if (error) throw error;
+      setTeses((lista) =>
+        lista.map((t) =>
+          String(t.id) === teseId
+            ? { ...t, prova_id: casamento.prova.id, vinculo_confirmado_em: agora }
+            : t,
+        ),
+      );
+      setCasamento(null);
+      // Boletim novo na mesa: a pergunta "quer abrir outro?" volta a valer.
+      setBoQuerOutro(null);
+      await supabase
+        .from("qa_efetiva_necessidade" as any)
+        .update({ bo_quer_outro: null, updated_at: agora })
+        .eq("id", registroId);
+      onPassoConcluido?.();
+    } catch (e) {
+      console.error("[efetiva necessidade] vincular boletim:", e);
+      toast.error("Não foi possível ligar este boletim à sua frente de risco.");
+    } finally {
+      setConfirmandoVinculo(false);
+    }
+  }, [casamento, registroId, onPassoConcluido]);
+
+  /**
+   * "Quer abrir outro boletim?" — o laço.
+   *
+   * SIM: o passo trava aqui até o documento chegar. Ele pode fechar a tela; a
+   * pendência continua no checklist e nada do que fez se perde. Sair sem o
+   * boletim só abrindo chamado com a equipe.
+   * NÃO: refazemos a síntese com o que foi lido dos boletins e ele segue para
+   * a defesa final, onde aprova e a sessão é carimbada.
+   */
+  const responderQuerOutro = useCallback(async (quer: boolean) => {
+    if (!registroId) return;
+    setRespondendoQuerOutro(true);
+    try {
+      const agora = new Date().toISOString();
+      const { error } = await supabase
+        .from("qa_efetiva_necessidade" as any)
+        .update({
+          bo_quer_outro: quer,
+          bo_aguardando_desde: quer ? agora : null,
+          updated_at: agora,
+        })
+        .eq("id", registroId);
+      if (error) throw error;
+      setBoQuerOutro(quer);
+      setBoAguardandoDesde(quer ? agora : null);
+      onPassoConcluido?.();
+      if (quer) {
+        toast.success(
+          "Certo. Guardamos o seu lugar aqui: quando o novo boletim sair, é só voltar e anexar.",
+        );
+        return;
+      }
+      // Encerrou o ciclo: a síntese é refeita com os dados lidos dos boletins
+      // que ele anexou, e é essa versão que ele lê e aprova na defesa final.
+      const chegouBoDepois = provas.some((p) => {
+        const t = Date.parse(String((p as any).created_at ?? ""));
+        const n = Date.parse(String(narrativaGeradaEm ?? ""));
+        return Number.isFinite(t) && (!Number.isFinite(n) || t > n);
+      });
+      if (chegouBoDepois) await gerarNarrativa();
+    } catch (e) {
+      console.error("[efetiva necessidade] quer outro BO:", e);
+      toast.error("Não foi possível salvar a sua resposta. Tente novamente.");
+    } finally {
+      setRespondendoQuerOutro(false);
+    }
+  }, [registroId, provas, narrativaGeradaEm, gerarNarrativa, onPassoConcluido]);
+
   const copiar = useCallback(async (texto: string) => {
     try {
       await navigator.clipboard.writeText(texto);
@@ -587,6 +802,14 @@ export default function EfetivaNecessidadeModal({
     if (!boEmMaos) {
       toast.error(
         "Antes de aprovar, conclua o passo do boletim de ocorrência: registre o boletim e anexe o documento aqui.",
+      );
+      return;
+    }
+    // Ele mesmo disse que ia abrir outro boletim: aprovar agora fecharia a
+    // defesa pela metade. Sair sem o documento, só com destrava da equipe.
+    if (esperandoOutroBo) {
+      toast.error(
+        "Você informou que vai abrir outro boletim. Anexe esse documento para aprovar — ou fale com a nossa equipe para liberar a sua continuação sem ele.",
       );
       return;
     }
@@ -615,7 +838,7 @@ export default function EfetivaNecessidadeModal({
     }
   }, [
     registroId, narrativa, narrativaTocada, textoBo, textoBoTocado,
-    provas, relato, boPendenteRegistro, onConcluido, onClose,
+    provas, relato, boPendenteRegistro, esperandoOutroBo, onConcluido, onClose,
   ]);
 
   /* ── Recepção da prova: lê, grava e avisa ─────────────────────────────── */
@@ -638,6 +861,26 @@ export default function EfetivaNecessidadeModal({
           }
         } catch (e) {
           console.warn("[efetiva necessidade] leitura local:", e);
+        }
+      }
+
+      /* 1.b) Mesmo boletim outra vez?
+       * Furo real (17/08/2026, cliente Mizael): sem texto separado por frente
+       * de risco, ele voltou ao mesmo passo e subiu o MESMO boletim duas
+       * vezes. Agora o número lido barra a repetição na hora — e ele fica
+       * sabendo o que fazer em vez de duplicar o documento. */
+      const numeroLido = String((lidos.numero_bo as string) ?? "").replace(/[^0-9A-Za-z]/g, "");
+      if (numeroLido) {
+        const jaExiste = provas.some(
+          (p) =>
+            p.tipo === tipo &&
+            String(p.numero ?? "").replace(/[^0-9A-Za-z]/g, "") === numeroLido,
+        );
+        if (jaExiste) {
+          toast.error(
+            `Este boletim (nº ${lidos.numero_bo}) já está anexado. Se você registrou outro, na delegacia, anexe o PDF dele.`,
+          );
+          return;
         }
       }
 
@@ -667,11 +910,19 @@ export default function EfetivaNecessidadeModal({
           dados_extraidos: lidos,
           leitura_por: leituraPor,
         })
-        .select("id, tipo, numero, data_fato, naturezas, arquivo_nome, leitura_por")
+        .select(COLUNAS_PROVA)
         .single();
       if (error) throw error;
 
       setProvas((p) => [...p, prova as unknown as Prova]);
+
+      /* 3.b) A qual frente de risco este boletim pertence?
+       * O sistema casa sozinho pelo que leu do documento e MOSTRA o encaixe.
+       * Quem confirma é o cliente, depois de ler — regra do usuário. */
+      if (tipo === "boletim_ocorrencia") {
+        const sugestao = casarProvaComTese(prova as unknown as Prova, teses);
+        if (sugestao) setCasamento({ prova: prova as unknown as Prova, sugestao });
+      }
 
       // O boletim que faltava chegou: o passo "registrar o BO" se encerra e a
       // defesa final é liberada.
@@ -712,7 +963,7 @@ export default function EfetivaNecessidadeModal({
     } finally {
       setEnviandoTipo(null);
     }
-  }, [registroId, clienteId, provas.length, boPendenteRegistro]);
+  }, [registroId, clienteId, provas, boPendenteRegistro, teses]);
 
   const abrirSeletor = (tipo: TipoProva) => {
     tipoAlvoRef.current = tipo;
@@ -758,6 +1009,19 @@ export default function EfetivaNecessidadeModal({
   const boEntregue =
     provasBo.length > 0 && (!suficienciaBo.exigeNovoBo || !boPendenteRegistro);
 
+  /* ── O laço dos boletins ────────────────────────────────────────────────
+   * Uma frente de risco, um boletim. Enquanto ele disser que vai abrir outro,
+   * o passo do envio fica aberto — travado de propósito. Sair sem o documento
+   * só com destrava da equipe (chamado). Regra do usuário (17/08/2026).    */
+  const tesesEmAberto = useMemo(() => tesesPendentes(teses), [teses]);
+  const teseAtual = tesesEmAberto[0] ?? null;
+  const todasTesesConfirmadas = useMemo(
+    () => teses.length > 0 && teses.every((t) => !!String(t.confirmada_em ?? "").trim()),
+    [teses],
+  );
+  /** O texto que ele leva à delegacia AGORA — o da frente de risco em aberto. */
+  const textoBoDaVez = String(teseAtual?.texto_bo ?? "").trim() || textoBo;
+
   /**
    * O cliente mexeu no texto do boletim DEPOIS de dizer que já tinha
    * registrado? Então o BO que ele registrou não cobre mais o texto atual, e o
@@ -789,11 +1053,15 @@ export default function EfetivaNecessidadeModal({
     if (p.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (p.tipo === "contexto") return contexto.trim().length > 0;
     if (p.tipo === "revisao") return narrativa.trim().length > 0;
+    if (p.tipo === "teses") return teses.length === 0 ? narrativa.trim().length > 0 : todasTesesConfirmadas;
     if (p.tipo === "entender_bo") return cienciaBoAceita;
     if (p.tipo === "registrar_bo") return registroBoValido;
-    if (p.tipo === "enviar_bo") return boEntregue;
+    if (p.tipo === "enviar_bo") return boEntregue && !esperandoOutroBo && !casamento;
     return false;
-  }, [passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita, registroBoValido, boEntregue]);
+  }, [
+    passos, respostas, relato, contexto, semProvaNenhuma, narrativa, cienciaBoAceita,
+    registroBoValido, boEntregue, teses.length, todasTesesConfirmadas, esperandoOutroBo, casamento,
+  ]);
 
   /** O "Próximo" só trava onde a regra de negócio já travava antes. */
   const podeAvancar = useMemo(() => {
@@ -801,13 +1069,21 @@ export default function EfetivaNecessidadeModal({
     if (passo.tipo === "pergunta") return typeof respostas[passo.campo!] === "boolean";
     if (passo.tipo === "relato") return !semProvaNenhuma || relato.trim().length >= RELATO_MINIMO;
     if (passo.tipo === "revisao") return narrativa.trim().length > 0;
+    // Trava dura: as frentes de risco são confirmadas por ele, uma a uma.
+    if (passo.tipo === "teses") {
+      return teses.length === 0 ? narrativa.trim().length > 0 : todasTesesConfirmadas;
+    }
     // Trava dura: sem a ciência marcada, não se manda ninguém à delegacia.
     if (passo.tipo === "entender_bo") return cienciaBoAceita;
     if (passo.tipo === "registrar_bo") return registroBoValido;
     // Trava dura: sem o boletim registrado em mãos, a defesa final não abre.
-    if (passo.tipo === "enviar_bo") return boEntregue;
+    // E, se ele disse que vai abrir outro, o passo trava até esse outro chegar.
+    if (passo.tipo === "enviar_bo") return boEntregue && !esperandoOutroBo && !casamento;
     return true;
-  }, [passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, registroBoValido, boEntregue]);
+  }, [
+    passo, respostas, relato, semProvaNenhuma, narrativa, cienciaBoAceita, registroBoValido,
+    boEntregue, teses.length, todasTesesConfirmadas, esperandoOutroBo, casamento,
+  ]);
 
   const irPara = useCallback((i: number) => {
     const destino = Math.max(0, Math.min(passos.length - 1, i));
@@ -879,8 +1155,19 @@ export default function EfetivaNecessidadeModal({
       if (error) console.error("[efetiva necessidade] confirmar registro BO:", error);
       else onPassoConcluido?.();
     }
+    // A declaração também fica na frente de risco que ele acabou de registrar —
+    // é o que permite acompanhar boletim a boletim, e não só "o boletim".
+    if (teseAtual?.id) {
+      void supabase
+        .from("qa_efetiva_teses" as any)
+        .update({ registro_confirmado_em: agora, updated_at: agora })
+        .eq("id", teseAtual.id);
+      setTeses((lista) =>
+        lista.map((t) => (t.id === teseAtual.id ? { ...t, registro_confirmado_em: agora } : t)),
+      );
+    }
     irPara(passoIndex + 1);
-  }, [registroId, irPara, passoIndex, onPassoConcluido]);
+  }, [registroId, irPara, passoIndex, onPassoConcluido, teseAtual]);
 
   /**
    * Há fato acrescentado que ainda não entrou no texto? É o que faz nascer a
@@ -1232,13 +1519,25 @@ export default function EfetivaNecessidadeModal({
             </>
             )}
 
-            {/* ── Texto pronto para o cliente registrar o BO ───────────────── */}
-            {textoBo && passo?.tipo !== "revisao" && (
+            {/* ── Texto pronto para o cliente registrar o BO ─────────────────
+              * Um texto por FRENTE DE RISCO. O que aparece aqui é o da frente
+              * que ainda espera boletim — e ele não menciona as outras, para o
+              * registro na delegacia se sustentar sozinho.                  */}
+            {textoBoDaVez && passo?.tipo !== "revisao" && (
               <div className="rounded-lg border border-[#7A1F2B]/30 bg-[#7A1F2B]/[0.03] p-4">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
-                  Texto para você registrar o boletim de ocorrência
+                  {teseAtual
+                    ? `Texto do boletim — ${teseAtual.titulo}`
+                    : "Texto para você registrar o boletim de ocorrência"}
                 </p>
                 <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                  {teseAtual && tesesEmAberto.length > 1 ? (
+                    <>
+                      Este é o texto de <strong>uma</strong> das suas frentes — ainda faltam{" "}
+                      {tesesEmAberto.length - 1}. Registre um boletim por vez: cada um trata da sua
+                      situação, sem citar a outra.{" "}
+                    </>
+                  ) : null}
                   O que você contou traz fatos que não estão em nenhum boletim. Leve o texto abaixo
                   à delegacia — ele descreve, com as suas palavras, a situação de risco em que você
                   se encontra hoje. Leia antes: você é quem assina o registro.
@@ -1246,30 +1545,44 @@ export default function EfetivaNecessidadeModal({
 
                 {editandoBo ? (
                   <textarea
-                    value={textoBo}
-                    onChange={(e) => { setTextoBo(e.target.value.slice(0, LIMITE_BO)); setTextoBoTocado(true); }}
+                    value={textoBoDaVez}
+                    onChange={(e) => {
+                      const valor = e.target.value.slice(0, LIMITE_BO);
+                      if (teseAtual?.id) {
+                        setTextoTeseEditado((m) => ({ ...m, [String(teseAtual.id)]: valor }));
+                      } else {
+                        setTextoBo(valor);
+                        setTextoBoTocado(true);
+                      }
+                    }}
                     rows={7}
                     className="mt-3 w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-2 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
                   />
                 ) : (
                   <p className="mt-3 rounded-lg border border-zinc-200 bg-white p-3 text-[13px] leading-relaxed text-zinc-800">
-                    {textoBo}
+                    {textoBoDaVez}
                   </p>
                 )}
 
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] text-zinc-400">{textoBo.length}/{LIMITE_BO} caracteres</span>
+                  <span className="text-[11px] text-zinc-400">{textoBoDaVez.length}/{LIMITE_BO} caracteres</span>
                   <button
                     type="button"
-                    onClick={() => void copiar(textoBo)}
+                    onClick={() => void copiar(textoBoDaVez)}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
                   >
                     <Copy className="h-3.5 w-3.5" /> Copiar o texto
                   </button>
                   <button
                     type="button"
-                    onClick={() => setEditandoBo((v) => !v)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                    disabled={salvandoTese !== null}
+                    onClick={() => {
+                      // Ajuste no texto da frente é gravado nela — e o carimbo
+                      // de "texto ajustado pelo cliente" acompanha.
+                      if (editandoBo && teseAtual) void confirmarTese(teseAtual);
+                      setEditandoBo((v) => !v);
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-40"
                   >
                     <Pencil className="h-3.5 w-3.5" /> {editandoBo ? "Concluir edição" : "Ajustar"}
                   </button>
@@ -1282,7 +1595,7 @@ export default function EfetivaNecessidadeModal({
               * A orientação de como registrar não depende de IA nenhuma. Se o
               * texto não veio, o cliente vê o motivo e um botão para montá-lo
               * — nunca uma tela vazia e, muito menos, a tela errada.        */}
-            {passo?.tipo === "registrar_bo" && !textoBo && (
+            {passo?.tipo === "registrar_bo" && !textoBoDaVez && (
               <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
                 <p className="text-[12px] font-semibold text-amber-900">
                   O texto sugerido para a delegacia ainda não está pronto
@@ -1519,6 +1832,131 @@ export default function EfetivaNecessidadeModal({
               </div>
             )}
 
+            {/* ── As frentes de risco: a IA propõe, o cliente confirma ─────
+              * Regra do usuário (17/08/2026): o que ele vive na família e o que
+              * ele vive no trabalho são coisas separadas — e viram boletins
+              * separados. Aqui ele lê cada frente, corrige o nome se quiser e
+              * confirma. Nada vai para a delegacia sem esse aceite.        */}
+            {passo?.tipo === "teses" && (
+              <div className="space-y-3">
+                <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                    Por que separamos
+                  </p>
+                  <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                    Pelo que você contou, existe mais de uma situação em curso — e elas não têm
+                    relação uma com a outra. Na delegacia, cada uma é um boletim: misturar tudo num
+                    registro só enfraquece os dois lados e não cabe no campo do sistema da Polícia
+                    Civil. Confira o nome de cada frente abaixo, corrija se quiser, e confirme.
+                  </p>
+                </div>
+
+                {teses.length === 0 && (
+                  <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <p className="text-[12px] leading-relaxed text-amber-900">
+                      Ainda não separamos as suas frentes de risco. Volte ao passo anterior e gere
+                      o seu relato — as frentes saem dele.
+                    </p>
+                  </div>
+                )}
+
+                {teses.map((t, i) => {
+                  const id = String(t.id ?? "");
+                  const confirmada = !!String(t.confirmada_em ?? "").trim();
+                  const titulo = tituloEditado[id] ?? String(t.titulo ?? "");
+                  const texto = textoTeseEditado[id] ?? String(t.texto_bo ?? "");
+                  const editando = teseEmEdicao === id;
+                  return (
+                    <div
+                      key={id}
+                      className={`rounded-lg border p-4 ${
+                        confirmada ? "border-emerald-300 bg-emerald-50/40" : "border-zinc-200 bg-white"
+                      }`}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+                        Frente {i + 1} de {teses.length}
+                        {t.prova_id ? " · boletim já anexado" : ""}
+                      </p>
+                      <input
+                        value={titulo}
+                        onChange={(e) =>
+                          setTituloEditado((m) => ({ ...m, [id]: e.target.value.slice(0, 90) }))
+                        }
+                        placeholder="Dê um nome para esta situação"
+                        className="mt-2 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13px] font-semibold text-zinc-900 focus:border-[#7A1F2B] focus:outline-none"
+                      />
+                      {t.resumo && (
+                        <p className="mt-2 text-[12px] leading-relaxed text-zinc-600">{t.resumo}</p>
+                      )}
+
+                      <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-400">
+                        Texto que você vai levar à delegacia nesta frente
+                      </p>
+                      {editando ? (
+                        <textarea
+                          value={texto}
+                          onChange={(e) =>
+                            setTextoTeseEditado((m) => ({
+                              ...m,
+                              [id]: e.target.value.slice(0, LIMITE_BO),
+                            }))
+                          }
+                          rows={7}
+                          className="mt-1 w-full rounded-lg border border-[#7A1F2B]/40 px-3 py-2 text-[13px] leading-relaxed text-zinc-800 focus:border-[#7A1F2B] focus:outline-none"
+                        />
+                      ) : (
+                        <p className="mt-1 rounded-lg border border-zinc-200 bg-white p-3 text-[13px] leading-relaxed text-zinc-800">
+                          {texto || "—"}
+                        </p>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] text-zinc-400">
+                          {texto.length}/{LIMITE_BO} caracteres
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setTeseEmEdicao(editando ? null : id)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50"
+                        >
+                          <Pencil className="h-3.5 w-3.5" /> {editando ? "Concluir edição" : "Ajustar"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={salvandoTese === id}
+                          onClick={() => void confirmarTese(t)}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold disabled:opacity-40 ${
+                            confirmada
+                              ? "border border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50"
+                              : "bg-[#7A1F2B] text-white hover:bg-[#63161f]"
+                          }`}
+                        >
+                          {salvandoTese === id ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Check className="h-3 w-3" />
+                          )}
+                          {confirmada ? "Salvar alteração" : "Confirmar esta frente"}
+                        </button>
+                        {confirmada && (
+                          <span className="inline-flex items-center gap-1 text-[11px] text-emerald-700">
+                            <ShieldCheck className="h-3.5 w-3.5" /> Confirmada
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {teses.length > 0 && !todasTesesConfirmadas && (
+                  <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
+                    Confirme todas as frentes para seguir. Se alguma não faz sentido, corrija o nome
+                    e o texto antes de confirmar — é você quem assina o boletim.
+                  </p>
+                )}
+              </div>
+            )}
+
             {passo?.tipo === "enviar_bo" && (
               <div className="rounded-lg border border-zinc-200 p-4">
                 <p className="text-[14px] font-semibold text-zinc-900">
@@ -1527,6 +1965,9 @@ export default function EfetivaNecessidadeModal({
                 <p className="mt-1 text-[12px] leading-relaxed text-zinc-500">
                   Assim que a delegacia liberar o documento, anexe aqui o PDF original. Nós lemos o
                   número, a data e a natureza do fato e juntamos tudo à sua defesa.
+                  {teseAtual ? (
+                    <> Agora estamos esperando o boletim da frente <strong>{teseAtual.titulo}</strong>.</>
+                  ) : null}
                 </p>
                 <button
                   type="button"
@@ -1543,6 +1984,111 @@ export default function EfetivaNecessidadeModal({
                   <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[12px] leading-relaxed text-amber-900">
                     Este passo fica aberto até o boletim chegar. Você pode fechar e voltar quando
                     tiver o documento em mãos — nada do que você já escreveu se perde.
+                  </p>
+                )}
+
+                {/* ── O encaixe: o sistema propõe, o cliente lê e confirma ── */}
+                {casamento && (
+                  <div className="mt-4 rounded-lg border border-[#7A1F2B]/40 bg-[#7A1F2B]/[0.04] p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[#7A1F2B]">
+                      Confirme a que situação este boletim se refere
+                    </p>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-800">
+                      {descreverCasamento(casamento.prova, casamento.sugestao)}
+                    </p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-zinc-600">
+                      <strong>Leia antes de confirmar.</strong> É esse encaixe que mantém as suas
+                      situações separadas na defesa — e o que evita você registrar duas vezes o
+                      mesmo fato.
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      {tesesEmAberto.map((t) => {
+                        const id = String(t.id ?? "");
+                        const sugerida = String(casamento.sugestao.tese.id ?? "") === id;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            disabled={confirmandoVinculo}
+                            onClick={() => void confirmarVinculo(id)}
+                            className={`flex w-full items-start gap-2 rounded-lg border px-3 py-2 text-left text-[12px] leading-relaxed transition-colors disabled:opacity-50 ${
+                              sugerida
+                                ? "border-[#7A1F2B] bg-white text-zinc-900 hover:bg-[#7A1F2B]/5"
+                                : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50"
+                            }`}
+                          >
+                            {confirmandoVinculo
+                              ? <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
+                              : <Check className="mt-0.5 h-3.5 w-3.5 shrink-0" />}
+                            <span>
+                              <strong>{t.titulo}</strong>
+                              {sugerida ? " · sugerido pelo que lemos no documento" : ""}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* ── O laço: quer abrir outro boletim? ────────────────────── */}
+                {!casamento && provasBo.length > 0 && boQuerOutro === null && (
+                  <div className="mt-4 rounded-lg border border-[#7A1F2B]/40 bg-[#7A1F2B]/[0.04] p-4">
+                    <p className="text-[13px] font-semibold leading-relaxed text-zinc-900">
+                      Você quer abrir outro boletim de ocorrência?
+                    </p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-zinc-600">
+                      Se ainda há outra situação — no trabalho, com vizinho, com outra pessoa — ela
+                      merece o boletim dela. Você pode abrir quantos precisar; cada um fortalece um
+                      ponto diferente da sua defesa.
+                      {tesesEmAberto.length > 0 && (
+                        <> Ainda temos texto pronto para: <strong>{tesesEmAberto.map((t) => t.titulo).join(", ")}</strong>.</>
+                      )}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={respondendoQuerOutro}
+                        onClick={() => void responderQuerOutro(true)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#7A1F2B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#63161f] disabled:opacity-50"
+                      >
+                        {respondendoQuerOutro ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" />}
+                        Sim, vou abrir outro
+                      </button>
+                      <button
+                        type="button"
+                        disabled={respondendoQuerOutro}
+                        onClick={() => void responderQuerOutro(false)}
+                        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-[11px] font-semibold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
+                      >
+                        Não, pode seguir
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Travado esperando o próximo boletim ──────────────────── */}
+                {esperandoOutroBo && (
+                  <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-4">
+                    <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                      <ShieldAlert className="h-3.5 w-3.5" /> Aguardando o seu próximo boletim
+                    </p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-amber-900">
+                      Você disse que vai abrir outro boletim, então o seu processo espera por ele
+                      aqui. {teseAtual ? (<>Volte ao passo anterior para copiar o texto da frente <strong>{teseAtual.titulo}</strong>, </>) : ""}
+                      registre na delegacia e anexe o PDF acima. Pode fechar a tela: nada se perde.
+                    </p>
+                    <p className="mt-2 text-[12px] leading-relaxed text-amber-900">
+                      <strong>Mudou de ideia e não vai abrir?</strong> Fale com a nossa equipe pelo
+                      chat: abrimos um chamado e liberamos a sua continuação sem esse boletim.
+                    </p>
+                  </div>
+                )}
+
+                {boQuerOutro === false && boEntregue && (
+                  <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] leading-relaxed text-emerald-900">
+                    Ciclo dos boletins encerrado. Refizemos a sua defesa com o que foi lido dos
+                    documentos — leia no próximo passo e aprove.
                   </p>
                 )}
               </div>
