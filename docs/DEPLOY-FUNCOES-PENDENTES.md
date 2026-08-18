@@ -3,9 +3,10 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
-> **NÃO HÁ NADA PENDENTE.** Todas as edge functions da auditoria estão
-> publicadas e todas as migrations estão aplicadas e conferidas. Este documento
-> vira registro histórico: use-o como modelo quando houver uma leva nova.
+> **PENDENTE: 3 funções** do trabalho de classificação do requerimento
+> (commits `4624a10` e `6872970`, feitos em outra sessão). Elas NÃO entraram em
+> nenhuma leva de deploy — ver a seção "Leva 8" no fim. Todo o resto da
+> auditoria está publicado e todas as migrations aplicadas.
 
 O push para a `main` publica o front. **Edge function não sai junto** — precisa
 de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
@@ -20,6 +21,11 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | **Leva 1** | 13 funções · publicada em **18/08 às 00:08 BRT** |
 | **Leva 2** | 9 funções · publicada em **18/08 às 01:20 BRT** |
 | **Leva 3** | 1 função (`qa-export-docx`) · publicada em **18/08 às 11:22 BRT** |
+| **Leva 4** | 3 funções (petição vira arquivo) · publicada em **18/08 às 12:19 BRT** |
+| **Leva 5** | 5 funções (resposta à notificação) · publicada em **18/08 às 12:54 BRT** |
+| **Leva 6** | 1 função (`qa-processo-prazo-alertas`) · publicada em **18/08 às 13:07 BRT** |
+| **Leva 7** | 2 funções (fila de conferência + fim do serviço) · publicada em **18/08 às 18:44 BRT** |
+| **Leva 8** | 3 funções (classificação do requerimento) · **PENDENTE** |
 
 ### Migrations — todas aplicadas e conferidas
 
@@ -32,6 +38,8 @@ de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 | `20260818140000` | Colunas de deferimento em `qa_processos` | ✅ 3 deferidos, 0 não confirmados |
 | `20260818150000` | Gatilho que espelha o status do processo na solicitação | ✅ conferência voltou **zero linhas** |
 | `20260818160000` | `qa_geracoes_own` deixa de ser `FOR ALL` | ✅ 5 policies, sem INSERT/DELETE para `authenticated` |
+| `20260818170000` | Petição aprovada vira arquivo (3 colunas) | ✅ tipos regerados pelo Lovable |
+| `20260818180000` | Resposta à notificação fecha o prazo (4 colunas) | ✅ consulta de alarme falso rodou |
 
 ---
 
@@ -129,3 +137,49 @@ dashboard, ou `qa-processo-prazo-alertas` com `{"dry_run": true}`. Ver
 Mudança em `supabase/functions/_shared/` obriga a republicar **todas** as
 funções que importam o arquivo — o módulo é embutido no bundle de cada uma, não
 compartilhado em runtime. O caso mais comum é o registry de templates de e-mail.
+
+---
+
+## Leva 8 — PENDENTE · classificação do requerimento
+
+Trabalho feito em **outra sessão** (commits `4624a10` às 19:02 UTC e `6872970`
+às 19:24 UTC de 18/08). Ficou de fora de todas as levas desta auditoria porque
+os comandos de deploy foram montados a partir do que ESTA sessão alterou.
+
+| Função | O que mudou |
+|---|---|
+| `qa-classificar-documento-arma` | tipo novo no enum e no prompt; regra determinística com precedência |
+| `qa-extract-documents` | parser do requerimento roda antes da IA; conferência campo a campo contra o cadastro |
+| `qa-processo-doc-validar-ia` | acompanha a reclassificação |
+
+**Por que importa:** o formulário que abre o processo de posse traz um número de
+18 dígitos e nenhum classificador tinha esse tipo na lista. A IA devolvia
+"PROTOCOLO DO PROCESSO" com 98% de confiança, o slot pedia o requerimento, e o
+Hub carimbava REPROVADO em cima do documento certo. O cliente reenviava e dava o
+mesmo erro. Enquanto não subir, o laço continua.
+
+Nenhum arquivo de `_shared/` foi tocado nesses dois commits — não há efeito
+cascata sobre outras funções.
+
+**Comando:**
+
+```
+Faça o deploy das edge functions abaixo. Elas já estão no repositório (branch
+main, commit 6872970) — o código NÃO deve ser alterado, apenas publicado.
+
+Alteradas:
+- qa-classificar-documento-arma
+- qa-extract-documents
+- qa-processo-doc-validar-ia
+
+São 3. Elas ensinam o sistema a reconhecer o REQUERIMENTO DE AQUISIÇÃO DE ARMA
+DE FOGO, que era classificado como "protocolo do processo" e fazia o Hub
+reprovar o documento correto — o cliente reenviava e dava o mesmo erro.
+
+Restrições:
+- Não altere nenhum arquivo em supabase/functions/, src/ ou supabase/migrations/.
+- Não crie migration nova.
+- Não mexa em nenhuma outra função.
+
+Ao terminar, me diga o horário da publicação.
+```
