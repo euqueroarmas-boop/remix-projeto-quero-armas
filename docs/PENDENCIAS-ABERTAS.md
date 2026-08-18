@@ -165,6 +165,41 @@ eternamente em "DEFERIDO" — e o cliente nunca vê o serviço fechar.
 
 ---
 
+## ✅ QUINTA AUDITORIA (18/08, noite) — a fila destravada não fechava o ciclo
+
+Reconferência de tudo: 18 furos originais + 4 da reauditoria + 4 da terceira + 2
+da quarta. Todos fechados. Esta passada foi atrás do risco que a própria
+correção anterior criou.
+
+### Ligar um caminho que nunca rodou expõe o que ele nunca fez
+
+A quarta auditoria destravou a Fila de Conferência. Só que
+`qa-doc-acao-equipe` — a função que a fila chama — aprovava o documento e
+parava ali. O painel do processo, ao aprovar na mão, já disparava duas coisas
+que ela não disparava:
+
+1. **`qa-exigencia-pf-checar`** — quando a última exigência de uma notificação
+   é cumprida, alguém precisa saber que a delegacia pode ser respondida. Corre
+   prazo de 10 dias.
+2. **`qa-processo-checar-conclusao-checklist`** — aprovar o último documento é
+   o que torna o processo `pronto_para_protocolar`. Sem a chamada, o checklist
+   fica 100% e o processo parado, esperando um clique que ninguém sabe que
+   precisa dar.
+
+Enquanto a fila estava morta isso era inofensivo — ninguém nunca aprovou nada
+por ali. Ligada a fila, viraria buraco vivo no caminho que a equipe mais usa.
+Corrigido nos dois caminhos de aprovação (`aprovar` e `aprovar_e_modelar`),
+best-effort para não derrubar uma aprovação já gravada.
+
+### Pedir reenvio não avisava o cliente
+
+`rejeitar` mandava e-mail; `solicitar_novo_envio` não — sendo que, para o
+cliente, os dois significam a mesma coisa. O item voltava para a fila do guiado
+com o motivo escrito, mas só quem entrasse no portal por conta própria
+descobriria. Agora avisa.
+
+---
+
 ## ✅ QUARTA AUDITORIA (18/08, tarde) — o status fantasma
 
 Reconferência dos 18 furos originais, dos 4 da reauditoria e dos 4 da terceira:

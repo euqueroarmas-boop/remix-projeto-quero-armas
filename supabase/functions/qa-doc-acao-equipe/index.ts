@@ -146,6 +146,51 @@ Deno.serve(async (req) => {
       }
     };
 
+    /**
+     * O QUE TEM QUE ACONTECER DEPOIS DE UMA APROVAÇÃO — E NÃO ACONTECIA AQUI.
+     *
+     * Quinta auditoria (18/08/2026). O painel do processo já disparava estas
+     * duas coisas ao aprovar um documento na mão; esta função, que serve a
+     * FILA DE CONFERÊNCIA da equipe, não disparava nenhuma.
+     *
+     * Até hoje isso era inofensivo por um motivo constrangedor: a fila estava
+     * vazia por construção (filtrava uma grafia de status que ninguém escreve),
+     * então ninguém nunca aprovou nada por ali. Corrigida a fila, o buraco
+     * ficaria vivo — e no caminho que a equipe mais usa.
+     *
+     *   1. EXIGÊNCIA DA PF — quando a última exigência de uma notificação é
+     *      cumprida, alguém precisa saber que a delegacia pode ser respondida.
+     *      Corre prazo de 10 dias; sem o aviso, o processo espera alguém
+     *      lembrar.
+     *
+     *   2. CONCLUSÃO DO CHECKLIST — aprovar o último documento é o que torna o
+     *      processo `pronto_para_protocolar`. Sem esta chamada o checklist fica
+     *      100% cumprido e o processo parado, esperando um clique que ninguém
+     *      sabe que precisa dar.
+     *
+     * As duas são best-effort: a aprovação do documento já está gravada, e
+     * derrubar a resposta por causa de um aviso faria a equipe reaprovar um
+     * documento que já está aprovado.
+     */
+    const encadearPosAprovacao = async () => {
+      if (!doc.processo_id) return;
+      try {
+        await supabase.functions.invoke("qa-exigencia-pf-checar", {
+          headers: { Authorization: req.headers.get("Authorization") || "" },
+          body: { processo_id: doc.processo_id, documento_id },
+        });
+      } catch (e) {
+        console.warn("[qa-doc-acao-equipe] exigencia-pf-checar falhou:", e);
+      }
+      try {
+        await supabase.functions.invoke("qa-processo-checar-conclusao-checklist", {
+          body: { processo_id: doc.processo_id, origem: "aprovacao_fila_conferencia" },
+        });
+      } catch (e) {
+        console.warn("[qa-doc-acao-equipe] checar-conclusao falhou:", e);
+      }
+    };
+
     switch (acao) {
       case "signed_url": {
         if (!doc.arquivo_storage_key) return json({ error: "Documento sem arquivo." }, 404);
@@ -184,6 +229,7 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error("[arsenal_auto] falhou no caminho equipe (aprovar):", e);
         }
+        await encadearPosAprovacao();
         return json({ ok: true });
       }
 
@@ -217,6 +263,15 @@ Deno.serve(async (req) => {
         }).eq("id", documento_id);
         await evento("novo_envio_solicitado", `Equipe solicitou novo envio de "${doc.nome_documento}".`, { motivo: m });
         await auditarStatus("pendente", m, "solicitar_novo_envio");
+        // AVISAR O CLIENTE, COMO NA REJEIÇÃO.
+        //
+        // Quinta auditoria: `rejeitar` mandava e-mail e `solicitar_novo_envio`
+        // não — sendo que, para o cliente, os dois significam a mesma coisa:
+        // "reenvie este documento". O item voltava para a fila do guiado com o
+        // motivo escrito, mas só quem entrasse no portal por conta própria
+        // descobriria. `documento_invalido` é o evento certo: o texto dele é
+        // exatamente "documento precisa ser reenviado".
+        await notificarCliente("documento_invalido", m);
         return json({ ok: true });
       }
 
@@ -246,6 +301,7 @@ Deno.serve(async (req) => {
         } catch (e) {
           console.error("[arsenal_auto] falhou no caminho equipe (aprovar_e_modelar):", e);
         }
+        await encadearPosAprovacao();
         // 2) Encadeia a função de promoção a modelo (passando o JWT da equipe)
         const auth = req.headers.get("Authorization") || "";
         const r = await fetch(`${url}/functions/v1/qa-modelo-aprovado-criar`, {
