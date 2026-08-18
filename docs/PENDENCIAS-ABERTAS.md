@@ -1,7 +1,7 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
 Índice único do que ficou em aberto. Atualizado em 18/08/2026.
-Fases entregues: F1–F8. Restam F9, F10, F11.
+Fases entregues: F1–F9. Restam F10, F11.
 
 ---
 
@@ -79,13 +79,17 @@ Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsen
 
 | Frente | O quê |
 |---|---|
-| **F9** | Devolver a petição pronta ao cliente para aprovar, dentro do pop-up guiado. Espelho do que já funciona no recurso. É o furo levantado na primeira mensagem da auditoria. |
 | **F10** | Registro do protocolo do recurso: nenhum código grava `qa_processo_recursos.numero_protocolo` nem `protocolado_em`. O cliente vê "aprovado" para sempre. |
 | **F11** | Deferimento e entrega da autorização. Hoje "deferido" é só uma etiqueta: sem e-mail, sem passo para entregar o documento ao cliente, sem baixa do serviço, sem registro no Arsenal. Para um serviço chamado "Autorização de Compra", o produto final não tem lugar no sistema. |
 
 ---
 
 ## Regras firmadas durante a auditoria
+
+- **A aprovação do RECURSO ainda vive fora do guiado.** `RecursoAprovacaoPanel`
+  é renderizado dentro de `LinhaDoTempoProcessoPF`, não na fila do pop-up. É um
+  desvio anterior à regra de 18/08 — funciona, mas deveria migrar para o guiado
+  como a petição (F9) já nasceu. Trabalho pequeno, sem urgência.
 
 - **Pop-up guiado é o canal do cliente.** Toda comunicação e toda exigência
   passa por ele. Ver mem://constraints/quero-armas-popup-guiado-canal-do-cliente.

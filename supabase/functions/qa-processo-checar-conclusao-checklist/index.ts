@@ -248,6 +248,34 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── GATE: A PETIÇÃO PRECISA TER SIDO APROVADA PELO CLIENTE ───────────
+    //
+    // A peça é o documento que sustenta o pedido — o que a Polícia Federal lê e
+    // que decide o processo. Protocolada com fato errado não se conserta: vira
+    // parte do processo e a autoridade seguinte lê aquilo.
+    //
+    // Só morde depois que a equipe DEVOLVE a peça ao cliente
+    // (`qa-peca-enviar-cliente`). Peça em rascunho na área da equipe
+    // (`nao_enviada`) não trava nada, e serviço sem peça também não.
+    {
+      const { data: pecas } = await admin
+        .from("qa_geracoes_pecas")
+        .select("id, status_cliente")
+        .eq("processo_id", processoId)
+        .in("status_cliente", ["aguardando_cliente", "devolvida"])
+        .limit(1);
+      const pendente = (pecas ?? [])[0] as { status_cliente?: string } | undefined;
+      if (pendente) {
+        return json({
+          pronto: false,
+          motivo: pendente.status_cliente === "devolvida"
+            ? "peticao_devolvida_pelo_cliente"
+            : "peticao_aguardando_aprovacao_do_cliente",
+          status_peca: pendente.status_cliente ?? null,
+        });
+      }
+    }
+
     const agora = new Date().toISOString();
 
     // Promove status macro (guard idempotente — só se ainda estiver num

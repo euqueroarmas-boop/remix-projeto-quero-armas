@@ -7739,7 +7739,20 @@ export type Database = {
           correcoes_ia_usadas_json: Json
           created_at: string
           documentos_referencia_json: Json | null
+          aprovacao_accept_language: string | null
+          aprovacao_hash: string | null
+          aprovacao_ip: string | null
+          aprovacao_user_agent: string | null
+          aprovada_cliente_em: string | null
+          devolucao_motivo: string | null
+          devolvida_em: string | null
           docx_path: string | null
+          editada_pelo_cliente: boolean
+          enviada_cliente_em: string | null
+          enviada_cliente_por: string | null
+          processo_id: string | null
+          status_cliente: string
+          texto_final: string | null
           entrada_caso: string | null
           foco: string | null
           fundamentos_utilizados_json: Json | null
@@ -7765,7 +7778,20 @@ export type Database = {
           correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
+          aprovacao_accept_language?: string | null
+          aprovacao_hash?: string | null
+          aprovacao_ip?: string | null
+          aprovacao_user_agent?: string | null
+          aprovada_cliente_em?: string | null
+          devolucao_motivo?: string | null
+          devolvida_em?: string | null
           docx_path?: string | null
+          editada_pelo_cliente?: boolean
+          enviada_cliente_em?: string | null
+          enviada_cliente_por?: string | null
+          processo_id?: string | null
+          status_cliente?: string
+          texto_final?: string | null
           entrada_caso?: string | null
           foco?: string | null
           fundamentos_utilizados_json?: Json | null
@@ -7791,7 +7817,20 @@ export type Database = {
           correcoes_ia_usadas_json?: Json
           created_at?: string
           documentos_referencia_json?: Json | null
+          aprovacao_accept_language?: string | null
+          aprovacao_hash?: string | null
+          aprovacao_ip?: string | null
+          aprovacao_user_agent?: string | null
+          aprovada_cliente_em?: string | null
+          devolucao_motivo?: string | null
+          devolvida_em?: string | null
           docx_path?: string | null
+          editada_pelo_cliente?: boolean
+          enviada_cliente_em?: string | null
+          enviada_cliente_por?: string | null
+          processo_id?: string | null
+          status_cliente?: string
+          texto_final?: string | null
           entrada_caso?: string | null
           foco?: string | null
           fundamentos_utilizados_json?: Json | null

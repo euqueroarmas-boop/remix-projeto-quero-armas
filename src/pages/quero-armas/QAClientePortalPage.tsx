@@ -107,6 +107,7 @@ import NotificacaoEngineOverlay from "@/components/quero-armas/portal/Notificaca
 import { grupoDaPendencia as grupoDaPendenciaHelper, grupoDaPendenciaDoItem, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import { protocoloDoProcesso } from "@/components/quero-armas/processos/processoConstants";
 import JuntadaAssinaturaPanel from "@/components/quero-armas/portal/JuntadaAssinaturaPanel";
+import PecaAprovacaoPanel, { type PecaParaAprovar } from "@/components/quero-armas/portal/PecaAprovacaoPanel";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
@@ -412,6 +413,18 @@ export default function QAClientePortalPage() {
    * guardamos, por processo, o estado de cada passo lido do banco.
    */
   const [efetivaPassos, setEfetivaPassos] = useState<Record<string, EfetivaPasso[]>>({});
+  /**
+   * Petições que a equipe devolveu para o cliente aprovar.
+   *
+   * A peça é o documento que sustenta o pedido — o que a PF lê e que decide o
+   * processo. Até 18/08/2026 ela vivia inteira na área da equipe e o cliente
+   * nunca via uma linha. Agora entra na fila do guiado, e o processo não vira
+   * `pronto_para_protocolar` enquanto ele não decidir.
+   */
+  const [pecasParaAprovar, setPecasParaAprovar] = useState<
+    Array<PecaParaAprovar & { processo_id: string | null }>
+  >([]);
+  const [pecasReloadKey, setPecasReloadKey] = useState(0);
   /**
    * Passo em tela agora, por processo. Voltar uma página tem que devolver a
    * contagem do grupo: os passos à frente do atual não contam como concluídos.
@@ -2168,6 +2181,54 @@ export default function QAClientePortalPage() {
       });
     }
 
+    // 1.4) PETIÇÃO ESPERANDO A APROVAÇÃO DELE.
+    //
+    // Vem antes do checklist de propósito: ela é o documento que decide o
+    // processo, e o processo não pode ser protocolado enquanto ele não ler
+    // (gate em qa-processo-checar-conclusao-checklist). Pedir certidão a quem
+    // tem uma petição parada esperando leitura é cobrar a coisa errada.
+    for (const peca of pecasParaAprovar) {
+      const proc = (processos ?? []).find((p: any) => String(p?.id) === String(peca.processo_id));
+      const servicoLabel = proc
+        ? (getQAServiceDisplayName({
+            ...catalogoByServicoId[Number(proc.servico_id)],
+            servico_id: proc.servico_id,
+            servico_nome: proc.servico_nome,
+          }) || proc.servico_nome || null)
+        : null;
+      items.push({
+        id: `peca:${peca.id}`,
+        kind: "documento",
+        servicoId: proc?.servico_id ?? null,
+        servicoLabel,
+        // @ts-expect-error usado apenas para ordenação por processo
+        __processoId: peca.processo_id ?? null,
+        label:
+          peca.status_cliente === "devolvida"
+            ? "Petição — aguardando o ajuste que você pediu"
+            : "Ler e aprovar a sua petição",
+        tipo: "peticao_aprovacao",
+        rawTipo: "peticao_aprovacao",
+        fallbackNome: peca.titulo_geracao ?? "Petição",
+        contexto: "Documento que vai à Polícia Federal",
+        grupoProprio: "requerimento",
+        ordemGrupoPropria: 0,
+        onPrimary: () => {},
+        onEntregar: () => {},
+        corpo: (
+          <PecaAprovacaoPanel
+            peca={peca}
+            servicoLabel={servicoLabel}
+            onDecidido={() => {
+              setPecasReloadKey((k) => k + 1);
+              setDocsReloadKey((k) => k + 1);
+              checarProntoParaProtocolar(peca.processo_id ?? undefined);
+            }}
+          />
+        ),
+      });
+    }
+
     // 1.5) Dados cadastrais — pendência EXPLÍCITA, prioridade imediatamente
     // após contrato e procuração. Enquanto houver campo obrigatório em branco
     // o cliente NÃO avança para o checklist do processo: a fila termina aqui.
@@ -2976,7 +3037,7 @@ export default function QAClientePortalPage() {
     // popup guiado. A sequência por grupo continua na ordenação, mas sem
     // esconder os demais grupos atrás de uma fila paralela.
     return decorados.map((d) => d.it);
-  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos]);
+  }, [cliente, pendingSignatureDocs, processoDocs, processos, catalogoByServicoId, catalogoDocOrdem, catalogoDocInfo, catalogoDocInfoByTipo, temIdentificacaoPessoalAprovadaNoHub, efetivaPassos, pecasParaAprovar]);
 
   const pendenciasGuiadasCount = pendenciasGuiadas.length;
 
@@ -3174,6 +3235,24 @@ export default function QAClientePortalPage() {
   // tem a exigência). É esta leitura que faz cada passo virar item da fila e
   // entrar na contagem "N de M concluídos" do grupo.
   // ==========================================================================
+  // Petições devolvidas para o cliente aprovar. Recarrega quando ele decide e
+  // quando a lista de processos muda (a equipe pode devolver a qualquer hora).
+  useEffect(() => {
+    const ids = (processos ?? []).map((p: any) => String(p?.id)).filter(Boolean);
+    if (ids.length === 0) { setPecasParaAprovar([]); return; }
+    let vivo = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("qa_geracoes_pecas" as any)
+        .select("id, processo_id, titulo_geracao, tipo_peca, minuta_gerada, texto_final, status_cliente, devolucao_motivo")
+        .in("processo_id", ids)
+        .in("status_cliente", ["aguardando_cliente", "devolvida"])
+        .order("created_at", { ascending: false });
+      if (vivo) setPecasParaAprovar((data as any[]) ?? []);
+    })();
+    return () => { vivo = false; };
+  }, [processos, pecasReloadKey]);
+
   useEffect(() => {
     const processosEfetiva = Array.from(
       new Set(

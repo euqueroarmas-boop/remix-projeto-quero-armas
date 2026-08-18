@@ -831,6 +831,59 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     ignorados_json: unknown;
   } | null>(null);
 
+  /**
+   * Petições do cliente e o estado de aprovação de cada uma.
+   *
+   * A peça é o documento que decide o processo, e até 18/08/2026 ela vivia só
+   * aqui dentro: escrita, revisada e protocolada sem que o requerente visse
+   * uma linha. Daqui a equipe devolve para ele aprovar.
+   */
+  const [pecas, setPecas] = useState<Array<{
+    id: string;
+    titulo_geracao: string | null;
+    tipo_peca: string | null;
+    status_cliente: string;
+    processo_id: string | null;
+    devolucao_motivo: string | null;
+    aprovada_cliente_em: string | null;
+    editada_pelo_cliente: boolean | null;
+  }>>([]);
+  const [enviandoPeca, setEnviandoPeca] = useState<string | null>(null);
+
+  const carregarPecas = useCallback(async () => {
+    const cid = processo?.cliente_id;
+    if (!cid) return;
+    const { data } = await supabase
+      .from("qa_geracoes_pecas")
+      .select("id, titulo_geracao, tipo_peca, status_cliente, processo_id, devolucao_motivo, aprovada_cliente_em, editada_pelo_cliente")
+      .eq("cliente_id", cid)
+      .order("created_at", { ascending: false })
+      .limit(10);
+    setPecas((data as typeof pecas) ?? []);
+  }, [processo?.cliente_id]);
+
+  useEffect(() => { void carregarPecas(); }, [carregarPecas]);
+
+  const enviarPecaAoCliente = async (geracaoId: string) => {
+    if (!processo?.id) return;
+    setEnviandoPeca(geracaoId);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-peca-enviar-cliente", {
+        body: { geracao_id: geracaoId, processo_id: processo.id },
+      });
+      if (error) throw error;
+      const err = (data as { error?: string } | null)?.error;
+      if (err) throw new Error(err);
+      toast.success("Petição enviada. Ela já está na fila do cliente para aprovação.");
+      await carregarPecas();
+      onUpdated?.();
+    } catch (e) {
+      toast.error("Não deu para enviar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setEnviandoPeca(null);
+    }
+  };
+
   const carregarJuntada = useCallback(async () => {
     if (!processoId) return;
     const { data } = await supabase
@@ -2751,6 +2804,73 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </div>
                 </div>
               )}
+              {/*
+                A PETIÇÃO VOLTA PARA O CLIENTE.
+
+                O documento que sustenta o pedido — o que a PF lê e que decide
+                o processo — era escrito, revisado e protocolado sem que o
+                requerente visse uma linha. Nos indeferimentos reais, dois
+                motivos não tinham nada a ver com mérito: divergência de nome e
+                de endereço. Quem pega isso é ele, não o revisor.
+              */}
+              {pecas.length > 0 && (
+                <div className="bg-white border border-slate-200 rounded-xl p-4">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">
+                    PETIÇÃO · APROVAÇÃO DO CLIENTE
+                  </h4>
+                  <ul className="divide-y divide-slate-100">
+                    {pecas.map((pc) => {
+                      const st = String(pc.status_cliente ?? "nao_enviada");
+                      const desteProcesso = !pc.processo_id || pc.processo_id === processo?.id;
+                      const badge =
+                        st === "aprovada" ? { txt: "APROVADA PELO CLIENTE", cls: "bg-emerald-50 text-emerald-800 border-emerald-200" } :
+                        st === "aguardando_cliente" ? { txt: "AGUARDANDO O CLIENTE", cls: "bg-sky-50 text-sky-800 border-sky-200" } :
+                        st === "devolvida" ? { txt: "CLIENTE PEDIU AJUSTE", cls: "bg-orange-50 text-orange-900 border-orange-300" } :
+                        { txt: "NÃO ENVIADA", cls: "bg-slate-50 text-slate-600 border-slate-200" };
+                      return (
+                        <li key={pc.id} className="py-3 flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-800 truncate">
+                              {pc.titulo_geracao || pc.tipo_peca || "Petição"}
+                            </p>
+                            <span className={`mt-1 inline-block px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold border ${badge.cls}`}>
+                              {badge.txt}
+                            </span>
+                            {st === "devolvida" && pc.devolucao_motivo && (
+                              <p className="text-[11px] text-orange-800 mt-1 leading-snug">
+                                “{pc.devolucao_motivo}”
+                              </p>
+                            )}
+                            {st === "aprovada" && (
+                              <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-1">
+                                EM {formatDateTime(pc.aprovada_cliente_em)}
+                                {pc.editada_pelo_cliente ? " · COM EDIÇÕES DELE" : ""}
+                              </p>
+                            )}
+                          </div>
+                          {st !== "aprovada" && st !== "aguardando_cliente" && desteProcesso && (
+                            <button
+                              onClick={() => enviarPecaAoCliente(pc.id)}
+                              disabled={enviandoPeca === pc.id}
+                              className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-[#7A1F2B] hover:bg-[#661925] disabled:opacity-60"
+                            >
+                              <FileSignature className="h-3 w-3" />
+                              {enviandoPeca === pc.id ? "ENVIANDO…" : st === "devolvida" ? "REENVIAR" : "ENVIAR AO CLIENTE"}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {/* Aviso honesto: aprovar é o que destrava o protocolo. */}
+                  {pecas.some((p) => ["aguardando_cliente", "devolvida"].includes(String(p.status_cliente))) && (
+                    <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400 leading-relaxed">
+                      ENQUANTO HOUVER PETIÇÃO SEM APROVAÇÃO, O PROCESSO NÃO VIRA "PRONTO PARA PROTOCOLAR".
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/*
                 A JUNTADA GANHOU ENDEREÇO.
 
