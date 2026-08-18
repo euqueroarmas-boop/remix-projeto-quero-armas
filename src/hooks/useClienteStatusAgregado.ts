@@ -236,7 +236,7 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
         const { data: itensData } = await sb
           .from("qa_itens_venda")
           .select(
-            "id, venda_id, servico_id, status, numero_processo, data_notificacao, data_indeferimento, data_recurso_administrativo, data_indeferimento_recurso",
+            "id, venda_id, servico_id, status, numero_processo, data_notificacao, data_indeferimento, data_recurso_administrativo, data_resposta_notificacao, data_indeferimento_recurso",
           )
           .in("venda_id", vendaIds);
         itensVenda = itensData ?? [];
@@ -371,11 +371,15 @@ export function useClienteStatusAgregado(clienteId: number | null | undefined) {
           id: p.id,
           servico_id: p.servico_id,
           servico_nome: p.servico_nome,
-          status: p.status,
+          // Ver prazosProcessuais: item e processo têm vocabulários
+          // diferentes de "acabou", e qualquer um dos dois encerra o prazo.
+          status: it?.status ?? null,
+          status_processo: p.status,
           numero_processo: it?.numero_processo ?? null,
           data_notificacao: it?.data_notificacao ?? null,
           data_indeferimento: it?.data_indeferimento ?? null,
           data_recurso_administrativo: it?.data_recurso_administrativo ?? null,
+          data_resposta_notificacao: it?.data_resposta_notificacao ?? null,
           data_indeferimento_recurso: it?.data_indeferimento_recurso ?? null,
         };
       });

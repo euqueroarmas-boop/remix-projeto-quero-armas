@@ -174,6 +174,7 @@ export default function ClienteOverview({ cliente, vendas, itens, crafs, gtes, f
         data_notificacao: it.data_notificacao,
         data_indeferimento: it.data_indeferimento,
         data_recurso_administrativo: it.data_recurso_administrativo,
+        data_resposta_notificacao: it.data_resposta_notificacao,
         data_indeferimento_recurso: it.data_indeferimento_recurso,
       })),
     );

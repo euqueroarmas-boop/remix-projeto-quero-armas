@@ -9,6 +9,7 @@ export interface DashboardItemSnapshotRow {
   data_notificacao: string | null;
   data_restituicao: string | null;
   data_recurso_administrativo: string | null;
+  data_resposta_notificacao: string | null;
   data_indeferimento_recurso: string | null;
   data_protocolo: string | null;
   data_ultima_atualizacao: string | null;
@@ -71,9 +72,9 @@ let snapshotCache: { data: QADashboardSnapshot; expiresAt: number } | null = nul
 let snapshotPromise: Promise<QADashboardSnapshot> | null = null;
 
 const ITEM_SELECT_BASE =
-  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
+  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_recurso_administrativo, data_resposta_notificacao, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
 const ITEM_SELECT_WITH_RESTITUICAO =
-  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_restituicao, data_recurso_administrativo, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
+  "id, venda_id, servico_id, status, data_indeferimento, data_notificacao, data_restituicao, data_recurso_administrativo, data_resposta_notificacao, data_indeferimento_recurso, data_protocolo, data_ultima_atualizacao, data_deferimento, numero_processo, numero_requerimento, numero_posse, numero_porte, numero_craf";
 
 function throwIfAborted(signal?: AbortSignal) {
   if (signal?.aborted) {

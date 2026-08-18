@@ -92,7 +92,11 @@ export interface ItemComPrazo {
   id: number | string;
   servico_id?: number | null;
   servico_nome?: string | null;
+  /** Status do ITEM da venda (vocabulário em maiúsculas: DEFERIDO, CANCELADO). */
   status?: string | null;
+  /** Status do PROCESSO (vocabulário em minúsculas: deferido, concluido).
+   *  Opcional: quem tiver os dois manda os dois, e qualquer um encerra. */
+  status_processo?: string | null;
   numero_processo?: string | null;
   data_notificacao?: string | null;
   data_indeferimento?: string | null;
@@ -119,12 +123,26 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dRecurso = normalizeDateISO(item.data_recurso_administrativo);
   const dResposta = normalizeDateISO(item.data_resposta_notificacao);
 
-  // Status finais cancelam o prazo (já não corre): deferido, concluído,
-  // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
-  // visível conforme regra de negócio.
-  const statusUpper = (item.status || "").toString().toUpperCase();
-  const FINALIZADOS = ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"];
-  if (FINALIZADOS.includes(statusUpper)) return null;
+  // ── DOIS VOCABULÁRIOS DE "ACABOU" ──────────────────────────────────────────
+  // O prazo morre quando o caso acabou — e "acabou" está escrito em DOIS
+  // lugares que nem sempre concordam: `qa_itens_venda.status` (o item vendido,
+  // em MAIÚSCULAS: DEFERIDO, CANCELADO) e `qa_processos.status` (a operação, em
+  // minúsculas: deferido, concluido, cancelado).
+  //
+  // Terceira auditoria, 18/08/2026: o cron de alertas e o agregado do cliente
+  // passavam para cá o status do PROCESSO, enquanto as telas passavam o do
+  // ITEM. Um cliente com o item já DEFERIDO e o processo ainda em
+  // `aguardando_documentos` — situação normal em quem foi deferido antes da
+  // automação — recebia "prazo VENCIDO há 60 dias" todo dia, num processo que
+  // já tinha sido concedido.
+  //
+  // Aceitar os dois e encerrar se QUALQUER um for terminal é o comportamento
+  // seguro: o erro possível aqui é deixar de alarmar um caso encerrado, nunca
+  // alarmar um caso vivo.
+  const ehTerminal = (s: string | null | undefined) =>
+    ["DEFERIDO", "CONCLUÍDO", "CONCLUIDO", "CANCELADO", "DESISTIU"]
+      .includes(String(s ?? "").trim().toUpperCase());
+  if (ehTerminal(item.status) || ehTerminal(item.status_processo)) return null;
 
   // PRIORIDADE 1: Indeferimento do recurso administrativo → MS 120 dias.
   // Sobrepõe qualquer prazo de 10 dias da PF (esgotada a via administrativa).

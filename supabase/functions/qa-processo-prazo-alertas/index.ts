@@ -110,6 +110,7 @@ interface ItemRow {
   status: string | null;
   numero_processo: string | null;
   data_notificacao: string | null;
+  data_resposta_notificacao: string | null;
   data_indeferimento: string | null;
   data_recurso_administrativo: string | null;
   data_indeferimento_recurso: string | null;
@@ -160,7 +161,7 @@ serve(async (req) => {
       const { data: itensRaw, error: itensErr } = await sb
         .from("qa_itens_venda")
         .select(
-          "id, venda_id, servico_id, status, numero_processo, data_notificacao, data_indeferimento, data_recurso_administrativo, data_indeferimento_recurso",
+          "id, venda_id, servico_id, status, numero_processo, data_notificacao, data_indeferimento, data_recurso_administrativo, data_resposta_notificacao, data_indeferimento_recurso",
         )
         .in("venda_id", vendaIds);
       if (itensErr) throw itensErr;
@@ -181,11 +182,15 @@ serve(async (req) => {
         id: p.id,
         servico_id: p.servico_id,
         servico_nome: p.servico_nome,
-        status: p.status,
+        // O ITEM é quem diz se o serviço acabou; o PROCESSO, se a operação
+        // acabou. Passar só o do processo alarmava item já deferido.
+        status: it.status,
+        status_processo: p.status,
         numero_processo: it.numero_processo,
         data_notificacao: it.data_notificacao,
         data_indeferimento: it.data_indeferimento,
         data_recurso_administrativo: it.data_recurso_administrativo,
+        data_resposta_notificacao: it.data_resposta_notificacao,
         data_indeferimento_recurso: it.data_indeferimento_recurso,
         __processoId: p.id,
         __clienteId: p.cliente_id,
