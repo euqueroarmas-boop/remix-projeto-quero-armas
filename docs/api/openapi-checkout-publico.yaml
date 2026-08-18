@@ -1,0 +1,412 @@
+openapi: 3.1.0
+
+info:
+  title: Arsenal Inteligente — API pública de contratação e checkout
+  version: "1.0.0-parcial"
+  description: |
+    ESCOPO PARCIAL E DELIBERADO.
+
+    Este documento cobre APENAS os quatro endpoints públicos usados pela página
+    de vendas. O sistema possui outros endpoints, que não estão aqui e não são
+    objeto desta entrega.
+
+    Ambiente: DESENVOLVIMENTO/TESTE. A chave e a URL fornecidas junto com este
+    documento são de ambiente de teste. Não utilizar dados reais de clientes.
+
+    Documento confidencial, sujeito ao Acordo de Confidencialidade firmado
+    entre as partes. Proibida a redistribuição.
+
+servers:
+  - url: https://{projeto}.supabase.co/functions/v1
+    description: Ambiente de teste
+    variables:
+      projeto:
+        default: SUBSTITUIR
+        description: Identificador do projeto no ambiente de teste
+
+security:
+  - apikeyAuth: []
+
+components:
+  securitySchemes:
+    apikeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+      description: |
+        Chave pública (anon) do ambiente de TESTE. Deve ser enviada também no
+        cabeçalho Authorization como "Bearer <chave>". Nunca versionar a chave
+        em repositório nem embuti-la em build público sem aprovação.
+
+  schemas:
+
+    Identificacao:
+      type: object
+      required: [nome_completo, cpf, email, celular]
+      properties:
+        nome_completo: { type: string, example: "Fulano de Tal" }
+        cpf:
+          type: string
+          description: Com ou sem máscara. Validado com dígito verificador no servidor.
+          example: "12345678909"
+        email: { type: string, format: email }
+        celular:
+          type: string
+          description: Somente dígitos, com DDD.
+          example: "11999998888"
+
+    CartItem:
+      type: object
+      required: [servico_id, slug, quantidade]
+      properties:
+        servico_id:
+          type: string
+          format: uuid
+          description: Identificador do serviço no catálogo.
+        slug:
+          type: string
+          description: Identificador textual do serviço no catálogo.
+        quantidade:
+          type: integer
+          minimum: 1
+
+    Erro:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Código estável do erro. Usar este campo na lógica do frontend.
+        detail: { type: string }
+        traceId:
+          type: string
+          description: Identificador da chamada, para suporte.
+
+paths:
+
+  /qa-cliente-criar-conta-publica:
+    post:
+      operationId: criarContaPublica
+      summary: Cria a conta de acesso do cliente (visitante do site)
+      description: |
+        Cria o usuário de autenticação e o cadastro do cliente a partir do
+        formulário público. Idempotente por CPF e por e-mail: quando já existe
+        cadastro, responde 200 com "ok: false" e um motivo, para o frontend
+        direcionar o visitante ao login em vez de duplicar registro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cpf, nome, email, senha]
+              properties:
+                cpf: { type: string, minLength: 11, maxLength: 20 }
+                nome: { type: string, minLength: 2, maxLength: 160 }
+                email: { type: string, format: email, maxLength: 255 }
+                telefone: { type: string, maxLength: 40, nullable: true }
+                senha:
+                  type: string
+                  minLength: 8
+                  maxLength: 72
+                  description: Definida pelo próprio visitante.
+                servico_interesse: { type: string, maxLength: 200, nullable: true }
+                servico_principal: { type: string, maxLength: 80, nullable: true }
+                catalogo_slug:
+                  type: string
+                  maxLength: 120
+                  nullable: true
+                  description: |
+                    Quando informado, o cadastro já registra uma venda pendente
+                    para o serviço correspondente.
+      responses:
+        "200":
+          description: |
+            Sucesso, OU caso tratado de cadastro pré-existente. Verificar sempre
+            o campo "ok" antes de prosseguir.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    title: Conta criada
+                    properties:
+                      ok: { type: boolean, const: true }
+                      qa_cliente_id: { type: integer, nullable: true }
+                      user_id: { type: string, format: uuid }
+                      email: { type: string }
+                      tipo_cliente: { type: string, nullable: true }
+                      cliente_created: { type: boolean }
+                      venda_pendente_id: { type: integer, nullable: true }
+                  - type: object
+                    title: Já existe cadastro — direcionar ao login
+                    properties:
+                      ok: { type: boolean, const: false }
+                      reason:
+                        type: string
+                        enum:
+                          - cpf_ja_possui_login
+                          - cpf_ja_possui_cadastro_sem_login
+                          - email_ja_cadastrado
+                      message:
+                        type: string
+                        description: Texto pronto para exibição ao visitante.
+        "400":
+          description: |
+            Requisição inválida. Códigos: invalid_json, invalid_payload,
+            cpf_invalido, email_invalido, auth_create_failed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+        "405":
+          description: "Método não permitido (method_not_allowed). Apenas POST."
+
+  /qa-contratar-publico:
+    post:
+      operationId: contratarPublico
+      summary: Contratação direta de um serviço pelo visitante
+      description: |
+        Caminho curto: registra a intenção de contratação de um único serviço,
+        identificando ou criando o cliente pelo CPF. Não gera cobrança, não cria
+        processo e não confirma pagamento — apenas registra a venda pendente e
+        notifica a equipe.
+
+        Usar quando a página de vendas oferece um serviço isolado. Para carrinho
+        com mais de um item e pagamento no ato, usar o par
+        qa-checkout-criar-venda + qa-checkout-iniciar-pagamento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [catalogo_slug, nome_completo, cpf, email, telefone, valor_informado]
+              properties:
+                catalogo_slug: { type: string, minLength: 1, maxLength: 120 }
+                nome_completo: { type: string, minLength: 3, maxLength: 200 }
+                cpf: { type: string, minLength: 11, maxLength: 20 }
+                email: { type: string, format: email, maxLength: 255 }
+                telefone: { type: string, minLength: 8, maxLength: 20 }
+                valor_informado:
+                  type: number
+                  exclusiveMinimum: 0
+                  description: |
+                    Valor exibido ao visitante na página. Conferido contra o
+                    catálogo no servidor.
+                observacoes: { type: string, maxLength: 2000, nullable: true }
+      responses:
+        "200":
+          description: |
+            Contratação registrada, OU caso tratado. Verificar sempre "ok".
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    title: Registrada
+                    properties:
+                      ok: { type: boolean, const: true }
+                      venda_id: { type: integer }
+                      traceId: { type: string }
+                  - type: object
+                    title: Cliente já tem acesso — direcionar ao login
+                    properties:
+                      ok: { type: boolean, const: false }
+                      precisa_login: { type: boolean, const: true }
+                      mensagem: { type: string }
+                      traceId: { type: string }
+                  - type: object
+                    title: Retido para conferência da equipe
+                    properties:
+                      ok: { type: boolean, const: false }
+                      needs_manual_review: { type: boolean, const: true }
+                      reason: { type: string }
+                      traceId: { type: string }
+        "400":
+          description: |
+            Dados inválidos. O corpo traz "details" com os campos reprovados.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Erro"
+                  - type: object
+                    properties:
+                      details:
+                        type: object
+                        additionalProperties:
+                          type: array
+                          items: { type: string }
+        "500":
+          description: Erro interno. Registrar o traceId e acionar o suporte.
+
+  /qa-checkout-criar-venda:
+    post:
+      operationId: criarVenda
+      summary: Cria a venda a partir do carrinho
+      description: |
+        Monta a venda e seus itens a partir do carrinho, identificando ou
+        criando o cliente. Não gera cobrança — devolve um checkout_token de vida
+        curta, que autoriza a chamada seguinte de pagamento.
+
+        Preços: o servidor recalcula todos os valores a partir do catálogo. O
+        que o frontend enviar como preço é ignorado.
+
+        Campos de operação assistida (preço negociado, exibição do contrato,
+        vínculo a outro cliente) existem no endpoint, exigem perfil de equipe
+        ativo, são validados no servidor e estão FORA do escopo da página de
+        vendas — não devem ser enviados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cart]
+              properties:
+                cart:
+                  type: array
+                  minItems: 1
+                  items: { $ref: "#/components/schemas/CartItem" }
+                identificacao:
+                  allOf:
+                    - $ref: "#/components/schemas/Identificacao"
+                  description: |
+                    Obrigatória para visitante não autenticado. Dispensável
+                    quando a chamada leva o token de um cliente já logado.
+      responses:
+        "200":
+          description: Venda criada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean, const: true }
+                  venda_id: { type: integer }
+                  id_legado: { type: integer, nullable: true }
+                  qa_cliente_id: { type: integer }
+                  total:
+                    type: number
+                    description: Total em reais, calculado pelo servidor.
+                  itens: { type: integer }
+                  status: { type: string, example: "À INICIAR" }
+                  cobranca_status: { type: string, example: "nao_gerada" }
+                  checkout_token:
+                    type: string
+                    description: |
+                      Autoriza a chamada de qa-checkout-iniciar-pagamento para
+                      esta venda. Tratar como segredo: não registrar em log, não
+                      colocar na URL, não persistir além da sessão.
+                  checkout_token_expires_at: { type: string, format: date-time }
+        "400":
+          description: |
+            Códigos: invalid_json, cart_empty, cart_item_invalid,
+            identification_required, identification_invalid, service_unavailable.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+        "403":
+          description: |
+            Campo restrito à equipe enviado sem perfil autorizado. Códigos:
+            target_qa_cliente_requires_staff, staff_required_for_negotiated_price.
+        "404":
+          description: "Cliente não localizado (client_not_found)."
+        "500":
+          description: Erro interno.
+
+  /qa-checkout-iniciar-pagamento:
+    post:
+      operationId: iniciarPagamento
+      summary: Gera a cobrança da venda (PIX, boleto ou cartão)
+      description: |
+        Gera a cobrança correspondente a uma venda criada no checkout público,
+        autorizada pelo checkout_token.
+
+        Valor: o servidor recalcula o valor final a partir do preço base da
+        venda, inclusive os encargos de parcelamento. Parcelas e forma de
+        pagamento enviadas pelo frontend são sugestões; o valor cobrado é sempre
+        o do servidor.
+
+        Idempotente: chamada repetida para a mesma venda devolve a cobrança já
+        existente, com "reused: true".
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [venda_id, checkout_token, billing_type]
+              properties:
+                venda_id: { type: integer, minimum: 1 }
+                checkout_token:
+                  type: string
+                  minLength: 16
+                  maxLength: 256
+                  description: Recebido em qa-checkout-criar-venda.
+                billing_type:
+                  type: string
+                  enum: [PIX, BOLETO, CREDIT_CARD]
+                installment_count:
+                  type: integer
+                  minimum: 1
+                  default: 1
+                  description: Considerado apenas para CREDIT_CARD.
+                due_date:
+                  type: string
+                  format: date
+                  description: Vencimento. Ausente, o servidor aplica o padrão.
+                success_url:
+                  type: string
+                  format: uri
+                  description: |
+                    Retorno após o pagamento. Aceito apenas com http/https.
+      responses:
+        "200":
+          description: Cobrança gerada (ou reaproveitada)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, const: true }
+                  reused:
+                    type: boolean
+                    description: Presente quando a cobrança já existia.
+                  venda_id: { type: integer }
+                  asaas_payment_id: { type: string }
+                  asaas_invoice_url:
+                    type: string
+                    nullable: true
+                    description: Fatura hospedada, para onde direcionar o cliente.
+                  asaas_bank_slip_url: { type: string, nullable: true }
+                  asaas_pix_payload:
+                    type: string
+                    nullable: true
+                    description: Conteúdo do "copia e cola" do PIX.
+                  asaas_due_date: { type: string, format: date }
+                  cobranca_status: { type: string, example: "aguardando_pagamento" }
+                  billing_type: { type: string }
+                  parcelas: { type: integer }
+                  valor_cobrado: { type: number }
+                  valor_parcela: { type: number }
+                  preco_base: { type: number }
+                  encargos_reais: { type: number }
+        "400":
+          description: |
+            Códigos: invalid_json, venda_id_required, checkout_token_required,
+            invalid_billing_type.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Erro" }
+        "401":
+          description: "checkout_token_invalido ou checkout_token_expirado."
+        "403":
+          description: "venda_nao_eh_checkout_publico."
+        "404":
+          description: "venda_not_found ou cliente_not_found."
+        "409":
+          description: |
+            Estado incompatível. Códigos: venda_ja_paga, cobranca_ja_confirmada,
+            valor_invalido, cliente_incompleto.
+        "500":
+          description: Erro interno.
