@@ -41,7 +41,7 @@ import DocResultadoCarimbo from "./DocResultadoCarimbo";
 import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./ResidenciaTerceiroModal";
 import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal";
 import ConfrontoCpfComprovanteModal from "./ConfrontoCpfComprovanteModal";
-import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
+import { extrairItensPdfPorPagina, extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { detectarEscopoCertidao, mensagemCertidaoCivel } from "@/lib/quero-armas/escopoCertidao";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
@@ -99,9 +99,14 @@ import {
 } from "@/lib/quero-armas/parserComprovanteEndereco";
 import { parseDanf3e } from "@/lib/quero-armas/parserComprovanteResidencia";
 import {
+  lerCamposRequerimentoPorGeometria,
   parseRequerimentoSinarm,
   textoIndicaRequerimentoSinarm,
 } from "@/lib/quero-armas/parserRequerimentoSinarm";
+import {
+  conferirRequerimentoContraCadastro,
+  type CadastroParaRequerimento,
+} from "@/lib/quero-armas/conferenciaRequerimento";
 import {
   validadeComprovanteConsumo,
   mensagemComprovanteVencido,
@@ -299,6 +304,12 @@ type ConformidadeItem = {
 function explicarDivergencia(item: ConformidadeItem): string {
   const lido = item.valorCertidao || "não localizado";
   const esperado = item.valorReferencia || "não informado no cadastro";
+  // Requerimento: o valor não foi "lido de um documento", foi DIGITADO pelo
+  // cliente no site da PF. A frase precisa dizer isso, senão ele procura erro
+  // no arquivo em vez de corrigir o que ele mesmo preencheu.
+  if (item.fonteReferencia === "Cadastro do cliente") {
+    return `no requerimento foi digitado "${lido}"; no cadastro consta "${esperado}". A PF confere campo a campo e indefere na diferença — veja qual dos dois está certo e corrija antes de enviar.`;
+  }
   switch (item.campo) {
     case "nome_completo":
       return `o documento está em nome de "${lido}", mas o interessado do processo é "${esperado}". Documento de outra pessoa não é aceito.`;
@@ -1761,6 +1772,17 @@ export function ClienteDocsHubModal({
     ocupacao_licita_razao_social: string | null;
   }>({ nome: null, cpf: null, data_nascimento: null, nome_mae: null, naturalidade_municipio: null, naturalidade_uf: null, rg: null, cep: null, cidade: null, uf: null, ocupacao_licita_cnpj: null, ocupacao_licita_razao_social: null });
 
+  /**
+   * Cadastro COMPLETO do cliente, como está no banco.
+   *
+   * O motor genérico de conformidade confere só nome, CPF, nascimento, filiação
+   * e naturalidade — é o que os documentos emitidos por órgão trazem. O
+   * requerimento da PF é outra história: todo campo dele foi DIGITADO pelo
+   * cliente, e a PF confere linha a linha. Para conferir na mesma régua
+   * precisamos da linha inteira do cadastro, não de cinco campos.
+   */
+  const [cadastroCompleto, setCadastroCompleto] = useState<CadastroParaRequerimento | null>(null);
+
   // Docs aprovados carregados internamente quando o prop vier vazio
   const [docsAprovadosFetched, setDocsAprovadosFetched] = useState<any[]>([]);
 
@@ -1794,6 +1816,7 @@ export function ClienteDocsHubModal({
     setShowDeclaracao(false);
     setExtracting(false);
     setProfissionalExtraido({ nome: null, registro: null });
+    setCadastroCompleto(null);
     setDocsAprovadosFetched([]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1835,11 +1858,25 @@ export function ClienteDocsHubModal({
       try {
         const { data } = await supabase
           .from("qa_clientes" as any)
-          .select("nome_completo, cpf, data_nascimento, nome_mae, naturalidade_municipio, naturalidade_uf, rg, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado, ocupacao_licita_cnpj, ocupacao_licita_razao_social")
+          .select("nome_completo, cpf, data_nascimento, nome_mae, nome_pai, sexo, estado_civil, naturalidade_municipio, naturalidade_uf, naturalidade_pais, rg, emissor_rg, uf_emissor_rg, expedicao_rg, titulo_eleitor, profissao, email, celular, endereco, numero, complemento, bairro, cep, cidade, estado, cep2, cidade2, estado2, responsavel_endereco_cep, responsavel_endereco_cidade, responsavel_endereco_estado, ocupacao_licita_cnpj, ocupacao_licita_razao_social")
           .eq("id", qaClienteId)
           .maybeSingle();
         if (cancelled || !data) return;
         const row = data as unknown as Record<string, string | null>;
+        // Guarda a linha inteira para a conferência campo a campo do
+        // requerimento. Os dados da EMPRESA ficam de fora de propósito.
+        setCadastroCompleto({
+          nome_completo: row.nome_completo, cpf: row.cpf, nome_mae: row.nome_mae,
+          nome_pai: row.nome_pai, data_nascimento: row.data_nascimento, sexo: row.sexo,
+          estado_civil: row.estado_civil, naturalidade_pais: row.naturalidade_pais,
+          naturalidade_uf: row.naturalidade_uf, naturalidade_municipio: row.naturalidade_municipio,
+          rg: row.rg, emissor_rg: row.emissor_rg, uf_emissor_rg: row.uf_emissor_rg,
+          expedicao_rg: row.expedicao_rg, titulo_eleitor: row.titulo_eleitor,
+          profissao: row.profissao, email: row.email, celular: row.celular,
+          cep: row.cep, endereco: row.endereco, numero: row.numero,
+          complemento: row.complemento, bairro: row.bairro, cidade: row.cidade,
+          estado: row.estado,
+        });
         // Endereço: tenta os campos do cadastro em cascata
         let cep = row.cep || row.cep2 || row.responsavel_endereco_cep || null;
         let cidade = row.cidade || row.cidade2 || row.responsavel_endereco_cidade || null;
@@ -2119,6 +2156,14 @@ export function ClienteDocsHubModal({
         return item;
       })
     : conformidade;
+  /**
+   * O painel está mostrando a conferência do requerimento (campos digitados
+   * pelo cliente no site da PF) e não a conformidade entre documentos. Muda o
+   * título e os cabeçalhos: "na certidão" não faz sentido num formulário.
+   */
+  const conferenciaContraCadastro =
+    form.tipo_documento === "requerimento_de_posse_de_arma_de_fogo" &&
+    conformidadeExibida.some((i) => i.fonteReferencia === "Cadastro do cliente");
   // Prioridade do carimbo: outro titular / parentesco > duplicidade > tipo errado.
   const motivoRejeicao: "titular" | "parentesco" | "duplicidade" | "tipo" | null = casoResidenciaTerceiro
     ? null
@@ -3476,45 +3521,80 @@ export function ClienteDocsHubModal({
     const requerimento = parseRequerimentoSinarm(texto);
     if (requerimento) {
       setConferenciaLocal(null);
+      // ── TODO CAMPO DIGITADO É CONFERIDO ────────────────────────────────
+      // O bloco IDENTIFICAÇÃO do requerimento é o único lugar do processo em
+      // que o cliente DIGITA os próprios dados — nome, filiação, RG, título de
+      // eleitor, endereço. A PF confere cada um contra os documentos anexados e
+      // indefere na divergência. Por isso a leitura é campo a campo, por
+      // posição na página, e o confronto é contra a linha inteira do cadastro.
+      //
+      // Fora da conferência, por decisão do produto: os dados da EMPRESA em que
+      // o cliente trabalha. Vínculo muda sem o cadastro acompanhar.
+      let camposDigitados = lerCamposRequerimentoPorGeometria([]);
+      try {
+        camposDigitados = lerCamposRequerimentoPorGeometria(await extrairItensPdfPorPagina(f));
+      } catch (e) {
+        console.warn("[requerimento] leitura por geometria falhou:", e);
+      }
+      // A frase-modelo do requerimento é a segunda fonte do titular: se o bloco
+      // de identificação não puder ser pareado, nome, CPF e RG ainda saem dali.
+      camposDigitados.nome_completo ||= requerimento.nome_completo ?? "";
+      camposDigitados.cpf ||= requerimento.cpf ?? "";
+      camposDigitados.rg ||= requerimento.rg ?? "";
+      camposDigitados.data_nascimento ||= requerimento.data_nascimento ?? "";
+      camposDigitados.especie_arma ||= requerimento.especie_arma ?? "";
+      camposDigitados.calibre ||= requerimento.calibre ?? "";
+
+      // O cadastro pode ainda não ter chegado (modal aberto e arquivo escolhido
+      // no mesmo instante). Buscar aqui evita conferir contra o vazio e exibir
+      // "sem referência" em tudo.
+      let cadastro = cadastroCompleto;
+      if (!cadastro && qaClienteId) {
+        try {
+          const { data } = await supabase
+            .from("qa_clientes" as any)
+            .select("nome_completo, cpf, nome_mae, nome_pai, data_nascimento, sexo, estado_civil, naturalidade_pais, naturalidade_uf, naturalidade_municipio, rg, emissor_rg, uf_emissor_rg, expedicao_rg, titulo_eleitor, profissao, email, celular, cep, endereco, numero, complemento, bairro, cidade, estado")
+            .eq("id", qaClienteId)
+            .maybeSingle();
+          if (data) {
+            cadastro = data as unknown as CadastroParaRequerimento;
+            setCadastroCompleto(cadastro);
+          }
+        } catch { /* sem cadastro a conferência degrada para "sem referência" */ }
+      }
+      // Props têm prioridade sobre a linha só quando a linha não trouxe o dado.
+      const cadastroReq: CadastroParaRequerimento = {
+        ...(cadastro ?? {}),
+        nome_completo: cadastro?.nome_completo || refClienteNome || null,
+        cpf: cadastro?.cpf || refClienteCpf || null,
+        data_nascimento: cadastro?.data_nascimento || refClienteDataNascimento || null,
+        nome_mae: cadastro?.nome_mae || refClienteNomeMae || null,
+      };
+
+      const conformidadeReq = conferirRequerimentoContraCadastro(camposDigitados, cadastroReq);
+      const divergentes = conformidadeReq.filter((i) => i.status === "divergente");
+      const titularConfere = !divergentes.some(
+        (item) => item.campo === "nome_completo" || item.campo === "cpf",
+      );
       const camposReq: Record<string, string | undefined> = {
-        nome_completo: requerimento.nome_completo ?? undefined,
-        cpf: requerimento.cpf ?? undefined,
-        rg: requerimento.rg ?? undefined,
-        data_nascimento: requerimento.data_nascimento ?? undefined,
+        ...Object.fromEntries(
+          Object.entries(camposDigitados).filter(([, v]) => !!v),
+        ),
         numero_documento: requerimento.numero_requerimento,
         numero_requerimento: requerimento.numero_requerimento,
         orgao_emissor: "Polícia Federal — SINARM",
         data_emissao: requerimento.data_emissao ?? undefined,
         data_validade: requerimento.data_vencimento ?? undefined,
-        especie_arma: requerimento.especie_arma ?? undefined,
-        calibre: requerimento.calibre ?? undefined,
       };
-      const conformidadeReq = calcularConformidade(
-        camposReq,
-        refClienteNome,
-        refClienteCpf,
-        refClienteDataNascimento,
-        refClienteNomeMae,
-        docsEfetivos,
-        null,
-        "requerimento_de_posse_de_arma_de_fogo",
-        null,
-        null,
-      );
-      const titularConfere = !conformidadeReq.some(
-        (item) =>
-          (item.campo === "nome_completo" || item.campo === "cpf") &&
-          item.status === "divergente",
-      );
       setClassificacao({
         tipoDetectado: "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO",
         confianca: 0.99,
         camposExtraidos: camposReq,
-        recomendacao: titularConfere ? "aceitar" : "revisao_obrigatoria",
-        revisao_obrigatoria: !titularConfere,
-        justificativa: titularConfere
-          ? "Leitura determinística: formulário oficial do SINARM (Polícia Federal), número do requerimento com 18 dígitos conferido. O título impresso é \"Requerimento de Aquisição de Arma de Fogo\" — é o mesmo documento que o checklist pede como Requerimento de Posse."
-          : "Formulário oficial do SINARM identificado, mas o titular lido não confere com o cadastro do cliente.",
+        recomendacao: divergentes.length === 0 ? "aceitar" : "revisao_obrigatoria",
+        revisao_obrigatoria: divergentes.length > 0,
+        justificativa: divergentes.length === 0
+          ? "Leitura determinística: formulário oficial do SINARM (Polícia Federal), número do requerimento com 18 dígitos conferido. O título impresso é \"Requerimento de Aquisição de Arma de Fogo\" — é o mesmo documento que o checklist pede como Requerimento de Posse. Todos os campos digitados conferem com o cadastro."
+          : `Formulário oficial do SINARM identificado, mas ${divergentes.length} campo(s) digitado(s) não conferem com o cadastro: ${divergentes.map((d) => d.label).join(", ")}.`,
       });
       setConformidade(conformidadeReq);
       setForm((prev) => ({
@@ -3534,12 +3614,17 @@ export function ClienteDocsHubModal({
         ].filter(Boolean).join("\n") || prev.observacoes,
       }));
       setCategoriaHub("documentos_processo");
-      if (!requerimento.nome_completo || !requerimento.cpf) {
+      if (!camposDigitados.nome_completo || !camposDigitados.cpf) {
         toast.error("Requerimento da PF identificado, mas não foi possível ler nome e CPF no PDF original. Confira os campos antes de salvar.");
       } else if (!titularConfere) {
         toast.error("Requerimento da PF identificado, mas o nome ou CPF não confere com o cadastro do cliente.");
+      } else if (divergentes.length > 0) {
+        toast.error(
+          `Requerimento lido: ${divergentes.length} campo(s) digitado(s) na PF não conferem com o cadastro — ${divergentes.map((d) => d.label).join(", ")}. Corrija no site da Polícia Federal e reenvie.`,
+        );
       } else {
-        toast.success("Requerimento de Posse lido e conferido — nº do requerimento, titular e prazo extraídos do PDF original.");
+        const conferidos = conformidadeReq.filter((i) => i.status === "conforme").length;
+        toast.success(`Requerimento de Posse lido e conferido — ${conferidos} campos digitados batem com o cadastro.`);
       }
       return true;
     }
@@ -5810,7 +5895,9 @@ export function ClienteDocsHubModal({
                     ? <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                     : <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-emerald-600" />}
                   <span className="font-bold uppercase tracking-wide text-[10px]">
-                    Conformidade com documentos aprovados
+                    {conferenciaContraCadastro
+                      ? "Conferência do que foi digitado na Polícia Federal"
+                      : "Conformidade com documentos aprovados"}
                     {conformidadeExibida.some(i => i.fonteReferencia?.includes("equipe")) ? " (dupla verificação)" : ""}
                   </span>
                 </div>
@@ -5818,8 +5905,12 @@ export function ClienteDocsHubModal({
                   <thead>
                     <tr className="text-[10px] uppercase tracking-wider opacity-60">
                       <th className="text-left pb-1 pr-2 font-semibold">Campo</th>
-                      <th className="text-left pb-1 pr-2 font-semibold">Na certidão</th>
-                      <th className="text-left pb-1 pr-2 font-semibold">Referência</th>
+                      <th className="text-left pb-1 pr-2 font-semibold">
+                        {conferenciaContraCadastro ? "Digitado na PF" : "Na certidão"}
+                      </th>
+                      <th className="text-left pb-1 pr-2 font-semibold">
+                        {conferenciaContraCadastro ? "No cadastro" : "Referência"}
+                      </th>
                       <th className="text-left pb-1 font-semibold">Status</th>
                     </tr>
                   </thead>

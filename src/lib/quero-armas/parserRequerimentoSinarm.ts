@@ -189,3 +189,177 @@ export function textoIndicaRequerimentoSinarm(hayNormalizado: string): boolean {
     )
   );
 }
+
+/* =============================================================================
+ * CAMPOS DIGITADOS PELO CLIENTE NO SITE DA PF
+ *
+ * Tudo que está no bloco IDENTIFICAÇÃO foi DIGITADO à mão pelo cliente no
+ * portal da Polícia Federal. É o único documento do processo em que isso
+ * acontece — todos os outros são emitidos por órgão. Um dígito trocado aqui não
+ * é detalhe de cadastro: é o processo inteiro andando com o dado errado.
+ *
+ * Por isso a leitura é campo a campo, pela POSIÇÃO na página (o formulário
+ * desenha todos os rótulos e depois todos os valores; ver
+ * `parearRotulosPorGeometria`), e nada é inferido: rótulo sem valor à direita
+ * volta vazio.
+ *
+ * O BLOCO DA EMPRESA FICA DE FORA, DE PROPÓSITO. Ele fica em outra página, com
+ * os MESMOS rótulos do endereço pessoal (CEP, Logradouro, Numero, Bairro, UF,
+ * Município). Ler as duas páginas juntas sobrescreveria a casa do cliente pelo
+ * endereço do trabalho — e a decisão do produto é não conferir o vínculo
+ * empregatício contra o cadastro.
+ * ============================================================================= */
+
+import {
+  parearRotulosPorGeometria,
+  type ItemTextoPdf,
+  type ParRotuloValor,
+} from "./leituraCamposPdf";
+
+export interface CamposRequerimentoPF {
+  // Identificação pessoal
+  nome_completo: string;
+  cpf: string;
+  nome_mae: string;
+  nome_pai: string;
+  data_nascimento: string; // ISO
+  sexo: string;
+  estado_civil: string;
+  // Naturalidade
+  naturalidade_pais: string;
+  naturalidade_uf: string;
+  naturalidade_municipio: string;
+  // Documento de identidade
+  rg: string;
+  rg_orgao: string;
+  rg_uf: string;
+  rg_expedicao: string; // ISO
+  titulo_eleitor: string;
+  // Contato e ocupação
+  profissao: string;
+  email: string;
+  celular: string;
+  telefone_fixo: string;
+  // Endereço residencial
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  // Informativos (não se comparam com o cadastro)
+  tipo_formulario: string;
+  categoria: string;
+  aposentado: string;
+  tipo_endereco: string;
+  especie_arma: string;
+  calibre: string;
+}
+
+const VAZIO: CamposRequerimentoPF = {
+  nome_completo: "", cpf: "", nome_mae: "", nome_pai: "", data_nascimento: "",
+  sexo: "", estado_civil: "", naturalidade_pais: "", naturalidade_uf: "",
+  naturalidade_municipio: "", rg: "", rg_orgao: "", rg_uf: "", rg_expedicao: "",
+  titulo_eleitor: "", profissao: "", email: "", celular: "", telefone_fixo: "",
+  cep: "", logradouro: "", numero: "", complemento: "", bairro: "", cidade: "",
+  uf: "", tipo_formulario: "", categoria: "", aposentado: "", tipo_endereco: "",
+  especie_arma: "", calibre: "",
+};
+
+/** Rótulos que o gerador do PDF imprime quebrados, sem os dois-pontos. */
+const ROTULOS_SEM_DOIS_PONTOS = ["País de", "Pais de", "País de Nascimento"];
+
+/** Rótulo → campo. Um para um; os ambíguos são resolvidos logo abaixo. */
+const ROTULO_PARA_CAMPO: Record<string, keyof CamposRequerimentoPF> = {
+  "NOME": "nome_completo",
+  "CPF": "cpf",
+  "NOME DA MAE": "nome_mae",
+  "NOME DO PAI": "nome_pai",
+  "DATA DE NASCIMENTO": "data_nascimento",
+  "SEXO": "sexo",
+  "ESTADO CIVIL": "estado_civil",
+  "PAIS DE": "naturalidade_pais",
+  "PAIS DE NASCIMENTO": "naturalidade_pais",
+  "UF DE NASCIMENTO": "naturalidade_uf",
+  "NUMERO DO RG": "rg",
+  "ORGAO EXP. RG": "rg_orgao",
+  "ORGAO EXP RG": "rg_orgao",
+  "UF DE EXP. RG": "rg_uf",
+  "UF DE EXP RG": "rg_uf",
+  "DATA DE EXPEDICAO": "rg_expedicao",
+  "TITULO DE ELEITOR": "titulo_eleitor",
+  "PROFISSAO": "profissao",
+  "EMAIL": "email",
+  "TELEFONE CELULAR": "celular",
+  "TELEFONE FIXO": "telefone_fixo",
+  "CEP": "cep",
+  "LOGRADOURO": "logradouro",
+  "NUMERO": "numero",
+  "COMPLEMENTO": "complemento",
+  "BAIRRO": "bairro",
+  "UF": "uf",
+  "TIPO DE FORMULARIO": "tipo_formulario",
+  "CATEGORIA": "categoria",
+  "APOSENTADO": "aposentado",
+  "TIPO": "tipo_endereco",
+};
+
+/**
+ * "Município:" aparece DUAS vezes na mesma página: uma na linha da
+ * naturalidade, outra na do endereço. Quem desempata é o rótulo vizinho
+ * impresso na mesma linha — "País de" na primeira, "UF:" na segunda.
+ */
+function campoDoMunicipio(par: ParRotuloValor): keyof CamposRequerimentoPF | null {
+  if (par.vizinhos.some((v) => v.startsWith("PAIS") || v === "UF DE NASCIMENTO")) {
+    return "naturalidade_municipio";
+  }
+  if (par.vizinhos.includes("UF")) return "cidade";
+  return null;
+}
+
+function textoDaPagina(itens: ItemTextoPdf[]): string {
+  return normalizar(itens.map((i) => String(i?.str ?? "")).join(" "));
+}
+
+/**
+ * Lê os campos digitados a partir das páginas do PDF (itens do pdf.js).
+ *
+ * Só a página do bloco IDENTIFICAÇÃO alimenta os dados pessoais; só a do bloco
+ * DADOS DA ARMA alimenta espécie e calibre. A página da empresa nunca é lida.
+ */
+export function lerCamposRequerimentoPorGeometria(
+  paginas: ItemTextoPdf[][],
+): CamposRequerimentoPF {
+  const campos: CamposRequerimentoPF = { ...VAZIO };
+
+  const identificacao = paginas.find((p) => textoDaPagina(p).includes("IDENTIFICACAO"));
+  if (identificacao) {
+    for (const par of parearRotulosPorGeometria(identificacao, {
+      rotulosSemDoisPontos: ROTULOS_SEM_DOIS_PONTOS,
+    })) {
+      const campo = par.rotulo === "MUNICIPIO"
+        ? campoDoMunicipio(par)
+        : ROTULO_PARA_CAMPO[par.rotulo] ?? null;
+      // Primeiro valor vence: o formulário repete a identificação na via do
+      // requerente, e a via da PF vem antes.
+      if (campo && par.valor && !campos[campo]) campos[campo] = par.valor;
+    }
+  }
+
+  const paginaArma = paginas.find((p) => textoDaPagina(p).includes("DADOS DA ARMA"));
+  if (paginaArma) {
+    for (const par of parearRotulosPorGeometria(paginaArma)) {
+      // SÓ espécie e calibre. Todo o resto desta página é da EMPRESA e, por
+      // decisão do produto, não é conferido contra o cadastro.
+      if (par.rotulo === "ESPECIE" && par.valor && !campos.especie_arma) campos.especie_arma = par.valor;
+      if (par.rotulo === "CALIBRE" && par.valor && !campos.calibre) campos.calibre = par.valor;
+    }
+  }
+
+  // Datas saem em ISO para comparar com as colunas `date` do cadastro.
+  campos.data_nascimento = dataBrParaIso(campos.data_nascimento) ?? "";
+  campos.rg_expedicao = dataBrParaIso(campos.rg_expedicao) ?? "";
+
+  return campos;
+}

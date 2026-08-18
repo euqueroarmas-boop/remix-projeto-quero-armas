@@ -138,6 +138,27 @@ export async function extrairTextoPdf(file: File): Promise<string> {
 }
 
 /**
+ * Lê o PDF preservando os ITENS com posição, página a página.
+ *
+ * Formulário oficial (o requerimento do SINARM é o caso) desenha todos os
+ * rótulos e só depois todos os valores. Nesse layout o texto reconstruído em
+ * linhas não casa rótulo com valor — quem casa é a POSIÇÃO. Ver
+ * `parearRotulosPorGeometria`.
+ */
+export async function extrairItensPdfPorPagina(file: File): Promise<ItemTextoPdf[][]> {
+  const { getDocument } = await carregarPdfjs();
+  const buf = await file.arrayBuffer();
+  const pdf = await getDocument({ data: buf }).promise;
+  const paginas: ItemTextoPdf[][] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    paginas.push(content.items as ItemTextoPdf[]);
+  }
+  return paginas;
+}
+
+/**
  * Lê os campos da certidão direto do texto do PDF.
  *
  * Devolve `precisaIA: true` quando não há camada de texto (PDF digitalizado)

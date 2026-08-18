@@ -332,3 +332,128 @@ export function cpfDoCadastroPresenteNoTexto(texto: string, cpfCadastro: unknown
   if (d.length !== 11) return false;
   return String(texto ?? "").replace(/\D/g, "").includes(d);
 }
+/* =============================================================================
+ * PAREAMENTO RÓTULO → VALOR POR GEOMETRIA
+ *
+ * Por que `reconstruirLinhasPdf` não basta em formulário
+ * -----------------------------------------------------
+ * Certidão é texto corrido: os fragmentos chegam na ordem em que se lê, e
+ * agrupar por linha resolve. Formulário oficial não. O requerimento do SINARM
+ * desenha PRIMEIRO todos os rótulos e DEPOIS todos os valores, cada bloco na
+ * sua ordem. O agrupamento por linha, que compara o Y com o do fragmento
+ * ANTERIOR, vê 30 rótulos seguidos, cada um numa altura diferente, e devolve 30
+ * linhas de rótulo sem valor nenhum — foi assim que o requerimento chegou ao
+ * Hub com nome, CPF, RG e endereço todos vazios.
+ *
+ * O que muda aqui
+ * ---------------
+ * Em vez da ordem do fluxo, usamos a POSIÇÃO: agrupa por altura na página
+ * (independente da ordem em que o PDF desenhou), ordena a linha por X e casa
+ * cada rótulo com a primeira célula à direita que não seja outro rótulo.
+ *
+ * Continua valendo a regra do módulo: nada é inferido. Rótulo sem valor à
+ * direita devolve vazio — que é um estado honesto e detectável.
+ * ============================================================================= */
+
+/** Um rótulo e o valor impresso à direita dele, na mesma linha da página. */
+export interface ParRotuloValor {
+  /** Rótulo normalizado: sem dois-pontos, sem acento, caixa alta. */
+  rotulo: string;
+  /** Rótulo exatamente como impresso. */
+  rotuloOriginal: string;
+  /** Valor lido à direita. Vazio quando o campo não foi preenchido. */
+  valor: string;
+  /** Índice da linha na página, de cima para baixo (0 = topo). */
+  linha: number;
+  /** Demais rótulos impressos na MESMA linha — desempatam rótulos repetidos. */
+  vizinhos: string[];
+}
+
+/** Diferença de altura, em pontos, dentro da qual duas células são a mesma linha. */
+const TOLERANCIA_LINHA_FORM = 4;
+/** Distância horizontal máxima entre um rótulo e o valor que lhe pertence. */
+const VAO_MAXIMO_VALOR = 220;
+
+export function normalizarRotulo(v: unknown): string {
+  return String(v ?? "")
+    .replace(/:\s*$/, "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+/**
+ * Casa rótulos com valores usando a posição na página.
+ *
+ * `rotulosSemDoisPontos` cobre o rótulo que o gerador do PDF quebra e deixa sem
+ * a pontuação (o requerimento imprime "País de" numa célula e "Nascimento:" em
+ * outra). Sem essa lista, a célula viraria valor e roubaria o campo seguinte.
+ */
+export function parearRotulosPorGeometria(
+  items: ItemTextoPdf[],
+  opts?: { rotulosSemDoisPontos?: string[]; vaoMaximo?: number },
+): ParRotuloValor[] {
+  type Celula = { x: number; fim: number; y: number; texto: string; rotulo: boolean; valorInline?: string };
+
+  const extras = new Set((opts?.rotulosSemDoisPontos ?? []).map((r) => normalizarRotulo(r)));
+  const vaoMaximo = opts?.vaoMaximo ?? VAO_MAXIMO_VALOR;
+
+  const celulas: Celula[] = [];
+  for (const it of items) {
+    const texto = String(it?.str ?? "").trim();
+    if (!texto) continue;
+    const t = it?.transform;
+    const x = Array.isArray(t) && typeof t[4] === "number" ? t[4] : 0;
+    const y = Array.isArray(t) && typeof t[5] === "number" ? t[5] : 0;
+    const largura = typeof it?.width === "number" ? it.width : texto.length * 4;
+
+    // "Espécie: Pistola" chega numa célula só. Rótulo e valor saem separados.
+    const inline = texto.match(/^([^:]{2,40}):\s+(\S.*)$/);
+    if (inline) {
+      celulas.push({ x, fim: x + largura, y, texto: `${inline[1]}:`, rotulo: true, valorInline: inline[2].trim() });
+      continue;
+    }
+    const ehRotulo = /:$/.test(texto) || extras.has(normalizarRotulo(texto));
+    celulas.push({ x, fim: x + largura, y, texto, rotulo: ehRotulo });
+  }
+
+  // Agrupa por ALTURA, não pela ordem em que o PDF desenhou.
+  const porAltura = [...celulas].sort((a, b) => b.y - a.y || a.x - b.x);
+  const linhas: Celula[][] = [];
+  for (const c of porAltura) {
+    const ultima = linhas[linhas.length - 1];
+    if (ultima && Math.abs(ultima[0].y - c.y) <= TOLERANCIA_LINHA_FORM) ultima.push(c);
+    else linhas.push([c]);
+  }
+
+  const pares: ParRotuloValor[] = [];
+  linhas.forEach((linha, indice) => {
+    const ordenada = [...linha].sort((a, b) => a.x - b.x);
+    const rotulosDaLinha = ordenada.filter((c) => c.rotulo).map((c) => normalizarRotulo(c.texto));
+    ordenada.forEach((celula, i) => {
+      if (!celula.rotulo) return;
+      let valor = celula.valorInline ?? "";
+      if (!valor) {
+        for (let j = i + 1; j < ordenada.length; j++) {
+          const cand = ordenada[j];
+          if (cand.rotulo) break;
+          if (cand.x - celula.x > vaoMaximo) break;
+          valor = cand.texto;
+          break;
+        }
+      }
+      const rotulo = normalizarRotulo(celula.texto);
+      pares.push({
+        rotulo,
+        rotuloOriginal: celula.texto.replace(/:\s*$/, "").trim(),
+        valor: valor.trim(),
+        linha: indice,
+        vizinhos: rotulosDaLinha.filter((r) => r !== rotulo),
+      });
+    });
+  });
+
+  return pares;
+}
