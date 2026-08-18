@@ -10,7 +10,7 @@
 > cargo, marco de revisão da contraprestação, valor da indenização de não
 > concorrência, valor diário da transição, foro.
 
-**CONTRATANTE:** _______________________________________________, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº ____________________, com sede em _______________________________________________, neste ato representada na forma de seu contrato social por _______________________________________________, inscrito no CPF sob o nº ____________________.
+**CONTRATANTE:** _______________________________________________, pessoa jurídica de direito privado, inscrita no CNPJ sob o nº 13.366.668/0001-07, com sede em _______________________________________________, neste ato representada na forma de seu contrato social por _______________________________________________, inscrito no CPF sob o nº ____________________.
 
 **CONTRATADO:** _______________________________________________, portador da cédula de identidade nº ____________________, inscrito no CPF sob o nº ____________________, residente e domiciliado em _______________________________________________, por si e, se aplicável, por meio da pessoa jurídica _______________________________________________, CNPJ ____________________, da qual é sócio ou titular, respondendo ambos solidariamente pelas obrigações aqui assumidas.
 

@@ -10,7 +10,7 @@
 ---
 
 **DIVULGADORA:** `[[WMTi — RAZÃO SOCIAL COMPLETA]]`, pessoa jurídica de direito
-privado, inscrita no CNPJ sob o nº `[[CNPJ DA WMTi]]`, com sede em
+privado, inscrita no CNPJ sob o nº 13.366.668/0001-07, com sede em
 `[[ENDEREÇO COMPLETO]]`, neste ato representada na forma de seu contrato
 social por `[[SEU NOME COMPLETO]]`, `[[nacionalidade]]`, `[[estado civil]]`,
 inscrito no CPF sob o nº `[[SEU CPF]]`.

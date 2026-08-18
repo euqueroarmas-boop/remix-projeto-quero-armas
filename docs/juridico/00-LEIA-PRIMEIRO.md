@@ -68,7 +68,7 @@ nos arquivos.
 
 1. Nome completo, CPF, RG e endereço do programador.
 2. Ele tem PJ/MEI? Razão social e CNPJ, se tiver.
-3. Razão social, CNPJ e endereço completos da WMTi.
+3. Razão social e endereço completos da WMTi (CNPJ já registrado: 13.366.668/0001-07).
 4. Endereço completo da Quero Armas.
 5. O percentual da participação — e **sobre o quê** (ver documento 03).
 6. Se vai haver pagamento mensal e de quanto (ver o alerta no documento 02).

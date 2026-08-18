@@ -20,7 +20,7 @@
 
 ---
 
-**DESENVOLVEDORA/LICENCIANTE:** `[[WMTi — RAZÃO SOCIAL]]`, CNPJ `[[__]]`, com
+**DESENVOLVEDORA/LICENCIANTE:** `[[WMTi — RAZÃO SOCIAL]]`, CNPJ **13.366.668/0001-07**, com
 sede em `[[__]]`, cujo objeto social contempla o desenvolvimento de programas
 de computador (CNAE `[[__]]`).
 
