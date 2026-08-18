@@ -864,6 +864,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     devolucao_motivo: string | null;
     aprovada_cliente_em: string | null;
     editada_pelo_cliente: boolean | null;
+    /** Via SIMPLES — a que entra no dossiê e vai ao órgão. */
+    peticao_storage_path: string | null;
+    /** Via LACRADA — texto + registro do aceite. Arquivo interno. */
+    lacre_storage_path: string | null;
   }>>([]);
   const [enviandoPeca, setEnviandoPeca] = useState<string | null>(null);
 
@@ -1013,7 +1017,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     if (!cid) return;
     const { data } = await supabase
       .from("qa_geracoes_pecas")
-      .select("id, titulo_geracao, tipo_peca, status_cliente, processo_id, devolucao_motivo, aprovada_cliente_em, editada_pelo_cliente")
+      .select("id, titulo_geracao, tipo_peca, status_cliente, processo_id, devolucao_motivo, aprovada_cliente_em, editada_pelo_cliente, peticao_storage_path, lacre_storage_path")
       .eq("cliente_id", cid)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -3070,15 +3074,76 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                 {pc.editada_pelo_cliente ? " · COM EDIÇÕES DELE" : ""}
                               </p>
                             )}
+                            {/*
+                              AS DUAS VIAS.
+
+                              A SIMPLES é a que entra no dossiê e chega à PF —
+                              só o texto. A LACRADA fica com a gente: mesmo
+                              texto mais o registro do aceite (data, hora, IP,
+                              navegador e impressão digital), que é o que
+                              responde a "eu nunca disse isso".
+                            */}
+                            {st === "aprovada" && (
+                              <div className="flex flex-wrap gap-3 mt-1.5">
+                                {pc.peticao_storage_path ? (
+                                  <button
+                                    onClick={() =>
+                                      viewer.abrirStorage("qa-processo-docs", pc.peticao_storage_path!, {
+                                        fileName: "peticao.pdf",
+                                        title: "Petição — via entregue ao órgão",
+                                      })
+                                    }
+                                    className="text-[10px] uppercase tracking-wider font-bold text-[#7A1F2B] hover:underline"
+                                  >
+                                    VER A VIA DO ÓRGÃO
+                                  </button>
+                                ) : (
+                                  // Aprovação anterior a 18/08/2026: o arquivo
+                                  // nunca foi gerado, então a peça está fora
+                                  // do dossiê. O botão ao lado reabre para uma
+                                  // nova aprovação — é dela que o arquivo
+                                  // nasce.
+                                  <span className="text-[10px] uppercase tracking-wider font-bold text-orange-700">
+                                    APROVADA SEM ARQUIVO — FORA DO DOSSIÊ
+                                  </span>
+                                )}
+                                {pc.lacre_storage_path && (
+                                  <button
+                                    onClick={() =>
+                                      viewer.abrirStorage("qa-processo-docs", pc.lacre_storage_path!, {
+                                        fileName: "peticao-lacrada.pdf",
+                                        title: "Petição — via lacrada (arquivo interno)",
+                                      })
+                                    }
+                                    className="text-[10px] uppercase tracking-wider font-bold text-slate-500 hover:underline"
+                                  >
+                                    VER A VIA LACRADA
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
-                          {st !== "aprovada" && st !== "aguardando_cliente" && desteProcesso && (
+                          {/*
+                            Aprovada COM arquivo é ponto final. Aprovada SEM
+                            arquivo é aprovação pela metade — a peça ficou fora
+                            do dossiê — e precisa voltar para um novo aceite,
+                            agora com a declaração de veracidade.
+                          */}
+                          {(st === "aprovada" ? !pc.peticao_storage_path : st !== "aguardando_cliente") &&
+                            desteProcesso && (
                             <button
                               onClick={() => enviarPecaAoCliente(pc.id)}
                               disabled={enviandoPeca === pc.id}
                               className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-[#7A1F2B] hover:bg-[#661925] disabled:opacity-60"
                             >
                               <FileSignature className="h-3 w-3" />
-                              {enviandoPeca === pc.id ? "ENVIANDO…" : st === "devolvida" ? "REENVIAR" : "ENVIAR AO CLIENTE"}
+                              {enviandoPeca === pc.id
+                                ? "ENVIANDO…"
+                                : st === "aprovada"
+                                  ? "REABRIR PARA GERAR O ARQUIVO"
+                                  : st === "devolvida"
+                                    ? "REENVIAR"
+                                    : "ENVIAR AO CLIENTE"}
                             </button>
                           )}
                         </li>

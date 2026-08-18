@@ -7734,10 +7734,13 @@ export type Database = {
       qa_geracoes_pecas: {
         Row: {
           aprovacao_accept_language: string | null
+          aprovacao_declaracao: string | null
           aprovacao_hash: string | null
           aprovacao_ip: string | null
           aprovacao_user_agent: string | null
           aprovada_cliente_em: string | null
+          lacre_storage_path: string | null
+          peticao_storage_path: string | null
           caso_id: string | null
           cliente_id: number | null
           correcoes_ia_alertas_json: Json
@@ -7773,10 +7776,13 @@ export type Database = {
         }
         Insert: {
           aprovacao_accept_language?: string | null
+          aprovacao_declaracao?: string | null
           aprovacao_hash?: string | null
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
+          lacre_storage_path?: string | null
+          peticao_storage_path?: string | null
           caso_id?: string | null
           cliente_id?: number | null
           correcoes_ia_alertas_json?: Json
@@ -7812,10 +7818,13 @@ export type Database = {
         }
         Update: {
           aprovacao_accept_language?: string | null
+          aprovacao_declaracao?: string | null
           aprovacao_hash?: string | null
           aprovacao_ip?: string | null
           aprovacao_user_agent?: string | null
           aprovada_cliente_em?: string | null
+          lacre_storage_path?: string | null
+          peticao_storage_path?: string | null
           caso_id?: string | null
           cliente_id?: number | null
           correcoes_ia_alertas_json?: Json

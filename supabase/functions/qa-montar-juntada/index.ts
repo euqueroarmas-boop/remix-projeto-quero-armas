@@ -106,6 +106,33 @@ Deno.serve(async (req) => {
       .select("id, tipo_documento, nome_documento, status, arquivo_storage_path, data_validade")
       .eq("qa_cliente_id", processo.cliente_id);
 
+    // ── 3) O QUE NÃO VAI PARA A DELEGACIA ────────────────────────────────
+    // Decisão do titular (18/08/2026), na terceira auditoria: o relato de
+    // efetiva necessidade — a narrativa que o cliente escreveu e aprovou — é
+    // PROVA NOSSA, não peça do processo. Ele existe para demonstrar que o
+    // cliente afirmou aquilo e concordou com a versão que redigimos a partir
+    // do material solto que ele trouxe. Guardamos; não entregamos.
+    //
+    // O que vai à Polícia Federal é a PETIÇÃO FINAL dos advogados, aprovada
+    // por ele, mais os boletins, inquéritos e demais provas que ele juntou.
+    //
+    // O corte é pelo CAMINHO do arquivo, não pelo tipo: `qa-efetiva-aprovar`
+    // grava o dossiê na linha de checklist que existir, e essa linha pode ser
+    // `comprovante_efetiva_necessidade` — que também é o código de uma prova
+    // legítima que o cliente envia no porte. Excluir por tipo derrubaria a
+    // prova junto com a narrativa.
+    const excluidos = new Set<string>();
+    {
+      const { data: efetivas } = await admin
+        .from("qa_efetiva_necessidade")
+        .select("dossie_storage_path")
+        .eq("processo_id", processoId);
+      for (const e of efetivas ?? []) {
+        const p = (e as { dossie_storage_path?: string | null }).dossie_storage_path;
+        if (p) excluidos.add(p);
+      }
+    }
+
     const itens: ItemJuntada[] = [];
     const ignorados: Array<{ tipo: string; motivo: string }> = [];
     const jaVisto = new Set<string>();
@@ -134,6 +161,14 @@ Deno.serve(async (req) => {
       }
       if (!caminho) {
         ignorados.push({ tipo: t, motivo: "sem arquivo no storage" });
+        return;
+      }
+      // Relato de efetiva necessidade: prova de arquivo, não peça do dossiê.
+      if (excluidos.has(caminho)) {
+        ignorados.push({
+          tipo: t,
+          motivo: "relato de efetiva necessidade — prova de arquivo, não vai ao órgão",
+        });
         return;
       }
       // Um tipo entra uma vez só: Hub e processo costumam apontar para o

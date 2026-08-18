@@ -19,11 +19,29 @@
 // Se corrigiu uma data ou o nome de uma rua, foi porque estava errado. Nada de
 // "normalizar" o que ele escreveu.
 //
+// ── APROVAR NÃO É O FIM: APROVAR VIRA ARQUIVO ───────────────────────────────
+// Terceira auditoria (18/08/2026): o ciclo terminava aqui, com o texto gravado
+// numa coluna. Só que o PDF único que vai para a delegacia é montado a partir
+// dos DOCUMENTOS do processo — e texto em coluna não é documento. A peça que o
+// cliente aprovou simplesmente não entrava no dossiê.
+//
+// Agora aprovar gera duas vias (ver `_shared/peticaoPdf.ts`):
+//   • SIMPLES — entra no checklist do processo como `peticao_efetiva_necessidade`
+//     e é o que a juntada leva à Polícia Federal. Só o texto.
+//   • LACRADA — fica arquivada, com data/hora, IP, navegador, impressão digital
+//     do texto e a declaração que ele marcou. NÃO vira documento do processo,
+//     logo nunca entra na juntada.
+//
+// Falhar ao gerar o PDF NÃO desfaz a aprovação: o aceite do cliente é o ato
+// jurídico e não pode se perder por um erro de storage. O que fica é um aviso
+// para a equipe, devolvido em `documento_ok`/`documento_aviso`.
+//
 // Entrada (POST, dono do processo ou staff):
-//   { geracao_id, acao: "aprovar" | "devolver", texto?, motivo? }
+//   { geracao_id, acao: "aprovar" | "devolver", texto?, motivo?, declaracao_veracidade? }
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { montarPeticaoSimplesPdf, montarPeticaoLacradaPdf } from "../_shared/peticaoPdf.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,6 +50,33 @@ const corsHeaders = {
 
 const TEAM_EMAIL = "eu@queroarmas.com.br";
 const ADMIN_BASE = "https://www.euqueroarmas.com.br/quero-armas/processos";
+
+/** Bucket dos documentos do processo — o mesmo do upload do portal. */
+const BUCKET_PROCESSO = "qa-processo-docs";
+
+/**
+ * Tipo com que a petição entra no checklist. É o slot 1.9 do dossiê
+ * (`_shared/ordemProtocolo.ts`), que fecha o bloco das provas: o analista lê
+ * primeiro os fatos comprovados e só então o argumento que os amarra.
+ */
+const TIPO_PETICAO = "peticao_efetiva_necessidade";
+
+/**
+ * ESPELHO de `src/lib/quero-armas/peticaoDeclaracao.ts`.
+ * O teste `peticaoViraDocumento` compara as duas cópias.
+ */
+const DECLARACAO_VERACIDADE =
+  "Declaro que li a petição por inteiro, que concordo com o seu conteúdo e que " +
+  "os fatos nela narrados são verdadeiros.";
+
+/** Data/hora em America/Sao_Paulo, para o carimbo da via lacrada. */
+function brt(d: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(d);
+}
 
 function json(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -62,6 +107,8 @@ Deno.serve(async (req) => {
     const acao = String((body as { acao?: string })?.acao ?? "aprovar").trim();
     const textoEditado = String((body as { texto?: string })?.texto ?? "");
     const motivo = String((body as { motivo?: string })?.motivo ?? "").trim().slice(0, 1000);
+    const declaracaoVeracidade =
+      (body as { declaracao_veracidade?: boolean })?.declaracao_veracidade === true;
 
     if (!geracaoId) return json({ error: "geracao_id_obrigatorio" }, 400);
     if (acao !== "aprovar" && acao !== "devolver") {
@@ -69,6 +116,12 @@ Deno.serve(async (req) => {
     }
     if (acao === "devolver" && motivo.length < 5) {
       return json({ error: "diga o que precisa mudar", minimo: 5 }, 400);
+    }
+    // A caixa marcada é o que o lacre atesta. Aceitar aprovação sem ela
+    // produziria uma via de arquivo afirmando uma declaração que ninguém fez —
+    // pior do que não ter lacre nenhum, porque parece prova e não é.
+    if (acao === "aprovar" && !declaracaoVeracidade) {
+      return json({ error: "declaracao_veracidade_obrigatoria" }, 400);
     }
 
     const { data: peca } = await admin
@@ -179,25 +232,52 @@ Deno.serve(async (req) => {
         aprovacao_user_agent: ua,
         aprovacao_accept_language: idioma,
         aprovacao_hash: hash,
+        aprovacao_declaracao: DECLARACAO_VERACIDADE,
         devolucao_motivo: null,
         updated_at: agora,
       })
       .eq("id", geracaoId);
     if (error) return json({ error: error.message }, 500);
 
+    // ── A PETIÇÃO VIRA ARQUIVO ──────────────────────────────────────────
+    // Depois da aprovação gravada, nunca antes: se o storage falhar, o aceite
+    // do cliente já está registrado e a equipe reprocessa. O contrário —
+    // arquivo no storage sem aceite no banco — seria uma peça órfã entrando no
+    // dossiê sem ninguém ter aprovado nada.
+    const mat = await materializarPeticao(admin, {
+      geracaoId,
+      processoId,
+      clienteId,
+      texto: final,
+      titulo: String((peca as { titulo_geracao?: string }).titulo_geracao ?? "") ||
+        "Peticao",
+      carimbo: {
+        aprovadaEm: brt(new Date(agora)),
+        ip, userAgent: ua, idioma, hash, editada,
+        declaracao: DECLARACAO_VERACIDADE,
+      },
+    });
+    if (mat.aviso) console.warn("[peca-aprovar] materializacao:", mat.aviso);
+
     if (processoId) {
       await admin.from("qa_processo_eventos").insert({
         processo_id: processoId,
         tipo_evento: "peca_aprovada_pelo_cliente",
         descricao:
-          `CLIENTE APROVOU A PETIÇÃO${editada ? " COM EDIÇÕES PRÓPRIAS" : " SEM ALTERAÇÕES"}`,
+          `CLIENTE APROVOU A PETIÇÃO${editada ? " COM EDIÇÕES PRÓPRIAS" : " SEM ALTERAÇÕES"}` +
+          (mat.ok ? " · PETIÇÃO ANEXADA AO DOSSIÊ" : " · ATENÇÃO: NÃO ANEXADA AO DOSSIÊ"),
         ator: ehCliente ? "cliente" : "equipe_operacional",
         dados_json: {
           geracao_id: geracaoId,
           editada_pelo_cliente: editada,
           caracteres: final.length,
           hash_sha256: hash,
+          declaracao: DECLARACAO_VERACIDADE,
           ip,
+          documento_ok: mat.ok,
+          documento_aviso: mat.aviso,
+          peticao_storage_path: mat.path,
+          lacre_storage_path: mat.lacrePath,
         },
       });
 
@@ -220,12 +300,154 @@ Deno.serve(async (req) => {
       status_cliente: "aprovada",
       editada_pelo_cliente: editada,
       email_equipe_ok: emailOk,
+      documento_ok: mat.ok,
+      documento_aviso: mat.aviso,
     });
   } catch (e) {
     console.error("[qa-peca-aprovar-cliente]", e);
     return json({ error: e instanceof Error ? e.message : "erro_interno" }, 500);
   }
 });
+
+/**
+ * Gera as duas vias e registra a SIMPLES como documento do processo.
+ *
+ * ── POR QUE ISSO É "BEST-EFFORT" DE PROPÓSITO ───────────────────────────────
+ * O aceite do cliente já está gravado quando esta função roda. Se o storage
+ * cair no meio, derrubar a requisição faria o cliente ver "não deu para
+ * registrar" e clicar de novo — só que a segunda tentativa bate na trava de
+ * idempotência (`ja_aprovada`) e não gera nada. Ele ficaria preso, com a peça
+ * aprovada e sem arquivo, sem entender o motivo.
+ *
+ * Então: erro aqui vira aviso. A equipe vê no histórico do processo e no
+ * retorno da chamada, e reprocessa reenviando a peça.
+ */
+async function materializarPeticao(
+  admin: ReturnType<typeof createClient>,
+  args: {
+    geracaoId: string;
+    processoId: string | null;
+    clienteId: number;
+    texto: string;
+    titulo: string;
+    carimbo: {
+      aprovadaEm: string;
+      ip: string | null;
+      userAgent: string | null;
+      idioma: string | null;
+      hash: string;
+      editada: boolean;
+      declaracao: string;
+    };
+  },
+): Promise<{ ok: boolean; aviso: string | null; path: string | null; lacrePath: string | null }> {
+  // Peça não amarrada a processo não tem dossiê onde entrar. Não é erro: é o
+  // caso da peça gerada em estudo, antes de existir processo.
+  if (!args.processoId) {
+    return { ok: false, aviso: "Peça sem processo: nada a anexar ao dossiê.", path: null, lacrePath: null };
+  }
+
+  try {
+    const { data: cliente } = await admin
+      .from("qa_clientes").select("nome_completo, cpf").eq("id", args.clienteId).maybeSingle();
+    const { data: processo } = await admin
+      .from("qa_processos").select("servico_nome").eq("id", args.processoId).maybeSingle();
+
+    const meta = {
+      titulo: args.titulo,
+      requerente: (cliente as { nome_completo?: string } | null)?.nome_completo ?? "requerente",
+      cpf: (cliente as { cpf?: string } | null)?.cpf ?? null,
+      servico: (processo as { servico_nome?: string } | null)?.servico_nome ?? null,
+    };
+
+    const simples = await montarPeticaoSimplesPdf(args.texto, meta);
+    const lacrada = await montarPeticaoLacradaPdf(args.texto, meta, args.carimbo);
+
+    // Caminho estável por geração: reaprovar depois de a equipe reescrever
+    // substitui o arquivo em vez de acumular versão órfã no bucket.
+    const base = `${args.processoId}/peticao`;
+    const path = `${base}/peticao-${args.geracaoId}.pdf`;
+    const lacrePath = `${base}/lacre-${args.geracaoId}.pdf`;
+
+    const up1 = await admin.storage.from(BUCKET_PROCESSO)
+      .upload(path, simples, { contentType: "application/pdf", upsert: true });
+    if (up1.error) throw new Error(`peticao: ${up1.error.message}`);
+
+    // A via lacrada é prova nossa; se ela falhar, a petição simples já subiu e
+    // o dossiê está inteiro. Vira aviso, não interrompe.
+    let lacreOk = true;
+    const up2 = await admin.storage.from(BUCKET_PROCESSO)
+      .upload(lacrePath, lacrada, { contentType: "application/pdf", upsert: true });
+    if (up2.error) { lacreOk = false; console.warn("[peca-aprovar] lacre não subiu", up2.error.message); }
+
+    const agora = new Date().toISOString();
+
+    // O tipo é único no processo: a petição aprovada é UMA. Reaprovação
+    // atualiza a linha existente em vez de criar uma segunda, que entraria
+    // duas vezes no dossiê.
+    const { data: existente } = await admin
+      .from("qa_processo_documentos")
+      .select("id")
+      .eq("processo_id", args.processoId)
+      .eq("tipo_documento", TIPO_PETICAO)
+      .maybeSingle();
+
+    const campos = {
+      nome_documento: "Petição aprovada pelo requerente",
+      status: "aprovado",
+      arquivo_storage_key: path,
+      data_envio: agora,
+      data_validacao: agora,
+      observacoes:
+        "Petição elaborada pela equipe jurídica e aprovada eletronicamente pelo requerente. " +
+        "Via de arquivo com o registro do aceite guardada separadamente.",
+      updated_at: agora,
+    };
+
+    if (existente) {
+      const { error } = await admin
+        .from("qa_processo_documentos").update(campos).eq("id", (existente as { id: string }).id);
+      if (error) throw new Error(`documento: ${error.message}`);
+    } else {
+      const { error } = await admin.from("qa_processo_documentos").insert({
+        processo_id: args.processoId,
+        cliente_id: args.clienteId,
+        tipo_documento: TIPO_PETICAO,
+        etapa: "complementar",
+        ordem: 190,
+        // NÃO é obrigatório do checklist: quem produz esta peça somos nós, não
+        // o cliente. Marcá-la obrigatória faria o contador de conclusão do
+        // processo esperar por um documento que nunca é cobrado dele.
+        obrigatorio: false,
+        formato_aceito: ["pdf"],
+        regra_validacao: { origem: "peca_aprovada_pelo_cliente", geracao_id: args.geracaoId },
+        ...campos,
+      });
+      if (error) throw new Error(`documento: ${error.message}`);
+    }
+
+    // Endereço das duas vias guardado na própria geração: é por ali que a tela
+    // da equipe abre o lacre sem precisar adivinhar caminho de bucket.
+    await admin.from("qa_geracoes_pecas").update({
+      peticao_storage_path: path,
+      lacre_storage_path: lacreOk ? lacrePath : null,
+    }).eq("id", args.geracaoId);
+
+    return {
+      ok: true,
+      aviso: lacreOk ? null : "Petição anexada, mas a via lacrada não foi arquivada.",
+      path,
+      lacrePath: lacreOk ? lacrePath : null,
+    };
+  } catch (e) {
+    return {
+      ok: false,
+      aviso: `Petição aprovada, mas NÃO anexada ao dossiê: ${e instanceof Error ? e.message : "erro"}`,
+      path: null,
+      lacrePath: null,
+    };
+  }
+}
 
 /**
  * Avisa a equipe. Não existe "aprovado e parado": aprovação que ninguém vê é

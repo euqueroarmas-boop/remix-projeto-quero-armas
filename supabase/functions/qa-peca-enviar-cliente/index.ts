@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
     const { data: peca } = await admin
       .from("qa_geracoes_pecas")
-      .select("id, cliente_id, tipo_peca, titulo_geracao, minuta_gerada, status_cliente")
+      .select("id, cliente_id, tipo_peca, titulo_geracao, minuta_gerada, status_cliente, peticao_storage_path")
       .eq("id", geracaoId)
       .maybeSingle();
     if (!peca) return json({ error: "peca_not_found" }, 404);
@@ -81,7 +81,20 @@ Deno.serve(async (req) => {
     }
 
     const jaEnviada = String((peca as { status_cliente?: string }).status_cliente ?? "");
-    if (jaEnviada === "aprovada") {
+    const temArquivo = !!(peca as { peticao_storage_path?: string | null }).peticao_storage_path;
+    // APROVADA E SEM ARQUIVO É APROVAÇÃO PELA METADE.
+    //
+    // Até 18/08/2026 aprovar não gerava PDF nenhum, e a petição não entrava no
+    // dossiê. As aprovações daquele período existem no banco sem arquivo: se
+    // esta trava as tratasse como concluídas, não haveria caminho nenhum para
+    // consertá-las — o envio devolveria "já aprovada" para sempre e a peça
+    // continuaria fora da juntada.
+    //
+    // Reabrir é o único conserto honesto: o cliente aprova de novo, agora
+    // marcando a declaração de veracidade, e o arquivo nasce desse aceite. Não
+    // dá para gerar o PDF por conta própria a partir de uma aprovação antiga:
+    // o lacre atestaria uma declaração que ele nunca leu.
+    if (jaEnviada === "aprovada" && temArquivo) {
       return json({ ok: true, ja_aprovada: true, status_cliente: jaEnviada });
     }
 

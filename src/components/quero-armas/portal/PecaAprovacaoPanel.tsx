@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Loader2, Pencil, Undo2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DECLARACAO_VERACIDADE } from "@/lib/quero-armas/peticaoDeclaracao";
 
 export interface PecaParaAprovar {
   id: string;
@@ -50,6 +51,9 @@ export default function PecaAprovacaoPanel({
   const [pedindoAjuste, setPedindoAjuste] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [enviando, setEnviando] = useState(false);
+  // A caixa da declaração. É ela que dá sentido ao lacre guardado: sem a
+  // afirmação, o registro provaria só que alguém clicou num botão.
+  const [declarou, setDeclarou] = useState(false);
 
   // A equipe pode reescrever a peça enquanto esta tela está aberta.
   useEffect(() => {
@@ -57,11 +61,16 @@ export default function PecaAprovacaoPanel({
     setEditando(false);
     setPedindoAjuste(false);
     setMotivo("");
+    setDeclarou(false);
   }, [peca.id, peca.minuta_gerada, peca.texto_final]);
 
   const decidir = async (acao: "aprovar" | "devolver") => {
     if (acao === "aprovar" && texto.trim().length < 200) {
       toast.error("O texto ficou curto demais. Fale com a equipe antes de aprovar.");
+      return;
+    }
+    if (acao === "aprovar" && !declarou) {
+      toast.error("Marque a declaração antes de aprovar.");
       return;
     }
     if (acao === "devolver" && motivo.trim().length < 5) {
@@ -74,7 +83,9 @@ export default function PecaAprovacaoPanel({
         body: {
           geracao_id: peca.id,
           acao,
-          ...(acao === "aprovar" ? { texto } : { motivo: motivo.trim() }),
+          ...(acao === "aprovar"
+            ? { texto, declaracao_veracidade: true }
+            : { motivo: motivo.trim() }),
         },
       });
       if (error) throw error;
@@ -192,9 +203,29 @@ export default function PecaAprovacaoPanel({
         </div>
       ) : (
         <div className="space-y-2">
+          {/*
+            A DECLARAÇÃO, ANTES DO BOTÃO.
+
+            A via que vai à Polícia Federal é o PDF simples, só com o texto. O
+            registro deste aceite — data, hora, IP, navegador e a impressão
+            digital do texto — fica arquivado conosco, junto desta frase. É o
+            que responde, no dia em que for preciso, à alegação de que ele não
+            afirmou aquilo.
+          */}
+          <label className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={declarou}
+              onChange={(e) => setDeclarou(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#2F8F4A]"
+            />
+            <span className="text-sm text-slate-700 leading-relaxed">
+              {DECLARACAO_VERACIDADE}
+            </span>
+          </label>
           <button
             onClick={() => decidir("aprovar")}
-            disabled={enviando}
+            disabled={enviando || !declarou}
             className="w-full h-11 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-bold uppercase tracking-wide text-white bg-[#2F8F4A] hover:bg-[#27793E] disabled:opacity-60"
           >
             {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
@@ -209,8 +240,9 @@ export default function PecaAprovacaoPanel({
           </button>
           {/* Aprovar aqui não é rascunho: dispara o aviso e libera o protocolo. */}
           <p className="text-sm text-slate-500 leading-relaxed">
-            Ao aprovar, a petição é liberada para entrega. Guardamos data, hora e uma
-            impressão digital do texto que você aprovou.
+            Ao aprovar, esta petição passa a fazer parte do dossiê entregue à Polícia
+            Federal. Guardamos data, hora e uma impressão digital do texto que você
+            aprovou — a via entregue ao órgão contém apenas o texto.
           </p>
         </div>
       )}
