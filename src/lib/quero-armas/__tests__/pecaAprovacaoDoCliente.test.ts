@@ -276,3 +276,36 @@ describe("a aprovação do recurso migrou para o guiado", () => {
     expect(portal).toMatch(/pinnedId: `recurso:\$\{recursoPF\.id\}`/);
   });
 });
+
+// ============================================================================
+// REAUDITORIA 18/08/2026 — dois laços que a própria F9 deixou abertos.
+// ============================================================================
+
+describe("a edição do cliente chega ao documento exportado", () => {
+  it("o DOCX usa texto_final, não a minuta original", () => {
+    // Furo criado junto com a F9 e pego na reauditoria no mesmo dia: o ciclo
+    // deixava o cliente CORRIGIR a peça, mas a exportação lia `minuta_gerada`.
+    // O cliente arrumava a data do boletim, aprovava, e a equipe baixava e
+    // protocolava a versão ERRADA — com a falsa sensação de que fora conferida.
+    const src = r("supabase/functions/qa-export-docx/index.ts");
+    expect(src).toMatch(/let content = geracao\.texto_final \|\| geracao\.minuta_gerada/);
+  });
+
+  it("peça sem ciclo de aprovação continua saindo pela minuta", () => {
+    const src = r("supabase/functions/qa-export-docx/index.ts");
+    expect(src).toContain("geracao.minuta_gerada");
+  });
+});
+
+describe("aprovar o último documento faz o processo andar na hora", () => {
+  it("a aprovação manual da equipe chama o checador de conclusão", () => {
+    // Antes só o useEffect de abertura da gaveta chamava. Aprovando o último
+    // documento pendente, o processo não virava pronto_para_protocolar naquele
+    // momento — e com ele ficavam presos o e-mail ao cliente e o aviso à
+    // equipe, até alguém reabrir a tela por acaso.
+    const src = r("src/components/quero-armas/processos/ProcessoDetalheDrawer.tsx");
+    const bloco = src.slice(src.indexOf("const equipeSetStatus = async"), src.indexOf("const abrirAprovacao"));
+    expect(bloco).toMatch(/qa-processo-checar-conclusao-checklist/);
+    expect(bloco).toMatch(/origem: "aprovacao_manual_equipe"/);
+  });
+});

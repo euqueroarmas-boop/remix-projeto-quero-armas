@@ -493,6 +493,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           .catch((e) => console.warn("[drawer] checar exigência PF falhou:", e));
       }
 
+      // APROVOU O ÚLTIMO? O PROCESSO PRECISA ANDAR AGORA.
+      //
+      // Reauditoria de 18/08/2026: `checar-conclusao-checklist` só era chamado
+      // ao ABRIR a gaveta. Aprovando o último documento pendente aqui dentro, o
+      // processo não virava `pronto_para_protocolar` naquele momento — e com
+      // ele ficavam presos o e-mail de "documentação completa" ao cliente e o
+      // aviso à equipe, até alguém reabrir a tela por acaso. A IA manda
+      // documento para revisão humana o tempo todo, então esta é a via comum.
+      if (novoStatus === "aprovado") {
+        void supabase.functions
+          .invoke("qa-processo-checar-conclusao-checklist", {
+            body: { processo_id: processoId, origem: "aprovacao_manual_equipe" },
+          })
+          .then(() => { void carregar(); })
+          .catch((e) => console.warn("[drawer] checar-conclusao pos-aprovacao:", e));
+      }
+
       const toastMsg =
         novoStatus === "aprovado" ? "Documento aprovado." :
         novoStatus === "invalido" ? "Documento rejeitado." :

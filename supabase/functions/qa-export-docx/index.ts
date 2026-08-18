@@ -179,7 +179,18 @@ Deno.serve(async (req) => {
       ...variables,
     };
 
-    let content = geracao.minuta_gerada || "";
+    // O TEXTO QUE O CLIENTE APROVOU VENCE A MINUTA.
+    //
+    // Furo criado junto com a F9 (18/08/2026) e pego na reauditoria no mesmo
+    // dia: o ciclo de aprovação passou a deixar o cliente CORRIGIR a peça
+    // (`texto_final`), mas esta exportação continuava lendo `minuta_gerada`.
+    // Ou seja: o cliente arrumava a data do boletim, aprovava, e a equipe
+    // baixava e protocolava a versão ERRADA — com a agravante de agora existir
+    // a falsa sensação de que alguém tinha conferido.
+    //
+    // Peça sem ciclo de aprovação (`texto_final` nulo) segue pela minuta,
+    // exatamente como antes.
+    let content = geracao.texto_final || geracao.minuta_gerada || "";
 
     // Post-process: remove advogado/OAB references from closing
     content = content.replace(/\n[^\n]*advogad[oa][^\n]*OAB[^\n]*/gi, "");
