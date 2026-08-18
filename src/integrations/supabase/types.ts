@@ -10122,6 +10122,59 @@ export type Database = {
           },
         ]
       }
+      qa_processo_juntadas: {
+        Row: {
+          bucket: string
+          cliente_id: number
+          created_at: string
+          id: string
+          ignorados_json: Json
+          itens_json: Json
+          montada_em: string
+          montada_por: string | null
+          paginas: number
+          processo_id: string
+          storage_path: string
+          versao: number
+        }
+        Insert: {
+          bucket?: string
+          cliente_id: number
+          created_at?: string
+          id?: string
+          ignorados_json?: Json
+          itens_json?: Json
+          montada_em?: string
+          montada_por?: string | null
+          paginas?: number
+          processo_id: string
+          storage_path: string
+          versao?: number
+        }
+        Update: {
+          bucket?: string
+          cliente_id?: number
+          created_at?: string
+          id?: string
+          ignorados_json?: Json
+          itens_json?: Json
+          montada_em?: string
+          montada_por?: string | null
+          paginas?: number
+          processo_id?: string
+          storage_path?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_processo_juntadas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "qa_processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_processo_manifestacoes_pf: {
         Row: {
           analise_ia_json: Json | null

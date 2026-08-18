@@ -789,6 +789,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   const [salvandoProtocolo, setSalvandoProtocolo] = useState(false);
   /** Escape consciente para o órgão que não devolve número na hora. */
   const [protocoloSemNumero, setProtocoloSemNumero] = useState(false);
+  /** Escape consciente para o dossiê montado e entregue fora do sistema. */
+  const [protocoloSemJuntada, setProtocoloSemJuntada] = useState(false);
 
   /**
    * Monta a JUNTADA — o PDF único que vai para a delegacia.
@@ -798,6 +800,38 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
    * primeiro. Mostramos a lista para a equipe saber o que cobrar.
    */
   const [montandoJuntada, setMontandoJuntada] = useState(false);
+  /**
+   * Juntada vigente (maior versão) do processo.
+   *
+   * O PDF que vai para a Polícia Federal era montado, subia para o storage e
+   * ficava inalcançável: o caminho vivia só dentro do `dados_json` de um
+   * evento, que nenhuma tela lia. Agora tem endereço em
+   * `qa_processo_juntadas`, e é daqui que sai o botão de abrir.
+   */
+  const [juntada, setJuntada] = useState<{
+    id: string;
+    versao: number;
+    bucket: string;
+    storage_path: string;
+    paginas: number;
+    montada_em: string;
+    itens_json: unknown;
+    ignorados_json: unknown;
+  } | null>(null);
+
+  const carregarJuntada = useCallback(async () => {
+    if (!processoId) return;
+    const { data } = await supabase
+      .from("qa_processo_juntadas")
+      .select("id, versao, bucket, storage_path, paginas, montada_em, itens_json, ignorados_json")
+      .eq("processo_id", processoId)
+      .order("versao", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setJuntada((data as typeof juntada) ?? null);
+  }, [processoId]);
+
+  useEffect(() => { void carregarJuntada(); }, [carregarJuntada]);
   /** Caixa onde a equipe cola o que a PF escreveu no SINARM. */
   const [manifestacaoAberta, setManifestacaoAberta] = useState(false);
   const [gerandoRecurso, setGerandoRecurso] = useState(false);
@@ -843,6 +877,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         `JUNTADA MONTADA — ${resp.itens?.length ?? 0} documentos, ${resp.paginas ?? 0} páginas${fora}`,
         { duration: 8000 },
       );
+      await carregarJuntada();
       await carregar();
       onUpdated?.();
     } catch (e) {
@@ -856,6 +891,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
     if (!processo) return;
     if (!protocoloForm.numero.trim() && !protocoloSemNumero) {
       toast.error("Informe o número do protocolo — ou marque que o órgão não forneceu.");
+      return;
+    }
+    // A JUNTADA É O QUE SE PROTOCOLA. Marcar "protocolado" sem ela registra a
+    // entrega de um dossiê que o sistema nunca montou — e é assim que um
+    // processo chega à delegacia sem alguém ter conferido o que foi entregue.
+    // O escape existe para o caso real de protocolo feito fora do sistema, mas
+    // fica escrito na auditoria.
+    if (!juntada && !protocoloSemJuntada) {
+      toast.error("Monte a juntada antes de protocolar — ou marque que o dossiê foi entregue por fora.");
       return;
     }
     setSalvandoProtocolo(true);
@@ -904,7 +948,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
           `PROCESSO PROTOCOLADO NO ÓRGÃO ${protocoloForm.orgao}` +
           (protocoloPayload.numero_protocolo ? ` — Nº ${protocoloPayload.numero_protocolo}` : ""),
         ator: "equipe_operacional",
-        dados_json: { ...protocoloPayload, status_anterior: statusAnterior },
+        dados_json: {
+          ...protocoloPayload,
+          status_anterior: statusAnterior,
+          juntada_id: juntada?.id ?? null,
+          juntada_versao: juntada?.versao ?? null,
+          sem_juntada_no_sistema: !juntada,
+          sem_numero_informado: !protocoloForm.numero.trim(),
+        },
       });
       void registrarStatusEvento({
         cliente_id: processo.cliente_id ?? null,
@@ -961,6 +1012,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         observacao: "",
       });
       setProtocoloSemNumero(false);
+      setProtocoloSemJuntada(false);
       await carregar();
       onUpdated?.();
     } catch (e: any) {
@@ -2688,6 +2740,63 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </div>
               )}
               {/*
+                A JUNTADA GANHOU ENDEREÇO.
+
+                Antes de 18/08/2026 o PDF único que vai para a Polícia Federal
+                era montado, subia para o storage e não havia como abri-lo: o
+                caminho ficava dentro do `dados_json` de um evento que nenhuma
+                tela lia. Aqui ele finalmente aparece — com o que entrou, o que
+                ficou de fora e quando foi montado.
+              */}
+              {juntada && (
+                <div className="bg-white border border-emerald-200 rounded-xl p-4">
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="min-w-0">
+                      <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">
+                        JUNTADA PARA O ÓRGÃO · V{juntada.versao}
+                      </h4>
+                      <p className="text-[11px] uppercase tracking-wide text-slate-600 mt-1">
+                        {juntada.paginas} PÁGINAS ·{" "}
+                        {Array.isArray(juntada.itens_json) ? juntada.itens_json.length : 0} DOCUMENTOS
+                        {Array.isArray(juntada.ignorados_json) && juntada.ignorados_json.length > 0
+                          ? ` · ${juntada.ignorados_json.length} FORA`
+                          : ""}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                        MONTADA EM {formatDateTime(juntada.montada_em)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() =>
+                        viewer.abrirStorage(juntada.bucket, juntada.storage_path, {
+                          fileName: `juntada-v${juntada.versao}.pdf`,
+                          title: `Juntada v${juntada.versao} — ${processo?.servico_nome ?? "processo"}`,
+                        })
+                      }
+                      className="h-9 px-4 inline-flex items-center gap-2 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-emerald-600 hover:bg-emerald-700 shrink-0"
+                    >
+                      <FileSignature className="h-3.5 w-3.5" />
+                      ABRIR JUNTADA
+                    </button>
+                  </div>
+                  {Array.isArray(juntada.ignorados_json) && juntada.ignorados_json.length > 0 && (
+                    <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-amber-800 mb-1">
+                        FICOU DE FORA
+                      </p>
+                      <ul className="space-y-0.5">
+                        {(juntada.ignorados_json as Array<{ tipo?: string; motivo?: string }>).map((ig, i) => (
+                          <li key={i} className="text-[10px] uppercase tracking-wide text-amber-700">
+                            {String(ig?.tipo ?? "").replace(/_/g, " ")} — {ig?.motivo ?? "sem motivo"}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/*
                 SÓ AS TRANSIÇÕES LEGAIS.
 
                 Até 18/08/2026 este bloco listava o mapa inteiro de status —
@@ -2985,6 +3094,37 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               <p className="text-xs text-slate-700 uppercase tracking-wide">
                 Confirma que este processo foi protocolado no órgão competente?
               </p>
+              {juntada ? (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-800">
+                    JUNTADA V{juntada.versao} · {juntada.paginas} PÁGINAS
+                  </p>
+                  <p className="text-[10px] uppercase tracking-wide text-emerald-700 mt-0.5">
+                    MONTADA EM {formatDateTime(juntada.montada_em)}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-amber-800 leading-snug">
+                    NENHUMA JUNTADA MONTADA PARA ESTE PROCESSO
+                  </p>
+                  <p className="text-[10px] uppercase tracking-wide text-amber-700 mt-1 leading-snug">
+                    A JUNTADA É O DOSSIÊ ÚNICO QUE VAI PARA O ÓRGÃO. FECHE ESTA JANELA E
+                    CLIQUE EM "MONTAR JUNTADA".
+                  </p>
+                  <label className="mt-2 flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={protocoloSemJuntada}
+                      onChange={(e) => setProtocoloSemJuntada(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 accent-amber-600"
+                    />
+                    <span className="text-[10px] uppercase tracking-wide font-bold text-amber-800 leading-snug">
+                      O DOSSIÊ FOI MONTADO E ENTREGUE FORA DO SISTEMA — REGISTRAR ASSIM MESMO
+                    </span>
+                  </label>
+                </div>
+              )}
               <div>
                 <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
                   ÓRGÃO

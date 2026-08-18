@@ -288,23 +288,79 @@ Deno.serve(async (req) => {
       .upload(destino, bytesFinal, { contentType: "application/pdf", upsert: true });
     if (upErr) return json({ error: `Falha ao guardar a juntada: ${upErr.message}` }, 500);
 
+    // ── 5) REGISTRO — a juntada ganha endereço ───────────────────────────
+    //
+    // Até 18/08/2026 o caminho do arquivo só existia dentro do `dados_json`
+    // deste evento, e nenhuma linha do front lia dali. O PDF que vai para a
+    // Polícia Federal ficava inalcançável: a equipe via o toast de sucesso e
+    // não tinha botão nenhum para abri-lo, e o cliente — que precisa assinar
+    // a juntada no gov.br para cumprir a exigência `juntada_assinada` — nunca
+    // recebia o arquivo.
+    //
+    // Versão nova a cada montagem: remontar depois de o cliente corrigir um
+    // documento é rotina, e a juntada anterior é o que foi de fato protocolado.
+    const itensRegistro = incluidos.map((i) => ({
+      numero: i.numero,
+      grupo: i.grupo,
+      grupo_nome: i.grupoNome,
+      tipo_documento: i.tipo_documento,
+      nome_documento: i.nome_documento,
+    }));
+
+    const { data: ultima } = await admin
+      .from("qa_processo_juntadas")
+      .select("versao")
+      .eq("processo_id", processoId)
+      .order("versao", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const versao = Number((ultima as { versao?: number } | null)?.versao ?? 0) + 1;
+
+    const { data: juntadaRow, error: juntadaErr } = await admin
+      .from("qa_processo_juntadas")
+      .insert({
+        processo_id: processoId,
+        cliente_id: processo.cliente_id,
+        versao,
+        bucket: BUCKET_PROCESSO,
+        storage_path: destino,
+        paginas: dossie.getPageCount(),
+        itens_json: itensRegistro,
+        ignorados_json: ignorados,
+        montada_por: guard.userId ?? null,
+      })
+      .select("id, versao")
+      .single();
+    // O arquivo já está no storage. Falhar o registro agora significaria
+    // devolver erro para uma juntada que existe — melhor avisar e seguir, com
+    // o problema visível no evento abaixo.
+    if (juntadaErr) {
+      console.error("[qa-montar-juntada] registro não gravado:", juntadaErr.message);
+    }
+
     await admin.from("qa_processo_eventos").insert({
       processo_id: processoId,
       tipo_evento: "juntada_montada",
       descricao:
-        `JUNTADA MONTADA — ${incluidos.length} documentos, ${dossie.getPageCount()} páginas` +
+        `JUNTADA MONTADA (v${versao}) — ${incluidos.length} documentos, ${dossie.getPageCount()} páginas` +
         (ignorados.length ? ` (${ignorados.length} fora)` : ""),
-      ator: "sistema",
+      ator: "equipe_operacional",
       dados_json: {
+        juntada_id: (juntadaRow as { id?: string } | null)?.id ?? null,
+        versao,
         storage_path: destino,
         paginas: dossie.getPageCount(),
         itens: incluidos.map((i) => ({ numero: i.numero, tipo: i.tipo_documento })),
         ignorados,
+        registro_ok: !juntadaErr,
       },
     });
 
     return json({
       ok: true,
+      juntada_id: (juntadaRow as { id?: string } | null)?.id ?? null,
+      versao,
+      registro_ok: !juntadaErr,
       storage_path: destino,
       bucket: BUCKET_PROCESSO,
       paginas: dossie.getPageCount(),
