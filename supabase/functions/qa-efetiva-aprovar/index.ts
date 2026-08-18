@@ -400,6 +400,17 @@ Deno.serve(async (req) => {
           updated_at: agora.toISOString(),
         })
         .eq("cliente_id", reg.cliente_id)
+        // ESCOPO É O PROCESSO, NÃO O CPF.
+        //
+        // Até 18/08/2026 o filtro parava no `cliente_id`. Cliente com mais de
+        // um processo (Posse + Porte, ou defesa pessoal + CAC) tinha a efetiva
+        // necessidade de UM deles marcada como aprovada em TODOS — inclusive
+        // nos que nunca viram esse relato. E a devolução pela equipe
+        // (`qa-efetiva-revisar`) sempre foi corretamente escopada por
+        // `processo_id`: só o processo certo reabria, e os outros ficavam com
+        // uma petição reprovada carimbada de aprovada, livre para entrar na
+        // juntada e ir para a delegacia.
+        .eq("processo_id", reg.processo_id)
         // `declaracao_necessidade_efetiva` é o código que o portal usa para
         // reconhecer a exigência. Sem ele aqui, a linha devolvida para ajustes
         // ficava eternamente pendente depois de o cliente aprovar de novo.

@@ -124,6 +124,13 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     // não uma declaração genérica do processo.
     t.startsWith("declaracao_sem_inquerito") ||
     t.startsWith("declaracao_idoneidade") ||
+    // Homonímia é IDONEIDADE: ela existe porque apareceu registro criminal de
+    // um xará nas certidões. Caía em "Declarações do processo" pelo prefixo
+    // `declaracao_` e, com isso, sumia da fila do cliente em todo serviço cujo
+    // whitelist não tem o grupo `declaracoes` — justamente uma das exigências
+    // que a PF mais faz depois de protocolado.
+    t === "declaracao_homonimia" ||
+    t.startsWith("declaracao_homonimia") ||
     t.includes("inquerito")
   ) {
     return GRUPOS.antecedentes;
@@ -270,6 +277,49 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
 
   return GRUPOS.outros;
 }
+
+/**
+ * Grupo de um ITEM de checklist (linha de `qa_processo_documentos`), e não de
+ * um tipo solto.
+ *
+ * DIFERENÇA QUE IMPORTA: `grupoDaPendencia` classifica pelo `tipo_documento`,
+ * e há um grupo que NENHUM tipo produz — `exigencias_pf`. Ele é gravado em
+ * `regra_validacao.grupo_checklist` por `qa-manifestacao-analisar` quando a
+ * Polícia Federal exige algo depois do protocolo, e é o grupo de ordem 5, o
+ * que passa na frente de tudo.
+ *
+ * Classificar essas linhas só pelo tipo jogava a exigência da PF no grupo
+ * temático do documento (`craf` → Arma, `declaracao_homonimia` → Declarações),
+ * e aí o filtro por serviço as escondia do cliente — com prazo fatal de 10
+ * dias correndo e o processo travado sem ninguém ser avisado.
+ *
+ * Use SEMPRE esta função quando houver a linha inteira em mãos.
+ */
+export function grupoDaPendenciaDoItem(
+  item:
+    | { tipo_documento?: string | null; regra_validacao?: unknown }
+    | null
+    | undefined,
+  hubTipo?: string | null,
+): PendenciaGrupoMeta {
+  const regra = item?.regra_validacao as { grupo_checklist?: unknown } | null | undefined;
+  const explicito = normalizarGrupoId(
+    typeof regra?.grupo_checklist === "string" ? regra.grupo_checklist : null,
+  );
+  if (explicito) return GRUPOS[explicito];
+  return grupoDaPendencia(item?.tipo_documento ?? null, hubTipo ?? null);
+}
+
+/**
+ * Grupos que NUNCA podem ser filtrados por serviço.
+ *
+ * O que a PF exige não é opcional e não pertence ao catálogo do serviço — ela
+ * pede o que quer, quando quer, e o cliente tem 10 dias para responder sob
+ * pena de arquivamento. Whitelist de serviço não tem autoridade sobre isso.
+ */
+export const GRUPOS_NAO_FILTRAVEIS: ReadonlySet<PendenciaGrupoId> = new Set<PendenciaGrupoId>([
+  "exigencias_pf",
+]);
 
 export function ordemGrupo(id: PendenciaGrupoId): number {
   return GRUPOS[id]?.ordem ?? 999;

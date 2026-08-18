@@ -104,7 +104,7 @@ import DadosExtraidosPanel from "@/components/quero-armas/portal/DadosExtraidosP
 import logoColor from "@/assets/logo-color.png";
 import ClienteFotoUploadModal from "@/components/quero-armas/clientes/ClienteFotoUploadModal";
 import NotificacaoEngineOverlay from "@/components/quero-armas/portal/NotificacaoEngineOverlay";
-import { grupoDaPendencia as grupoDaPendenciaHelper, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
+import { grupoDaPendencia as grupoDaPendenciaHelper, grupoDaPendenciaDoItem, ordemGrupo as ordemGrupoHelper, PENDENCIA_GRUPOS, normalizarGrupoId } from "@/lib/quero-armas/pendenciasGrupos";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
@@ -2249,8 +2249,12 @@ export default function QAClientePortalPage() {
       const slug = catalogoByServicoId[Number(p?.servico_id)]?.service_slug ?? "";
       const permitidos = gruposPermitidosPorServico(slug);
       if (!permitidos) return false; // serviço não mapeado — sem filtro
-      const rawTipoD = String(d?.tipo_documento || "").toLowerCase();
-      return !permitidos.has(grupoDaPendenciaHelper(rawTipoD, null).id);
+      // Classifica pela LINHA, não pelo tipo: exigência criada pela PF traz o
+      // grupo em `regra_validacao.grupo_checklist` e não pode ser escondida —
+      // classificar só pelo tipo mandava `craf`/`declaracao_homonimia` para
+      // grupos fora do whitelist e sumia com a exigência da fila do cliente,
+      // com prazo de 10 dias correndo e o processo travado em silêncio.
+      return !permitidos.has(grupoDaPendenciaDoItem(d).id);
     };
 
     const jaAdicionados = new Set<string>();

@@ -13,7 +13,7 @@
 // serviço existente mudarem, atualize o registro desse serviço aqui.
 // ============================================================================
 
-import type { PendenciaGrupoId } from "./pendenciasGrupos";
+import { GRUPOS_NAO_FILTRAVEIS, type PendenciaGrupoId } from "./pendenciasGrupos";
 
 /**
  * Mapa declarativo: slug do serviço → conjunto de grupos permitidos.
@@ -25,11 +25,13 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Autorização de compra / posse civil ────────────────────────────────
   "posse-arma-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "requerimento", "outros",
   ]),
   "posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "requerimento", "outros",
@@ -37,6 +39,7 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // Pacote completo (compra + registro + posse): inclui documentos da arma.
   "aquisicao-registro-posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "arma", "requerimento", "outros",
@@ -44,6 +47,7 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Renovação de posse ──────────────────────────────────────────────────
   "renovacao-posse-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "arma", "requerimento", "outros",
@@ -51,11 +55,13 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Porte de arma ───────────────────────────────────────────────────────
   "porte-arma-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade", "efetiva_necessidade",
     "laudos", "arma", "requerimento", "outros",
   ]),
   "renovacao-de-porte-de-arma-de-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade", "efetiva_necessidade",
     "laudos", "arma", "requerimento", "outros",
@@ -63,11 +69,13 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── CR (Certificado de Registro — Exército) ─────────────────────────────
   "concessao-cr": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "requerimento", "outros",
   ]),
   "renovacao-cr": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "efetiva_necessidade",
     "laudos", "requerimento", "outros",
@@ -75,16 +83,19 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Registro / Apostilamento ────────────────────────────────────────────
   "registro-arma-fogo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "laudos", "arma", "requerimento", "outros",
   ]),
   "apostilamento-atualizacao": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "laudos", "arma", "requerimento", "outros",
   ]),
 
   // Registro/Apostilamento CAC: habitualidade é obrigatória.
   "registro-e-apostilamento-de-arma-de-fogo-cac": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade",
     "laudos", "arma", "requerimento", "outros",
@@ -92,11 +103,13 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── CAC — Atiradores / Caçadores ────────────────────────────────────────
   "autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade",
     "laudos", "arma", "requerimento", "outros",
   ]),
   "autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade",
     "laudos", "arma", "requerimento", "outros",
@@ -104,6 +117,7 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // GTE (Guia de Tráfego Especial CAC)
   "guia-de-trafego-especial-cac": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
     "ocupacao", "antecedentes", "habitualidade",
     "laudos", "arma", "requerimento", "outros",
@@ -111,17 +125,21 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
 
   // ── Recursos e vias judiciais ───────────────────────────────────────────
   "recurso-administrativo": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "declaracoes", "requerimento", "outros",
   ]),
   "mandado-de-seguranca": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "declaracoes", "requerimento", "outros",
   ]),
 
   // ── Cursos / treinamento ────────────────────────────────────────────────
   "operador-de-pistola-nivel-i": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "laudos", "requerimento", "outros",
   ]),
   "vip-operador-de-pistola-nivel-i": new Set<PendenciaGrupoId>([
+    "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "laudos", "requerimento", "outros",
   ]),
 };
@@ -132,5 +150,12 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
  */
 export function gruposPermitidosPorServico(slug: string | null | undefined): ReadonlySet<PendenciaGrupoId> | null {
   if (!slug) return null;
-  return GRUPOS_PERMITIDOS[slug] ?? null;
+  const base = GRUPOS_PERMITIDOS[slug];
+  if (!base) return null;
+  // Rede de segurança: `exigencias_pf` (e o que mais entrar em
+  // GRUPOS_NAO_FILTRAVEIS) volta para dentro mesmo que o mapa acima esqueça.
+  // Serviço novo cadastrado sem esse grupo escondia da fila do cliente o que a
+  // Polícia Federal exigiu — com prazo de 10 dias correndo.
+  if ([...GRUPOS_NAO_FILTRAVEIS].every((g) => base.has(g))) return base;
+  return new Set<PendenciaGrupoId>([...base, ...GRUPOS_NAO_FILTRAVEIS]);
 }

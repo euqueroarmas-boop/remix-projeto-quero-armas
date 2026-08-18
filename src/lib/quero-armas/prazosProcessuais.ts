@@ -10,6 +10,10 @@
  *   - data_restituicao             → RESTITUIÇÃO             (10 dias · Lei 9.784/99)
  *   - data_indeferimento_recurso   → MANDADO DE SEGURANÇA    (120 dias · art. 23 Lei 12.016/09)
  *
+ * Evento que FECHA prazo:
+ *   - data_recurso_administrativo  → recurso protocolado: o prazo de 10 dias
+ *                                    deixa de correr (não vira alarme).
+ *
  * Regra de prioridade: se houver `data_indeferimento_recurso`, ela SOBREPÕE
  * qualquer outro evento (já se esgotou a via administrativa, agora corre o
  * prazo decadencial do MS). Caso contrário, vence a data MAIS RECENTE.
@@ -103,6 +107,7 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
   const dIndef = normalizeDateISO(item.data_indeferimento);
   const dRest = normalizeDateISO(item.data_restituicao);
   const dIndefRec = normalizeDateISO(item.data_indeferimento_recurso);
+  const dRecurso = normalizeDateISO(item.data_recurso_administrativo);
 
   // Status finais cancelam o prazo (já não corre): deferido, concluído,
   // cancelado, desistiu. Indeferido/notificado/em análise mantêm o prazo
@@ -126,6 +131,25 @@ export function extrairPrazoDoItem(item: ItemComPrazo): PrazoProcessual | null {
     if (candidatos.length === 0) return null;
     candidatos.sort((a, b) => (a.data < b.data ? 1 : -1));
     ativo = candidatos[0];
+
+    // RECURSO PROTOCOLADO FECHA O PRAZO DE 10 DIAS.
+    //
+    // Até 18/08/2026 esta coluna era declarada aqui, documentada como "se
+    // preenchida, o prazo de 10 dias nao corre mais" — e nunca lida. O efeito
+    // era o pior possível: depois de o recurso entrar na delegacia, o cron
+    // continuava mandando "prazo VENCIDO há N dias" para o cliente e para a
+    // equipe, todo dia, para sempre. Alarme falso no evento mais sensível do
+    // fluxo, e um KPI vermelho em processo que está correto — o oposto do que
+    // manda a regra-mãe.
+    //
+    // A comparação é `>=` de propósito: recurso protocolado no MESMO dia da
+    // notificação/indeferimento já cumpre o prazo. Recurso ANTERIOR ao evento
+    // ativo é de outro ciclo (o cliente recorreu, a PF notificou de novo) e
+    // não fecha nada.
+    //
+    // O indeferimento do recurso NÃO passa por aqui: ele é PRIORIDADE 1 acima
+    // e abre os 120 dias do Mandado de Segurança.
+    if (dRecurso && dRecurso >= ativo.data) return null;
   }
 
   const dataLimite = addDaysISO(ativo.data, prazoTotal);

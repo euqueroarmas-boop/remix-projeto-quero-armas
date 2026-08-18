@@ -209,6 +209,38 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── GATE: A PETIÇÃO PRECISA TER PASSADO PELA EQUIPE ──────────────────
+    //
+    // O aceite do cliente em `qa-efetiva-aprovar` fecha a linha do checklist
+    // como `aprovado` — de propósito, para o cliente seguir para os laudos sem
+    // esperar. Mas aceite do cliente NÃO é revisão da equipe: o próprio
+    // `qa-efetiva-aprovar` deixa o registro em `em_revisao` justamente porque
+    // alguém ainda precisa ler.
+    //
+    // Sem este gate, o checklist ficava 100% e o processo virava
+    // `pronto_para_protocolar` com uma petição de efetiva necessidade que
+    // ninguém da Quero Armas leu — e ela é a peça que decide o pedido. Pior:
+    // seguia direto para a juntada e para a delegacia.
+    //
+    // Só morde quando existe registro: serviço sem efetiva necessidade não tem
+    // linha nenhuma aqui e passa reto.
+    {
+      const { data: efetivas } = await admin
+        .from("qa_efetiva_necessidade")
+        .select("id, status, aprovado_cliente")
+        .eq("processo_id", processoId)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const efetiva = (efetivas ?? [])[0] as { status?: string } | undefined;
+      if (efetiva && String(efetiva.status ?? "").toLowerCase() !== "aprovado") {
+        return json({
+          pronto: false,
+          motivo: "efetiva_necessidade_sem_revisao_da_equipe",
+          status_efetiva: efetiva.status ?? null,
+        });
+      }
+    }
+
     const agora = new Date().toISOString();
 
     // Promove status macro (guard idempotente — só se ainda estiver num

@@ -30,6 +30,11 @@ export const STATUS_DOCUMENTO = {
   em_analise: { label: "EM ANÁLISE", color: "#8B5CF6", icon: "Sparkles" },
   revisao_humana: { label: "REVISÃO HUMANA", color: "#0EA5E9", icon: "Eye" },
   divergente: { label: "DIVERGENTE", color: "#F59E0B", icon: "AlertTriangle" },
+  // Devolvido pela equipe para o cliente ajustar (hoje: efetiva necessidade,
+  // via qa-efetiva-revisar). Sem esta entrada caía no fallback e a petição
+  // devolvida aparecia como "PENDENTE" — o cliente não descobria que havia um
+  // motivo escrito esperando por ele.
+  ajuste_necessario: { label: "AJUSTE NECESSÁRIO", color: "#F97316", icon: "AlertTriangle" },
   invalido: { label: "INVÁLIDO", color: "#EF4444", icon: "XCircle" },
   aprovado: { label: "APROVADO", color: "#10B981", icon: "CheckCircle" },
   dispensado_por_reaproveitamento: { label: "REAPROVEITADO", color: "#059669", icon: "Database" },
