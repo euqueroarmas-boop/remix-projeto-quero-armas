@@ -55,6 +55,7 @@ const TIPOS = [
   "LAUDO_PSICOLOGICO","LAUDO_CAPACIDADE_TECNICA",
   "COMPROVANTE_EFETIVA_NECESSIDADE","DOCUMENTO_COMPLEMENTAR",
   "COMPROVANTE_HABITUALIDADE","COMPROVANTE_CLUBE","COMPROVANTE_COMPETICAO",
+  "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO",
   "PROTOCOLO_PROCESSO","OFICIO","DESPACHO","EXIGENCIA","INDEFERIMENTO",
   "PROCURACAO","RECURSO_ADMINISTRATIVO","MANDADO_SEGURANCA",
   "CONTRATO_ADESAO_ASSINADO","PROCURACAO_ASSINADA",
@@ -310,7 +311,11 @@ const SYSTEM_PROMPT = [
   "  Extrair: nome_completo, cpf, orgao_emissor (federação/clube), data_emissao.",
   "",
   "=== DOCUMENTOS PROCESSUAIS ===",
-  "• PROTOCOLO_PROCESSO: protocolo de processo administrativo.",
+  "• REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO: formulário oficial do SINARM/Polícia Federal que ABRE o processo.",
+  "  O título impresso é 'REQUERIMENTO DE AQUISIÇÃO DE ARMA DE FOGO' (ou 'DE POSSE'), emitido por 'MJ - POLÍCIA FEDERAL / DIVISÃO NACIONAL DE CONTROLE DE ARMAS DE FOGO', com 'NÚMERO DO REQUERIMENTO' de 18 dígitos, declaração de efetiva necessidade, termo de responsabilidade e dados da arma pretendida.",
+  "  ATENÇÃO: este documento traz número de protocolo, mas NÃO é PROTOCOLO_PROCESSO. Se o texto tiver o título 'REQUERIMENTO DE AQUISIÇÃO/POSSE DE ARMA DE FOGO', o tipo é este, sempre.",
+  "  Extrair: numero_documento (nº do requerimento, 18 dígitos), nome_completo (requerente), cpf, orgao_emissor, data_emissao, data_validade (Data de Vencimento impressa).",
+  "• PROTOCOLO_PROCESSO: comprovante de protocolo de processo administrativo — recibo de que um processo foi autuado. NÃO é o requerimento em si.",
   "  Extrair: numero_documento (nº protocolo/processo), orgao_emissor, nome_completo (requerente), data_emissao.",
   "• OFICIO: ofício administrativo emitido por órgão público.",
   "  Extrair: numero_documento (nº do ofício), orgao_emissor, data_emissao.",
@@ -489,6 +494,14 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
     .replace(/[\s\-./|]+/g, "_");
   if (x === "CR") return "CR";
   if (x === "CRAF") return "CRAF";
+  // A Biblioteca guarda o modelo com o código do catálogo
+  // ("requerimento_de_posse_de_arma_de_fogo"). Sem esta linha, o `includes
+  // ("POSSE")` logo abaixo transformava o modelo TREINADO do requerimento em
+  // SINARM (certificado de registro) — o admin treinava o parser e a
+  // classificação continuava saindo no tipo errado.
+  if (x.includes("REQUERIMENTO") && (x.includes("ARMA") || x.includes("POSSE") || x.includes("AQUISICAO") || x.includes("SINARM"))) {
+    return "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO";
+  }
   if (x === "SINARM" || x.includes("POSSE") || x.includes("PORTE")) return "SINARM";
   if (x === "GT" || x === "GUIA_DE_TRAFEGO" || x === "GUIA_TRAFEGO") return "GT";
   if (x === "GTE" || x === "GUIA_DE_TRAFEGO_ESPECIAL" || x === "GUIA_TRAFEGO_ESPECIAL") return "GTE";
@@ -547,6 +560,11 @@ function normalizeTipoSelecionado(t: string | undefined | null): Tipo | null {
   if (x.includes("HABITUALIDADE")) return "COMPROVANTE_HABITUALIDADE";
   if (x.includes("CLUBE")) return "COMPROVANTE_CLUBE";
   if (x.includes("COMPETICAO") || x.includes("COMPETIÇÃO")) return "COMPROVANTE_COMPETICAO";
+  // Antes de PROTOCOLO: o requerimento da PF traz número de protocolo e a IA
+  // devolvia rótulos como "PROTOCOLO_REQUERIMENTO". O requerimento prevalece.
+  if (x.includes("REQUERIMENTO") && (x.includes("ARMA") || x.includes("POSSE") || x.includes("AQUISICAO") || x.includes("SINARM"))) {
+    return "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO";
+  }
   if (x.includes("PROTOCOLO")) return "PROTOCOLO_PROCESSO";
   if (x === "OFICIO" || x === "OFÍCIO") return "OFICIO";
   if (x.includes("DESPACHO")) return "DESPACHO";
@@ -683,6 +701,72 @@ function aplicarClassificacaoDeterministica(parsed: any, textoPdf: string): any 
   const combinado = [textoPdf, JSON.stringify(campos)].filter(Boolean).join("\n");
   const norm = normalizarTexto(combinado);
   if (!norm) return parsed;
+
+  // ── REQUERIMENTO SINARM · PRECEDÊNCIA ABSOLUTA ───────────────────────────
+  // ESPELHO de src/lib/quero-armas/parserRequerimentoSinarm.ts — as duas
+  // cópias mudam juntas.
+  //
+  // O formulário que abre o processo de posse é intitulado "REQUERIMENTO DE
+  // AQUISIÇÃO DE ARMA DE FOGO" e traz um número de 18 dígitos. Por causa desse
+  // número a IA o classificava como PROTOCOLO_PROCESSO com 98% de confiança —
+  // e o Hub carimbava REPROVADO no documento certo, dizendo ao cliente que ele
+  // havia anexado a coisa errada. Título impresso não é palpite: decide.
+  //
+  // PORTE fica de fora de propósito: é outra exigência, com outro slot.
+  const reqTitulo = norm.match(/REQUERIMENTO DE (AQUISICAO|POSSE|PORTE) DE ARMA DE FOGO/);
+  const reqNumero = String(textoPdf || "").match(/\b(20\d{16})\b/)?.[1] || "";
+  if (
+    reqTitulo &&
+    reqTitulo[1] !== "PORTE" &&
+    reqNumero &&
+    /POLICIA FEDERAL|SINARM|DIVISAO NACIONAL DE CONTROLE DE ARMAS DE FOGO/.test(norm)
+  ) {
+    parsed.tipoDetectado = "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO";
+    parsed.confianca = Math.max(Number(parsed.confianca || 0), 0.99);
+    campos.numero_documento = reqNumero;
+    campos.numero_requerimento = reqNumero;
+    campos.orgao_emissor = campos.orgao_emissor || "Polícia Federal — SINARM";
+    // A emissão sai dos 8 primeiros dígitos do número (AAAAMMDDHHMMSSNNNN):
+    // não depende de OCR de rótulo nem de o cliente informar nada.
+    const emissaoIso = `${reqNumero.slice(0, 4)}-${reqNumero.slice(4, 6)}-${reqNumero.slice(6, 8)}`;
+    if (!Number.isNaN(new Date(`${emissaoIso}T00:00:00Z`).getTime())) {
+      campos.data_emissao = `${reqNumero.slice(6, 8)}/${reqNumero.slice(4, 6)}/${reqNumero.slice(0, 4)}`;
+    }
+    // Vencimento: rótulo quando ele sobrevive à extração; senão, a data colada
+    // ao número, aceita só dentro da janela real de 1 a 90 dias da emissão.
+    const bruto = String(textoPdf || "");
+    let vencBr =
+      bruto.match(/(\d{2}\/\d{2}\/\d{4})\s*Data\s+de\s+Vencimento/i)?.[1] ||
+      bruto.match(/Data\s+de\s+Vencimento[:\s]*(\d{2}\/\d{2}\/\d{4})/i)?.[1] ||
+      "";
+    if (!vencBr) {
+      const idx = bruto.indexOf(reqNumero);
+      const janela = idx >= 0 ? bruto.slice(Math.max(0, idx - 60), idx + reqNumero.length + 60) : "";
+      const emissaoMs = new Date(`${emissaoIso}T00:00:00Z`).getTime();
+      for (const m of janela.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)) {
+        const iso = `${m[3]}-${m[2]}-${m[1]}`;
+        const dias = Math.round((new Date(`${iso}T00:00:00Z`).getTime() - emissaoMs) / 86400000);
+        if (dias >= 1 && dias <= 90) { vencBr = `${m[1]}/${m[2]}/${m[3]}`; break; }
+      }
+    }
+    if (vencBr) campos.data_validade = vencBr;
+    const nomeFrase = bruto.match(
+      /([A-Za-zÀ-ÿ' ]{6,160}?)\s*,\s*RG\s*:?\s*([\dA-Za-z.\-\/]{5,20})\s*,\s*CPF\s*:?\s*(\d{3}\.?\d{3}\.?\d{3}-?\d{2})\s*,\s*vem\s+por\s+meio\s+deste/i,
+    );
+    if (nomeFrase) {
+      const RUIDO = new Set(["MJ","POLICIA","FEDERAL","SERVICO","PUBLICO","DIVISAO","NACIONAL","CONTROLE","ARMAS","ARMA","FOGO","REQUERIMENTO","NUMERO","DATA","VENCIMENTO","IDENTIFICACAO","VIA","REQUERENTE","TIPO","FORMULARIO","CATEGORIA","CIDADAO","DE","DO","DA","DOS","DAS","E"]);
+      const tokens = normalizarTexto(nomeFrase[1]).split(" ").filter(Boolean);
+      while (tokens.length && RUIDO.has(tokens[0])) tokens.shift();
+      const nome = tokens.join(" ");
+      if (tokens.length >= 2 && nome.length >= 6 && /^[A-Z][A-Z' ]+$/.test(nome)) {
+        campos.nome_completo = nome;
+      }
+      campos.cpf = cpfComDigitosVerificadores(nomeFrase[3]);
+    }
+    parsed.justificativa =
+      "Classificação determinística: formulário oficial do SINARM (Polícia Federal) com número de requerimento de 18 dígitos. O título impresso é \"Requerimento de Aquisição de Arma de Fogo\" — é o mesmo documento que o checklist pede como Requerimento de Posse, e não um protocolo de processo.";
+    return parsed;
+  }
 
   // O PDF oficial do CCMEI pode incluir, na segunda página, o próprio Cartão
   // CNPJ da Receita. O título e os marcadores específicos do certificado têm

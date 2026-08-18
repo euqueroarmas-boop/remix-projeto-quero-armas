@@ -66,6 +66,42 @@ export function extrairVencimentoRequerimento(texto: unknown): string | null {
 }
 
 /**
+ * Vencimento impresso, com a saída de emergência para quando o rótulo não
+ * sobrevive à extração do PDF.
+ *
+ * Em parte dos requerimentos o cabeçalho sai como
+ * "202608181300111745   18/09/2026 Data de NÚMERO DO REQUERIMENTO:" — a palavra
+ * "Vencimento" se perde na ordem de leitura e a busca por rótulo devolve nada,
+ * embora a data esteja ali, colada no número. A candidata só é aceita se cair
+ * na janela em que a PF de fato emite o vencimento (1 a 90 dias da emissão);
+ * fora disso é outra data qualquer do documento e não vira validade.
+ *
+ * Devolve ISO (aaaa-mm-dd).
+ */
+export function vencimentoRequerimentoImpresso(texto: unknown): string | null {
+  const s = String(texto ?? "");
+  const porRotulo = extrairVencimentoRequerimento(s);
+  if (porRotulo) return porRotulo;
+
+  const numero = extrairNumeroRequerimento(s);
+  const emissao = dataEmissaoDoNumero(numero);
+  if (!numero || !emissao) return null;
+
+  const idx = s.indexOf(numero);
+  if (idx < 0) return null;
+  const janela = s.slice(Math.max(0, idx - 60), idx + numero.length + 60);
+  const emissaoMs = new Date(`${emissao}T00:00:00Z`).getTime();
+  for (const m of janela.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)) {
+    const iso = `${m[3]}-${m[2]}-${m[1]}`;
+    const d = new Date(`${iso}T00:00:00Z`);
+    if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) continue;
+    const dias = Math.round((d.getTime() - emissaoMs) / 86_400_000);
+    if (dias >= 1 && dias <= 90) return iso;
+  }
+  return null;
+}
+
+/**
  * Extrai o número a partir do `dados_extraidos_json` de um documento.
  * Aceita as chaves que a IA e o extrator usam, na ordem de confiança.
  */

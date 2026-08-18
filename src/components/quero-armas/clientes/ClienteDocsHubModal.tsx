@@ -99,6 +99,10 @@ import {
 } from "@/lib/quero-armas/parserComprovanteEndereco";
 import { parseDanf3e } from "@/lib/quero-armas/parserComprovanteResidencia";
 import {
+  parseRequerimentoSinarm,
+  textoIndicaRequerimentoSinarm,
+} from "@/lib/quero-armas/parserRequerimentoSinarm";
+import {
   validadeComprovanteConsumo,
   mensagemComprovanteVencido,
   type DatasComprovanteConsumo,
@@ -245,6 +249,12 @@ const IA_TO_TIPO: Record<string, string> = {
   COMPROVANTE_CLUBE: "comprovante_filiacao_entidade_tiro",
   COMPROVANTE_COMPETICAO: "comprovante_competicao",
   // Processuais
+  // O formulário do SINARM se chama "REQUERIMENTO DE AQUISIÇÃO DE ARMA DE FOGO"
+  // no papel e "Requerimento de Posse de Arma de Fogo" no catálogo do Hub. As
+  // duas grafias entram aqui: a leitura pode devolver qualquer uma das duas.
+  REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO: "requerimento_de_posse_de_arma_de_fogo",
+  REQUERIMENTO_DE_AQUISICAO_DE_ARMA_DE_FOGO: "requerimento_de_posse_de_arma_de_fogo",
+  REQUERIMENTO_SINARM: "requerimento_de_posse_de_arma_de_fogo",
   PROTOCOLO_PROCESSO: "protocolo_processo",
   OFICIO: "oficio",
   DESPACHO: "despacho",
@@ -433,7 +443,30 @@ function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_
   return "antecedentes_federal";
 }
 
+/**
+ * Tipos em que a leitura "desiste" e devolve um rótulo genérico. Só eles podem
+ * ser reclassificados pelo título impresso do requerimento — reclassificar um
+ * tipo já específico seria atropelar uma leitura que acertou.
+ */
+const TIPOS_GENERICOS_RECLASSIFICAVEIS = new Set([
+  "outro",
+  "protocolo_processo",
+  "documento_complementar_caso",
+  "comprovante_efetiva_necessidade",
+  "sinarm",
+  "autorizacao_compra",
+]);
+
 function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
+  // ── REQUERIMENTO DA PF ────────────────────────────────────────────────────
+  // O formulário do SINARM traz número de protocolo, e por causa disso a IA o
+  // classificava como "Protocolo do processo" com 98% de confiança — o slot
+  // pedia o requerimento e o documento CERTO era carimbado REPROVADO. O título
+  // impresso não deixa dúvida sobre o que o documento é.
+  if (TIPOS_GENERICOS_RECLASSIFICAVEIS.has(tipoAtual) && textoIndicaRequerimentoSinarm(hay)) {
+    return "requerimento_de_posse_de_arma_de_fogo";
+  }
+
   const contaConsumoImovel =
     /DANF3E|NF3E|NOTA FISCAL DE ENERGIA ELETRICA|CONTA DE ENERGIA|FATURA DE ENERGIA|CONTA DE AGUA|FATURA DE AGUA|CONTA DE GAS|FATURA DE TELECOMUNICACOES/.test(hay) &&
     /ENDERECO DE ENTREGA|UNIDADE CONSUMIDORA|CODIGO DE INSTALACAO|NUMERO UC|\bUC\b|MEDIDOR|CLASSIFICACAO B1 RESIDENCIAL|CONSUMO KWH|HIDROMETRO/.test(hay);
@@ -2720,6 +2753,13 @@ export function ClienteDocsHubModal({
               const resolvido = await tentarLeituraLocal(target);
               if (resolvido) return;
             }
+            // O requerimento do SINARM é formulário estruturado: quem lê é o
+            // parser. Precede a certidão porque não é certidão nenhuma e, sem
+            // esta porta, ia direto para a IA — que o chamava de protocolo.
+            if (parseRequerimentoSinarm(textoNativo)) {
+              const resolvido = await tentarLeituraLocal(target);
+              if (resolvido) return;
+            }
             const docLocal = parseCertidao(textoNativo);
             // PARSE-01: o gate deixava passar só certidão. Comprovante de
             // endereço (DANF3E / fatura de concessionária) é igualmente
@@ -3426,6 +3466,83 @@ export function ClienteDocsHubModal({
     // documento: toda certidão traz o CEP do tribunal no rodapé, e aproveitar
     // isso como "UF do cliente" mandaria o processo para a região errada.
     setEnderecoLocal(parseComprovanteEndereco(texto));
+
+    // ── REQUERIMENTO SINARM — formulário oficial da Polícia Federal ─────────
+    // Precede tudo: é o documento que ABRE o processo e o único cujo título
+    // impresso ("REQUERIMENTO DE AQUISIÇÃO DE ARMA DE FOGO") não bate com o
+    // nome do slot ("Requerimento de Posse de Arma de Fogo"). Ler aqui, byte a
+    // byte, é o que impede a IA de chamá-lo de "Protocolo do processo" e
+    // reprovar o documento certo.
+    const requerimento = parseRequerimentoSinarm(texto);
+    if (requerimento) {
+      setConferenciaLocal(null);
+      const camposReq: Record<string, string | undefined> = {
+        nome_completo: requerimento.nome_completo ?? undefined,
+        cpf: requerimento.cpf ?? undefined,
+        rg: requerimento.rg ?? undefined,
+        data_nascimento: requerimento.data_nascimento ?? undefined,
+        numero_documento: requerimento.numero_requerimento,
+        numero_requerimento: requerimento.numero_requerimento,
+        orgao_emissor: "Polícia Federal — SINARM",
+        data_emissao: requerimento.data_emissao ?? undefined,
+        data_validade: requerimento.data_vencimento ?? undefined,
+        especie_arma: requerimento.especie_arma ?? undefined,
+        calibre: requerimento.calibre ?? undefined,
+      };
+      const conformidadeReq = calcularConformidade(
+        camposReq,
+        refClienteNome,
+        refClienteCpf,
+        refClienteDataNascimento,
+        refClienteNomeMae,
+        docsEfetivos,
+        null,
+        "requerimento_de_posse_de_arma_de_fogo",
+        null,
+        null,
+      );
+      const titularConfere = !conformidadeReq.some(
+        (item) =>
+          (item.campo === "nome_completo" || item.campo === "cpf") &&
+          item.status === "divergente",
+      );
+      setClassificacao({
+        tipoDetectado: "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO",
+        confianca: 0.99,
+        camposExtraidos: camposReq,
+        recomendacao: titularConfere ? "aceitar" : "revisao_obrigatoria",
+        revisao_obrigatoria: !titularConfere,
+        justificativa: titularConfere
+          ? "Leitura determinística: formulário oficial do SINARM (Polícia Federal), número do requerimento com 18 dígitos conferido. O título impresso é \"Requerimento de Aquisição de Arma de Fogo\" — é o mesmo documento que o checklist pede como Requerimento de Posse."
+          : "Formulário oficial do SINARM identificado, mas o titular lido não confere com o cadastro do cliente.",
+      });
+      setConformidade(conformidadeReq);
+      setForm((prev) => ({
+        ...prev,
+        tipo_documento: "requerimento_de_posse_de_arma_de_fogo",
+        nome_documento: "Requerimento de Posse de Arma de Fogo (Polícia Federal)",
+        numero_documento: requerimento.numero_requerimento,
+        orgao_emissor: "Polícia Federal — SINARM",
+        data_emissao: requerimento.data_emissao || prev.data_emissao,
+        // Validade impressa pela própria PF. Nunca herdar `prev`: data residual
+        // de um arquivo anexado antes viraria carimbo de vencido no requerimento.
+        data_validade: requerimento.data_vencimento || "",
+        observacoes: [
+          `Nº do requerimento: ${requerimento.numero_requerimento}`,
+          requerimento.especie_arma ? `Espécie: ${requerimento.especie_arma}` : "",
+          requerimento.calibre ? `Calibre: ${requerimento.calibre}` : "",
+        ].filter(Boolean).join("\n") || prev.observacoes,
+      }));
+      setCategoriaHub("documentos_processo");
+      if (!requerimento.nome_completo || !requerimento.cpf) {
+        toast.error("Requerimento da PF identificado, mas não foi possível ler nome e CPF no PDF original. Confira os campos antes de salvar.");
+      } else if (!titularConfere) {
+        toast.error("Requerimento da PF identificado, mas o nome ou CPF não confere com o cadastro do cliente.");
+      } else {
+        toast.success("Requerimento de Posse lido e conferido — nº do requerimento, titular e prazo extraídos do PDF original.");
+      }
+      return true;
+    }
 
     // ── CCMEI — modelo oficial do Portal do Empreendedor. Parse local decide o
     //    tipo (renda_ccmei) e preenche CNPJ/abertura sem depender da IA.

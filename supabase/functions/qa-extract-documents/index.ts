@@ -347,7 +347,7 @@ ARMA E ACERVO
 - nota_fiscal_arma: nota fiscal de COMPRA DE ARMA DE FOGO especificamente
 
 PROCESSO
-- requerimento_de_posse_de_arma_de_fogo: requerimento gerado no site da Polícia Federal, com os dados completos do requerente e o calibre da arma pretendida
+- requerimento_de_posse_de_arma_de_fogo: formulário oficial do SINARM gerado no site da Polícia Federal, com os dados completos do requerente e o calibre da arma pretendida. O título impresso é 'REQUERIMENTO DE AQUISIÇÃO DE ARMA DE FOGO' (ou 'DE POSSE') e traz 'NÚMERO DO REQUERIMENTO' de 18 dígitos, declaração de efetiva necessidade e termo de responsabilidade. ATENÇÃO: o número de 18 dígitos é um protocolo, mas o documento NÃO é protocolo de processo — havendo esse título, o tipo é sempre este
 - habilitacao_cacador_ibama: certificado de registro do IBAMA/IBRAM que autoriza o cliente a caçar. Documento oficial do órgão, com validade
 - declaracao_nao_possuir_segundo_endereco: declaração do próprio cliente, assinada via gov.br, de que não possui segundo endereço de guarda de acervo
 - comprovante_pagamento: comprovante de transação bancária — PIX, TED, DOC ou pagamento com cartão. Só use quando o BENEFICIÁRIO for "Willian Rodrigues da Silva Massaroto" ou "Senhor das Armas Comercio de Armas e Municoes Ltda" (ou variações). Fatura de cartão de crédito NÃO é comprovante_pagamento nem comprovante_residencia — use outro. Extrato bancário sem beneficiário identificado = outro.

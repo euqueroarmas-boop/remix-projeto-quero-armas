@@ -1477,10 +1477,31 @@ Deno.serve(async (req) => {
       // A "Data de Vencimento" impressa fica ~30 dias à frente e é a validade
       // do requerimento em si. Guardamos como informação, mas ela NÃO é o
       // prazo que a operação persegue — ver o bloco abaixo.
-      const vencBR =
+      // Em parte dos requerimentos nem o rótulo sobrevive à extração: o
+      // cabeçalho sai como "202608181300111745  18/09/2026 Data de NÚMERO DO
+      // REQUERIMENTO:" e a palavra "Vencimento" se perde. A data continua ali,
+      // colada no número — e só é aceita dentro da janela real de 1 a 90 dias
+      // da emissão, para não capturar outra data qualquer do documento.
+      // ESPELHO de `vencimentoRequerimentoImpresso` em requerimentoSinarm.ts.
+      let vencBR =
         fonteTexto.match(/(\d{2}\/\d{2}\/\d{4})\s*Data\s+de\s+Vencimento/i)?.[1] ??
         fonteTexto.match(/Data\s+de\s+Vencimento[:\s]*(\d{2}\/\d{2}\/\d{4})/i)?.[1] ??
         null;
+      if (!vencBR && numero) {
+        const emissaoMs = new Date(
+          `${numero.slice(0, 4)}-${numero.slice(4, 6)}-${numero.slice(6, 8)}T00:00:00Z`,
+        ).getTime();
+        const idxNum = fonteTexto.indexOf(numero);
+        const janela = idxNum >= 0
+          ? fonteTexto.slice(Math.max(0, idxNum - 60), idxNum + numero.length + 60)
+          : "";
+        for (const m of janela.matchAll(/\b(\d{2})\/(\d{2})\/(\d{4})\b/g)) {
+          const ms = new Date(`${m[3]}-${m[2]}-${m[1]}T00:00:00Z`).getTime();
+          if (Number.isNaN(ms) || Number.isNaN(emissaoMs)) continue;
+          const dias = Math.round((ms - emissaoMs) / 86_400_000);
+          if (dias >= 1 && dias <= 90) { vencBR = `${m[1]}/${m[2]}/${m[3]}`; break; }
+        }
+      }
       if (vencBR && !camposExtraidosFinal.data_vencimento_requerimento) {
         camposExtraidosFinal.data_vencimento_requerimento = vencBR;
       }
