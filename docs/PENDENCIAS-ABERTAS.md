@@ -98,6 +98,26 @@ Aguarda três decisões: exames (4), procuração (1), CR + assinaturas do Arsen
 
 ---
 
+## ✅ Reauditoria de 18/08 — o que foi encontrado e fechado
+
+Reconferência dos 18 furos originais: **todos fechados**. A reauditoria achou
+mais quatro, dois deles criados pelas próprias correções:
+
+| Achado | Situação |
+|---|---|
+| DOCX exportava `minuta_gerada`, ignorando a correção do cliente (criado pela F9) | ✅ corrigido |
+| Aprovar o último documento não promovia o processo na hora | ✅ corrigido |
+| **Segunda verdade:** processo avança e `status_servico` da solicitação fica parado | ✅ gatilho + backfill (SQL `20260818150000`) |
+| `qa_geracoes_own` era `FOR ALL` — usuário logado podia inserir peça | ✅ SQL `20260818160000` |
+
+**Fechado sem código — não era furo:** o `etapaDoTipo` manda tipo desconhecido
+para a etapa 1. Conferido na reauditoria: a fila do guiado **não filtra por
+etapa**, então o item continua visível ao cliente, e o checador de conclusão
+conta todos os obrigatórios independentemente da etapa. Não há travamento nem
+invisibilidade — é imprecisão do contador de etapas, cosmética.
+
+---
+
 ## ✅ Escopo de ataque — concluído
 
 As 11 frentes foram entregues entre 17 e 18/08/2026. O que resta neste arquivo
