@@ -1,113 +1,111 @@
-# Deploy das edge functions — auditoria do fluxo de posse/autorização
+# Deploy — auditoria do fluxo de posse/autorização
 
-**Gerado em 18/08/2026.** Referente aos commits `d55dd5d` → `168dfba` na `main`.
+**Versão final, 18/08/2026.** Cobre os commits `d55dd5d` → `HEAD` na `main`
+(escopo de ataque F1–F11, concluído).
 
-O push para a `main` publica o front. **Edge function não sai junto** — precisa de
-Publish no Lovable (ou `supabase functions deploy` pelo CLI). Este arquivo existe
-para a lista não se perder e para o deploy ser conferível.
+O push para a `main` publica o front. **Edge function não sai junto** — precisa
+de Publish no Lovable (ou `supabase functions deploy` pelo CLI).
 
 ---
 
-## ⚠️ LEVA 2 — pendente (F9 + migração do recurso, 18/08/2026)
+## Estado atual
 
-A leva 1 foi publicada às 00:08 BRT. Depois disso entraram mais mudanças, e
-**estas ainda não foram deployadas**:
+| | |
+|---|---|
+| **Migrations** | 5 criadas · **5 aplicadas** · nada pendente |
+| **Leva 1** | 13 funções · **publicada** em 18/08 às 00:08 BRT |
+| **Leva 2** | 9 funções · **pendente** ← é o que este documento entrega |
 
-**Novas (4):**
-- `qa-peca-enviar-cliente`
-- `qa-peca-aprovar-cliente`
-- `qa-recurso-protocolar`
-- `qa-processo-deferir`
+### Migrations — todas já aplicadas
 
-**Alteradas (1):**
+| Arquivo | O que faz | Conferido |
+|---|---|---|
+| `20260818100000` | Fecha o acesso anônimo a `qa_geracoes_pecas` | ✅ 4 policies, zero `anon` |
+| `20260818110000` | Colunas `protocolo_*` em `qa_processos` | ✅ 6 colunas |
+| `20260818120000` | Tabela `qa_processo_juntadas` | ✅ 2 policies |
+| `20260818130000` | Ciclo de aprovação da peça | ✅ 2 peças, ambas `nao_enviada` |
+| `20260818140000` | Colunas de deferimento em `qa_processos` | ✅ 3 deferidos, 0 não confirmados |
+
+**Não há SQL pendente.** Pode publicar as funções direto.
+
+---
+
+## Leva 2 — 9 funções
+
+**Novas (4)** — primeiro deploy:
+
+| Função | Chamada por | Ator |
+|---|---|---|
+| `qa-peca-enviar-cliente` | painel da equipe | equipe |
+| `qa-peca-aprovar-cliente` | portal do cliente | cliente |
+| `qa-recurso-protocolar` | painel da equipe | equipe |
+| `qa-processo-deferir` | painel + portal | equipe e cliente |
+
+**Alterada (1):**
+
 - `qa-processo-checar-conclusao-checklist` — ganhou o gate que impede o processo
-  de virar `pronto_para_protocolar` com petição aguardando ou devolvida.
+  de virar `pronto_para_protocolar` com petição aguardando ou devolvida. (Já foi
+  publicada na leva 1 com o gate da efetiva necessidade; esta é a segunda
+  alteração.)
 
-**Arrastadas pelo registry (4)** — quatro templates novos:
-`peca-pronta-aprovacao`, `peca-decidida-equipe`, `recurso-protocolado` e
-`processo-deferido`:
+**Arrastadas pelo registry (4)** — quatro templates novos
+(`peca-pronta-aprovacao`, `peca-decidida-equipe`, `recurso-protocolado`,
+`processo-deferido`). O registry é embutido no bundle de cada uma:
+
 - `send-transactional-email`
 - `preview-transactional-email`
 - `qa-enviar-email-template`
 - `qa-send-all-templates-preview`
 
-**SQL da leva 2:** `20260818130000` (aprovação da peça) — **já aplicada**;
-`20260818140000` (colunas de deferimento em `qa_processos`) — **pendente**.
-
-**Não precisa de deploy:** a migração da aprovação do recurso para o guiado é só
-front (`QAClientePortalPage`, `LinhaDoTempoProcessoPF`), sai no push da `main`.
-
-> Escopo F1–F11 concluído em 18/08. Esta é a leva final: 9 funções.
-
----
-
-## Ordem obrigatória
-
-1. **SQL primeiro.** As migrations `20260818110000` (colunas `protocolo_*`) e
-   `20260818120000` (tabela `qa_processo_juntadas`). O front já lê as duas: sem
-   elas o painel de processos e o card da juntada quebram no `select`.
-2. **Depois as 13 funções, de uma vez só.** Publicar em pedaços cria janela de
-   inconsistência — ver "Por que tudo junto" no fim.
-3. **Por último, a conferência.**
+> **Só o registry mudou em `_shared` depois da leva 1.** Nenhum outro módulo
+> compartilhado foi tocado, então nenhuma outra função precisa ser republicada.
 
 ---
 
 ## Comando para o Lovable
 
-Cole isto no chat do Lovable:
-
 ```
 Faça o deploy das edge functions abaixo. Elas já estão no repositório (branch
-main, commits d55dd5d..168dfba, sincronizados via GitHub) — o código NÃO deve
-ser alterado, apenas publicado.
+main) — o código NÃO deve ser alterado, apenas publicado.
 
-Alteradas diretamente:
-- qa-efetiva-aprovar
-- qa-manifestacao-analisar
-- qa-montar-juntada
+Novas (primeiro deploy):
+- qa-peca-enviar-cliente
+- qa-peca-aprovar-cliente
+- qa-recurso-protocolar
+- qa-processo-deferir
+
+Alterada:
 - qa-processo-checar-conclusao-checklist
-- qa-processo-doc-upload
-- qa-processo-doc-validar-ia
 
-Nova (primeiro deploy):
-- qa-exigencia-pf-checar
+Precisam ser republicadas porque o registry de templates mudou (quatro templates
+novos: peca-pronta-aprovacao, peca-decidida-equipe, recurso-protocolado,
+processo-deferido). O registry é embutido no bundle de cada uma:
+- send-transactional-email
+- preview-transactional-email
+- qa-enviar-email-template
+- qa-send-all-templates-preview
 
-Precisam ser republicadas porque um arquivo de _shared que elas importam mudou
-(o bundle de deploy embute o _shared, então a versão antiga continua rodando a
-lógica antiga):
-- qa-processo-prazo-alertas          (_shared/prazosProcessuais.ts)
-- qa-processo-dispensas              (_shared/pendenciasGrupos.ts)
-- send-transactional-email           (registry de templates)
-- preview-transactional-email        (registry de templates)
-- qa-enviar-email-template           (registry de templates)
-- qa-send-all-templates-preview      (registry de templates)
-
-São 13 no total. Publique todas na mesma leva.
+São 9 no total. Publique todas na mesma leva.
 
 Restrições:
 - Não altere nenhum arquivo em supabase/functions/, src/ ou supabase/migrations/.
-- Não crie migration nova. O SQL já foi aplicado à mão no SQL Editor.
-- qa-exigencia-pf-checar não precisa de entrada no config.toml: ela usa
-  requireQAStaff internamente e o padrão verify_jwt = true serve.
+- Não crie migration nova. Todo o SQL já foi aplicado à mão no SQL Editor.
+- Nenhuma das novas precisa de entrada no config.toml: todas fazem a própria
+  guarda (requireQAStaff nas de equipe; dono do processo via qa_clientes.user_id
+  ou cliente_auth_links nas do cliente), e o padrão verify_jwt = true serve.
 
 Ao terminar, me diga quais funções foram publicadas e o horário de cada uma.
 ```
 
 ## Alternativa pelo Supabase CLI
 
-Se preferir sem passar pelo Lovable (exige `supabase login` e Docker):
-
 ```bash
 supabase functions deploy \
-  qa-efetiva-aprovar \
-  qa-manifestacao-analisar \
-  qa-montar-juntada \
+  qa-peca-enviar-cliente \
+  qa-peca-aprovar-cliente \
+  qa-recurso-protocolar \
+  qa-processo-deferir \
   qa-processo-checar-conclusao-checklist \
-  qa-processo-doc-upload \
-  qa-processo-doc-validar-ia \
-  qa-exigencia-pf-checar \
-  qa-processo-prazo-alertas \
-  qa-processo-dispensas \
   send-transactional-email \
   preview-transactional-email \
   qa-enviar-email-template \
@@ -119,55 +117,61 @@ supabase functions deploy \
 
 ## Conferência depois do deploy
 
-**1. O template novo existe?** Abra o preview de e-mails da equipe e procure
-`exigencia-pf-respondida` ("Exigência da PF respondida (equipe)"). Se não
-aparecer, o `send-transactional-email` não subiu — e todo aviso de exigência da
-PF vai falhar em runtime por template não encontrado.
+### 1. Os quatro templates novos estão no ar
 
-**2. A juntada passa a registrar.** Abra um processo em `pronto_para_protocolar`,
-clique em MONTAR JUNTADA e confira no SQL Editor:
+Abra o preview de e-mails e confirme que aparecem:
 
-```sql
-SELECT processo_id, versao, paginas,
-       jsonb_array_length(itens_json)     AS documentos,
-       jsonb_array_length(ignorados_json) AS fora,
-       montada_em
-  FROM public.qa_processo_juntadas
- ORDER BY montada_em DESC
- LIMIT 5;
-```
+- **Petição pronta para aprovação (cliente)**
+- **Petição decidida pelo cliente (equipe)**
+- **Recurso protocolado (cliente)**
+- **Processo deferido — documento entregue (cliente)**
 
-Voltou linha → o `qa-montar-juntada` novo está no ar e o card aparece no painel.
+É o item que quebra em silêncio: se o registry não pegou, os envios falham em
+runtime por template inexistente, e só se descobre na hora do disparo real.
 
-**3. O alarme falso do recurso parou.** É o item mais visível para quem recebe os
-e-mails. Confira que nenhum processo com recurso protocolado ainda tem prazo
-aberto:
+### 2. As pontas do fluxo, com um caso real
+
+Não há como conferir por SQL antes de alguém usar. Quando usar, esta consulta
+mostra se cada ponta gravou — seção vazia significa "ainda não usado", com linha
+significa "funcionando":
 
 ```sql
-SELECT iv.id, iv.servico_id,
-       iv.data_indeferimento, iv.data_recurso_administrativo,
-       iv.data_indeferimento_recurso
-  FROM public.qa_itens_venda iv
- WHERE iv.data_recurso_administrativo IS NOT NULL
-   AND iv.data_indeferimento_recurso IS NULL;
+SELECT 'A PECA'::text AS secao, id::text AS item,
+       status_cliente AS detalhe,
+       COALESCE(aprovada_cliente_em::text, enviada_cliente_em::text, '—') AS valor
+  FROM public.qa_geracoes_pecas WHERE status_cliente <> 'nao_enviada'
+UNION ALL
+SELECT 'B RECURSO', id::text, status,
+       COALESCE(numero_protocolo, '—')
+  FROM public.qa_processo_recursos WHERE status = 'protocolado'
+UNION ALL
+SELECT 'C DEFERIMENTO', p.id::text, COALESCE(p.deferimento_numero, '—'),
+       COALESCE(p.deferimento_data::text, '—')
+  FROM public.qa_processos p WHERE p.deferimento_documento_id IS NOT NULL
+UNION ALL
+SELECT 'D JUNTADA', j.processo_id::text, 'v' || j.versao || ' · ' || j.paginas || ' pág',
+       to_char(j.montada_em AT TIME ZONE 'America/Sao_Paulo', 'DD/MM HH24:MI')
+  FROM public.qa_processo_juntadas j
+ORDER BY 1, 2;
 ```
 
-As linhas que voltarem aqui NÃO devem mais gerar alerta de prazo vencido. O cron
-`qa-processo-prazo-alertas` roda 07:00 BRT — a confirmação real é no dia
-seguinte, ou disparando a função à mão com `dry_run: true`.
+### 3. Ainda pendente da leva 1
+
+Duas conferências continuam abertas — ver `docs/PENDENCIAS-ABERTAS.md`:
+
+- template `exigencia-pf-respondida` no ar (mesma checagem do item 1 acima);
+- prova definitiva de que o prazo do recurso parou de alarmar (painel de prazos
+  ou `qa-processo-prazo-alertas` com `{"dry_run": true}`).
 
 ---
 
 ## Por que tudo junto
 
-Publicar em pedaços quebra em três pontos:
-
-- `qa-manifestacao-analisar` e os avisos de exigência referenciam o template
-  `exigencia-pf-respondida`. Se subirem sem o `send-transactional-email`, o envio
-  falha por template inexistente.
-- O front já está na `main` e espera linha em `qa_processo_juntadas`. Enquanto o
-  `qa-montar-juntada` não subir, o PDF é gerado mas o card não aparece — e a
-  trava nova barra o protocolo, obrigando a equipe ao escape "entregue fora do
-  sistema".
-- `qa-processo-doc-upload` e `qa-processo-doc-validar-ia` importam o mesmo
-  `notificarExigenciaPF.ts`. Uma sem a outra deixa metade dos avisos mudos.
+- As quatro funções novas referenciam os templates novos. Sem o
+  `send-transactional-email` na mesma leva, o envio falha por template
+  inexistente e o e-mail some — sem erro visível para quem clicou.
+- O front já está na `main` e já chama as quatro. Enquanto não subirem, os
+  botões existem e devolvem erro de função não encontrada.
+- O gate da petição vive em `qa-processo-checar-conclusao-checklist`. Publicar
+  `qa-peca-enviar-cliente` sem ela deixa a petição na fila do cliente **sem**
+  travar o protocolo — o pior dos dois mundos.
