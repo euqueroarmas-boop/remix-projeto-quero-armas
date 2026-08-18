@@ -1859,7 +1859,7 @@ export default function QAClientePortalPage() {
     void (async () => {
       const { data } = await supabase
         .from("qa_processo_recursos" as never)
-        .select("id, status, narrativa_gerada, narrativa_final, aprovado_em, editada_pelo_cliente, provas_json")
+        .select("id, status, narrativa_gerada, narrativa_final, aprovado_em, editada_pelo_cliente, provas_json, numero_protocolo, protocolado_em")
         .eq("processo_id", alvo)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -5099,6 +5099,14 @@ export default function QAClientePortalPage() {
                   onRecursoAprovado={() => setRecursoReloadKey((k) => k + 1)}
                   // A aprovação mora na fila do guiado. Este botão leva direto
                   // ao passo, já aberto — sem obrigar o cliente a procurá-lo.
+                  recursoProtocolo={
+                    recursoPF
+                      ? {
+                          numero: (recursoPF as { numero_protocolo?: string | null }).numero_protocolo ?? null,
+                          protocoladoEm: (recursoPF as { protocolado_em?: string | null }).protocolado_em ?? null,
+                        }
+                      : null
+                  }
                   onAbrirAprovacaoRecurso={
                     recursoPF
                       ? () => abrirPendenciasGuiadas({ pinnedId: `recurso:${recursoPF.id}`, pularGateCadastral: true })

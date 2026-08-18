@@ -850,6 +850,78 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   }>>([]);
   const [enviandoPeca, setEnviandoPeca] = useState<string | null>(null);
 
+  /**
+   * Recurso do processo, para a equipe registrar o protocolo.
+   *
+   * `numero_protocolo` e `protocolado_em` existem em qa_processo_recursos desde
+   * que a tabela nasceu e NENHUM código jamais escreveu neles: o ciclo morria em
+   * `enviado_equipe` e o cliente via "aprovado" para sempre.
+   */
+  const [recurso, setRecurso] = useState<{
+    id: string;
+    status: string;
+    numero_protocolo: string | null;
+    protocolado_em: string | null;
+    aprovado_em: string | null;
+  } | null>(null);
+  const [protocoloRecursoModal, setProtocoloRecursoModal] = useState(false);
+  const [recursoForm, setRecursoForm] = useState({ numero: "", data: new Date().toISOString().slice(0, 10) });
+  const [salvandoRecurso, setSalvandoRecurso] = useState(false);
+
+  const carregarRecurso = useCallback(async () => {
+    if (!processoId) return;
+    const { data } = await supabase
+      .from("qa_processo_recursos")
+      .select("id, status, numero_protocolo, protocolado_em, aprovado_em")
+      .eq("processo_id", processoId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setRecurso((data as typeof recurso) ?? null);
+  }, [processoId]);
+
+  useEffect(() => { void carregarRecurso(); }, [carregarRecurso]);
+
+  const confirmarProtocoloRecurso = async () => {
+    if (!recurso) return;
+    if (!recursoForm.numero.trim()) {
+      toast.error("Informe o número do protocolo do recurso.");
+      return;
+    }
+    setSalvandoRecurso(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("qa-recurso-protocolar", {
+        body: {
+          recurso_id: recurso.id,
+          numero_protocolo: recursoForm.numero.trim(),
+          data_protocolo: recursoForm.data || undefined,
+        },
+      });
+      if (error) throw error;
+      const resp = (data ?? {}) as { error?: string; prazo_fechado?: boolean; prazo_aviso?: string | null };
+      if (resp.error) throw new Error(resp.error);
+      toast.success("Recurso protocolado. O cliente já vê o número no portal.");
+      // O lançamento do prazo é best-effort: se falhou, a equipe precisa saber
+      // agora, senão o contador de 10 dias segue correndo contra um processo
+      // que já foi recorrido.
+      if (!resp.prazo_fechado) {
+        toast.warning(
+          "Protocolo registrado, mas o prazo não foi lançado na venda. " + (resp.prazo_aviso ?? ""),
+          { duration: 12000 },
+        );
+      }
+      setProtocoloRecursoModal(false);
+      setRecursoForm({ numero: "", data: new Date().toISOString().slice(0, 10) });
+      await carregarRecurso();
+      await carregar();
+      onUpdated?.();
+    } catch (e) {
+      toast.error("Não deu para registrar: " + ((e as Error)?.message ?? "erro"));
+    } finally {
+      setSalvandoRecurso(false);
+    }
+  };
+
   const carregarPecas = useCallback(async () => {
     const cid = processo?.cliente_id;
     if (!cid) return;
@@ -2805,6 +2877,55 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </div>
               )}
               {/*
+                O RECURSO GANHA NÚMERO E FIM.
+
+                `numero_protocolo` e `protocolado_em` existem na tabela desde
+                sempre e nenhum código escrevia neles: o ciclo morria em
+                `enviado_equipe`, e o cliente via "aprovado" para sempre.
+                Registrar aqui também FECHA o prazo de 10 dias na venda — antes
+                isso dependia de alguém lembrar de colar uma manifestação.
+              */}
+              {recurso && (
+                <div className="bg-white border border-indigo-200 rounded-xl p-4">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                    RECURSO ADMINISTRATIVO
+                  </h4>
+                  {recurso.status === "protocolado" ? (
+                    <div>
+                      <p className="text-xs font-bold text-indigo-800 uppercase tracking-wide">
+                        PROTOCOLADO · Nº {recurso.numero_protocolo ?? "—"}
+                      </p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                        EM {formatDateTime(recurso.protocolado_em)}
+                      </p>
+                    </div>
+                  ) : ["aprovado", "enviado_equipe"].includes(String(recurso.status)) ? (
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                          APROVADO PELO CLIENTE — AGUARDA PROTOCOLO
+                        </p>
+                        <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                          EM {formatDateTime(recurso.aprovado_em)}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setProtocoloRecursoModal(true)}
+                        className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700"
+                      >
+                        <FileSignature className="h-3 w-3" />
+                        REGISTRAR PROTOCOLO DO RECURSO
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                      AGUARDANDO O CLIENTE LER E APROVAR O RELATO.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/*
                 A PETIÇÃO VOLTA PARA O CLIENTE.
 
                 O documento que sustenta o pedido — o que a PF lê e que decide
@@ -3213,6 +3334,69 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         source={viewer.source}
         title={viewer.title}
       />
+
+      {/* Modal — Protocolo do recurso */}
+      {protocoloRecursoModal && recurso && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
+          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-indigo-600" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+                PROTOCOLO DO RECURSO
+              </h3>
+            </div>
+            <div className="px-5 py-4 space-y-3">
+              <p className="text-xs text-slate-700 uppercase tracking-wide">
+                Registre o número que a Polícia Federal devolveu ao receber o recurso.
+              </p>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  NÚMERO DO PROTOCOLO
+                </label>
+                <input
+                  type="text"
+                  value={recursoForm.numero}
+                  onChange={(e) => setRecursoForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
+                  placeholder="EX.: 2026.0001234-56"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                  DATA DO PROTOCOLO
+                </label>
+                <input
+                  type="date"
+                  value={recursoForm.data}
+                  onChange={(e) => setRecursoForm((f) => ({ ...f, data: e.target.value }))}
+                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                />
+              </div>
+              {/* A data importa: é ela que fecha o contador de 10 dias. */}
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+                ESTA DATA FECHA O PRAZO DE 10 DIAS NO PAINEL. USE A DATA REAL DO PROTOCOLO,
+                NÃO A DE HOJE, SE FOREM DIFERENTES.
+              </p>
+            </div>
+            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+              <button
+                onClick={() => setProtocoloRecursoModal(false)}
+                disabled={salvandoRecurso}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+              >
+                CANCELAR
+              </button>
+              <button
+                onClick={confirmarProtocoloRecurso}
+                disabled={salvandoRecurso}
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {salvandoRecurso ? "REGISTRANDO..." : "REGISTRAR"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal — Marcar como protocolado */}
       {protocoloModalOpen && (

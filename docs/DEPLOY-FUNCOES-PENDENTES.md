@@ -8,6 +8,38 @@ para a lista não se perder e para o deploy ser conferível.
 
 ---
 
+## ⚠️ LEVA 2 — pendente (F9 + migração do recurso, 18/08/2026)
+
+A leva 1 foi publicada às 00:08 BRT. Depois disso entraram mais mudanças, e
+**estas ainda não foram deployadas**:
+
+**Novas (3):**
+- `qa-peca-enviar-cliente`
+- `qa-peca-aprovar-cliente`
+- `qa-recurso-protocolar`
+
+**Alteradas (1):**
+- `qa-processo-checar-conclusao-checklist` — ganhou o gate que impede o processo
+  de virar `pronto_para_protocolar` com petição aguardando ou devolvida.
+
+**Arrastadas pelo registry (4)** — três templates novos:
+`peca-pronta-aprovacao`, `peca-decidida-equipe` e `recurso-protocolado`:
+- `send-transactional-email`
+- `preview-transactional-email`
+- `qa-enviar-email-template`
+- `qa-send-all-templates-preview`
+
+**SQL da leva 2:** migration `20260818130000` (colunas de aprovação em
+`qa_geracoes_pecas`) — **já aplicada** em 18/08.
+
+**Não precisa de deploy:** a migração da aprovação do recurso para o guiado é só
+front (`QAClientePortalPage`, `LinhaDoTempoProcessoPF`), sai no push da `main`.
+
+> A leva 2 será publicada junto com o que vier da F10 e da F11 — decisão do
+> usuário em 18/08: um deploy só no fim.
+
+---
+
 ## Ordem obrigatória
 
 1. **SQL primeiro.** As migrations `20260818110000` (colunas `protocolo_*`) e

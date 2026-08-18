@@ -53,6 +53,12 @@ export interface LinhaDoTempoProcessoPFProps {
    */
   recurso?: RecursoParaAprovar | null;
   onRecursoAprovado?: () => void;
+  /**
+   * Número e data do protocolo do RECURSO, quando já entrou na delegacia.
+   * Até 18/08/2026 isso nunca era gravado: o cliente via "aprovado" para
+   * sempre, sem nada que pudesse conferir no site da PF.
+   */
+  recursoProtocolo?: { numero: string | null; protocoladoEm: string | null } | null;
   /** Abre a fila do pop-up guiado direto no passo de aprovação do recurso. */
   onAbrirAprovacaoRecurso?: () => void;
 }
@@ -105,6 +111,7 @@ export default function LinhaDoTempoProcessoPF({
   recurso,
   onRecursoAprovado,
   onAbrirAprovacaoRecurso,
+  recursoProtocolo,
 }: LinhaDoTempoProcessoPFProps) {
   // Do mais ANTIGO para o mais recente — é o que "linha do tempo" quer dizer.
   const cronologica = [...manifestacoes].sort((a, b) =>
@@ -147,6 +154,18 @@ export default function LinhaDoTempoProcessoPF({
           {numeroProtocolo ? ` · protocolo ${numeroProtocolo}` : ""}
           {delegacia ? ` · ${delegacia}` : ""}
         </p>
+        {/*
+          O RECURSO TEM PROTOCOLO PRÓPRIO, e é por ele que o cliente acompanha
+          o recurso no site da PF — não pelo número do processo original.
+        */}
+        {recursoProtocolo?.numero && (
+          <p className="mt-1 text-[11px] leading-snug font-semibold text-[#7A1F2B]">
+            Recurso protocolado sob o nº {recursoProtocolo.numero}
+            {recursoProtocolo.protocoladoEm
+              ? ` em ${new Date(recursoProtocolo.protocoladoEm).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}`
+              : ""}
+          </p>
+        )}
       </header>
 
       <ol className="px-4 py-3">
