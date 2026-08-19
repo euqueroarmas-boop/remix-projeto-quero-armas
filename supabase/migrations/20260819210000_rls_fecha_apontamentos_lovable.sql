@@ -1,9 +1,4 @@
 -- ============================================================================
--- AVISO: o bloco anterior deste arquivo (filiação LNTD, boleto e modelos de
--- declaração) está guardado em
--- supabase/migrations/20260819110000_cr_filiacao_lntd_e_modelos.sql.
--- Se ainda não foi colado no SQL Editor, cole aquele primeiro.
--- ============================================================================
 -- CORREÇÃO — apontamentos de segurança do Lovable (2026-08-19)
 -- Fecha os itens: 1 (ciências/consentimentos), 3 (exames), 4 (identidades
 -- funcionais), 5 (psicólogos não localizados), 9 (revisões de peças),
@@ -130,23 +125,3 @@ COMMIT;
 -- nas tabelas abaixo, e a seção secdef_sem_search_path com "0 funcoes".
 SELECT 'policies'::text AS secao,
        p.tablename::text AS item,
-       p.policyname || ' | cmd=' || p.cmd || ' | roles=' || array_to_string(p.roles, ',') AS detalhe,
-       coalesce(p.qual, '-') AS using_expr,
-       coalesce(p.with_check, '-') AS with_check_expr
-FROM pg_policies p
-WHERE p.schemaname = 'public'
-  AND p.tablename IN ('qa_cliente_ciencias','qa_exames_cliente',
-                      'qa_exames_alertas_enviados','qa_identidades_funcionais',
-                      'qa_psico_nao_localizados','qa_revisoes_pecas',
-                      'contract_signatures')
-UNION ALL
-SELECT 'secdef_sem_search_path', 'esperado: 0 funcoes',
-       count(*)::text || ' funcoes',
-       coalesce(string_agg(p.proname, ', ' ORDER BY p.proname), '(nenhuma)'), '-'
-FROM pg_proc p
-JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE n.nspname = 'public' AND p.prosecdef AND p.prokind = 'f'
-  AND (p.proconfig IS NULL
-       OR NOT EXISTS (SELECT 1 FROM unnest(p.proconfig) cfg
-                      WHERE cfg LIKE 'search_path=%'))
-ORDER BY 1, 2, 3;
