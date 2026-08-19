@@ -470,7 +470,7 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
         <Button
           onClick={onAvancar}
           disabled={!temObrigatorios}
-          className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+          className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           size="sm"
         >
           Salvar Cliente <ChevronRight className="w-3.5 h-3.5" />

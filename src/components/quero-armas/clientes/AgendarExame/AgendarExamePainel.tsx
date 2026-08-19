@@ -88,13 +88,13 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho 
     <div className="flex flex-col gap-3">
       {comCabecalho ? (
         <div>
-          <div className="qa-eyebrow text-[#8A1224]">Agendar exame</div>
+          <div className="qa-eyebrow text-[#2F3439]">Agendar exame</div>
           <h2 className="qa-h2 mt-1 text-[#0A0A0A]">
             {TITULO[tipo]}{cidadeUfLabel ? ` EM ${cidadeUfLabel}` : ""}
           </h2>
           <p className="qa-caption mt-1 text-[#6A6A6A]">
             Fonte:{" "}
-            <a href={fonteHref} target="_blank" rel="noreferrer noopener" className="text-[#8A1224] underline">
+            <a href={fonteHref} target="_blank" rel="noreferrer noopener" className="text-[#2F3439] underline">
               gov.br/PF
             </a>
             {cidadeUfLabel ? ` · próximos de ${cidadeUfLabel}` : ""}
@@ -111,7 +111,7 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho 
             onClick={() => setRaio(r)}
             className={`qa-btn-label rounded-full border px-3 py-1 transition-colors ${
               raio === r
-                ? "border-[#8A1224] bg-[#8A1224] text-white"
+                ? "border-[#2F3439] bg-[#2F3439] text-white"
                 : "border-[#E4E4E4] bg-white text-[#303030] hover:bg-[#FAFAFA]"
             }`}
           >
@@ -158,7 +158,7 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho 
             Fonte oficial da Polícia Federal — sempre consulte o PDF para conferir.
           </p>
           {pdfHref ? (
-            <a href={pdfHref} target="_blank" rel="noreferrer noopener" className="qa-caption mt-1 inline-block font-bold text-[#8A1224] underline">
+            <a href={pdfHref} target="_blank" rel="noreferrer noopener" className="qa-caption mt-1 inline-block font-bold text-[#2F3439] underline">
               Baixar lista atualizada — {ufResolved}
             </a>
           ) : (

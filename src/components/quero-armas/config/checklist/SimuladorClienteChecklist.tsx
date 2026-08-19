@@ -272,7 +272,7 @@ export default function SimuladorClienteChecklist() {
               className={cn(
                 "w-full text-left flex items-start gap-3 rounded-xl border px-4 py-3 transition-colors",
                 selecionado?.id === p.id
-                  ? "border-[#8A1224] bg-[#8A1224]/5"
+                  ? "border-[#2F3439] bg-[#2F3439]/5"
                   : "border-slate-200 bg-white hover:bg-slate-50",
               )}
             >
@@ -293,7 +293,7 @@ export default function SimuladorClienteChecklist() {
         <Button
           onClick={iniciarSimulacao}
           disabled={!selecionado || carregando}
-          className="w-full gap-2 bg-[#8A1224] hover:bg-[#6e0e1c] text-white"
+          className="w-full gap-2 bg-[#2F3439] hover:bg-[#26292D] text-white"
         >
           <Play className="h-4 w-4" />
           {carregando
@@ -353,7 +353,7 @@ export default function SimuladorClienteChecklist() {
           </span>
           <div className="h-1.5 flex-1 max-w-[140px] rounded-full bg-slate-200 overflow-hidden">
             <div
-              className="h-full bg-[#8A1224] transition-all duration-300"
+              className="h-full bg-[#2F3439] transition-all duration-300"
               style={{ width: `${progresso}%` }}
             />
           </div>

@@ -93,7 +93,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-[#7B1C2E]">Central de Adesão</h1>
+        <h1 className="text-xl font-semibold text-[#2E3236]">Central de Adesão</h1>
         <p className="text-xs text-muted-foreground mt-0.5">
           Extração automática de documentos → cadastro do cliente → contrato → formalização da venda
         </p>
@@ -111,9 +111,9 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
                     ativa
-                      ? "bg-[#7B1C2E] text-white"
+                      ? "bg-[#2E3236] text-white"
                       : concluida
-                      ? "bg-[#7B1C2E]/20 text-[#7B1C2E]"
+                      ? "bg-[#2E3236]/20 text-[#2E3236]"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
@@ -121,7 +121,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
                 </div>
                 <span
                   className={`text-[10px] font-medium whitespace-nowrap ${
-                    ativa ? "text-[#7B1C2E]" : concluida ? "text-[#7B1C2E]/70" : "text-muted-foreground"
+                    ativa ? "text-[#2E3236]" : concluida ? "text-[#2E3236]/70" : "text-muted-foreground"
                   }`}
                 >
                   {e.label}
@@ -130,7 +130,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
               {i < ETAPAS.length - 1 && (
                 <div
                   className={`h-px w-8 mx-1 mt-[-12px] flex-shrink-0 transition-colors ${
-                    concluida ? "bg-[#7B1C2E]/40" : "bg-muted"
+                    concluida ? "bg-[#2E3236]/40" : "bg-muted"
                   }`}
                 />
               )}

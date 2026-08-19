@@ -250,7 +250,7 @@ export default function ResidenciaTerceiroModal({
           type="button"
           onClick={onCancelar}
           aria-label="Fechar"
-          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#2F3439] p-2 text-white hover:bg-[#262A2E] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -258,7 +258,7 @@ export default function ResidenciaTerceiroModal({
         {/* Header — mesmos chips do pop-up de pendências */}
         <div className="px-6 pt-8 pb-4 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+            <span className="inline-flex items-center rounded-full border border-[#2F3439]/20 bg-[#FBFBFB] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#2F3439]">
               Comprovação de endereço
             </span>
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
@@ -289,7 +289,7 @@ export default function ResidenciaTerceiroModal({
               <ul className="space-y-5 relative">
                 {passos.map((p, i) => (
                   <li key={i} className="flex gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FBFBFB] text-[#2F3439] border border-[#2F3439]/10 flex items-center justify-center text-xs font-bold z-10">
                       {i + 1}
                     </span>
                     <div className="pt-1">
@@ -303,8 +303,8 @@ export default function ResidenciaTerceiroModal({
           ) : (
             <div className="space-y-6">
               {/* BLOCO 1 — dados DO REQUERENTE (fica explícito de quem são) */}
-              <section className="rounded-xl border border-[#8A1224]/15 bg-[#FFF7F8] p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8A1224]">
+              <section className="rounded-xl border border-[#2F3439]/15 bg-[#FBFBFB] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#2F3439]">
                   Bloco 1 · Dados de {titular} — dono do imóvel
                 </p>
                 <p className="mt-1 text-[13px] leading-relaxed text-[#3A3A3A]">
@@ -321,7 +321,7 @@ export default function ResidenciaTerceiroModal({
                     <select
                       value={estadoCivil}
                       onChange={(e) => setEstadoCivil(e.target.value)}
-                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#2F3439] focus:outline-none"
                     >
                       <option value="">SELECIONE</option>
                       {ESTADOS_CIVIS.map((e) => (
@@ -336,7 +336,7 @@ export default function ResidenciaTerceiroModal({
                     <select
                       value={profissao}
                       onChange={(e) => setProfissao(e.target.value)}
-                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] uppercase text-[#0A0A0A] focus:border-[#2F3439] focus:outline-none"
                     >
                       <option value="">SELECIONE</option>
                       {profissaoOptionsCom(profissao).map((o) => (
@@ -357,7 +357,7 @@ export default function ResidenciaTerceiroModal({
                       inputMode="numeric"
                       placeholder="MM/AAAA"
                       autoComplete="off"
-                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] text-[#0A0A0A] focus:border-[#8A1224] focus:outline-none"
+                      className="mt-1 h-11 w-full rounded-lg border border-[#CFCFCF] bg-white px-3 text-[13px] text-[#0A0A0A] focus:border-[#2F3439] focus:outline-none"
                     />
                   </label>
                 </div>
@@ -401,7 +401,7 @@ export default function ResidenciaTerceiroModal({
                     className={`mt-3 flex gap-2 rounded-lg border p-3 text-[12px] ${
                       confere
                         ? "border-[#1F7A3F]/40 bg-[#1F7A3F]/5 text-[#1F5F33]"
-                        : "border-[#8A1224]/40 bg-[#8A1224]/5 text-[#8A1224]"
+                        : "border-[#2F3439]/40 bg-[#2F3439]/5 text-[#2F3439]"
                     }`}
                   >
                     {confere ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
@@ -413,7 +413,7 @@ export default function ResidenciaTerceiroModal({
                   </div>
                 ) : null}
                 {erroLeitura ? (
-                  <p className="mt-2 text-[12px] text-[#8A1224]">{erroLeitura}</p>
+                  <p className="mt-2 text-[12px] text-[#2F3439]">{erroLeitura}</p>
                 ) : null}
               </section>
             </div>
@@ -427,7 +427,7 @@ export default function ResidenciaTerceiroModal({
             <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
               Resolva um por vez
             </span>
-            <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+            <span className="text-[10px] font-bold text-[#2F3439] tracking-widest uppercase">
               {etapa === "pergunta" ? "Passo 1 de 2" : "Passo 2 de 2"}
             </span>
           </div>
@@ -444,7 +444,7 @@ export default function ResidenciaTerceiroModal({
               <button
                 type="button"
                 onClick={() => setEtapa("dados")}
-                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] transition-colors"
+                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#2F3439] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#262A2E] transition-colors"
               >
                 Sim, eu moro aqui
               </button>
@@ -453,7 +453,7 @@ export default function ResidenciaTerceiroModal({
                 type="button"
                 onClick={confirmar}
                 disabled={salvando || lendo || !podeConfirmar}
-                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] disabled:opacity-50 transition-colors"
+                className="inline-flex h-14 w-full items-center justify-center rounded-xl bg-[#2F3439] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#262A2E] disabled:opacity-50 transition-colors"
               >
                 {salvando ? "Enviando" : "Confirmar residência"}
               </button>

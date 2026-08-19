@@ -398,11 +398,11 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
         {linhas.map((l, i) => (
           <div key={i} className="flex items-start gap-2 text-sm">
             {l.status === "pending" && <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 mt-0.5 flex-shrink-0" />}
-            {l.status === "loading" && <Loader2 className="w-4 h-4 animate-spin text-[#7B1C2E] mt-0.5 flex-shrink-0" />}
+            {l.status === "loading" && <Loader2 className="w-4 h-4 animate-spin text-[#2E3236] mt-0.5 flex-shrink-0" />}
             {l.status === "ok" && <CheckCircle2 className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />}
             {l.status === "error" && <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />}
             <div>
-              <p className={`text-xs font-medium ${l.status === "loading" ? "text-[#7B1C2E]" : l.status === "error" ? "text-red-600" : ""}`}>
+              <p className={`text-xs font-medium ${l.status === "loading" ? "text-[#2E3236]" : l.status === "error" ? "text-red-600" : ""}`}>
                 {l.label}
               </p>
               {l.detalhe && <p className="text-[11px] text-muted-foreground">{l.detalhe}</p>}
@@ -423,7 +423,7 @@ export default function Etapa2Leitura({ arquivos, setArquivos, textoPastaColado,
           <Button variant="outline" size="sm" onClick={onVoltar} className="text-xs gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Button>
-          <Button size="sm" onClick={() => { rodouRef.current = false; executar(); }} className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs">
+          <Button size="sm" onClick={() => { rodouRef.current = false; executar(); }} className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs">
             Tentar novamente
           </Button>
         </div>
