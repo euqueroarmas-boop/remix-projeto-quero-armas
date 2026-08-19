@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { ClienteSalvo } from "./PrePilotoWizard";
+import { corpoDoErroFn, ehRecompraBloqueada, resumoRecompra } from "@/lib/quero-armas/recompraServico";
 
 type Servico = { id: string; slug: string; nome: string; preco: number | null };
 
@@ -127,34 +128,51 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
     setEnviando(true);
     try {
       // 1. Criar venda
-      const { data: vendaData, error: errVenda } = await supabase.functions.invoke(
+      const corpoVenda: Record<string, unknown> = {
+      cart: selecionados.map((s) => ({
+        servico_id: s.id,
+        slug: s.slug,
+        quantidade: 1,
+        preco_negociado: precoAplicado(s),
+      })),
+      negociacao: temNegociacao
+        ? {
+            tipo_ajuste: tipoAjuste,
+            motivo: motivoAjuste.trim(),
+            confirmado: true,
+            origem: "central_adesao_desconto",
+          }
+        : undefined,
+      target_qa_cliente_id: clienteSalvo.id,
+      identificacao: {
+        nome_completo: clienteSalvo.nome_completo,
+        cpf: clienteSalvo.cpf || "",
+        email: clienteSalvo.email || "",
+        celular: clienteSalvo.celular || "",
+      },
+      };
+      let { data: vendaData, error: errVenda } = await supabase.functions.invoke(
         "qa-checkout-criar-venda",
-        {
-          body: {
-            cart: selecionados.map((s) => ({
-              servico_id: s.id,
-              slug: s.slug,
-              quantidade: 1,
-              preco_negociado: precoAplicado(s),
-            })),
-            negociacao: temNegociacao
-              ? {
-                  tipo_ajuste: tipoAjuste,
-                  motivo: motivoAjuste.trim(),
-                  confirmado: true,
-                  origem: "central_adesao_desconto",
-                }
-              : undefined,
-            target_qa_cliente_id: clienteSalvo.id,
-            identificacao: {
-              nome_completo: clienteSalvo.nome_completo,
-              cpf: clienteSalvo.cpf || "",
-              email: clienteSalvo.email || "",
-              celular: clienteSalvo.celular || "",
-            },
-          },
-        }
+        { body: corpoVenda },
       );
+      // Trava de compra duplicada: o serviço já está numa venda viva do cliente.
+      // Quem decide se é recompra de verdade é quem está montando a adesão.
+      if (errVenda) {
+        const corpoErro = await corpoDoErroFn(errVenda);
+        if (!ehRecompraBloqueada(corpoErro)) throw errVenda;
+        const confirmou = window.confirm(
+          `Este cliente já tem em andamento: ${resumoRecompra(corpoErro)}.\n\n` +
+          "É mesmo uma nova solicitação? Confirmar cria uma SEGUNDA venda do mesmo serviço.",
+        );
+        if (!confirmou) {
+          toast.message("Venda não criada — serviço já contratado por este cliente.");
+          return;
+        }
+        ({ data: vendaData, error: errVenda } = await supabase.functions.invoke(
+          "qa-checkout-criar-venda",
+          { body: { ...corpoVenda, recompra_confirmada: true } },
+        ));
+      }
       if (errVenda || !(vendaData as any)?.ok) {
         throw new Error((vendaData as any)?.error || errVenda?.message || "Falha ao criar venda");
       }

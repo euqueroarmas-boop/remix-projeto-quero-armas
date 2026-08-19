@@ -100,6 +100,13 @@ interface Body {
    * Sem essa checagem, o admin que dispara o wizard vira dono da venda.
    */
   target_qa_cliente_id?: number | null;
+  /**
+   * Libera a criação da venda mesmo quando o cliente já tem uma venda viva
+   * com o mesmo serviço. Sem isso, a segunda compra idêntica é recusada —
+   * ver TRAVA DE COMPRA DUPLICADA abaixo. A decisão fica registrada no
+   * evento `venda_recompra_confirmada`.
+   */
+  recompra_confirmada?: boolean;
 }
 
 const TIPOS_AJUSTE = new Set([
@@ -443,6 +450,81 @@ Deno.serve(async (req) => {
   });
   const temNegociacao = cartAvaliado.some((c) => c.diferente);
 
+  // ── TRAVA DE COMPRA DUPLICADA ──────────────────────────────────────────────
+  // Auditoria de 19/08/2026: um cliente fechou o MESMO carrinho duas vezes com
+  // quatro minutos de diferença. As duas vendas foram confirmadas à mão, os dois
+  // contratos foram assinados e cada contrato validado abriu os seus processos —
+  // seis no lugar de três. Nenhuma trava a jusante viu o problema porque todas
+  // são por VENDA (`uq_qa_processos_venda_servico`), e ali eram duas vendas
+  // distintas. A recusa precisa acontecer aqui, antes de a segunda venda nascer.
+  //
+  // Recompra legítima existe (uma segunda autorização de compra, por exemplo).
+  // Por isso não é bloqueio absoluto: `recompra_confirmada: true` libera e a
+  // decisão fica registrada no evento da venda.
+  const STATUS_VENDA_ENCERRADA = new Set([
+    "CANCELADO", "DESISTIU", "RESTITUÍDO", "RESTITUIDO",
+    "CONCLUÍDO", "CONCLUIDO", "DEFERIDO", "INDEFERIDO",
+  ]);
+  const servicosDoCarrinho = Array.from(new Set(
+    cartAvaliado
+      .map((c) => Number(c.r?.servico_id))
+      .filter((n) => Number.isFinite(n) && n > 0),
+  ));
+  const recompras: Array<{
+    servico_id: number;
+    servico_nome: string;
+    venda_id: number;
+    venda_status: string;
+    contratada_em: string | null;
+  }> = [];
+
+  if (servicosDoCarrinho.length > 0) {
+    const { data: vendasDoCliente } = await admin
+      .from("qa_vendas")
+      .select("id, id_legado, status, created_at")
+      .eq("cliente_id", cliLegado);
+    const vivas = (vendasDoCliente ?? []).filter(
+      (v: any) => !STATUS_VENDA_ENCERRADA.has(String(v.status ?? "").trim().toUpperCase()),
+    );
+    if (vivas.length > 0) {
+      // qa_itens_venda referencia a venda pelo id LEGADO.
+      const porLegado = new Map<number, any>();
+      for (const v of vivas) porLegado.set(Number((v as any).id_legado ?? (v as any).id), v);
+      const { data: itensVivos } = await admin
+        .from("qa_itens_venda")
+        .select("venda_id, servico_id, status")
+        .in("venda_id", Array.from(porLegado.keys()))
+        .in("servico_id", servicosDoCarrinho);
+      for (const item of itensVivos ?? []) {
+        if (String((item as any).status ?? "").trim().toUpperCase() === "CANCELADO") continue;
+        const venda = porLegado.get(Number((item as any).venda_id));
+        if (!venda) continue;
+        const servicoId = Number((item as any).servico_id);
+        const doCarrinho = cartAvaliado.find((c) => Number(c.r?.servico_id) === servicoId);
+        recompras.push({
+          servico_id: servicoId,
+          servico_nome: String(doCarrinho?.r?.nome ?? `serviço ${servicoId}`),
+          venda_id: Number(venda.id),
+          venda_status: String(venda.status ?? ""),
+          contratada_em: venda.created_at ?? null,
+        });
+      }
+    }
+  }
+
+  if (recompras.length > 0 && body.recompra_confirmada !== true) {
+    return new Response(
+      JSON.stringify({
+        error: "servico_ja_contratado",
+        code: "SERVICO_JA_CONTRATADO",
+        detalhe:
+          "Este cliente já tem uma venda ativa com este serviço. Se for mesmo uma nova solicitação, reenvie com recompra_confirmada.",
+        servicos: recompras,
+      }),
+      { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   if (temNegociacao) {
     // Precisa de staff ativo (mesma regra de qa_usuarios_perfis).
     if (!userId) {
@@ -681,6 +763,21 @@ Deno.serve(async (req) => {
       exibicao_contrato: body.exibicao_contrato ?? null,
     },
   });
+
+  // Auditoria — recompra do mesmo serviço liberada por confirmação explícita.
+  // O registro é o que permite distinguir depois "segunda arma" de "clicou duas vezes".
+  if (recompras.length > 0) {
+    await admin.from("qa_venda_eventos").insert({
+      venda_id: vendaId,
+      qa_cliente_id: qaClienteId,
+      cliente_id: cliLegado,
+      tipo_evento: "venda_recompra_confirmada",
+      descricao: "Venda criada mesmo com serviço já contratado — recompra confirmada por quem fechou o carrinho.",
+      ator: userId ? "cliente_logado" : "cliente_publico",
+      user_id: userId,
+      dados_json: { servicos_ja_contratados: recompras },
+    });
+  }
 
   // Auditoria dedicada — modo de exibição do contrato (usada por qa-generate-contract).
   // Sempre grava o evento quando o modo foi explicitamente enviado (mesmo itens_separados,
