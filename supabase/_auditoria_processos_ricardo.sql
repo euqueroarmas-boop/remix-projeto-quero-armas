@@ -19,6 +19,34 @@
 --   bloco 12 → panorama da base: outros clientes com processo repetido
 --   bloco 13 → panorama da base: processos sem venda (porta manual/RPC aberta)
 -- ============================================================================
+-- RESULTADO DA AUDITORIA (rodada em 19/08/2026)
+--
+-- Cliente 236, cadastro único (sem duplicidade de cadastro).
+-- Seis processos = DUAS COMPRAS IGUAIS x três serviços:
+--
+--   venda 344 · 17/08 15:41:41 · checkout do site · ator "cliente_logado" · R$ 2.997
+--   venda 345 · 17/08 15:45:57 · checkout do site · ator "cliente_logado" · R$ 2.997
+--
+-- Carrinhos idênticos (autorização de compra + CRAF/GT + mudança de serviço).
+-- A Equipe confirmou o PIX à mão nas duas (15:41:54 e 15:46:01, mesmo usuário).
+-- Saíram dois contratos (QAPOSSE20260025 e ...26); o cliente assinou os dois —
+-- no primeiro há quatro registros de `customer_signature_wrong_contract`, ou
+-- seja, ele se perdeu entre os dois contratos iguais. Cada contrato validado
+-- abriu os seus três processos: 3 + 3 = 6.
+--
+-- Nenhuma trava foi violada: a idempotência é por VENDA, e eram duas vendas.
+-- A duplicação nasceu no checkout, que não recusa uma segunda compra idêntica
+-- do mesmo serviço. O sistema chegou a REGISTRAR a recompra
+-- (`liberacao_recompra_mesmo_servico_detectada`), mas o registro é só auditoria
+-- — não bloqueia nada.
+--
+-- Dinheiro: bloco 11 voltou VAZIO. Não há webhook do Asaas nem auditoria de
+-- pagamento — as duas vendas foram marcadas como pagas manualmente. O sistema
+-- não sabe se entrou R$ 2.997 uma vez ou duas; isso só o extrato do PIX diz.
+--
+-- Resto da base: ele é o ÚNICO cliente com processo repetido do mesmo serviço
+-- (bloco 12) e não existe processo sem venda (bloco 13 vazio).
+-- ============================================================================
 
 WITH cli AS (
   SELECT c.*
