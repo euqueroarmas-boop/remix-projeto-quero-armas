@@ -101,10 +101,10 @@ interface Body {
    */
   target_qa_cliente_id?: number | null;
   /**
-   * Libera a criação da venda mesmo quando o cliente já tem uma venda viva
-   * com o mesmo serviço. Sem isso, a segunda compra idêntica é recusada —
-   * ver TRAVA DE COMPRA DUPLICADA abaixo. A decisão fica registrada no
-   * evento `venda_recompra_confirmada`.
+   * Confirma que a compra repetida é intencional. Sem isso, comprar o mesmo
+   * serviço duas vezes em poucos minutos é recusado — ver PROTEÇÃO CONTRA
+   * COMPRA REPETIDA POR ENGANO. A confirmação fica registrada no evento
+   * `venda_recompra_confirmada`.
    */
   recompra_confirmada?: boolean;
 }
@@ -413,10 +413,7 @@ Deno.serve(async (req) => {
   // Lê id_legado do cliente (usado por qa_vendas.cliente_id).
   const { data: cliRow } = await admin
     .from("qa_clientes")
-    // categoria_titular decide o limite de compras do serviço (ver TRAVA DE
-    // COMPRA REPETIDA): posse admite 2 armas para cidadão comum e 4 para
-    // segurança pública.
-    .select("id, id_legado, categoria_titular")
+    .select("id, id_legado")
     .eq("id", qaClienteId!)
     .maybeSingle();
   if (!cliRow) {
@@ -453,159 +450,91 @@ Deno.serve(async (req) => {
   });
   const temNegociacao = cartAvaliado.some((c) => c.diferente);
 
-  // ── TRAVA DE COMPRA REPETIDA ──────────────────────────────────────────────
+  // ── PROTEÇÃO CONTRA COMPRA REPETIDA POR ENGANO ────────────────────────────
   // Auditoria de 19/08/2026: um cliente fechou o MESMO carrinho duas vezes com
-  // quatro minutos de diferença (não viu a confirmação do PIX e refez). Saíram
+  // quatro minutos de diferença — não viu a confirmação do PIX e refez. Saíram
   // duas vendas, dois contratos assinados e seis processos no lugar de três.
   // Todas as travas a jusante são por VENDA (`uq_qa_processos_venda_servico`),
-  // então nenhuma delas enxerga a segunda compra: a recusa tem que acontecer
-  // aqui, antes de a venda nascer.
+  // então nenhuma delas enxerga a segunda compra.
   //
-  // Comprar de novo o mesmo serviço é legítimo — a posse admite mais de uma
-  // arma. Por isso a trava é estreita, com dois motivos e nada além deles:
-  //
-  //   repeticao_em_minutos → mesma compra há menos de 30 minutos. Ninguém
-  //                          contrata duas vezes o mesmo serviço em meia hora
-  //                          de propósito; isso é o acidente que aconteceu.
-  //   limite_do_servico    → estourou o limite cadastrado em
-  //                          `qa_servicos_limite_compra` para a categoria do
-  //                          titular (posse: 2 para cidadão comum, 4 para
-  //                          segurança pública). Serviço SEM limite cadastrado
-  //                          não trava nunca.
-  //
-  // Nos dois casos `recompra_confirmada: true` libera, e a liberação fica
-  // registrada no evento `venda_recompra_confirmada`.
+  // Isto NÃO é limite de compra: quantas armas o cliente pode ter é assunto do
+  // órgão, não do checkout. Quem quer comprar, compra. A única coisa barrada é
+  // a repetição em minutos, que é engano e não escolha — e mesmo essa o próprio
+  // cliente desfaz confirmando na tela (`recompra_confirmada`), sem depender de
+  // ninguém da Equipe. A confirmação fica registrada no evento
+  // `venda_recompra_confirmada`.
   const JANELA_COMPRA_REPETIDA_MIN = 30;
   const STATUS_VENDA_ENCERRADA = new Set([
     "CANCELADO", "DESISTIU", "RESTITUÍDO", "RESTITUIDO",
     "CONCLUÍDO", "CONCLUIDO", "DEFERIDO", "INDEFERIDO",
   ]);
 
-  interface CompraExistente {
-    unidades: number;
-    venda_id: number;
-    minutos_desde_a_ultima: number;
-  }
-  interface RecusaCompra {
-    motivo: "repeticao_em_minutos" | "limite_do_servico";
+  interface CompraRecente {
     servico_id: number;
-    servico_slug: string;
     servico_nome: string;
-    ja_tem: number;
-    no_carrinho: number;
-    limite: number | null;
     venda_id: number;
     minutos_desde_a_ultima: number;
   }
 
-  const servicosDoCarrinho = new Map<number, { slug: string; nome: string; quantidade: number }>();
+  const servicosDoCarrinho = new Map<number, string>();
   for (const c of cartAvaliado) {
     const servicoId = Number(c.r?.servico_id);
     if (!Number.isFinite(servicoId) || servicoId <= 0) continue;
-    const atual = servicosDoCarrinho.get(servicoId);
-    const quantidade = Math.max(1, Number(c.it.quantidade) || 1);
-    if (atual) atual.quantidade += quantidade;
-    else servicosDoCarrinho.set(servicoId, {
-      slug: String(c.r?.slug ?? ""),
-      nome: String(c.r?.nome ?? `serviço ${servicoId}`),
-      quantidade,
-    });
+    servicosDoCarrinho.set(servicoId, String(c.r?.nome ?? `serviço ${servicoId}`));
   }
 
-  const recusas: RecusaCompra[] = [];
+  const compradosAgoraHaPouco: CompraRecente[] = [];
 
   if (servicosDoCarrinho.size > 0) {
-    // 1) O que o cliente já tem, por serviço, nas vendas que não foram encerradas.
-    const jaComprado = new Map<number, CompraExistente>();
     const { data: vendasDoCliente } = await admin
       .from("qa_vendas")
       .select("id, id_legado, status, created_at")
-      .eq("cliente_id", cliLegado);
-    const vivas = (vendasDoCliente ?? []).filter(
+      .eq("cliente_id", cliLegado)
+      .gte("created_at", new Date(Date.now() - JANELA_COMPRA_REPETIDA_MIN * 60000).toISOString());
+    const recentes = (vendasDoCliente ?? []).filter(
       (v: any) => !STATUS_VENDA_ENCERRADA.has(String(v.status ?? "").trim().toUpperCase()),
     );
-    if (vivas.length > 0) {
+    if (recentes.length > 0) {
       // qa_itens_venda referencia a venda pelo id LEGADO.
       const porLegado = new Map<number, any>();
-      for (const v of vivas) porLegado.set(Number((v as any).id_legado ?? (v as any).id), v);
-      const { data: itensVivos } = await admin
+      for (const v of recentes) porLegado.set(Number((v as any).id_legado ?? (v as any).id), v);
+      const { data: itensRecentes } = await admin
         .from("qa_itens_venda")
         .select("venda_id, servico_id, status")
         .in("venda_id", Array.from(porLegado.keys()))
         .in("servico_id", Array.from(servicosDoCarrinho.keys()));
       const agora = Date.now();
-      for (const item of itensVivos ?? []) {
+      const jaListado = new Set<number>();
+      for (const item of itensRecentes ?? []) {
         if (String((item as any).status ?? "").trim().toUpperCase() === "CANCELADO") continue;
         const venda = porLegado.get(Number((item as any).venda_id));
         if (!venda) continue;
         const servicoId = Number((item as any).servico_id);
+        if (jaListado.has(servicoId)) continue;
+        jaListado.add(servicoId);
         const criadaEm = venda.created_at ? Date.parse(venda.created_at) : NaN;
-        const minutos = Number.isFinite(criadaEm)
-          ? Math.floor((agora - criadaEm) / 60000)
-          : Number.MAX_SAFE_INTEGER;
-        const atual = jaComprado.get(servicoId);
-        // Cada linha de qa_itens_venda é uma unidade do serviço.
-        if (!atual) {
-          jaComprado.set(servicoId, { unidades: 1, venda_id: Number(venda.id), minutos_desde_a_ultima: minutos });
-        } else {
-          atual.unidades += 1;
-          if (minutos < atual.minutos_desde_a_ultima) {
-            atual.minutos_desde_a_ultima = minutos;
-            atual.venda_id = Number(venda.id);
-          }
-        }
-      }
-    }
-
-    // 2) Limites cadastrados. Tabela ausente ou serviço sem linha = sem limite.
-    const slugs = Array.from(servicosDoCarrinho.values()).map((s) => s.slug).filter(Boolean);
-    const { data: limitesRows } = slugs.length > 0
-      ? await admin
-          .from("qa_servicos_limite_compra")
-          .select("servico_slug, categoria_titular, limite")
-          .in("servico_slug", slugs)
-      : { data: [] as any[] };
-    const categoriaTitular = (cliRow as any).categoria_titular ?? null;
-    const limiteDoServico = (slug: string): number | null => {
-      const doServico = (limitesRows ?? []).filter((l: any) => l.servico_slug === slug);
-      const daCategoria = doServico.find((l: any) => l.categoria_titular === categoriaTitular);
-      const geral = doServico.find((l: any) => l.categoria_titular == null);
-      const escolhido = daCategoria ?? geral;
-      return escolhido ? Number((escolhido as any).limite) : null;
-    };
-
-    // 3) Decide serviço a serviço.
-    for (const [servicoId, doCarrinho] of servicosDoCarrinho) {
-      const existente = jaComprado.get(servicoId);
-      if (!existente) continue;
-      const limite = limiteDoServico(doCarrinho.slug);
-      const base = {
-        servico_id: servicoId,
-        servico_slug: doCarrinho.slug,
-        servico_nome: doCarrinho.nome,
-        ja_tem: existente.unidades,
-        no_carrinho: doCarrinho.quantidade,
-        limite,
-        venda_id: existente.venda_id,
-        minutos_desde_a_ultima: existente.minutos_desde_a_ultima,
-      };
-      if (existente.minutos_desde_a_ultima < JANELA_COMPRA_REPETIDA_MIN) {
-        recusas.push({ motivo: "repeticao_em_minutos", ...base });
-      } else if (limite != null && existente.unidades + doCarrinho.quantidade > limite) {
-        recusas.push({ motivo: "limite_do_servico", ...base });
+        compradosAgoraHaPouco.push({
+          servico_id: servicoId,
+          servico_nome: servicosDoCarrinho.get(servicoId) ?? `serviço ${servicoId}`,
+          venda_id: Number(venda.id),
+          minutos_desde_a_ultima: Number.isFinite(criadaEm)
+            ? Math.floor((agora - criadaEm) / 60000)
+            : 0,
+        });
       }
     }
   }
 
-  if (recusas.length > 0 && body.recompra_confirmada !== true) {
+  if (compradosAgoraHaPouco.length > 0 && body.recompra_confirmada !== true) {
     return new Response(
       JSON.stringify({
-        error: "servico_ja_contratado",
-        code: "SERVICO_JA_CONTRATADO",
-        motivo: recusas[0].motivo,
+        error: "compra_repetida_agora",
+        code: "COMPRA_REPETIDA_AGORA",
         detalhe:
-          "Compra recusada por repetição recente ou por limite do serviço. Se for mesmo uma nova solicitação, reenvie com recompra_confirmada.",
-        servicos: recusas,
+          `Este serviço já foi comprado nos últimos ${JANELA_COMPRA_REPETIDA_MIN} minutos. ` +
+          "Se for mesmo uma nova compra, reenvie com recompra_confirmada.",
+        janela_minutos: JANELA_COMPRA_REPETIDA_MIN,
+        servicos: compradosAgoraHaPouco,
       }),
       { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
@@ -803,9 +732,10 @@ Deno.serve(async (req) => {
     },
   });
 
-  // Auditoria — recompra do mesmo serviço liberada por confirmação explícita.
-  // O registro é o que permite distinguir depois "segunda arma" de "clicou duas vezes".
-  if (recusas.length > 0) {
+  // Auditoria — compra repetida liberada por confirmação de quem comprou.
+  // O registro é o que permite distinguir depois "comprou de novo mesmo" de
+  // "clicou duas vezes".
+  if (compradosAgoraHaPouco.length > 0) {
     await admin.from("qa_venda_eventos").insert({
       venda_id: vendaId,
       qa_cliente_id: qaClienteId,
@@ -814,7 +744,7 @@ Deno.serve(async (req) => {
       descricao: "Venda criada mesmo com serviço já contratado — recompra confirmada por quem fechou o carrinho.",
       ator: userId ? "cliente_logado" : "cliente_publico",
       user_id: userId,
-      dados_json: { servicos_ja_contratados: recusas },
+      dados_json: { comprados_agora_ha_pouco: compradosAgoraHaPouco },
     });
   }
 

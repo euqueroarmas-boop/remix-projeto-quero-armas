@@ -1,62 +1,50 @@
 import { describe, expect, it } from "vitest";
 import {
-  ERRO_SERVICO_JA_CONTRATADO,
-  ehRecompraBloqueada,
-  listaRecusas,
-  motivoRecusa,
-  resumoRecompra,
-  type RecusaCompra,
+  ERRO_COMPRA_REPETIDA,
+  ehCompraRepetida,
+  listaComprasRecentes,
+  perguntaCompraRepetida,
+  resumoCompraRepetida,
+  type CompraRecente,
 } from "../recompraServico";
 
-function recusa(over: Partial<RecusaCompra>): RecusaCompra {
+function compra(over: Partial<CompraRecente> = {}): CompraRecente {
   return {
-    motivo: "limite_do_servico",
     servico_id: 60,
-    servico_slug: "autorizacao-de-compra-posse-de-arma-de-fogo",
     servico_nome: "AUTORIZAÇÃO DE COMPRA",
-    ja_tem: 2,
-    no_carrinho: 1,
-    limite: 2,
     venda_id: 344,
-    minutos_desde_a_ultima: 4320,
+    minutos_desde_a_ultima: 4,
     ...over,
   };
 }
 
 describe("recompraServico", () => {
-  it("reconhece a recusa do checkout", () => {
-    expect(ehRecompraBloqueada({ error: ERRO_SERVICO_JA_CONTRATADO })).toBe(true);
-    expect(ehRecompraBloqueada({ error: "outro" })).toBe(false);
-    expect(ehRecompraBloqueada(null)).toBe(false);
+  it("reconhece só a recusa por compra repetida", () => {
+    expect(ehCompraRepetida({ error: ERRO_COMPRA_REPETIDA })).toBe(true);
+    expect(ehCompraRepetida({ error: "asaas_payment_failed" })).toBe(false);
+    expect(ehCompraRepetida(null)).toBe(false);
   });
 
-  it("lê o motivo e a lista de serviços barrados", () => {
-    const corpo = {
-      error: ERRO_SERVICO_JA_CONTRATADO,
-      motivo: "repeticao_em_minutos",
-      servicos: [recusa({ motivo: "repeticao_em_minutos", minutos_desde_a_ultima: 4 })],
-    };
-    expect(motivoRecusa(corpo)).toBe("repeticao_em_minutos");
-    expect(listaRecusas(corpo)).toHaveLength(1);
-    expect(listaRecusas({ error: ERRO_SERVICO_JA_CONTRATADO })).toEqual([]);
-    expect(motivoRecusa({ error: ERRO_SERVICO_JA_CONTRATADO })).toBeNull();
+  it("lê a lista de compras recentes", () => {
+    expect(listaComprasRecentes({ error: ERRO_COMPRA_REPETIDA, servicos: [compra()] })).toHaveLength(1);
+    expect(listaComprasRecentes({ error: ERRO_COMPRA_REPETIDA })).toEqual([]);
   });
 
-  it("explica repetição pelo tempo e limite pela contagem", () => {
-    expect(
-      resumoRecompra({
-        error: ERRO_SERVICO_JA_CONTRATADO,
-        servicos: [recusa({ motivo: "repeticao_em_minutos", minutos_desde_a_ultima: 4 })],
-      }),
-    ).toBe("AUTORIZAÇÃO DE COMPRA (comprado há 4 min, venda #344)");
-
-    expect(
-      resumoRecompra({ error: ERRO_SERVICO_JA_CONTRATADO, servicos: [recusa({})] }),
-    ).toBe("AUTORIZAÇÃO DE COMPRA (já tem 2, limite 2)");
+  it("diz o serviço, o tempo e a venda anterior", () => {
+    expect(resumoCompraRepetida({ error: ERRO_COMPRA_REPETIDA, servicos: [compra()] }))
+      .toBe("AUTORIZAÇÃO DE COMPRA (há 4 min, venda #344)");
+    expect(resumoCompraRepetida({ error: ERRO_COMPRA_REPETIDA, servicos: [compra({ minutos_desde_a_ultima: 0 })] }))
+      .toBe("AUTORIZAÇÃO DE COMPRA (há menos de 1 minuto, venda #344)");
   });
 
   it("não repete o mesmo serviço no resumo", () => {
-    const corpo = { error: ERRO_SERVICO_JA_CONTRATADO, servicos: [recusa({}), recusa({})] };
-    expect(resumoRecompra(corpo)).toBe("AUTORIZAÇÃO DE COMPRA (já tem 2, limite 2)");
+    expect(resumoCompraRepetida({ error: ERRO_COMPRA_REPETIDA, servicos: [compra(), compra()] }))
+      .toBe("AUTORIZAÇÃO DE COMPRA (há 4 min, venda #344)");
+  });
+
+  it("pergunta a quem está comprando, sem mandar falar com a equipe", () => {
+    const texto = perguntaCompraRepetida({ error: ERRO_COMPRA_REPETIDA, servicos: [compra()] });
+    expect(texto).toContain("Quer mesmo fazer uma nova compra?");
+    expect(texto.toLowerCase()).not.toContain("equipe");
   });
 });

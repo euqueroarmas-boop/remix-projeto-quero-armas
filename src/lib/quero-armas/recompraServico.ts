@@ -1,36 +1,25 @@
 /**
- * Trava de compra repetida do checkout.
+ * Proteção contra compra repetida por engano.
  *
- * `qa-checkout-criar-venda` recusa (HTTP 409, `servico_ja_contratado`) em dois
- * casos, e só neles:
+ * `qa-checkout-criar-venda` recusa (HTTP 409, `compra_repetida_agora`) quando o
+ * mesmo serviço já foi comprado nos últimos 30 minutos. Não é limite de compra
+ * — quantas armas o cliente pode ter é assunto do órgão, não do checkout. É só
+ * a proteção contra o clique repetido de quem não viu a confirmação do
+ * pagamento e refez o pedido.
  *
- *   repeticao_em_minutos → o mesmo serviço foi comprado há menos de 30 minutos.
- *                          É acidente (não viu a confirmação e refez), não
- *                          escolha.
- *   limite_do_servico    → a compra estouraria o limite cadastrado em
- *                          `qa_servicos_limite_compra` para a categoria do
- *                          titular (posse: 2 para cidadão comum, 4 para
- *                          segurança pública). Serviço sem limite não trava.
+ * Quem está comprando desfaz sozinho: reenviar com `recompra_confirmada: true`
+ * cria a venda e deixa a confirmação registrada. Ninguém precisa pedir
+ * autorização à Equipe.
  *
- * Quem fecha o carrinho decide: reenviar com `recompra_confirmada: true` cria
- * a venda mesmo assim e deixa a decisão registrada.
- *
- * Este módulo guarda o vocabulário compartilhado pelas três telas que criam
- * venda (checkout do cliente, Piloto Real e Central de Adesão).
+ * Vocabulário compartilhado pelas três telas que criam venda (checkout do
+ * cliente, Piloto Real e Central de Adesão).
  */
 
-export const ERRO_SERVICO_JA_CONTRATADO = "servico_ja_contratado";
+export const ERRO_COMPRA_REPETIDA = "compra_repetida_agora";
 
-export type MotivoRecusaCompra = "repeticao_em_minutos" | "limite_do_servico";
-
-export interface RecusaCompra {
-  motivo: MotivoRecusaCompra;
+export interface CompraRecente {
   servico_id: number;
-  servico_slug: string;
   servico_nome: string;
-  ja_tem: number;
-  no_carrinho: number;
-  limite: number | null;
   venda_id: number;
   minutos_desde_a_ultima: number;
 }
@@ -49,36 +38,35 @@ export async function corpoDoErroFn(err: unknown): Promise<CorpoErro> {
   return null;
 }
 
-export function ehRecompraBloqueada(body: CorpoErro): boolean {
-  return !!body && body.error === ERRO_SERVICO_JA_CONTRATADO;
+export function ehCompraRepetida(body: CorpoErro): boolean {
+  return !!body && body.error === ERRO_COMPRA_REPETIDA;
 }
 
-export function listaRecusas(body: CorpoErro): RecusaCompra[] {
+export function listaComprasRecentes(body: CorpoErro): CompraRecente[] {
   const bruto = body?.servicos;
-  return Array.isArray(bruto) ? (bruto as RecusaCompra[]) : [];
+  return Array.isArray(bruto) ? (bruto as CompraRecente[]) : [];
 }
 
-export function motivoRecusa(body: CorpoErro): MotivoRecusaCompra | null {
-  const doCorpo = body?.motivo;
-  if (doCorpo === "repeticao_em_minutos" || doCorpo === "limite_do_servico") return doCorpo;
-  return listaRecusas(body)[0]?.motivo ?? null;
-}
-
-/** Frase única, já explicando por que cada serviço foi barrado. */
-export function resumoRecompra(body: CorpoErro): string {
+/** Frase única dizendo o que já foi comprado e há quanto tempo. */
+export function resumoCompraRepetida(body: CorpoErro): string {
   const vistos = new Set<number>();
   const partes: string[] = [];
-  for (const r of listaRecusas(body)) {
-    if (vistos.has(r.servico_id)) continue;
-    vistos.add(r.servico_id);
-    if (r.motivo === "repeticao_em_minutos") {
-      const min = Math.max(0, Number(r.minutos_desde_a_ultima) || 0);
-      partes.push(
-        `${r.servico_nome} (comprado há ${min === 0 ? "menos de 1 minuto" : `${min} min`}, venda #${r.venda_id})`,
-      );
-    } else {
-      partes.push(`${r.servico_nome} (já tem ${r.ja_tem}, limite ${r.limite ?? "—"})`);
-    }
+  for (const c of listaComprasRecentes(body)) {
+    if (vistos.has(c.servico_id)) continue;
+    vistos.add(c.servico_id);
+    const min = Math.max(0, Number(c.minutos_desde_a_ultima) || 0);
+    partes.push(
+      `${c.servico_nome} (há ${min === 0 ? "menos de 1 minuto" : `${min} min`}, venda #${c.venda_id})`,
+    );
   }
   return partes.join(" · ");
+}
+
+/** Pergunta feita a quem está comprando — a decisão é dele, não da Equipe. */
+export function perguntaCompraRepetida(body: CorpoErro): string {
+  return (
+    `Você já comprou isto agora há pouco: ${resumoCompraRepetida(body)}.\n\n` +
+    "Se o pagamento anterior não apareceu, não é preciso comprar de novo — ele pode estar a caminho.\n\n" +
+    "Quer mesmo fazer uma nova compra?"
+  );
 }

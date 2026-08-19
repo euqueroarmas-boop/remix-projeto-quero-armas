@@ -37,7 +37,7 @@ import {
   policyIsValid,
   type NotificacaoPolicyValue,
 } from "@/components/quero-armas/NotificacaoPolicyPicker";
-import { corpoDoErroFn, ehRecompraBloqueada, motivoRecusa, resumoRecompra } from "@/lib/quero-armas/recompraServico";
+import { corpoDoErroFn, ehCompraRepetida, perguntaCompraRepetida } from "@/lib/quero-armas/recompraServico";
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
@@ -803,19 +803,14 @@ export default function QAPilotoRealPage() {
       let { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
         body: corpoVenda,
       });
-      // Trava de compra duplicada: o serviço já está numa venda viva do cliente.
-      // Quem decide se é recompra de verdade (segunda arma) é a Equipe, aqui.
+      // Mesmo serviço comprado há poucos minutos: confirma se é nova compra
+      // ou o clique repetido. Não é limite — é proteção contra engano.
       if (error) {
         const corpoErro = await corpoDoErroFn(error);
-        if (!ehRecompraBloqueada(corpoErro)) throw error;
-        const confirmou = window.confirm(
-          `${resumoRecompra(corpoErro)}.\n\n` +
-          (motivoRecusa(corpoErro) === "limite_do_servico"
-            ? "Isso passa do limite cadastrado para a categoria do titular. Confirmar cria a venda mesmo assim."
-            : "Foi comprado agora há pouco — confira se não é a mesma compra repetida. Confirmar cria uma SEGUNDA venda."),
-        );
+        if (!ehCompraRepetida(corpoErro)) throw error;
+        const confirmou = window.confirm(perguntaCompraRepetida(corpoErro));
         if (!confirmou) {
-          toast.message("Venda não criada — compra repetida ou acima do limite do serviço.");
+          toast.message("Venda não criada — era a mesma compra repetida.");
           return;
         }
         ({ data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {

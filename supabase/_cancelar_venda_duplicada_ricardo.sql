@@ -86,8 +86,12 @@ VALUES (345, 236, 'venda_cancelada_compra_duplicada',
         jsonb_build_object('venda_cancelada', 345, 'venda_mantida', 344,
                            'valor', 2997, 'conferido_no_extrato', true));
 
+-- `origem` tem CHECK: só aceita webhook_asaas, manual_financeiro,
+-- sistema_trigger, backfill, bloqueado, outro. É por isso que a primeira
+-- tentativa deste script parou aqui — e por isso a auditoria de pagamento
+-- nunca registrou as confirmações manuais (as funções gravam 'manual_admin').
 INSERT INTO public.qa_pagamento_auditoria (venda_id, cliente_id, campo, valor_anterior, valor_novo, origem, ator, contexto)
-VALUES (345, 236, 'venda_cancelada_compra_duplicada', 'PAGO', 'CANCELADO', 'manual_admin', 'sistema',
+VALUES (345, 236, 'venda_cancelada_compra_duplicada', 'PAGO', 'CANCELADO', 'manual_financeiro', 'sistema',
         jsonb_build_object('motivo', 'compra duplicada — pagamento unico confirmado no extrato',
                            'venda_mantida', 344));
 

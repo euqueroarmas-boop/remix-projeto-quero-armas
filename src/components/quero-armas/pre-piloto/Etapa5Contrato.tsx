@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { ClienteSalvo } from "./PrePilotoWizard";
-import { corpoDoErroFn, ehRecompraBloqueada, motivoRecusa, resumoRecompra } from "@/lib/quero-armas/recompraServico";
+import { corpoDoErroFn, ehCompraRepetida, perguntaCompraRepetida } from "@/lib/quero-armas/recompraServico";
 
 type Servico = { id: string; slug: string; nome: string; preco: number | null };
 
@@ -155,19 +155,14 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         "qa-checkout-criar-venda",
         { body: corpoVenda },
       );
-      // Trava de compra duplicada: o serviço já está numa venda viva do cliente.
-      // Quem decide se é recompra de verdade é quem está montando a adesão.
+      // Mesmo serviço comprado há poucos minutos: confirma se é nova compra
+      // ou o clique repetido. Não é limite — é proteção contra engano.
       if (errVenda) {
         const corpoErro = await corpoDoErroFn(errVenda);
-        if (!ehRecompraBloqueada(corpoErro)) throw errVenda;
-        const confirmou = window.confirm(
-          `${resumoRecompra(corpoErro)}.\n\n` +
-          (motivoRecusa(corpoErro) === "limite_do_servico"
-            ? "Isso passa do limite cadastrado para a categoria do titular. Confirmar cria a venda mesmo assim."
-            : "Foi comprado agora há pouco — confira se não é a mesma compra repetida. Confirmar cria uma SEGUNDA venda."),
-        );
+        if (!ehCompraRepetida(corpoErro)) throw errVenda;
+        const confirmou = window.confirm(perguntaCompraRepetida(corpoErro));
         if (!confirmou) {
-          toast.message("Venda não criada — compra repetida ou acima do limite do serviço.");
+          toast.message("Venda não criada — era a mesma compra repetida.");
           return;
         }
         ({ data: vendaData, error: errVenda } = await supabase.functions.invoke(

@@ -266,24 +266,19 @@ ALTERADAS (redeploy obrigatório):
 - supabase/functions/qa-inatividade-cobranca/index.ts — sem ela, o lembrete de
   processo parado continua sem aparecer no portal.
 
-## Leva 13 — trava de compra repetida no checkout (19/08/2026)
+## Leva 13 — proteção contra compra repetida por engano (19/08/2026)
 
 Motivo: auditoria do cliente 236 (RICARDO ADRIANO MIRANDA) mostrou o mesmo
 carrinho fechado duas vezes com quatro minutos de diferença — duas vendas, dois
 contratos assinados e seis processos no lugar de três. Todas as travas de
 idempotência são por VENDA, então nenhuma delas enxerga a segunda compra.
 
-A função passa a recusar em dois casos, e só neles: compra repetida em menos de
-30 minutos (acidente) e compra que passa do limite cadastrado em
-`qa_servicos_limite_compra` (posse: 2 para cidadão comum, 4 para segurança
-pública). Serviço sem limite cadastrado não trava. Recompra legítima segue
-possível com `recompra_confirmada`.
-
-DEPENDE DO SQL: a migration `20260819150000_limite_de_compras_por_servico.sql`
-cria a tabela de limites. Sem ela, só a janela de 30 minutos funciona — os
-limites por categoria ficam inativos (a função não quebra).
+A função passa a recusar UM caso só: o mesmo serviço comprado nos últimos 30
+minutos. Não é limite de quantidade — quantas armas o cliente pode ter é
+assunto do órgão, não do checkout. E não vira pedido de autorização: quem está
+comprando confirma na própria tela (`recompra_confirmada`) e a venda sai.
 
 ALTERADAS (redeploy obrigatório):
-- supabase/functions/qa-checkout-criar-venda/index.ts — sem ela, o cliente
-  continua conseguindo repetir a mesma compra em minutos e o sistema segue
-  abrindo processo duplicado para cada uma.
+- supabase/functions/qa-checkout-criar-venda/index.ts — sem ela, o clique
+  repetido de quem não viu a confirmação do pagamento continua virando uma
+  segunda venda com processos duplicados.
