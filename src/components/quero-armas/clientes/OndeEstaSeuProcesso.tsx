@@ -26,7 +26,7 @@ import {
  * ============================================================================= */
 
 const CORES: Record<string, { fundo: string; texto: string; rotulo: string }> = {
-  cliente: { fundo: "#7A1F2B", texto: "#FFFFFF", rotulo: "É COM VOCÊ" },
+  cliente: { fundo: "#2F3337", texto: "#FFFFFF", rotulo: "É COM VOCÊ" },
   equipe: { fundo: "#0A0A0A", texto: "#FFFFFF", rotulo: "É COM A NOSSA EQUIPE" },
   policia_federal: { fundo: "#2F3439", texto: "#FFFFFF", rotulo: "ESTÁ NA POLÍCIA FEDERAL" },
 };

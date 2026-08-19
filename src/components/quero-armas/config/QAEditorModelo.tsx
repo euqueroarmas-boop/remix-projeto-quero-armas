@@ -111,7 +111,7 @@ function TBtn({
       onMouseDown={(e) => { e.preventDefault(); onClick(); }}
       className={`h-6 w-6 flex items-center justify-center rounded transition-all duration-100
         ${active
-          ? "bg-[#7B1C2E] text-white shadow-inner scale-95 ring-1 ring-[#7B1C2E]/40"
+          ? "bg-[#2E3236] text-white shadow-inner scale-95 ring-1 ring-[#2E3236]/40"
           : "text-slate-600 hover:bg-slate-200"}`}>
       {children}
     </button>
@@ -452,12 +452,12 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
         <div className="flex mr-1">
           <button type="button" onClick={() => alternarModo("visual")}
             className={`h-6 px-2.5 text-[10px] rounded-l border font-semibold transition-colors
-              ${modo === "visual" ? "bg-[#7B1C2E] text-white border-[#7B1C2E]" : "bg-white text-slate-500 border-slate-300 hover:bg-slate-50"}`}>
+              ${modo === "visual" ? "bg-[#2E3236] text-white border-[#2E3236]" : "bg-white text-slate-500 border-slate-300 hover:bg-slate-50"}`}>
             Visual
           </button>
           <button type="button" onClick={() => alternarModo("html")}
             className={`h-6 px-2 text-[10px] rounded-r border-t border-r border-b font-semibold flex items-center gap-0.5 transition-colors
-              ${modo === "html" ? "bg-[#7B1C2E] text-white border-[#7B1C2E]" : "bg-white text-slate-500 border-slate-300 hover:bg-slate-50"}`}>
+              ${modo === "html" ? "bg-[#2E3236] text-white border-[#2E3236]" : "bg-white text-slate-500 border-slate-300 hover:bg-slate-50"}`}>
             <Code2 className="w-2.5 h-2.5" /> HTML
           </button>
         </div>
@@ -525,7 +525,7 @@ export const QAEditorModelo = forwardRef<QAEditorModeloRef, Props>(function QAEd
                   className={`h-6 px-1.5 text-[10px] rounded border transition-all duration-100
                     ${tipo === "upper" ? "font-bold tracking-wide" : "font-medium"}
                     ${isActive
-                      ? "bg-[#7B1C2E] text-white border-[#7B1C2E] shadow-inner scale-95 ring-1 ring-[#7B1C2E]/40"
+                      ? "bg-[#2E3236] text-white border-[#2E3236] shadow-inner scale-95 ring-1 ring-[#2E3236]/40"
                       : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-400"}`}>
                   {labels[tipo]}
                 </button>

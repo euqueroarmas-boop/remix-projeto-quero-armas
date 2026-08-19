@@ -255,7 +255,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <Button
             size="sm"
             onClick={() => onConcluido(vendaGerada.id, vendaGerada.legado)}
-            className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+            className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           >
             Ir para Piloto Real <ChevronRight className="w-3.5 h-3.5" />
           </Button>
@@ -307,7 +307,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           {jaPagou
             ? <>Sim — {formaPagamento === "cartao_credito" ? `Cartão de Crédito ${parcelas}x` : formaPagamento === "cartao_debito" ? "Cartão de Débito" : formaPagamento === "pix" ? "PIX" : "Boleto"}</>
             : <>Não pagou ainda — a combinar</>}
-          <button type="button" onClick={() => setEtapa("selecionar")} className="ml-2 text-[#7B1C2E] underline">alterar</button>
+          <button type="button" onClick={() => setEtapa("selecionar")} className="ml-2 text-[#2E3236] underline">alterar</button>
         </div>
 
         {!clienteSalvo.email && (
@@ -324,7 +324,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             size="sm"
             onClick={gerarContrato}
             disabled={enviando}
-            className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+            className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           >
             {enviando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
             {enviando ? "Gerando..." : "Gerar contrato"}
@@ -370,11 +370,11 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
                 key={s.id}
                 onClick={() => toggleServico(s)}
                 className={`w-full text-left px-3 py-2 rounded text-xs flex justify-between items-center gap-2 transition-colors ${
-                  marcado ? "bg-[#7B1C2E] text-white" : "bg-muted/40 hover:bg-muted"
+                  marcado ? "bg-[#2E3236] text-white" : "bg-muted/40 hover:bg-muted"
                 }`}
               >
                 <span className={`w-4 h-4 flex-shrink-0 rounded border flex items-center justify-center ${marcado ? "bg-white border-white" : "border-muted-foreground"}`}>
-                  {marcado && <CheckCircle2 className="w-3.5 h-3.5 text-[#7B1C2E]" />}
+                  {marcado && <CheckCircle2 className="w-3.5 h-3.5 text-[#2E3236]" />}
                 </span>
                 <span className="font-medium flex-1">{s.nome}</span>
                 <span className={marcado ? "text-white/80" : "text-muted-foreground"}>
@@ -489,11 +489,11 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           <div>
             <p className="text-xs font-semibold mb-1">Cliente já pagou este serviço?</p>
             <div className="flex flex-col sm:flex-row gap-2">
-              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${!jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${!jaPagou ? "border-[#2E3236] bg-[#2E3236]/5 font-semibold" : "border-slate-200"}`}>
                 <input type="radio" name="jaPagou" checked={!jaPagou} onChange={() => setJaPagou(false)} />
                 Não pagou ainda — cobrar depois (a combinar)
               </label>
-              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${jaPagou ? "border-[#7B1C2E] bg-[#7B1C2E]/5 font-semibold" : "border-slate-200"}`}>
+              <label className={`flex-1 border rounded-md px-3 py-2 cursor-pointer text-xs flex items-center gap-2 ${jaPagou ? "border-[#2E3236] bg-[#2E3236]/5 font-semibold" : "border-slate-200"}`}>
                 <input type="radio" name="jaPagou" checked={jaPagou} onChange={() => setJaPagou(true)} />
                 Sim, já pagou
               </label>
@@ -550,7 +550,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           size="sm"
           onClick={() => setEtapa("confirmar")}
           disabled={selecionados.length === 0 || !negociacaoValida}
-          className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+          className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
         >
           Continuar <ChevronRight className="w-3.5 h-3.5" />
         </Button>

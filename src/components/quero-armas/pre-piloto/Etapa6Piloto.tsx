@@ -77,7 +77,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
           <Button
             onClick={irParaPiloto}
             size="sm"
-            className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+            className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           >
             <Play className="w-3.5 h-3.5" /> Piloto Real
           </Button>

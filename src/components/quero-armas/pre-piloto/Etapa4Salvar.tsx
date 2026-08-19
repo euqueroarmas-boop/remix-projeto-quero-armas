@@ -675,7 +675,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         <Button
           onClick={verificarDuplicata}
           disabled={salvando}
-          className="w-full bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+          className="w-full bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           size="sm"
         >
           {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
@@ -721,7 +721,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               size="sm"
               onClick={() => salvar(false)}
               disabled={salvando}
-              className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 flex-1"
+              className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 flex-1"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
               Criar novo mesmo assim
@@ -739,7 +739,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           <Button
             onClick={() => salvar(false)}
             disabled={salvando}
-            className="w-full bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1"
+            className="w-full bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
             size="sm"
           >
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronRight className="w-3.5 h-3.5" />}

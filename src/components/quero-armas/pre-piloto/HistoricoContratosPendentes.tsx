@@ -470,7 +470,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
               onClick={() => setFiltro(a.id)}
               className={`flex flex-shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-medium uppercase tracking-wide transition-all ${
                 ativo
-                  ? "bg-[#7B1C2E] text-white shadow-sm"
+                  ? "bg-[#2E3236] text-white shadow-sm"
                   : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
               }`}
             >
@@ -532,7 +532,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                 onClick={() => setOrdemSemContrato(o.id)}
                 className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
                   ordemSemContrato === o.id
-                    ? "bg-[#7B1C2E] text-white border-[#7B1C2E]"
+                    ? "bg-[#2E3236] text-white border-[#2E3236]"
                     : "bg-white text-amber-900 border-amber-200 hover:bg-amber-100/60"
                 }`}
               >
@@ -556,7 +556,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
               </div>
               <Button
                 size="sm"
-                className="text-xs gap-1 h-7 bg-[#7B1C2E] hover:bg-[#6a1827] text-white flex-shrink-0"
+                className="text-xs gap-1 h-7 bg-[#2E3236] hover:bg-[#282B2F] text-white flex-shrink-0"
                 disabled={gerando === v.venda_id}
                 onClick={() => gerarParaVenda(v.venda_id_legado ?? v.venda_id, v.cliente_nome, v.venda_id)}
               >
@@ -666,7 +666,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                       size="sm"
                       onClick={() => uploadAssinado(c.contrato_id, c.venda_id)}
                       disabled={!uploadArquivo || enviando}
-                      className="bg-[#7B1C2E] hover:bg-[#6a1827] text-white text-xs gap-1 h-7"
+                      className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 h-7"
                     >
                       {enviando ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                       {enviando ? "Enviando..." : "Confirmar assinatura"}

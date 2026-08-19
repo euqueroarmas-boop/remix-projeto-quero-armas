@@ -252,14 +252,14 @@ export default function DeclaracaoResponsavelImovelModal({
           type="button"
           onClick={onFechar}
           aria-label="Fechar"
-          className="absolute top-3 right-3 z-20 rounded-full bg-[#8A1224] p-2 text-white hover:bg-[#6f0f1e] transition-colors"
+          className="absolute top-3 right-3 z-20 rounded-full bg-[#2F3439] p-2 text-white hover:bg-[#262A2E] transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="px-6 pt-6 pb-4 pr-14 shrink-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="inline-flex items-center rounded-full border border-[#8A1224]/20 bg-[#FFF7F8] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8A1224]">
+            <span className="inline-flex items-center rounded-full border border-[#2F3439]/20 bg-[#FBFBFB] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#2F3439]">
               Comprovação de endereço
             </span>
             <span className="inline-flex items-center rounded-full border border-[#E4E4E4] bg-white px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-[#6A6A6A]">
@@ -284,7 +284,7 @@ export default function DeclaracaoResponsavelImovelModal({
             <ul className="space-y-5 relative">
               {passos.map((p, i) => (
                 <li key={i} className="flex gap-4">
-                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FFF7F8] text-[#8A1224] border border-[#8A1224]/10 flex items-center justify-center text-xs font-bold z-10">
+                  <span className="flex-shrink-0 w-8 h-8 rounded-full bg-[#FBFBFB] text-[#2F3439] border border-[#2F3439]/10 flex items-center justify-center text-xs font-bold z-10">
                     {i + 1}
                   </span>
                   <div className="pt-1">
@@ -310,7 +310,7 @@ export default function DeclaracaoResponsavelImovelModal({
                 type="button"
                 onClick={apagarDeclaracao}
                 disabled={apagando}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#8A1224]/40 bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#8A1224] hover:bg-[#8A1224] hover:text-white disabled:opacity-50 transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#2F3439]/40 bg-white px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#2F3439] hover:bg-[#2F3439] hover:text-white disabled:opacity-50 transition-colors"
               >
                 {apagando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
                 Apagar e enviar no meu nome
@@ -323,7 +323,7 @@ export default function DeclaracaoResponsavelImovelModal({
               className={`mt-5 flex gap-2 rounded-lg border p-3 text-[12px] ${
                 resultado.conforme
                   ? "border-[#1F7A3F]/40 bg-[#1F7A3F]/5 text-[#1F5F33]"
-                  : "border-[#8A1224]/40 bg-[#8A1224]/5 text-[#8A1224]"
+                  : "border-[#2F3439]/40 bg-[#2F3439]/5 text-[#2F3439]"
               }`}
             >
               {resultado.conforme ? (
@@ -359,7 +359,7 @@ export default function DeclaracaoResponsavelImovelModal({
             <span className="text-[10px] font-bold text-[#6A6A6A] tracking-widest uppercase">
               Resolva um por vez
             </span>
-            <span className="text-[10px] font-bold text-[#8A1224] tracking-widest uppercase">
+            <span className="text-[10px] font-bold text-[#2F3439] tracking-widest uppercase">
               {declaracaoId ? "Passo 2 de 2" : "Passo 1 de 2"}
             </span>
           </div>
@@ -389,7 +389,7 @@ export default function DeclaracaoResponsavelImovelModal({
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={!declaracaoId || enviando}
-              className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#8A1224] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#6f0f1e] disabled:opacity-50 transition-colors"
+              className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-[#2F3439] px-4 text-[11px] font-bold uppercase tracking-[0.14em] text-white hover:bg-[#262A2E] disabled:opacity-50 transition-colors"
             >
               {enviando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
               {enviando ? "Conferindo assinatura" : "Enviar declaração assinada"}
