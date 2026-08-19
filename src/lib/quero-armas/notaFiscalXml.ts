@@ -729,10 +729,32 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
 /* ── Entrada pública ────────────────────────────────────────────────────── */
 
 /**
- * Lê o XML de uma nota fiscal autorizada. Devolve o motivo em português quando
- * o arquivo não serve — a mensagem vai direto para a tela do cliente.
+ * TRAVA DE LIBERAÇÃO DA NFS-e — DESLIGADA (19/08/2026).
+ *
+ * A NF-e (mercadoria) foi conferida contra o XML real do cliente e está no ar.
+ * A NFS-e NÃO: o leitor dela foi escrito a partir do leiaute publicado, e a
+ * fixture dos testes foi montada da especificação, não copiada de uma nota de
+ * verdade. Enquanto isso, ficam abertos o QR Code que a NT 008 exige no DANFSe
+ * e os grupos de IBS/CBS da NT 009.
+ *
+ * Decisão do usuário: nada de nota de serviço no ar sem validação. Enquanto
+ * esta constante for `false`, XML de NFS-e é RECUSADO na porta — o cliente
+ * recebe o motivo na tela e continua podendo enviar o PDF da DANFSe, que é o
+ * caminho que já funcionava antes de tudo isto.
+ *
+ * PARA RELIGAR: troque para `true`. Só isso. O leitor da NFS-e continua
+ * inteiro e coberto por testes (`notaFiscalXmlNfse.test.ts`), justamente para
+ * não apodrecer enquanto espera o XML real.
  */
-export function lerNotaFiscalXml(xml: string): LeituraNotaFiscalXml {
+export const IMPORTACAO_XML_NFSE_LIBERADA = false;
+
+export const MSG_XML_NFSE_NAO_ACEITO =
+  "Ainda não aceitamos o XML da nota fiscal de SERVIÇO (NFS-e) — estamos validando essa leitura. " +
+  "Para nota de serviço, anexe o PDF da DANFSe baixado no portal onde a nota foi emitida. " +
+  "O XML da nota de venda de mercadoria (NF-e) continua sendo aceito normalmente.";
+
+/** Faz a leitura de fato, sem consultar a trava de liberação. */
+function lerXml(xml: string): LeituraNotaFiscalXml {
   const bruto = String(xml ?? "").trim();
   if (!bruto) return { ok: false, motivo: "O arquivo XML está vazio." };
 
@@ -754,6 +776,46 @@ export function lerNotaFiscalXml(xml: string): LeituraNotaFiscalXml {
     motivo:
       "Este XML não é de nota fiscal (NF-e ou NFS-e). Anexe o XML que o emissor gera junto com o DANFE.",
   };
+}
+
+/**
+ * O XML é de nota de SERVIÇO? Decidido pela raiz do documento, antes de
+ * qualquer leitura de campo — nota de serviço não pode nem começar a ser
+ * processada enquanto a trava estiver desligada.
+ */
+function ehXmlDeNfse(xml: string): boolean {
+  try {
+    const doc = new DOMParser().parseFromString(String(xml ?? ""), "application/xml");
+    if (acha(doc, "parsererror")) return false;
+    return !!(acha(doc, "infNFSe") || acha(doc, "infDPS"));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Lê o XML de uma nota fiscal autorizada. Devolve o motivo em português quando
+ * o arquivo não serve — a mensagem vai direto para a tela do cliente.
+ *
+ * É por aqui que o Hub entra. Com a trava desligada, XML de NFS-e nunca passa.
+ */
+export function lerNotaFiscalXml(xml: string): LeituraNotaFiscalXml {
+  if (!IMPORTACAO_XML_NFSE_LIBERADA && ehXmlDeNfse(xml)) {
+    return { ok: false, motivo: MSG_XML_NFSE_NAO_ACEITO };
+  }
+  return lerXml(xml);
+}
+
+/**
+ * Leitura SEM a trava de liberação.
+ *
+ * Existe só para os testes continuarem cobrindo o leitor da NFS-e enquanto a
+ * importação está desligada — código morto e sem teste é código que quebra em
+ * silêncio até o dia em que alguém religa. NÃO usar no fluxo do Hub: o caminho
+ * do cliente é `lerNotaFiscalXml`.
+ */
+export function lerNotaFiscalXmlSemTrava(xml: string): LeituraNotaFiscalXml {
+  return lerXml(xml);
 }
 
 /* ── Ponte com o restante do sistema ────────────────────────────────────── */

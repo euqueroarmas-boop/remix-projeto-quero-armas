@@ -4,8 +4,11 @@ import { describe, expect, it } from "vitest";
 import {
   camposCertidaoDaNotaXml,
   enderecoEmLinha,
+  IMPORTACAO_XML_NFSE_LIBERADA,
   lerNotaFiscalXml,
+  lerNotaFiscalXmlSemTrava,
   modeloPelaChave,
+  MSG_XML_NFSE_NAO_ACEITO,
   ufPeloCodigoMunicipio,
   type NotaFiscalXml,
 } from "../notaFiscalXml";
@@ -22,6 +25,12 @@ import { camposPlanosDaNotaXml, papelDoClienteNaNota } from "../notaFiscalXmlImp
  *
  * A fixture foi montada a partir do leiaute, não copiada de uma nota real.
  * Substituir por um XML real (anonimizado) assim que houver um em mãos.
+ *
+ * ATENÇÃO: a importação de XML de NFS-e está DESLIGADA no Hub (ver
+ * `IMPORTACAO_XML_NFSE_LIBERADA`). Por isso os testes do LEITOR chamam
+ * `lerNotaFiscalXmlSemTrava` — o leitor precisa continuar coberto enquanto
+ * espera validação, senão apodrece e quebra em silêncio no dia em que alguém
+ * religar. Quem testa a TRAVA é o bloco no fim do arquivo.
  */
 
 const XML_NFSE = readFileSync(resolve(__dirname, "fixtures/nfse-nacional.xml"), "utf8");
@@ -31,7 +40,7 @@ const CNPJ_PRESTADOR = "11222333000181";
 const CNPJ_TOMADOR = "44555666000177";
 
 function nota(): NotaFiscalXml {
-  const r = lerNotaFiscalXml(XML_NFSE);
+  const r = lerNotaFiscalXmlSemTrava(XML_NFSE);
   if (r.ok === false) throw new Error(`fixture deveria ser lida: ${r.motivo}`);
   return r.nota;
 }
@@ -128,7 +137,7 @@ describe("NFS-e nacional — nome do município", () => {
   });
 
   it("sem xLocEmi, fica o código — nunca um nome inventado", () => {
-    const r = lerNotaFiscalXml(
+    const r = lerNotaFiscalXmlSemTrava(
       XML_NFSE.replace("<xLocEmi>Ferraz de Vasconcelos</xLocEmi>", ""),
     );
     if (r.ok === false) throw new Error(r.motivo);
@@ -182,7 +191,7 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
    */
   it("tributação do ISSQN: cada código com o rótulo que é dele", () => {
     const lidoCom = (codigo: string) => {
-      const r = lerNotaFiscalXml(
+      const r = lerNotaFiscalXmlSemTrava(
         XML_NFSE.replace("<tribISSQN>1</tribISSQN>", `<tribISSQN>${codigo}</tribISSQN>`),
       );
       if (r.ok === false) throw new Error(r.motivo);
@@ -196,7 +205,7 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
 
   it("retenção do ISSQN e regime especial seguem as tabelas do leiaute", () => {
     const comRetencao = (codigo: string) => {
-      const r = lerNotaFiscalXml(
+      const r = lerNotaFiscalXmlSemTrava(
         XML_NFSE.replace("<tpRetISSQN>1</tpRetISSQN>", `<tpRetISSQN>${codigo}</tpRetISSQN>`),
       );
       if (r.ok === false) throw new Error(r.motivo);
@@ -207,7 +216,7 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
     expect(comRetencao("3")).toBe("Retido pelo Intermediário");
 
     const comRegime = (codigo: string) => {
-      const r = lerNotaFiscalXml(
+      const r = lerNotaFiscalXmlSemTrava(
         XML_NFSE.replace("<regEspTrib>0</regEspTrib>", `<regEspTrib>${codigo}</regEspTrib>`),
       );
       if (r.ok === false) throw new Error(r.motivo);
@@ -222,7 +231,7 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
   });
 
   it("código fora da tabela conhecida sai cru, em vez de rotulado errado", () => {
-    const r = lerNotaFiscalXml(XML_NFSE.replace("<tribISSQN>1</tribISSQN>", "<tribISSQN>9</tribISSQN>"));
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE.replace("<tribISSQN>1</tribISSQN>", "<tribISSQN>9</tribISSQN>"));
     if (r.ok === false) throw new Error(r.motivo);
     expect(r.nota.servico?.tributacaoIssqn).toBe("9");
   });
@@ -238,13 +247,13 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
 
 describe("NFS-e nacional — travas", () => {
   it("recusa nota de homologação", () => {
-    const r = lerNotaFiscalXml(XML_NFSE.replace("<tpAmb>1</tpAmb>", "<tpAmb>2</tpAmb>"));
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE.replace("<tpAmb>1</tpAmb>", "<tpAmb>2</tpAmb>"));
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.motivo).toMatch(/HOMOLOGA/i);
   });
 
   it("recusa XML sem chave de acesso", () => {
-    const r = lerNotaFiscalXml(XML_NFSE.replace(/ Id="NFS\d+"/, ""));
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE.replace(/ Id="NFS\d+"/, ""));
     expect(r.ok).toBe(false);
     expect(r.ok === false && r.motivo).toMatch(/chave/i);
   });
@@ -280,5 +289,52 @@ describe("NFS-e nacional — ponte com o Golden Record", () => {
     expect(planos.cnpj).toBe(CNPJ_PRESTADOR);
     expect(planos.nome_completo).toBeUndefined();
     expect(planos.tomador_nome).toBe("COMERCIO DE METAIS EXEMPLO LTDA");
+  });
+});
+
+
+describe("TRAVA — XML de NFS-e é recusado enquanto não houver validação", () => {
+  /**
+   * Decisão do usuário (19/08/2026): nada de nota de serviço no ar sem
+   * validação contra XML real. O cliente que anexar um XML de NFS-e recebe o
+   * motivo na tela e continua podendo enviar o PDF da DANFSe — caminho que já
+   * funcionava antes de tudo isto.
+   */
+  it("a trava está desligada — se alguém religar sem validar, este teste avisa", () => {
+    expect(IMPORTACAO_XML_NFSE_LIBERADA).toBe(false);
+  });
+
+  it("recusa o XML de NFS-e pela porta de entrada do Hub", () => {
+    const r = lerNotaFiscalXml(XML_NFSE);
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.motivo).toBe(MSG_XML_NFSE_NAO_ACEITO);
+  });
+
+  it("a recusa explica o que fazer: mandar o PDF da DANFSe", () => {
+    expect(MSG_XML_NFSE_NAO_ACEITO).toContain("PDF da DANFSe");
+    expect(MSG_XML_NFSE_NAO_ACEITO).toContain("NF-e");
+  });
+
+  it("recusa a NFS-e mesmo quando o arquivo tem outro problema — não vaza detalhe interno", () => {
+    // Nota de homologação: sem a trava, o motivo seria "ambiente de
+    // homologação". Com a trava, a resposta é sempre a mesma, porque nota de
+    // serviço não entra por este caminho de jeito nenhum.
+    const homologacao = XML_NFSE.replace("<tpAmb>1</tpAmb>", "<tpAmb>2</tpAmb>");
+    const r = lerNotaFiscalXml(homologacao);
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.motivo).toBe(MSG_XML_NFSE_NAO_ACEITO);
+  });
+
+  it("a trava vale também para o XML da DPS avulsa", () => {
+    const dps = `<?xml version="1.0"?><DPS xmlns="http://www.sped.fazenda.gov.br/nfse"><infDPS Id="DPS1"><tpAmb>1</tpAmb><nDPS>1</nDPS></infDPS></DPS>`;
+    const r = lerNotaFiscalXml(dps);
+    expect(r.ok).toBe(false);
+    expect(r.ok === false && r.motivo).toBe(MSG_XML_NFSE_NAO_ACEITO);
+  });
+
+  it("o leitor da NFS-e continua inteiro por trás da trava", () => {
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE);
+    expect(r.ok).toBe(true);
+    expect(r.ok === true && r.nota.modelo).toBe("nfse");
   });
 });

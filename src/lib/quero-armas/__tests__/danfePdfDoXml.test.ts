@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { gerarDanfePdfDoXml, nomeArquivoDanfe } from "../danfePdfDoXml";
-import { lerNotaFiscalXml, type NotaFiscalXml } from "../notaFiscalXml";
+import { lerNotaFiscalXml, lerNotaFiscalXmlSemTrava, type NotaFiscalXml } from "../notaFiscalXml";
 
 /**
  * DUAS COISAS SÃO VERIFICADAS AQUI, e as duas custaram um retrabalho.
@@ -184,7 +184,9 @@ describe("DANFSe — a nota de serviço tem folha própria", () => {
   const XML_NFSE = readFileSync(resolve(__dirname, "fixtures/nfse-nacional.xml"), "utf8");
 
   function notaServico(): NotaFiscalXml {
-    const r = lerNotaFiscalXml(XML_NFSE);
+    // Sem trava: aqui se testa a IMPRESSÃO da DANFSe, que segue coberta
+    // enquanto a importação por XML espera validação.
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE);
     if (r.ok === false) throw new Error(r.motivo);
     return r.nota;
   }
@@ -229,7 +231,7 @@ describe("DANFSe — a nota de serviço tem folha própria", () => {
   });
 
   it("sem nome de município, a linha da prefeitura simplesmente não sai", async () => {
-    const r = lerNotaFiscalXml(XML_NFSE.replace("<xLocEmi>Ferraz de Vasconcelos</xLocEmi>", ""));
+    const r = lerNotaFiscalXmlSemTrava(XML_NFSE.replace("<xLocEmi>Ferraz de Vasconcelos</xLocEmi>", ""));
     if (r.ok === false) throw new Error(r.motivo);
     const texto = await textoUnico(r.nota);
     expect(texto).not.toContain("PREFEITURA MUNICIPAL");
