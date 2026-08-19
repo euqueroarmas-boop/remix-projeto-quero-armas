@@ -14,7 +14,8 @@ Aberta em 19/08/2026.
 | `20260819030000_concessao_cr_checklist_in311` | Monta o checklist do CR pela IN 311/2025 | ✅ aplicada — 47 exigências ativas, nenhuma sem grupo |
 | `20260819040000_modalidade_cac_vem_da_compra` | Modalidade CAC passa a vir do item comprado; a pergunta ao cliente sai do checklist | ✅ aplicada — 46 exigências ativas |
 | `20260819050000_concessao_cr_e_atirador_esportivo` | Marca `concessao-cr` como atirador desportivo | ✅ aplicada — `modalidade_cac = atirador` |
-| `20260819060000_cr_nome_explicito_e_backfill_modalidade` | Nome explícito na vitrine + acerta o processo de CR de 15/07, anterior ao gatilho | ⬜ **a aplicar** |
+| `20260819060000_cr_nome_explicito_e_backfill_modalidade` | Nome explícito na vitrine + modalidade nos processos de CR abertos | ✅ aplicada |
+| `20260819070000_cr_completa_checklist_dos_processos_abertos` | Completa o checklist dos 2 processos de CR abertos que nasceram com a versão antiga | ⬜ **a aplicar** |
 
 **Edge functions:**
 
