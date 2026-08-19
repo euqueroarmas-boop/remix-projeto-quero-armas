@@ -4,6 +4,7 @@ import { QAAuthProvider, useQAAuthContext } from "./QAAuthContext";
 import { QATemaProvider } from "./QATemaContext";
 import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
+import { useGestoGaveta } from "./useGestoGaveta";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Menu } from "lucide-react";
 
@@ -39,6 +40,9 @@ function QALayoutInner() {
 
   // Navegou? A gaveta fecha sozinha — senão ela fica por cima da tela nova.
   useEffect(() => { setMenuMobile(false); }, [location.pathname]);
+
+  // Dedo da borda esquerda para a direita abre a gaveta; para a esquerda fecha.
+  useGestoGaveta(menuMobile, setMenuMobile);
 
   // Gaveta em tela cheia: o fundo não pode rolar por baixo dela.
   useEffect(() => {
