@@ -18,7 +18,8 @@ Aberta em 19/08/2026.
 | `20260819070000_cr_completa_checklist_dos_processos_abertos` | Completa o checklist dos 2 processos de CR abertos que nasceram com a versão antiga | ✅ aplicada — 35 e 39 exigências |
 | `20260819080000_cr_dega_sempre_e_segundo_endereco_declarado` | DEGA sempre obrigatória + declaração positiva/negativa do 2º endereço (achado dos 4 dossiês deferidos) | ✅ aplicada — trio conferido |
 | `20260819090000_biblioteca_decore` | Registra o DECORE na Biblioteca (sem virar exigência); o treino do parser é o upload do PDF pela tela | ✅ aplicada — modelo treinado (det+ia) |
-| `20260819100000_cr_protocolo_pela_equipe` | Senha GOV abre o grupo Requerimento; juntada sai do CR; declarações exigem assinatura gov.br; requerimento e boleto viram marcos da equipe | ⬜ **a aplicar** |
+| `20260819100000_cr_protocolo_pela_equipe` | Senha GOV abre o grupo Requerimento; juntada sai do CR; declarações exigem assinatura gov.br; requerimento e boleto viram marcos da equipe | ✅ aplicada |
+| `20260819110000_cr_filiacao_lntd_e_modelos` | Filiação LNTD em 2 passos (boleto pago pela equipe + declaração do clube assinada), grupo depois dos exames, template_key nas 4 declarações sem botão | ⬜ **a aplicar** — SUBIR os 8 .docx limpos no Storage (`qa-templates/declaracoes/`) ANTES |
 
 **Edge functions:**
 

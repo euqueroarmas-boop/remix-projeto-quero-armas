@@ -161,6 +161,10 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   // Habitualidade / clube
   if (
     t.startsWith("comprovante_filiacao") ||
+    // O boleto da filiação à entidade (LNTD) é parte do passo de filiação:
+    // o cliente envia o boleto e a EQUIPE paga. Sem esta regra caía em
+    // "Fechamento" e sumia da sequência do clube.
+    t.startsWith("boleto_filiacao") ||
     t.startsWith("declaracao_habitualidade") ||
     t.startsWith("declaracao_compromisso_treino") ||
     t.startsWith("declaracao_compromisso_habitualidade") ||

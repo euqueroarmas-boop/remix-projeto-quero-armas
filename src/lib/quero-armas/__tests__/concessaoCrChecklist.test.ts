@@ -46,6 +46,7 @@ const TIPOS_CONCESSAO_CR = [
   "antecedentes_militar_estadual",
   "pergunta_responde_inquerito_criminal",
   "declaracao_sem_inquerito_processo_criminal",
+  "boleto_filiacao_entidade",
   "comprovante_filiacao_entidade_tiro",
   "declaracao_compromisso_habitualidade",
   "habilitacao_cacador_ibama",
@@ -83,6 +84,7 @@ describe("Concessão de CR — grupos das exigências da IN 311", () => {
 
   it("os documentos da atividade CAC ficam em Habitualidade e clube", () => {
     for (const t of [
+      "boleto_filiacao_entidade",
       "comprovante_filiacao_entidade_tiro",
       "declaracao_compromisso_habitualidade",
       "habilitacao_cacador_ibama",
