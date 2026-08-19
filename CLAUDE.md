@@ -43,3 +43,26 @@ do Supabase. Portanto:
 - Se o bloco for longo, mostre mesmo assim. Tamanho não é motivo para omitir.
 - Junto do bloco, diga em uma linha o que ele faz e qual consulta roda depois para
   conferir se funcionou.
+
+## Edge functions — SEMPRE MANDAR O COMANDO
+
+O push publica o front, mas **edge function não sai junto**. Toda vez que eu criar
+ou alterar qualquer arquivo em `supabase/functions/`, a resposta tem que trazer o
+comando de deploy **pronto para copiar e colar**, no mesmo lugar e com o mesmo
+peso do bloco de SQL. Vale a mesma regra do SQL: mostrar na tela, por inteiro,
+sem abreviar e sem mandar abrir arquivo nenhum.
+
+Formato do comando (project ref fixo, vem de `supabase/config.toml`):
+
+```bash
+supabase functions deploy <nome-da-funcao> --project-ref ogkltfqvzweeqkfmrzts
+```
+
+- Uma linha por função tocada — nova ou alterada. Função alterada precisa de
+  deploy igual à nova; esquecer disso deixa o banco novo conversando com código
+  velho.
+- Junto do comando, dizer em uma linha o que quebra se aquela função não subir.
+- Se preferir o botão, o Publish do Lovable faz o mesmo — mas o comando vai
+  sempre, porque nem sempre estou no Lovable.
+- Registrar a leva em `docs/DEPLOY-FUNCOES-PENDENTES.md` NÃO substitui mostrar o
+  comando na resposta. O arquivo é o registro; o comando na tela é o que eu uso.
