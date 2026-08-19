@@ -110,7 +110,12 @@ import JuntadaAssinaturaPanel from "@/components/quero-armas/portal/JuntadaAssin
 import PecaAprovacaoPanel, { type PecaParaAprovar } from "@/components/quero-armas/portal/PecaAprovacaoPanel";
 import DeferimentoEntregaPanel from "@/components/quero-armas/portal/DeferimentoEntregaPanel";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
-import { exigenciaCobravelAgora } from "@/lib/quero-armas/etapaFinalProtocolo";
+import {
+  aguardandoEquipe,
+  exigenciaCobravelAgora,
+  separarPorResponsavel,
+} from "@/lib/quero-armas/etapaFinalProtocolo";
+import AguardandoEquipePanel from "@/components/quero-armas/portal/AguardandoEquipePanel";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
@@ -3166,6 +3171,26 @@ export default function QAClientePortalPage() {
 
   // TRAVA DE ORDEM POR GRUPO — só o grupo corrente da fila aceita entrega.
   const travaGrupos = useMemo(() => calcularTravaGrupos(pendenciasGuiadas as any), [pendenciasGuiadas]);
+  /**
+   * Exigências que sobraram e NÃO dependem do cliente: pagar a taxa, liberar o
+   * gov.br, assinar a juntada. Elas abrem quando a equipe marca o processo como
+   * pronto para protocolar — e é isso que a tela precisa dizer, em vez de somar
+   * quatro linhas amarelas escritas PENDENTE no colo de quem já entregou tudo.
+   */
+  const docsAguardandoEquipe = useMemo(() => {
+    const statusPorProcesso = new Map(
+      ((processos ?? []) as Array<{ id?: string; status?: string }>).map((p) => [
+        String(p?.id ?? ""),
+        String(p?.status ?? ""),
+      ]),
+    );
+    return (processoDocs ?? []).filter(
+      (d: any) =>
+        d?.obrigatorio &&
+        isChecklistPendente(d.status) &&
+        !exigenciaCobravelAgora(d, statusPorProcesso.get(String(d?.processo_id)) ?? ""),
+    );
+  }, [processoDocs, processos]);
 
   // ── Varredura silenciosa por baixo do portal ───────────────────────────────
   // Só liga quando o cliente logado TEM pendência aberta (assinatura ou
@@ -5373,23 +5398,43 @@ export default function QAClientePortalPage() {
                 return ia - ib;
               });
               let contadorPasso = 0;
+              // O que sobrou esperando a equipe não é documento "a enviar": o
+              // cliente não tem como enviar. Contar junto transformava a tela
+              // em cobrança de uma dívida que não existe.
+              const idsEsperandoEquipe = new Set(
+                docsAguardandoEquipe.map((d: any) => String(d.id)),
+              );
+              const docsDoCliente = docsFilt.filter((d: any) => !idsEsperandoEquipe.has(String(d.id)));
+              const comAEquipeNoEscopo = docsFilt.length - docsDoCliente.length;
               const kpis = [
-                { label: "PENDENTES", value: docsFilt.length - totalReenvio, sub: "documentos a enviar", accent: "#B8860B" },
+                { label: "PENDENTES", value: docsDoCliente.length - totalReenvio, sub: "documentos a enviar", accent: "#B8860B" },
                 { label: "REENVIAR", value: totalReenvio, sub: "documentos rejeitados", accent: "#C32E26" },
-                { label: "PROCESSOS", value: byProc.size, sub: "com pendências", accent: "#7A1F2B" },
+                comAEquipeNoEscopo > 0 && docsDoCliente.length === 0
+                  ? { label: "COM A EQUIPE", value: comAEquipeNoEscopo, sub: "passos que vamos liberar", accent: "#4A4A4A" }
+                  : { label: "PROCESSOS", value: byProc.size, sub: "com pendências", accent: "#7A1F2B" },
               ];
               return (
                 <>
                   {/* Cabeçalho travado: H1 + metadados + KPIs + filtro por processo. */}
                   <header className="shrink-0 pt-[26px] pb-4" style={{ maxWidth: "100%" }}>
-                    <h1 className="qa-h1" style={{ overflowWrap: "anywhere" }}>{primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS</h1>
+                    <h1 className="qa-h1" style={{ overflowWrap: "anywhere" }}>
+                      {docsDoCliente.length === 0 && comAEquipeNoEscopo > 0
+                        ? `${primeiroNome}, VOCÊ ENTREGOU TUDO`
+                        : `${primeiroNome}, ESSAS SÃO SUAS PENDÊNCIAS`}
+                    </h1>
                     <div className="qa-meta qa-meta-lines">
                       <span>
                         <span>CPF · <b>{cliente?.cpf || "—"}</b></span>
                         <span>PROCESSOS · <b>{byProc.size}</b></span>
                       </span>
                       <span>
-                        <b>{docsFilt.length}</b>&nbsp;DOCUMENTO{docsFilt.length === 1 ? "" : "S"} AGUARDANDO ENVIO
+                        {docsDoCliente.length === 0 && comAEquipeNoEscopo > 0 ? (
+                          <>AGORA É COM A NOSSA EQUIPE</>
+                        ) : (
+                          <>
+                            <b>{docsDoCliente.length}</b>&nbsp;DOCUMENTO{docsDoCliente.length === 1 ? "" : "S"} AGUARDANDO ENVIO
+                          </>
+                        )}
                       </span>
                     </div>
                     <div className="qa-kpi-grid grid grid-cols-3 gap-2 mt-4">
@@ -5439,17 +5484,49 @@ export default function QAClientePortalPage() {
                         {procsOrdenados.map(([procId, lista]) => {
                           const proc = processos.find((p) => String(p.id) === procId);
                           const nome = String(proc?.servico_nome || "Processo").toUpperCase();
+                          // ── SUA PARTE ACABOU ────────────────────────────
+                          // Só sobrou o que depende da equipe (defesa, aprovação
+                          // da petição, taxa, protocolo). Continuar listando
+                          // isso como "pendência" faz o cliente ler dívida onde
+                          // não há nada que ele possa fazer — foi o que gerou o
+                          // "e agora?" no WhatsApp. Aqui o processo explica onde
+                          // está e o que vem depois.
+                          const statusProc = (proc as any)?.status ?? "";
+                          if (aguardandoEquipe(lista as any[], statusProc)) {
+                            return (
+                              <AguardandoEquipePanel
+                                key={procId}
+                                nomeServico={nome}
+                                passos={(lista as any[]).map((d) => ({
+                                  id: String(d.id),
+                                  nome:
+                                    String(d.nome_documento || "").trim() ||
+                                    String(d.tipo_documento || "Documento")
+                                      .replace(/_/g, " ")
+                                      .toUpperCase(),
+                                }))}
+                              />
+                            );
+                          }
+                          const { comAEquipe } = separarPorResponsavel(lista as any[], statusProc);
+                          const idsComAEquipe = new Set(comAEquipe.map((d: any) => String(d.id)));
                           return (
                             <div key={procId} className="rounded-sm border border-[#E5E5E5] bg-white">
                               <div className="border-b border-[#EEEEEE] px-5 py-3">
                                 <div className="qa-eyebrow">{nome}</div>
-                                <div className="qa-kpi-sub mt-1">{lista.length} pendência(s)</div>
+                                <div className="qa-kpi-sub mt-1">
+                                  {lista.length - idsComAEquipe.size} pendência(s)
+                                  {idsComAEquipe.size > 0
+                                    ? ` · ${idsComAEquipe.size} com a nossa equipe`
+                                    : ""}
+                                </div>
                               </div>
                               <div className="divide-y divide-[#F0F0F0]">
                                 {lista.map((d) => {
                                   const reprov = isReprov(d);
                                   const passo = ++contadorPasso;
                                   const foraDaFila = passoDe(d) === undefined;
+                                  const esperaEquipe = idsComAEquipe.has(String(d.id));
                                   const isAtiva = d.id === atividadeAtualId;
                                   return (
                                     <button
@@ -5493,20 +5570,31 @@ export default function QAClientePortalPage() {
                                               {String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase()}
                                             </div>
                                             <div className="qa-kpi-sub mt-0.5">
-                                              {foraDaFila
-                                                ? "LIBERA APÓS OS PASSOS ANTERIORES"
-                                                : isAtiva
-                                                  ? (d.etapa ? String(d.etapa).toUpperCase() : "—")
-                                                  : "AGUARDA O PASSO ANTERIOR"}
+                                              {/* "LIBERA APÓS OS PASSOS ANTERIORES" mentia nos
+                                                  passos do protocolo: eles não esperam passo
+                                                  nenhum do cliente, esperam a EQUIPE liberar. */}
+                                              {esperaEquipe
+                                                ? "AGUARDANDO A NOSSA EQUIPE LIBERAR"
+                                                : foraDaFila
+                                                  ? "LIBERA APÓS OS PASSOS ANTERIORES"
+                                                  : isAtiva
+                                                    ? (d.etapa ? String(d.etapa).toUpperCase() : "—")
+                                                    : "AGUARDA O PASSO ANTERIOR"}
                                             </div>
                                           </div>
                                         </div>
                                       </div>
                                       <span
                                         className="qa-eyebrow shrink-0 rounded-sm px-2 py-1"
-                                        style={reprov ? { background: "#C32E26", color: "#FFFFFF" } : { background: "#F5EDD8", color: "#7A5A14" }}
+                                        style={
+                                          reprov
+                                            ? { background: "#C32E26", color: "#FFFFFF" }
+                                            : esperaEquipe
+                                              ? { background: "#EFEFEF", color: "#4A4A4A" }
+                                              : { background: "#F5EDD8", color: "#7A5A14" }
+                                        }
                                       >
-                                        {reprov ? "REENVIAR" : "PENDENTE"}
+                                        {reprov ? "REENVIAR" : esperaEquipe ? "COM A EQUIPE" : "PENDENTE"}
                                       </span>
                                     </button>
                                   );
@@ -5566,6 +5654,20 @@ export default function QAClientePortalPage() {
                 cidadeCliente={(cliente as any)?.cidade ?? null}
                 resumoProcesso={resumoProcesso}
               />
+            ) : docsAguardandoEquipe.length > 0 ? (
+              // Fila vazia NÃO é o fim do processo: o que sobrou está com a
+              // equipe. Dizer "nenhuma pendência" aqui deixava o cliente sem
+              // saber que ainda vem a defesa, a aprovação dele e o protocolo.
+              <div className="px-1 pb-6">
+                <AguardandoEquipePanel
+                  passos={docsAguardandoEquipe.map((d: any) => ({
+                    id: String(d.id),
+                    nome:
+                      String(d.nome_documento || "").trim() ||
+                      String(d.tipo_documento || "Documento").replace(/_/g, " ").toUpperCase(),
+                  }))}
+                />
+              </div>
             ) : (
               <p className="py-8 text-center text-sm text-slate-500">Nenhuma pendência no momento.</p>
             )}
