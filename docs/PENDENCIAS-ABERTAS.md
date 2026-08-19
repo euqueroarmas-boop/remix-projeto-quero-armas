@@ -65,13 +65,18 @@ SELECT id, tipo_peca, procedimento_servico, prazo_dias, base_calculo,
 
 ### 3. Insumos do CR que dependem da operação
 
-Nada disso é código — é material que só a equipe tem:
+Atualizado em 19/08/2026, depois dos 4 zips de dossiês deferidos (Rivelino,
+Wellington, Augusto e Fabrício — todos atirador, todos com o CR emitido):
 
-| Insumo | Para que serve | Sem ele |
-|---|---|---|
-| 3 dossiês de CR deferidos (atirador), com a pasta inteira protocolada | referência de conferência e treino da IA | a equipe confere de memória |
-| Telas do Sinarm-CAC, passo a passo | virar o roteiro guiado do requerimento | o cliente vê o item "Requerimento de CR" sem o passo a passo |
-| 2 arquivos de cada documento novo (requerimento do CR, filiação, DSA, DEGA) | a IA aprender a reconhecer | todo upload desses tipos cai em revisão humana |
+| Insumo | Situação |
+|---|---|
+| Dossiês de CR deferidos | ✅ **entregues** — 4 dossiês completos; corrigiram a DEGA (sempre exigida) e a declaração do 2º endereço (migration `20260819080000`) |
+| Modelos para treinar a IA | 🟡 **material em mãos** — os zips têm 2+ versões de cada declaração (DSA, DEGA, compromisso em 5 clubes, responsável imóvel, 2º endereço, inquérito) nas pastas "Documentos para preencher", mais as versões assinadas reais. Falta a equipe subir na Biblioteca (Configurações), 2 por documento. DECORE já subiu (1 modelo, det+ia ✅ — subir o 2º quando aparecer) |
+| Telas do Sinarm-CAC, passo a passo | 🔴 **único insumo que falta.** Os 4 CRs dos zips são da era Exército (SFPC, Portaria 166-COLOG); o protocolo hoje é no Sinarm-CAC da PF. Do próximo CR real: print de cada tela do requerimento — entrada no sistema, formulários na ordem, quais slots de upload ele pede, geração da GRU e tela do protocolo. Sem isso o item "Requerimento de CR" segue sem roteiro guiado |
+
+Fora do escopo do CR, registrado nesta sessão: DECORE **não** vira exigência de
+serviço até um cliente precisar (decisão do titular, 19/08); arquivos de senha
+GOV dentro dos zips são ignorados em qualquer processamento.
 
 ---
 
