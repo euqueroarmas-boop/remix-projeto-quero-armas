@@ -1,12 +1,13 @@
 -- ============================================================================
--- DIAGNÓSTICO · REQUERIMENTO DO ANTHONY REPROVADO COMO "OUTRO DOCUMENTO"
--- Cole as três consultas no SQL Editor do Supabase e me mande o resultado.
--- Nenhuma delas altera dado nenhum — são só leituras.
+-- FALTAM AS DUAS CONSULTAS QUE DIZEM POR QUE O DOCUMENTO FOI REPROVADO.
+-- A do cadastro (que você já rodou) responde outra pergunta — a da conferência
+-- campo a campo. Estas duas são as que apontam a causa do "OUTRO DOCUMENTO".
+-- Nenhuma altera dado nenhum.
 -- ============================================================================
 
--- 1) O QUE A LEITURA DEVOLVEU EM CADA TENTATIVA BLOQUEADA
---    `tipo_lido` é exatamente o rótulo que a classificação cravou. É este
---    campo que diz se o problema está na leitura, no mapa de tipos ou no slot.
+-- 1) O RÓTULO EXATO QUE A LEITURA CRAVOU EM CADA TENTATIVA BLOQUEADA
+--    `tipo_lido` é o campo decisivo: ele diz se a leitura errou, se o mapa de
+--    tipos não conhecia o rótulo, ou se o navegador estava com a versão velha.
 select
   e.created_at,
   e.detalhes->>'codigo'          as codigo,
@@ -42,16 +43,13 @@ where (c.nome_completo ilike '%ANTHONY NELSON%' or replace(replace(c.cpf,'.','')
 order by d.created_at desc
 limit 20;
 
--- 3) O CADASTRO QUE VAI SER USADO NA CONFERÊNCIA CAMPO A CAMPO
---    Campo vazio aqui não reprova ninguém (entra como "sem referência"), mas
---    campo PREENCHIDO E DIFERENTE do que ele digitou na PF passa a acusar
---    divergência. É por isso que preciso ver a linha inteira.
-select
-  id, nome_completo, cpf, nome_mae, nome_pai, data_nascimento, sexo, estado_civil,
-  naturalidade_pais, naturalidade_uf, naturalidade_municipio,
-  rg, emissor_rg, uf_emissor_rg, expedicao_rg, titulo_eleitor,
-  profissao, email, celular,
-  cep, endereco, numero, complemento, bairro, cidade, estado
-from qa_clientes
-where nome_completo ilike '%ANTHONY NELSON%'
-   or replace(replace(cpf,'.',''),'-','') = '30372708889';
+-- ============================================================================
+-- OPCIONAL — só se você decidir que quem está certo é o requerimento.
+-- O cadastro diz JARDIM RODEIO; ele digitou Jardim Marica no site da PF.
+-- NÃO rode antes de saber qual dos dois é o bairro verdadeiro.
+-- ============================================================================
+-- update qa_clientes set bairro = 'JARDIM MARICA', updated_at = now()
+--  where id = 218;
+-- Conferência depois do update:
+-- select id, nome_completo, endereco, numero, complemento, bairro, cidade, cep
+--   from qa_clientes where id = 218;

@@ -117,14 +117,14 @@ describe("conferirRequerimentoContraCadastro", () => {
     expect(requerimentoConfere(itens)).toBe(true);
   });
 
-  it("confere os 25 campos do formulário, e não só nome e CPF", () => {
+  it("confere o formulário inteiro, e não só nome e CPF", () => {
     const itens = conferirRequerimentoContraCadastro(campos, CADASTRO_CERTO);
     const conferidos = itens.filter((i) => i.status === "conforme").map((i) => i.campo);
     expect(conferidos).toEqual(
       expect.arrayContaining([
         "nome_completo", "cpf", "nome_mae", "nome_pai", "data_nascimento", "sexo",
         "estado_civil", "naturalidade_pais", "naturalidade_uf", "naturalidade_municipio",
-        "rg", "rg_orgao", "rg_uf", "rg_expedicao", "titulo_eleitor", "profissao",
+        "rg", "rg_orgao", "rg_uf", "rg_expedicao", "titulo_eleitor",
         "email", "celular", "cep", "logradouro", "numero", "complemento", "bairro",
         "cidade", "uf",
       ]),
@@ -174,5 +174,52 @@ describe("conferirRequerimentoContraCadastro", () => {
     expect(campos_conferidos).not.toContain("cnpj");
     expect(campos_conferidos).not.toContain("razao_social");
     expect(campos_conferidos).not.toContain("empresa");
+  });
+});
+
+describe("profissão — cadastro guarda categoria, PF guarda cargo", () => {
+  const campos = lerCamposRequerimentoPorGeometria(PAGINAS);
+
+  // Caso REAL do cadastro do cliente: ele escolheu a categoria na lista do
+  // cadastro e digitou o cargo no site da PF. Os dois estão certos. Comparar
+  // reprovaria todo policial, bombeiro e guarda do sistema.
+  it("mostra os dois valores mas nunca acusa divergência", () => {
+    const itens = conferirRequerimentoContraCadastro(campos, {
+      ...CADASTRO_CERTO,
+      profissao: "SERVIDOR DE SEGURANÇA PÚBLICA (PM, PC, PF, PRF, GUARDA, BOMBEIRO, AGENTE PENITENCIÁRIO)",
+    });
+    const profissao = itens.find((i) => i.campo === "profissao");
+    expect(profissao?.valorCertidao).toBe("CABO DA POLICIA MILITAR");
+    expect(profissao?.valorReferencia).toBe(
+      "SERVIDOR DE SEGURANÇA PÚBLICA (PM, PC, PF, PRF, GUARDA, BOMBEIRO, AGENTE PENITENCIÁRIO)",
+    );
+    expect(profissao?.status).toBe("sem_referencia");
+    expect(itens.filter((i) => i.status === "divergente")).toEqual([]);
+  });
+});
+
+describe("cadastro REAL do cliente — o que a tela vai mostrar", () => {
+  const campos = lerCamposRequerimentoPorGeometria(PAGINAS);
+
+  // Linha do banco exportada em 18/08/2026. O requerimento e o cadastro batem
+  // em tudo, menos no bairro: o cliente digitou "Jardim Marica" na PF e o
+  // cadastro diz "JARDIM RODEIO", mesma rua, mesmo número, mesma cidade.
+  // É exatamente o tipo de diferença que faz a PF indeferir.
+  it("acusa o bairro e nada mais", () => {
+    const itens = conferirRequerimentoContraCadastro(campos, {
+      ...CADASTRO_CERTO,
+      bairro: "JARDIM RODEIO",
+      profissao: "SERVIDOR DE SEGURANÇA PÚBLICA (PM, PC, PF, PRF, GUARDA, BOMBEIRO, AGENTE PENITENCIÁRIO)",
+      celular: "(11) 98562-5177",
+      cep: "08.775-395",
+      complemento: "APTO 32 bloco c",
+      naturalidade_pais: "BRASIL",
+      sexo: "Masculino",
+      emissor_rg: "SSP",
+    });
+    const divergentes = itens.filter((i) => i.status === "divergente");
+    expect(divergentes.map((i) => i.campo)).toEqual(["bairro"]);
+    expect(divergentes[0].valorCertidao).toBe("Jardim Marica");
+    expect(divergentes[0].valorReferencia).toBe("JARDIM RODEIO");
   });
 });

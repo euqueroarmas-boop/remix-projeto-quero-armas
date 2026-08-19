@@ -154,6 +154,12 @@ interface DefinicaoCampo {
   label: string;
   coluna?: keyof CadastroParaRequerimento;
   normalizar: (v: unknown) => string;
+  /**
+   * Mostra os dois valores lado a lado, mas NUNCA acusa divergência. Serve para
+   * campo em que os dois lados guardam coisas de naturezas diferentes: comparar
+   * seria acusar todo mundo de errado.
+   */
+  apenasInformativo?: boolean;
 }
 
 /**
@@ -176,7 +182,14 @@ const CAMPOS: DefinicaoCampo[] = [
   { campo: "rg_uf",                  label: "UF expedidora do RG",     coluna: "uf_emissor_rg",          normalizar: uf },
   { campo: "rg_expedicao",           label: "Data de expedição do RG", coluna: "expedicao_rg",           normalizar: iso },
   { campo: "titulo_eleitor",         label: "Título de eleitor",       coluna: "titulo_eleitor",         normalizar: digitos },
-  { campo: "profissao",              label: "Profissão",               coluna: "profissao",              normalizar: texto },
+  // PROFISSÃO NÃO SE COMPARA — e a razão é estrutural, não preguiça.
+  // No cadastro a profissão vem de uma LISTA FECHADA, com o nome da categoria
+  // ("SERVIDOR DE SEGURANÇA PÚBLICA (PM, PC, PF, PRF, GUARDA, BOMBEIRO,
+  // AGENTE PENITENCIÁRIO)"). No formulário da PF o cliente digita o CARGO
+  // ("CABO DA POLICIA MILITAR"). Os dois estão certos e nunca vão bater —
+  // comparar reprovaria todo policial, todo bombeiro e todo guarda do sistema.
+  // Fica na tela, lado a lado, para a equipe olhar; não reprova ninguém.
+  { campo: "profissao",              label: "Profissão",               coluna: "profissao",              normalizar: texto, apenasInformativo: true },
   { campo: "email",                  label: "E-mail",                  coluna: "email",                  normalizar: texto },
   { campo: "celular",                label: "Telefone celular",        coluna: "celular",                normalizar: telefone },
   { campo: "cep",                    label: "CEP",                     coluna: "cep",                    normalizar: digitos },
@@ -218,6 +231,18 @@ export function conferirRequerimentoContraCadastro(
         valorCertidao: valorDoc,
         valorReferencia: null,
         fonteReferencia: null,
+        status: "sem_referencia",
+      });
+      continue;
+    }
+
+    if (def.apenasInformativo) {
+      itens.push({
+        campo: def.campo,
+        label: def.label,
+        valorCertidao: valorDoc,
+        valorReferencia: valorRef,
+        fonteReferencia: FONTE,
         status: "sem_referencia",
       });
       continue;
