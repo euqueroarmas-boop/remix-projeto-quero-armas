@@ -382,9 +382,9 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       {alertas.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded p-3 flex gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-semibold text-amber-800">Campos com baixa confiança — revise</p>
-            <ul className="text-xs text-amber-700 mt-0.5 list-disc list-inside">
+            <ul className="text-xs text-amber-700 mt-1 list-disc pl-4 space-y-0.5">
               {alertas.map((a) => (
                 <li key={a.campo}>{a.campo.replace(/_/g, " ")}: <em>{a.valor}</em></li>
               ))}
@@ -396,7 +396,7 @@ export default function Etapa3Revisao({ dadosExtraidos, dadosRevisados, setDados
       {dadosExtraidos.warnings?.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded p-3">
           <p className="text-xs font-semibold text-blue-800">Avisos da IA</p>
-          <ul className="text-xs text-blue-700 mt-0.5 list-disc list-inside">
+          <ul className="text-xs text-blue-700 mt-1 list-disc pl-4 space-y-0.5">
             {dadosExtraidos.warnings.map((w, i) => <li key={i}>{w}</li>)}
           </ul>
         </div>

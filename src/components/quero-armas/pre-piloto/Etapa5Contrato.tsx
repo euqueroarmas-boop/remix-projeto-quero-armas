@@ -225,22 +225,24 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
             <p className="text-sm font-semibold text-green-800">Contrato gerado!</p>
           </div>
-          <div className="text-xs text-green-700 space-y-1">
-            <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
-            <p><span className="font-medium">Serviço(s):</span></p>
-            <ul className="list-disc list-inside ml-2 space-y-0.5">
-              {selecionados.map((s) => <li key={s.id}>{s.nome} — {formatBRL(s.preco)}</li>)}
-            </ul>
-            <p className="flex items-center gap-1">
-              <Mail className="w-3.5 h-3.5" />
-              Disponível para download no Arsenal Inteligente do cliente (sem envio por e-mail)
+          <div className="text-xs text-green-700 space-y-2">
+            <p className="break-words"><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
+            <div>
+              <p className="font-medium">Serviço(s)</p>
+              <ul className="mt-1 list-disc pl-4 space-y-1 marker:text-green-600/70">
+                {selecionados.map((s) => <li key={s.id} className="break-words">{s.nome} — {formatBRL(s.preco)}</li>)}
+              </ul>
+            </div>
+            <p className="flex items-start gap-1.5">
+              <Mail className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+              <span>Disponível para download no Arsenal Inteligente do cliente (sem envio por e-mail)</span>
             </p>
           </div>
         </div>
 
         <div className="bg-muted/40 rounded p-3 text-xs text-muted-foreground space-y-1">
           <p className="font-medium text-foreground">Próximos passos</p>
-          <ul className="list-disc list-inside space-y-0.5">
+          <ul className="mt-1 list-disc pl-4 space-y-1">
             <li>Cliente baixa o contrato no Arsenal Inteligente</li>
             <li>Assina pelo GOV.BR e devolve por WhatsApp</li>
             <li>Você faz upload do contrato assinado no Histórico abaixo</li>
@@ -248,7 +250,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           </ul>
         </div>
 
-        <div className="flex gap-2 justify-between">
+        <div className="flex flex-wrap gap-2 justify-between">
           <Button variant="outline" size="sm" onClick={onVoltar} className="text-xs gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Button>
@@ -274,18 +276,30 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           </p>
         </div>
 
-        <div className="bg-muted/40 rounded-lg p-3 space-y-1 text-xs">
-          <p><span className="font-medium">Cliente:</span> {clienteSalvo.nome_completo}</p>
-          <p><span className="font-medium">CPF:</span> {clienteSalvo.cpf || "—"}</p>
-          <p><span className="font-medium">E-mail:</span> {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}</p>
-          <p>
-            <span className="font-medium">Endereço:</span>{" "}
-            {enderecoCliente || <span className="text-amber-700">Não cadastrado</span>}
-          </p>
-          <p className="font-medium">Serviço(s):</p>
-          <ul className="list-disc list-inside ml-2 space-y-0.5">
+        {/* Rótulo e valor em duas colunas: com tudo num parágrafo só, a linha
+            longa (endereço) quebrava por baixo do rótulo e o bloco ficava
+            desalinhado. Na lista, o marcador fica fora do texto para a segunda
+            linha do serviço alinhar com a primeira. */}
+        <div className="bg-muted/40 rounded-lg p-3 text-xs">
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+            <dt className="font-medium">Cliente</dt>
+            <dd className="min-w-0 break-words">{clienteSalvo.nome_completo}</dd>
+            <dt className="font-medium">CPF</dt>
+            <dd className="min-w-0 break-words">{clienteSalvo.cpf || "—"}</dd>
+            <dt className="font-medium">E-mail</dt>
+            <dd className="min-w-0 break-words">
+              {clienteSalvo.email || <span className="text-red-600">Não cadastrado — contrato não será enviado!</span>}
+            </dd>
+            <dt className="font-medium">Endereço</dt>
+            <dd className="min-w-0 break-words">
+              {enderecoCliente || <span className="text-amber-700">Não cadastrado</span>}
+            </dd>
+          </dl>
+
+          <p className="font-medium mt-3">Serviço(s)</p>
+          <ul className="mt-1 list-disc pl-4 space-y-1 marker:text-muted-foreground">
             {selecionados.map((s) => (
-              <li key={s.id}>
+              <li key={s.id} className="break-words">
                 {s.nome} — {formatBRL(precoAplicado(s))}
                 {Math.abs(precoAplicado(s) - (s.preco ?? 0)) > 0.0049 && (
                   <span className="text-emerald-700"> (de {formatBRL(s.preco)})</span>
@@ -293,16 +307,22 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
               </li>
             ))}
           </ul>
+
           {descontoTotal > 0.0049 && (
-            <p className="text-emerald-700">
-              <span className="font-medium">Desconto aplicado:</span> {formatBRL(descontoTotal)} — {TIPOS_AJUSTE_LABEL[tipoAjuste]}
-            </p>
+            <div className="flex justify-between gap-3 mt-2 text-emerald-700">
+              <span className="font-medium">Desconto — {TIPOS_AJUSTE_LABEL[tipoAjuste]}</span>
+              <span className="whitespace-nowrap">{formatBRL(descontoTotal)}</span>
+            </div>
           )}
-          <p><span className="font-medium">Total:</span> {formatBRL(totalSelecionados)}</p>
+
+          <div className="flex justify-between gap-3 mt-2 pt-2 border-t border-border/60 font-medium">
+            <span>Total</span>
+            <span className="whitespace-nowrap">{formatBRL(totalSelecionados)}</span>
+          </div>
         </div>
 
         {/* Resumo curto do pagamento — a escolha é feita na tela anterior (seleção). */}
-        <div className="text-xs bg-muted/40 rounded p-2">
+        <div className="text-xs bg-muted/40 rounded p-2 break-words">
           <span className="font-medium">Pagamento: </span>
           {jaPagou
             ? <>Sim — {formaPagamento === "cartao_credito" ? `Cartão de Crédito ${parcelas}x` : formaPagamento === "cartao_debito" ? "Cartão de Débito" : formaPagamento === "pix" ? "PIX" : "Boleto"}</>
@@ -316,7 +336,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
           </div>
         )}
 
-        <div className="flex gap-2 justify-between">
+        <div className="flex flex-wrap gap-2 justify-between">
           <Button variant="outline" size="sm" onClick={() => setEtapa("selecionar")} className="text-xs gap-1">
             <ArrowLeft className="w-3.5 h-3.5" /> Voltar
           </Button>

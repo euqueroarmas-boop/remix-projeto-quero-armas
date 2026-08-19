@@ -102,14 +102,16 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
       {/* Stepper */}
       {/* No celular só o passo atual mostra o nome: com os seis nomes abertos a
           régua ficava mais larga que a tela e o último passo saía do quadro. */}
-      <div className="flex items-start gap-0 mb-8 overflow-x-auto pb-1">
+      <div className="flex items-start gap-0 mb-8 overflow-x-auto pb-6">
         {ETAPAS.map((e, i) => {
           const Icon = e.icon;
           const ativa = i === etapa;
           const concluida = i < etapa;
           return (
-            <div key={i} className="flex items-center flex-shrink-0">
-              <div className="flex flex-col items-center gap-1">
+            <div key={i} className="flex items-start flex-shrink-0">
+              {/* Largura fixa: o nome do passo fica solto por cima, senão a
+                  coluna do passo atual cresce e as bolinhas saem do prumo. */}
+              <div className="relative w-8 flex justify-center">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
                     ativa
@@ -122,7 +124,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
                   <Icon className="w-4 h-4" />
                 </div>
                 <span
-                  className={`text-[10px] font-medium whitespace-nowrap ${
+                  className={`absolute top-9 left-1/2 -translate-x-1/2 text-[10px] font-medium whitespace-nowrap ${
                     ativa ? "block" : "hidden sm:block"
                   } ${
                     ativa ? "text-[#2E3236]" : concluida ? "text-[#2E3236]/70" : "text-muted-foreground"
@@ -133,7 +135,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
               </div>
               {i < ETAPAS.length - 1 && (
                 <div
-                  className={`h-px w-4 sm:w-8 mx-1 mt-4 flex-shrink-0 transition-colors ${
+                  className={`h-px w-4 sm:w-8 mx-1.5 mt-4 flex-shrink-0 transition-colors ${
                     concluida ? "bg-[#2E3236]/40" : "bg-muted"
                   }`}
                 />

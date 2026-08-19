@@ -54,7 +54,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
 
       <div className="bg-muted/40 rounded p-3 text-xs text-muted-foreground space-y-1">
         <p className="font-medium text-foreground">Fluxo após assinatura</p>
-        <ul className="list-disc list-inside space-y-0.5">
+        <ul className="mt-1 list-disc pl-4 space-y-1">
           <li>Cliente assina pelo GOV.BR e envia por WhatsApp</li>
           <li>Faça upload do contrato assinado no histórico desta página</li>
           <li>Confirme o pagamento no Piloto Real</li>

@@ -671,17 +671,36 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       </div>
 
       {/* Resumo */}
-      <div className="bg-muted/40 rounded-lg p-3 space-y-1 text-xs">
-        <p><span className="font-medium">Nome:</span> {dadosRevisados.nome_completo}</p>
-        <p><span className="font-medium">CPF:</span> {formatCpf(cpfNorm) || "(não informado)"}</p>
-        {dadosRevisados.email && <p><span className="font-medium">E-mail:</span> {dadosRevisados.email}</p>}
-        {dadosRevisados.celular && <p><span className="font-medium">Celular:</span> {dadosRevisados.celular}</p>}
-        {enderecoResumo && (
-          <p><span className="font-medium">Endereço:</span> {enderecoResumo}</p>
-        )}
+      {/* Rótulo e valor em duas colunas: no parágrafo corrido o endereço
+          quebrava por baixo do rótulo e o bloco ficava torto. */}
+      <div className="bg-muted/40 rounded-lg p-3 text-xs">
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
+          <dt className="font-medium">Nome</dt>
+          <dd className="min-w-0 break-words">{dadosRevisados.nome_completo}</dd>
+          <dt className="font-medium">CPF</dt>
+          <dd className="min-w-0 break-words">{formatCpf(cpfNorm) || "(não informado)"}</dd>
+          {dadosRevisados.email && (
+            <>
+              <dt className="font-medium">E-mail</dt>
+              <dd className="min-w-0 break-words">{dadosRevisados.email}</dd>
+            </>
+          )}
+          {dadosRevisados.celular && (
+            <>
+              <dt className="font-medium">Celular</dt>
+              <dd className="min-w-0 break-words">{dadosRevisados.celular}</dd>
+            </>
+          )}
+          {enderecoResumo && (
+            <>
+              <dt className="font-medium">Endereço</dt>
+              <dd className="min-w-0 break-words">{enderecoResumo}</dd>
+            </>
+          )}
+        </dl>
         {senhagov && (
-          <p className="flex items-center gap-1 text-green-700">
-            <ShieldCheck className="w-3.5 h-3.5" /> Senha GOV.BR será salva (criptografada)
+          <p className="flex items-center gap-1.5 text-green-700 mt-2 pt-2 border-t border-border/60">
+            <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" /> Senha GOV.BR será salva (criptografada)
           </p>
         )}
       </div>
@@ -702,20 +721,20 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-3">
           <div className="flex items-start gap-2">
             <UserCheck className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div>
+            <div className="min-w-0 space-y-1">
               <p className="text-xs font-semibold text-amber-800">
                 {existenteArquivado ? "CPF encontrado (cliente arquivado)" : "CPF já cadastrado"}
               </p>
-              <p className="text-xs text-amber-700 mt-0.5">
+              <p className="text-xs text-amber-700 break-words">
                 <strong>{existente.nome_completo}</strong> (ID {existente.id})
               </p>
-              {existente.email && <p className="text-xs text-amber-600">{existente.email}</p>}
+              {existente.email && <p className="text-xs text-amber-600 break-words">{existente.email}</p>}
               {existenteArquivado && (
-                <p className="text-xs text-amber-600 mt-1">
+                <p className="text-xs text-amber-600">
                   Este cliente estava arquivado. Você pode reativá-lo ou criar um novo cadastro (o arquivado será excluído).
                 </p>
               )}
-              <p className="text-xs text-amber-600 mt-1">
+              <p className="text-xs text-amber-600 leading-relaxed">
                 Atualizar mantém o ID {existente.id}, o histórico e os documentos, e grava por cima os dados revisados. Campo que não foi lido nos documentos fica como está.
               </p>
             </div>
