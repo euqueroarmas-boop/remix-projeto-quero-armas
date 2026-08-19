@@ -37,6 +37,7 @@ export interface EstadoPeticao {
 /** O que este módulo precisa de uma linha de `qa_geracoes_pecas`. */
 export interface PecaDoProcesso {
   processo_id?: string | null;
+  cliente_id?: number | null;
   status_cliente?: string | null;
 }
 
@@ -155,5 +156,47 @@ export function pecasPorProcesso<T extends PecaDoProcesso>(pecas: readonly T[]):
     if (!k) continue;
     (mapa[k] ||= []).push(p);
   }
+  return mapa;
+}
+
+/** Linha do painel, do ponto de vista do vínculo peça↔processo. */
+export interface ProcessoParaVinculo {
+  processo_id: string;
+  cliente_id: number;
+}
+
+/**
+ * Liga cada peça ao processo dela — inclusive a peça que ainda não tem vínculo.
+ *
+ * `qa_geracoes_pecas.processo_id` só é preenchido quando a equipe envia a peça
+ * ao cliente (é a função `qa-peca-enviar-cliente` que grava). Antes disso a peça
+ * nasce com `cliente_id` e nada mais, então a minuta pronta e nunca enviada —
+ * justamente a que a equipe precisa enxergar — ficaria invisível no painel.
+ *
+ * Para essas, o vínculo é pelo cliente, e só quando ele tem UM processo ativo.
+ * Com dois ou mais não dá para adivinhar de qual processo é a peça, e chutar
+ * seria pior do que não mostrar: acenderia o chip no processo errado.
+ */
+export function vincularPecas<T extends PecaDoProcesso>(
+  processos: readonly ProcessoParaVinculo[],
+  pecas: readonly T[],
+): Record<string, T[]> {
+  const mapa = pecasPorProcesso(pecas);
+
+  const processosDoCliente: Record<number, string[]> = {};
+  for (const r of processos ?? []) {
+    if (r?.cliente_id == null || !r?.processo_id) continue;
+    (processosDoCliente[r.cliente_id] ||= []).push(r.processo_id);
+  }
+
+  for (const p of pecas ?? []) {
+    if (p?.processo_id) continue;
+    const cid = p?.cliente_id;
+    if (cid == null) continue;
+    const candidatos = processosDoCliente[cid] ?? [];
+    if (candidatos.length !== 1) continue;
+    (mapa[candidatos[0]] ||= []).push(p);
+  }
+
   return mapa;
 }

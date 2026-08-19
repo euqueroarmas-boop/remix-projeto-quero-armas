@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { estadoPeticao, statusPecaDominante, pecasPorProcesso } from "../fasePeticao";
+import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas } from "../fasePeticao";
 
 const emDocumentos = { status: "aguardando_documentos", total_docs: 30, entregues: 19 };
 const checklistFechado = { status: "aguardando_documentos", total_docs: 30, entregues: 30 };
@@ -101,5 +101,36 @@ describe("pecasPorProcesso", () => {
     ]);
     expect(mapa.p1).toHaveLength(2);
     expect(Object.keys(mapa)).toEqual(["p1"]);
+  });
+});
+
+describe("vincularPecas", () => {
+  const processos = [
+    { processo_id: "p1", cliente_id: 10 },
+    { processo_id: "p2", cliente_id: 20 },
+    { processo_id: "p3", cliente_id: 20 },
+  ];
+
+  it("respeita o processo_id quando ele existe", () => {
+    const mapa = vincularPecas(processos, [{ processo_id: "p2", cliente_id: 20, status_cliente: "aguardando_cliente" }]);
+    expect(mapa.p2).toHaveLength(1);
+    expect(mapa.p3).toBeUndefined();
+  });
+
+  it("peça solta cai no único processo ativo do cliente", () => {
+    // É o caso da minuta gerada e nunca enviada: nasce só com cliente_id.
+    const mapa = vincularPecas(processos, [{ processo_id: null, cliente_id: 10, status_cliente: "nao_enviada" }]);
+    expect(mapa.p1).toHaveLength(1);
+    expect(estadoPeticao({ status: "aguardando_documentos", total_docs: 30, entregues: 19 }, mapa.p1)?.id).toBe("redigida");
+  });
+
+  it("cliente com dois processos: peça solta não é chutada em nenhum", () => {
+    const mapa = vincularPecas(processos, [{ processo_id: null, cliente_id: 20, status_cliente: "nao_enviada" }]);
+    expect(mapa.p2).toBeUndefined();
+    expect(mapa.p3).toBeUndefined();
+  });
+
+  it("peça sem processo e sem cliente é descartada", () => {
+    expect(vincularPecas(processos, [{ processo_id: null, cliente_id: null, status_cliente: "nao_enviada" }])).toEqual({});
   });
 });

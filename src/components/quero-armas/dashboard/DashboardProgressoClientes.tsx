@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
-import { estadoPeticao, pecasPorProcesso, type EstadoPeticao, type PecaDoProcesso, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
+import { estadoPeticao, vincularPecas, type EstadoPeticao, type PecaDoProcesso, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
@@ -291,8 +291,8 @@ export default function DashboardProgressoClientes() {
   const [sortKey, setSortKey] = useState<SortKey>(() => (lerOrdemSalva()?.key as SortKey) ?? "dias_parado");
   const [asc, setAsc] = useState<boolean>(() => lerOrdemSalva()?.asc ?? false);
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
-  /** Peças por processo — de onde sai a fase da PET no card. */
-  const [pecas, setPecas] = useState<Record<string, PecaDoProcesso[]>>({});
+  /** Peças dos processos listados — de onde sai a fase da PET no card. */
+  const [pecas, setPecas] = useState<PecaDoProcesso[]>([]);
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
     try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
   });
@@ -507,12 +507,14 @@ export default function DashboardProgressoClientes() {
               .select("id, condicao_profissional")
               .in("id", ids),
             // Fase da PET: a vida da peça vive em outra tabela e nunca chegava ao card.
+            // A busca é por CLIENTE, não por processo: a minuta que ainda não foi
+            // enviada nasce sem `processo_id` e ficaria de fora do `.in()`.
             supabase
               .from("qa_geracoes_pecas")
-              .select("processo_id, status_cliente")
-              .in("processo_id", ids),
+              .select("processo_id, cliente_id, status_cliente")
+              .in("cliente_id", Array.from(new Set(lista.map((r) => r.cliente_id).filter((c) => c != null)))),
           ]);
-          if (!cancelled) setPecas(pecasPorProcesso((pecasDoc ?? []) as PecaDoProcesso[]));
+          if (!cancelled) setPecas((pecasDoc ?? []) as PecaDoProcesso[]);
           const condicaoPorProcesso: Record<string, string | null> = {};
           for (const p of ((procs as any[]) ?? [])) condicaoPorProcesso[p.id] = p.condicao_profissional ?? null;
 
@@ -592,8 +594,9 @@ export default function DashboardProgressoClientes() {
 
   /** Fase da PET por processo: null = ainda não chegou lá. */
   const peticoes = useMemo(() => {
+    const porProcesso = vincularPecas(rows, pecas);
     const mapa: Record<string, EstadoPeticao | null> = {};
-    for (const r of rows) mapa[r.processo_id] = estadoPeticao(r, pecas[r.processo_id] ?? []);
+    for (const r of rows) mapa[r.processo_id] = estadoPeticao(r, porProcesso[r.processo_id] ?? []);
     return mapa;
   }, [rows, pecas]);
 
