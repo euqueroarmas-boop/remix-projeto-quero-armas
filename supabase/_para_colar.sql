@@ -1,71 +1,81 @@
 -- ============================================================================
--- CONFERÊNCIA DA ORDEM DO CHECKLIST — versão correta
+-- FUSÃO DOS DOIS CADASTROS DO BRUNO PEREIRA MACIEL (CPF 052.641.421-90)
 --
--- POR QUE ESTE ARQUIVO EXISTE.
--- A primeira consulta de conferência que eu mandei (20/08/2026) acusou duas
--- divergências que NÃO eram divergências. Ela comparava a ordem do processo
--- com QUALQUER linha do catálogo daquele tipo de documento — inclusive linhas
--- que não valem para aquele cliente e linhas inativas.
+-- O QUE O DIAGNÓSTICO MOSTROU (19/08/2026).
+-- 132 — criado em 06/05/2026, CPF gravado só com dígitos, endereço antigo
+--       (Rua Gonzaga, Vl Guilhermina). Tem 1 venda e 1 assinatura do Arsenal.
+--       Não tem vínculo de login.
+-- 230 — criado em 10/08/2026, CPF formatado, endereço atual (Canto do Forte).
+--       Tem 1 venda, 1 contrato e o login ativo do cliente.
+-- Os dois carregam o MESMO user_id, o que é risco: o portal pode abrir o
+-- cadastro errado para a mesma pessoa.
 --
--- Os dois falso-positivos, e o que estava acontecendo de verdade:
+-- DECISÃO: o 230 é o cadastro vivo. A venda antiga e a assinatura do Arsenal
+-- passam para ele, e o 132 sai de circulação (arquivado + excluído) com o
+-- user_id limpo, para nunca mais ser alcançado por login.
 --
---   • `renda_nf_empresa` num processo de cliente EMPRESÁRIO. O catálogo tem
---     duas linhas: ordem 270 para "autonomo" e ordem 280 para "empresario".
---     O processo estava em 280 — CERTO. A consulta acusou porque comparou
---     com a linha 270, que é de outra condição profissional.
---
---   • `renda_extrato_inss` num processo de cliente APOSENTADO. O catálogo tem
---     ordem 141 para "clt" (ativa) e ordem 200 para "aposentado" (INATIVA).
---     Como não há regra ATIVA que se aplique a ele, não existe ordem
---     autoritativa — e o realinhamento deixou quieto, como manda. A exigência,
---     aliás, já está `nao_aplicavel`: para aposentado o catálogo pede o
---     comprovante de benefício (ordem 210), não o extrato.
---
--- A conferência tem que usar EXATAMENTE o mesmo critério do conserto
--- (`qa_realinhar_ordem_checklist`): só linha ativa, só a regra que se aplica
--- à condição profissional do processo, regra específica ganhando da geral.
--- Conferência mais frouxa que o conserto gera alarme falso — e alarme falso
--- ensina a ignorar alarme.
---
--- Resultado esperado: NENHUMA linha.
+-- Roda tudo dentro de uma transação: ou vai inteiro, ou não vai nada.
 -- ============================================================================
 
-WITH esperado AS (
-  SELECT DISTINCT ON (pd.id)
-         pd.id            AS pd_id,
-         pd.processo_id,
-         pd.tipo_documento,
-         pd.ordem         AS ordem_no_processo,
-         sd.ordem         AS ordem_no_catalogo,
-         sd.condicao_profissional AS regra_aplicada
-    FROM public.qa_processo_documentos pd
-    JOIN public.qa_processos p
-      ON p.id = pd.processo_id
-    JOIN public.qa_servicos_documentos sd
-      ON sd.servico_id = p.servico_id
-     AND sd.tipo_documento = pd.tipo_documento
-   WHERE p.status NOT IN ('concluido', 'cancelado')
-     AND sd.ativo = true
-     AND sd.ordem IS NOT NULL
-     AND (
-       sd.condicao_profissional IS NULL
-       OR COALESCE(p.condicao_profissional, 'indefinido') = ANY (
-            SELECT btrim(lower(x))
-              FROM unnest(string_to_array(sd.condicao_profissional, ',')) AS x
-          )
-     )
-   ORDER BY pd.id,
-            (sd.condicao_profissional IS NOT NULL) DESC,
-            sd.ordem
-)
-SELECT c.nome_completo,
-       p.servico_nome,
-       e.tipo_documento,
-       e.ordem_no_processo,
-       e.ordem_no_catalogo,
-       e.regra_aplicada
-  FROM esperado e
-  JOIN public.qa_processos p ON p.id = e.processo_id
-  JOIN public.qa_clientes  c ON c.id = p.cliente_id
- WHERE e.ordem_no_processo IS DISTINCT FROM e.ordem_no_catalogo
- ORDER BY c.nome_completo, e.ordem_no_catalogo;
+BEGIN;
+
+-- A venda antiga passa para o cadastro vivo.
+UPDATE public.qa_vendas
+   SET cliente_id = 230
+ WHERE cliente_id = 132;
+
+-- A assinatura do Arsenal idem.
+UPDATE public.qa_arsenal_assinaturas
+   SET cliente_id = 230
+ WHERE cliente_id = 132;
+
+-- O cadastro duplicado sai de circulação e perde o vínculo de login.
+UPDATE public.qa_clientes
+   SET user_id = NULL,
+       arquivado = true,
+       excluido = true
+ WHERE id = 132;
+
+COMMIT;
+
+-- ============================================================================
+-- CONFERÊNCIA — rodar depois do COMMIT.
+-- Esperado: o CPF não aparece mais na lista de duplicados; o 230 fica com as
+-- 2 vendas e a 1 assinatura; o 132 volta como arquivado=true, excluido=true e
+-- sem user_id.
+-- ============================================================================
+
+SELECT 'duplicados_restantes' AS bloco,
+       regexp_replace(cpf, '\D', '', 'g') AS chave,
+       format('registros=%s | ids=%s', count(*), array_agg(id ORDER BY id)) AS valor
+FROM public.qa_clientes
+WHERE excluido = false
+  AND regexp_replace(cpf, '\D', '', 'g') <> ''
+GROUP BY 2
+HAVING count(*) > 1
+
+UNION ALL
+
+SELECT 'cadastro', id::text,
+       concat_ws(' | ', nome_completo, cpf,
+                 'user_id=' || coalesce(user_id::text, '-'),
+                 'arquivado=' || coalesce(arquivado::text, '-'),
+                 'excluido=' || coalesce(excluido::text, '-'))
+FROM public.qa_clientes
+WHERE id IN (132, 230)
+
+UNION ALL
+
+SELECT 'vendas', cliente_id::text, format('vendas=%s', count(*))
+FROM public.qa_vendas
+WHERE cliente_id IN (132, 230)
+GROUP BY cliente_id
+
+UNION ALL
+
+SELECT 'arsenal', cliente_id::text, format('assinaturas=%s', count(*))
+FROM public.qa_arsenal_assinaturas
+WHERE cliente_id IN (132, 230)
+GROUP BY cliente_id
+
+ORDER BY 1, 2;
