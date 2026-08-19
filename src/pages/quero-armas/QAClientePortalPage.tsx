@@ -4215,7 +4215,7 @@ export default function QAClientePortalPage() {
       onScopeChange={setSelectedScopeId}
     >
     <><EmuEspelhoBanner />
-    <div className="min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 pl-0 lg:pl-[200px]">
+    <div className="qa-portal-root min-h-dvh bg-[#F2F2F2] text-slate-900 overflow-x-clip transition-[padding-left] duration-200 pl-0 lg:pl-[200px]">
       {/* Navegação única: rail de ícones à direita, igual ao desktop. */}
       {/* Avatar global — fixo no topo direito (oculto na aba de suporte) */}
       {activeSection !== "mensagens" && (
@@ -4314,7 +4314,7 @@ export default function QAClientePortalPage() {
 
       {/* ═══ RAIL DIREITO — nav icon-only, navegação única em todas as larguras ═══ */}
       <aside
-        className="flex fixed right-0 bottom-0 z-40 w-[56px] flex-col items-center pt-6 overflow-y-auto no-scrollbar"
+        className="qa-portal-rail flex fixed right-0 bottom-0 z-40 flex-col items-center pt-6 overflow-y-auto no-scrollbar"
         style={{ top: "var(--emu-barra, 0px)", background: sidebarTheme.bg.includes("url(") ? "#0A0A0A" : sidebarTheme.bg }}
         data-qa-sb-theme={sidebarTheme.key}
       >
@@ -4439,6 +4439,25 @@ export default function QAClientePortalPage() {
       {/* TOP BAR mobile removida — sidebar dark é a navegação única em todas as larguras. */}
 
       <style>{`
+        /* ═══ RESERVA DA FAIXA DO RAIL — não mexer sem ler ═══
+           O rail da direita é \`position: fixed\`: ele não ocupa lugar nenhum no
+           fluxo, então alguém precisa reservar a faixa dele. Quem reserva é a
+           BORDA (padding) da raiz do portal.
+
+           Por que padding na raiz e não margem no <main>: o <main> tem largura
+           explícita (\`w-full\`), e largura explícita anula a margem direita
+           (CSS 2.1 §10.3.3 — a caixa fica "over-constrained" e o navegador
+           joga a margem fora). Era exatamente esse o defeito: o \`mr-[56px]\`
+           não valia nada e o texto passava por baixo dos ícones. Borda do pai
+           nenhum filho consegue anular.
+
+           A largura mora em UMA variável só, usada pela reserva e pelo próprio
+           rail — assim os dois não têm como divergir. Mudou a largura do rail?
+           Muda aqui, e o conteúdo acompanha sozinho. */
+        :root { --qa-rail-w: 56px; }
+        .qa-portal-root { padding-right: var(--qa-rail-w, 56px); box-sizing: border-box; }
+        .qa-portal-rail { width: var(--qa-rail-w, 56px); }
+
         /* overscroll-behavior: none (os dois eixos) prende o gesto ao
            portal: nada de repique elástico no fim da lista nem de "puxar
            para recarregar" derrubando o que o cliente está preenchendo. */
@@ -4465,11 +4484,10 @@ export default function QAClientePortalPage() {
         .qa-portal-main .overflow-x-auto,
         .qa-portal-main .overflow-x-scroll { overflow-x: clip !important; }
       `}</style>
-      {/* `mx-auto` com `mr-[56px]` brigavam: a margem direita fixa anulava a
-          centralização, então em tela larga o conteúdo era empurrado para a
-          direita e sobrava uma faixa branca à esquerda. Sem teto de largura, o
-          conteúdo acompanha a tela — o `mr` continua reservando o rail. */}
-      <main className={`qa-portal-main w-full px-4 lg:px-8 mr-[56px] ${isLockedSection ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pb-6 pt-[26px]"}`}>
+      {/* Sem teto de largura e sem margem lateral: o conteúdo acompanha a
+          tela e quem reserva a faixa do rail é a borda da raiz (`.qa-portal-root`).
+          `mr-[56px]` aqui era letra morta — ver o comentário do CSS acima. */}
+      <main className={`qa-portal-main w-full px-4 lg:px-8 ${isLockedSection ? "h-dvh overflow-hidden py-0" : "space-y-5 overflow-x-clip pb-6 pt-[26px]"}`}>
         {activeTab === "arsenal" && cliente && analysis && (
           <>
           {/* bloco arsenal carregado normalmente */}

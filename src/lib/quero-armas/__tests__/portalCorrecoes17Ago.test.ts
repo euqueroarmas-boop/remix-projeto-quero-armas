@@ -81,9 +81,11 @@ describe("lista de vencimentos: vermelho, amarelo, verde", () => {
 describe("layout do portal", () => {
   it("o conteúdo acompanha a largura da tela", () => {
     // `mx-auto` + `mr-[56px]` se anulavam: em tela grande o conteúdo ia para a
-    // direita e sobrava uma faixa branca à esquerda.
+    // direita e sobrava uma faixa branca à esquerda. O `mr` saiu de vez — a
+    // faixa do rail hoje é reservada pela borda da raiz (`.qa-portal-root`),
+    // ver railNaoInvadeConteudo.test.ts.
     const src = r(PORTAL);
-    expect(src).toContain('qa-portal-main w-full px-4 lg:px-8 mr-[56px]');
+    expect(src).toContain('qa-portal-main w-full px-4 lg:px-8');
     expect(src).not.toContain("max-w-[1540px] mx-auto");
   });
 
