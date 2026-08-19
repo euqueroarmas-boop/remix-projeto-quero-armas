@@ -84,26 +84,29 @@ function QALayoutInner() {
         onFecharMobile={() => setMenuMobile(false)}
       />
 
-      {/* Botão do menu no celular. Fica flutuando no canto inferior direito —
-          ao alcance do polegar e sem a barra fixa que antes roubava uma linha
-          inteira do topo de toda tela. Some enquanto a gaveta está aberta. */}
+      {/* Botão do menu no celular. Canto inferior direito, ao alcance do polegar.
+          O envelope com `h-[100dvh]` existe por causa do Safari do iPhone: ali
+          `position: fixed` se ancora na viewport de layout, que fica POR BAIXO
+          da barra do navegador — o botão sumia atrás dela. A altura dinâmica
+          (dvh) acompanha a barra e mantém o botão sempre visível. */}
       {!menuMobile && (
-        <button
-          type="button"
-          data-qa-sidebar="true"
-          data-nao-inverter
-          onClick={() => setMenuMobile(true)}
-          aria-label="Abrir menu"
-          className="fixed right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg transition-transform active:scale-95 md:hidden"
-          style={{
-            bottom: "max(1rem, env(safe-area-inset-bottom))",
-            background: "var(--qa-sb-shell, var(--qa-sb-bg))",
-            borderColor: "var(--qa-sb-border)",
-            color: "var(--qa-sb-name)",
-          }}
-        >
-          <Menu className="h-6 w-6" />
-        </button>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-40 h-[100dvh] md:hidden">
+          <button
+            type="button"
+            data-qa-sidebar="true"
+            data-nao-inverter
+            onClick={() => setMenuMobile(true)}
+            aria-label="Abrir menu"
+            className="pointer-events-auto absolute right-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl shadow-xl ring-1 ring-black/10 transition-transform active:scale-95"
+            style={{
+              bottom: "calc(1.25rem + env(safe-area-inset-bottom))",
+              background: "var(--qa-sb-accent)",
+              color: "var(--qa-sb-accent-text)",
+            }}
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+        </div>
       )}
 
       <main className="flex min-h-screen min-w-0 flex-col pb-16 md:pb-0" style={{ background: "var(--qa-app)" }}>

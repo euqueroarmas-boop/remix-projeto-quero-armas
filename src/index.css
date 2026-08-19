@@ -308,6 +308,7 @@ html.qa-noite .qa-scope [class*="shadow"] { box-shadow: none; }
   --qa-sb-toggle-hover-bg: hsl(220 14% 94%);
   --qa-sb-name: hsl(220 20% 18%);
   --qa-sb-accent: hsl(210 9% 20%);
+  --qa-sb-accent-text: hsl(0 0% 100%);
   --qa-sb-danger-text: hsl(0 72% 51%);
   --qa-sb-danger-bg: hsl(0 72% 96%);
 }
@@ -330,6 +331,7 @@ html.qa-noite [data-qa-sidebar] {
   --qa-sb-toggle-hover-bg: hsl(240 5% 16%);
   --qa-sb-name: hsl(0 0% 96%);
   --qa-sb-accent: hsl(210 10% 72%);
+  --qa-sb-accent-text: hsl(240 6% 9%);
   --qa-sb-danger-text: hsl(0 85% 70%);
   --qa-sb-danger-bg: hsl(0 60% 18%);
 }
