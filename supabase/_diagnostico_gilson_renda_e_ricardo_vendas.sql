@@ -56,8 +56,11 @@ SELECT 'A · RENDA DO GILSON, DOS DOIS LADOS' AS bloco,
          'dias_ate_vencer',  dc.data_validade - CURRENT_DATE,
          'acervo_criado_em', dc.created_at
        ) AS dados
+  -- O acervo aponta para o cliente por `qa_cliente_id` (não `cliente_id`):
+  -- a tabela nasceu ligada a `customers` e o vínculo com qa_clientes veio
+  -- depois, com nome próprio.
   FROM public.qa_documentos_cliente dc
-  JOIN public.qa_clientes c ON c.id = dc.cliente_id
+  JOIN public.qa_clientes c ON c.id = dc.qa_cliente_id
  WHERE c.nome_completo ILIKE '%GILSON DO NASCIMENTO%'
    AND dc.tipo_documento LIKE 'renda%'
    AND NOT EXISTS (
