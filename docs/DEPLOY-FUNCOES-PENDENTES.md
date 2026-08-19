@@ -13,6 +13,7 @@ Aberta em 19/08/2026.
 |---|---|---|
 | `20260819030000_concessao_cr_checklist_in311` | Monta o checklist do CR pela IN 311/2025 | ✅ aplicada — 47 exigências ativas, nenhuma sem grupo |
 | `20260819040000_modalidade_cac_vem_da_compra` | Modalidade CAC passa a vir do item comprado; a pergunta ao cliente sai do checklist | ⬜ **a aplicar** — depois dela ficam 46 ativas |
+| `20260819050000_concessao_cr_e_atirador_esportivo` | Marca `concessao-cr` como atirador desportivo | ⬜ **a aplicar** — é o que liga o carimbo da modalidade |
 
 **Edge functions:**
 
@@ -24,10 +25,8 @@ Não há função nova para publicar nesta leva. A `qa-processo-set-modalidade`
 chegou a ser escrita e foi removida antes de qualquer deploy: a modalidade não
 é escolha do cliente, é carimbo do gatilho de banco.
 
-**Conferência depois da migration:** `qa_servicos_catalogo` precisa dizer qual
-atividade cada item de CR vende (coluna `modalidade_cac`). Enquanto ela estiver
-vazia, o processo de CR nasce sem modalidade e as três exigências por atividade
-não entram no checklist.
+**Conferência depois das migrations:** criar um processo de CR e verificar que
+`qa_processos.modalidade` nasce como `atirador`, sem ninguém escolher nada.
 
 ---
 
