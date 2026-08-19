@@ -137,8 +137,8 @@ const BORDA_POR_FUNDO: Record<string, string> = {
   [AMBAR_BG]: "var(--qa-ambar-borda)",
   [VERMELHO_BG]: "var(--qa-vermelho-borda)",
   [NEUTRO_BG]: "var(--qa-neutro-borda)",
-  "#F4F4F4": "var(--qa-neutro-borda)",
-  "#FFFFFF": "var(--qa-neutro-borda)",
+  "var(--qa-chip-bg)": "var(--qa-neutro-borda)",
+  "var(--qa-paper)": "var(--qa-neutro-borda)",
 };
 
 function bordaDe(fundo: string, cor: string) {
@@ -627,7 +627,7 @@ export default function DashboardProgressoClientes() {
 
   return (
     <div ref={wrapperRef} className="qa-card overflow-hidden qa-dash-compact">
-      <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
+      <div className="relative px-4 py-3 border-b border-[var(--qa-linha)] flex items-center gap-2">
         <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold leading-none" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
         </h3>
@@ -636,7 +636,7 @@ export default function DashboardProgressoClientes() {
           aria-label="Escolher colunas"
           title="Escolher colunas"
           onClick={() => setConfigAberta((v) => !v)}
-          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+          className="rounded-full p-1 text-[var(--qa-tinta-4)] hover:text-[var(--qa-tinta)] transition-colors"
         >
           <Settings2 className="h-3.5 w-3.5" />
         </button>
@@ -645,7 +645,7 @@ export default function DashboardProgressoClientes() {
           aria-label="Atualizar agora"
           title="Atualizar agora"
           onClick={() => carregarRef.current()}
-          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+          className="rounded-full p-1 text-[var(--qa-tinta-4)] hover:text-[var(--qa-tinta)] transition-colors"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${recarregando ? "animate-spin" : ""}`} />
         </button>
@@ -655,7 +655,7 @@ export default function DashboardProgressoClientes() {
           title={noturno ? "Voltar ao modo claro" : "Ativar modo noturno"}
           aria-pressed={noturno}
           onClick={alternarTema}
-          className="rounded-full p-1 text-[#9A9A9A] hover:text-[#0A0A0A] transition-colors"
+          className="rounded-full p-1 text-[var(--qa-tinta-4)] hover:text-[var(--qa-tinta)] transition-colors"
         >
           {noturno ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </button>
@@ -671,7 +671,7 @@ export default function DashboardProgressoClientes() {
         </span>
 
         {configAberta && (
-          <div className="absolute left-4 top-[44px] z-30 w-[240px] rounded-sm border border-[#DADADA] bg-white p-3 shadow-lg">
+          <div className="absolute left-4 top-[44px] z-30 w-[240px] rounded-sm border border-[var(--qa-linha-2)] bg-[var(--qa-paper)] p-3 shadow-lg">
             <div className="mb-2 text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: TINTA_3 }}>
               COLUNAS VISÍVEIS
             </div>
@@ -682,7 +682,7 @@ export default function DashboardProgressoClientes() {
                     type="checkbox"
                     checked={visiveis[c.key] !== false}
                     onChange={(e) => setVisiveis((v) => ({ ...v, [c.key]: e.target.checked }))}
-                    className="h-3 w-3 accent-[#2F3337]"
+                    className="h-3 w-3 accent-[var(--qa-tinta-2)]"
                   />
                   {c.label}
                 </label>
@@ -695,7 +695,7 @@ export default function DashboardProgressoClientes() {
                 setFiltroTrilha(null); setContador("todos");
                 setSortKey("dias_parado"); setAsc(false);
               }}
-              className="mt-3 w-full rounded-sm border border-[#DADADA] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[#0A0A0A]"
+              className="mt-3 w-full rounded-sm border border-[var(--qa-linha-2)] px-2 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] hover:border-[var(--qa-tinta)]"
               style={{ color: TINTA_2 }}
             >
               RESTAURAR PADRÃO
@@ -705,9 +705,9 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[#E4E4E4] grid grid-cols-3 md:grid-cols-10 gap-2">
+      <div className="px-4 py-3 border-b border-[var(--qa-linha)] grid grid-cols-3 md:grid-cols-10 gap-2">
         {([
-          { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "#F4F4F4" },
+          { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "var(--qa-chip-bg)" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
           { k: "pronto", label: "PRONTOS", v: contadores.pronto, cor: VERDE, fundo: VERDE_BG },
           { k: "analise", label: "EM ANÁLISE", v: contadores.analise, cor: AMBAR, fundo: AMBAR_BG },
@@ -723,9 +723,9 @@ export default function DashboardProgressoClientes() {
               setContador((v) => (v === c.k ? "todos" : c.k));
             }}
             className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-              contador === c.k ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+              contador === c.k ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
             }`}
-            style={{ background: contador === c.k ? c.fundo : "#FFFFFF" }}
+            style={{ background: contador === c.k ? c.fundo : "var(--qa-paper)" }}
           >
             <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: c.cor }}>
               {c.v}
@@ -753,9 +753,9 @@ export default function DashboardProgressoClientes() {
             title="Profissionais citados em laudos que não foram localizados na base de credenciados da Polícia Federal"
             onClick={() => setModoCred((v) => (v === c.t ? null : c.t))}
             className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-              modoCred === c.t ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+              modoCred === c.t ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
             }`}
-            style={{ background: modoCred === c.t ? VERMELHO_BG : "#FFFFFF" }}
+            style={{ background: modoCred === c.t ? VERMELHO_BG : "var(--qa-paper)" }}
           >
             <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: VERMELHO }}>{c.v}</div>
             <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>{c.label}</div>
@@ -771,9 +771,9 @@ export default function DashboardProgressoClientes() {
           title="Clique para ver os e-mails por cliente e as falhas"
           onClick={() => setEmailsAberto((v) => !v)}
           className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-            emailsAberto ? "border-[#0A0A0A]" : "border-[#E4E4E4] hover:border-[#BDBDBD]"
+            emailsAberto ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
           }`}
-          style={{ background: emailsAberto ? "#F4F4F4" : "#FFFFFF" }}
+          style={{ background: emailsAberto ? "var(--qa-chip-bg)" : "var(--qa-paper)" }}
         >
           <div className="text-[18px] font-bold tabular-nums leading-none" style={{ color: TINTA }}>
             {emails.total}
@@ -792,7 +792,7 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {emailsAberto && (
-        <div className="border-b border-[#E4E4E4] bg-white px-4 py-3">
+        <div className="border-b border-[var(--qa-linha)] bg-[var(--qa-paper)] px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: TINTA_3 }}>
               E-MAILS POR CLIENTE
@@ -801,7 +801,7 @@ export default function DashboardProgressoClientes() {
               type="button"
               onClick={() => setSomenteFalhas((v) => !v)}
               className={`rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] transition-colors ${
-                somenteFalhas ? "border-[#2F3337] text-[#2F3337]" : "border-[#DADADA] text-[#3A3A3A]"
+                somenteFalhas ? "border-[var(--qa-tinta-2)] text-[var(--qa-tinta-2)]" : "border-[var(--qa-linha-2)] text-[var(--qa-tinta-2)]"
               }`}
             >
               SOMENTE FALHAS
@@ -818,7 +818,7 @@ export default function DashboardProgressoClientes() {
                   const aberto = emailExpandido === e.recipient_email;
                   const det = emailDetalhe[e.recipient_email] ?? [];
                   return (
-                    <div key={e.recipient_email} className="border-b border-[#EFEFEF] py-1.5">
+                    <div key={e.recipient_email} className="border-b border-[var(--qa-linha-4)] py-1.5">
                       <button
                         type="button"
                         onClick={() => abrirDetalhe(e.recipient_email)}
@@ -845,7 +845,7 @@ export default function DashboardProgressoClientes() {
                         )}
                       </button>
                       {aberto && (
-                        <div className="mt-1.5 pl-3 border-l-2 border-[#E4E4E4]">
+                        <div className="mt-1.5 pl-3 border-l-2 border-[var(--qa-linha)]">
                           {det.length === 0 ? (
                             <div className="py-1 text-[10px] uppercase" style={{ color: TINTA_3 }}>CARREGANDO</div>
                           ) : det.map((d) => {
@@ -859,7 +859,7 @@ export default function DashboardProgressoClientes() {
                                     {new Date(d.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                                   </span>
                                   <span className="uppercase">{d.template_name ?? "—"}</span>
-                                  <span className="font-bold uppercase" style={{ color: falhou ? VERMELHO : "#166534" }}>
+                                  <span className="font-bold uppercase" style={{ color: falhou ? VERMELHO : "var(--qa-verde)" }}>
                                     {reenviado ? "REENVIADO" : (d.status ?? "—")}
                                   </span>
                                 </div>
@@ -890,7 +890,7 @@ export default function DashboardProgressoClientes() {
       )}
 
       {trilhasDisponiveis.length > 0 && (
-        <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
+        <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[var(--qa-linha)] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
           <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] mr-1" style={{ color: TINTA_3 }}>TRILHA</span>
           {trilhasDisponiveis.map((t) => (
             <button
@@ -899,8 +899,8 @@ export default function DashboardProgressoClientes() {
               onClick={() => setFiltroTrilha((v) => (v === t ? null : t))}
               className={`shrink-0 text-[9.5px] font-semibold uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border transition-colors ${
                 filtroTrilha === t
-                  ? "border-[#2F3337] bg-[#ECEDEF] text-[#2F3337] font-bold"
-                  : "border-[#CFCCC5] bg-[#FBFBFA] text-[#3A3A3A] hover:border-[#0A0A0A]"
+                  ? "border-[var(--qa-tinta-2)] bg-[var(--qa-chip-ativo-bg)] text-[var(--qa-tinta-2)] font-bold"
+                  : "border-[var(--qa-neutro-borda)] bg-[var(--qa-chip-bg-2)] text-[var(--qa-tinta-2)] hover:border-[var(--qa-tinta)]"
               }`}
             >
               {t}
@@ -917,7 +917,7 @@ export default function DashboardProgressoClientes() {
         <>
         {/* MOBILE: lista compacta */}
         <div className="md:hidden">
-          <div className="px-4 py-2 border-b border-[#E4E4E4] flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-4 py-2 border-b border-[var(--qa-linha)] flex items-center gap-2 overflow-x-auto no-scrollbar">
             {COLS.map((c) => (
               <button
                 key={c.key}
@@ -925,8 +925,8 @@ export default function DashboardProgressoClientes() {
                 onClick={() => toggle(c.key)}
                 className={`shrink-0 inline-flex items-center gap-1 text-[9.5px] uppercase tracking-[0.12em] font-bold px-2 py-1 rounded-full border transition-colors ${
                   sortKey === c.key
-                    ? "border-[#0A0A0A] text-[#0A0A0A]"
-                    : "border-[#DADADA] text-[#3A3A3A]"
+                    ? "border-[var(--qa-tinta)] text-[var(--qa-tinta)]"
+                    : "border-[var(--qa-linha-2)] text-[var(--qa-tinta-2)]"
                 }`}
               >
                 {c.label}
@@ -941,7 +941,7 @@ export default function DashboardProgressoClientes() {
               <Link
                 key={r.processo_id}
                 to={rotaCadastroCliente(r.cliente_id)}
-                className="block px-4 py-3 border-b border-[#EFEFEF] active:bg-[#FAFAFA]"
+                className="block px-4 py-3 border-b border-[var(--qa-linha-4)] active:bg-[var(--qa-paper-2)]"
               >
                 <div className="flex items-start gap-2">
                   <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: TINTA }}>
@@ -958,7 +958,7 @@ export default function DashboardProgressoClientes() {
                   <span className="text-[11.5px] font-bold tabular-nums w-12" style={{ color: TINTA }}>
                     {r.entregues}/{r.total_docs}
                   </span>
-                  <div className="flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
+                  <div className="flex-1 h-[6px] bg-[var(--qa-trilho)] rounded-full overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                   </div>
                   <span className="text-[12.5px] font-bold uppercase tabular-nums" style={{ color: TINTA_2 }}>{pct}%</span>
@@ -967,7 +967,7 @@ export default function DashboardProgressoClientes() {
                   {r.bloqueado_por_prerequisito ? (
                     <Chip cor={VERMELHO} fundo={VERMELHO_BG}><Lock className="h-3 w-3" />AGUARDA ETAPA ANTERIOR</Chip>
                   ) : (
-                    <Chip cor={TINTA} fundo="#F4F4F4">
+                    <Chip cor={TINTA} fundo="var(--qa-chip-bg)">
                       {r.grupo_atual ?? r.fase}
                       {passoAtual(r) ? ` ${passoAtual(r)!.atual}/${passoAtual(r)!.total}` : ""}
                     </Chip>
@@ -981,7 +981,7 @@ export default function DashboardProgressoClientes() {
                   {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
                   {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                   {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
-                  {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="#F4F4F4">{r.cobrancas} COB.</Chip>}
+                  {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="var(--qa-chip-bg)">{r.cobrancas} COB.</Chip>}
                 </div>
                 <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
                   {r.proximo_tipo === "pergunta" && <HelpCircle className="mt-[2px] h-3 w-3 shrink-0" />}
@@ -1008,13 +1008,13 @@ export default function DashboardProgressoClientes() {
               {colunas.map((c) => (<col key={c.key} style={{ width: larguraDe(c) }} />))}
             </colgroup>
             <thead className="sticky top-0 z-20">
-              <tr className="border-b border-[#DADADA] bg-[#FAFAFA] [&>th]:bg-[#FAFAFA]">
+              <tr className="border-b border-[var(--qa-linha-2)] bg-[var(--qa-paper-2)] [&>th]:bg-[var(--qa-paper-2)]">
                 {colunas.map((c) => (
-                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom border-r border-[#EFEFEF] last:border-r-0" title={c.titulo}>
+                  <th key={c.key} className="relative px-3 py-2 text-left align-bottom border-r border-[var(--qa-linha-4)] last:border-r-0" title={c.titulo}>
                     <button
                       type="button"
                       onClick={() => toggle(c.key)}
-                      className="flex w-full items-end justify-start gap-1 break-words text-left text-[10px] font-bold uppercase leading-[1.15] tracking-[0.12em] text-[#3A3A3A] transition-colors hover:text-[#0A0A0A]"
+                      className="flex w-full items-end justify-start gap-1 break-words text-left text-[10px] font-bold uppercase leading-[1.15] tracking-[0.12em] text-[var(--qa-tinta-2)] transition-colors hover:text-[var(--qa-tinta)]"
                     >
                       {c.label}
                       {sortKey === c.key && (asc ? <ArrowUp className="h-2.5 w-2.5" /> : <ArrowDown className="h-2.5 w-2.5" />)}
@@ -1029,7 +1029,7 @@ export default function DashboardProgressoClientes() {
                         document.body.style.userSelect = "none";
                       }}
                       onDoubleClick={() => setLarguras((prev) => { const n = { ...prev }; delete n[c.key]; return n; })}
-                      className="absolute right-0 top-0 h-full w-[6px] cursor-col-resize hover:bg-[#DADADA]"
+                      className="absolute right-0 top-0 h-full w-[6px] cursor-col-resize hover:bg-[var(--qa-linha-2)]"
                     />
                   </th>
                 ))}
@@ -1105,7 +1105,7 @@ export default function DashboardProgressoClientes() {
                             {(trilhasEfetivas[r.processo_id] ?? []).map((t) => (
                               <span
                                 key={t}
-                                className="rounded-full border border-[#DADADA] px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-[0.1em]"
+                                className="rounded-full border border-[var(--qa-linha-2)] px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-[0.1em]"
                                 style={{ color: TINTA_3 }}
                               >
                                 {t}
@@ -1142,7 +1142,7 @@ export default function DashboardProgressoClientes() {
                         <LinhaTopo><Chip cor={VERMELHO} fundo={VERMELHO_BG}><Lock className="h-3 w-3" />AGUARDA ETAPA ANTERIOR</Chip></LinhaTopo>
                       ) : (
                         <div>
-                          <LinhaTopo><Chip cor={TINTA} fundo="#F4F4F4">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
+                          <LinhaTopo><Chip cor={TINTA} fundo="var(--qa-chip-bg)">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
                           <div className="mt-1"><LinhaGrupos r={r} /></div>
                           {retroativas[r.processo_id] && (
                             <div className="mt-1">
@@ -1166,7 +1166,7 @@ export default function DashboardProgressoClientes() {
                         <span className="shrink-0 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA }}>
                           {r.entregues}/{r.total_docs}
                         </span>
-                        <div className="min-w-0 flex-1 h-[6px] bg-[#EDEDED] rounded-full overflow-hidden">
+                        <div className="min-w-0 flex-1 h-[6px] bg-[var(--qa-trilho)] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
                         <span className="shrink-0 w-10 text-[10.5px] font-medium uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
@@ -1177,12 +1177,12 @@ export default function DashboardProgressoClientes() {
                         {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
                         {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
                         {(r.reaproveitados ?? 0) > 0 && (
-                          <Chip miudo cor={TINTA_3} fundo="#F4F4F4" titulo="Documentos aproveitados do histórico do cliente">
+                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Documentos aproveitados do histórico do cliente">
                             {r.reaproveitados} REAPROVEITADOS
                           </Chip>
                         )}
                         {(r.dispensados ?? 0) > 0 && (
-                          <Chip miudo cor={TINTA_3} fundo="#F4F4F4" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
+                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
                             {r.dispensados} NÃO SE APLICA
                           </Chip>
                         )}
@@ -1225,11 +1225,11 @@ export default function DashboardProgressoClientes() {
                 return (
                   <tr
                     key={r.processo_id}
-                    className="border-b border-[#EFEFEF] hover:bg-[#F6F6F6]"
-                    style={{ background: i % 2 === 1 ? "#FCFCFC" : "#FFFFFF" }}
+                    className="border-b border-[var(--qa-linha-4)] hover:bg-[var(--qa-hover)]"
+                    style={{ background: i % 2 === 1 ? "var(--qa-paper-3)" : "var(--qa-paper)" }}
                   >
                     {colunas.map((c) => (
-                      <td key={c.key} className="border-r border-[#F3F3F3] px-3 py-3 text-left align-top last:border-r-0 [overflow-wrap:anywhere]">
+                      <td key={c.key} className="border-r border-[var(--qa-linha-3)] px-3 py-3 text-left align-top last:border-r-0 [overflow-wrap:anywhere]">
                         {celulas[c.key]}
                       </td>
                     ))}
@@ -1242,7 +1242,7 @@ export default function DashboardProgressoClientes() {
         </>
       )}
 
-      <div className="px-4 py-2.5 border-t border-[#E4E4E4] flex flex-wrap items-center gap-3 text-[9.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: TINTA_2 }}>
+      <div className="px-4 py-2.5 border-t border-[var(--qa-linha)] flex flex-wrap items-center gap-3 text-[9.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: TINTA_2 }}>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: VERDE }} />ATÉ 6 DIAS</span>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: AMBAR }} />7 A 14 DIAS</span>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: VERMELHO }} />15+ (COBRANÇA SEMANAL AUTOMÁTICA)</span>

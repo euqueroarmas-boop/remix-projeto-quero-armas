@@ -83,10 +83,10 @@ function toneFor(dias: number, prazoTotalDias = 10) {
   const ms = prazoTotalDias > 10;
   const critico = ms ? 15 : 4;
   const atencao = ms ? 45 : 7;
-  if (dias < 0)         return { dot: "bg-rose-700",    text: "text-rose-800",    border: "border-rose-300",    bg: "bg-rose-100",   label: "VENCIDO" };
-  if (dias <= critico)  return { dot: "bg-rose-600",    text: "text-rose-700",    border: "border-rose-200",    bg: "bg-rose-50",    label: "CRÍTICO" };
-  if (dias <= atencao)  return { dot: "bg-amber-500",   text: "text-amber-700",   border: "border-amber-200",   bg: "bg-amber-50",   label: "ATENÇÃO" };
-  return                     { dot: "bg-emerald-500", text: "text-emerald-700", border: "border-emerald-200", bg: "bg-white",     label: "EM PRAZO" };
+  if (dias < 0)         return { dot: "bg-[var(--qa-vermelho)]",    text: "text-[var(--qa-vermelho)]",    border: "border-[var(--qa-vermelho-borda)]",    bg: "bg-[var(--qa-vermelho-bg)]",   label: "VENCIDO" };
+  if (dias <= critico)  return { dot: "bg-[var(--qa-vermelho)]",    text: "text-[var(--qa-vermelho)]",    border: "border-[var(--qa-vermelho-borda)]",    bg: "bg-[var(--qa-vermelho-bg)]",    label: "CRÍTICO" };
+  if (dias <= atencao)  return { dot: "bg-[var(--qa-ambar)]",   text: "text-[var(--qa-ambar)]",   border: "border-[var(--qa-ambar-borda)]",   bg: "bg-[var(--qa-ambar-bg)]",   label: "ATENÇÃO" };
+  return                     { dot: "bg-[var(--qa-verde)]", text: "text-[var(--qa-verde)]", border: "border-[var(--qa-verde-borda)]", bg: "bg-[var(--qa-paper)]",     label: "EM PRAZO" };
 }
 
 export default function DashboardPrazosRecursais() {
@@ -147,11 +147,11 @@ export default function DashboardPrazosRecursais() {
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)</h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">Carregando…</p>
+          <h3 className="text-sm font-bold text-[var(--qa-tinta)] uppercase tracking-wide">Prazos Processuais — 10 Dias · Lei 9.784/99 (PF)</h3>
+          <p className="text-[11px] text-[var(--qa-tinta-3)] mt-0.5">Carregando…</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-xl p-6 flex items-center justify-center shadow-sm">
-          <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+        <div className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-xl p-6 flex items-center justify-center shadow-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--qa-tinta-4)]" />
         </div>
       </div>
     );
@@ -175,10 +175,10 @@ export default function DashboardPrazosRecursais() {
     <div className="space-y-4">
       {/* Header — mesmo padrão do Monitoramento de Exames */}
       <div>
-        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">
+        <h3 className="text-sm font-bold text-[var(--qa-tinta)] uppercase tracking-wide">
           Prazos Processuais — Lei 9.784/99 (PF)
         </h3>
-        <p className="text-[11px] text-slate-500 mt-0.5">
+        <p className="text-[11px] text-[var(--qa-tinta-3)] mt-0.5">
           {rows.length} cliente(s) com prazo ainda ativo · ordenado do mais urgente ao menos urgente
           {/*
             O título não pode mais dizer "10 dias" sozinho: desde que a equipe
@@ -193,8 +193,8 @@ export default function DashboardPrazosRecursais() {
       </div>
 
       {/* Grid de cards pequenos — 2/3/5 colunas */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-slate-100">
+      <div className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-xl overflow-hidden shadow-sm">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-y sm:divide-y-0 divide-[var(--qa-linha-3)]">
           {visible.map(r => {
             const tone = toneFor(r.diasRestantes, r.prazoTotalDias);
             const link = r.clienteIdLegado
@@ -220,7 +220,7 @@ export default function DashboardPrazosRecursais() {
                 key={r.itemId}
                 to={link}
                 title={`${r.clienteNome} — ${r.tipo} PF · ${r.evento} · prazo fatal ${dataLimiteBr}`}
-                className={`group flex flex-col gap-1.5 px-3 py-3 ${tone.bg} hover:bg-slate-50 transition-colors min-h-[88px]`}
+                className={`group flex flex-col gap-1.5 px-3 py-3 ${tone.bg} hover:bg-[var(--qa-hover)] transition-colors min-h-[88px]`}
               >
                 <div className="flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full ${tone.dot} shrink-0`} />
@@ -228,14 +228,14 @@ export default function DashboardPrazosRecursais() {
                     {tone.label}
                   </span>
                 </div>
-                <div className="text-[11px] font-semibold text-slate-900 leading-tight line-clamp-2 group-hover:text-[#2F3337] group-hover:underline uppercase">
+                <div className="text-[11px] font-semibold text-[var(--qa-tinta)] leading-tight line-clamp-2 group-hover:text-[var(--qa-tinta-2)] group-hover:underline uppercase">
                   {r.clienteNome}
                 </div>
-                <div className="text-[8.5px] font-bold uppercase tracking-wider text-slate-500 leading-none">
+                <div className="text-[8.5px] font-bold uppercase tracking-wider text-[var(--qa-tinta-3)] leading-none">
                   {r.tipo} PF · {r.evento}
                 </div>
                 {r.status && (
-                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-[#2F3337] leading-none truncate">
+                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-[var(--qa-tinta-2)] leading-none truncate">
                     Status: {r.status}
                   </div>
                 )}
@@ -243,19 +243,19 @@ export default function DashboardPrazosRecursais() {
                   <button
                     type="button"
                     onClick={(e) => handleCopy(e, "Protocolo", r.protocolo)}
-                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-[var(--qa-chip-bg)] text-[9px] font-mono text-[var(--qa-tinta-2)] truncate"
                     title={r.protocolo ? `Copiar protocolo: ${r.protocolo}` : "Sem protocolo"}
                   >
-                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    <Copy className="h-2.5 w-2.5 shrink-0 text-[var(--qa-tinta-4)]" />
                     <span className="truncate">PROT: {r.protocolo || "—"}</span>
                   </button>
                   <button
                     type="button"
                     onClick={(e) => handleCopy(e, "CPF", cpfFmt)}
-                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-[var(--qa-chip-bg)] text-[9px] font-mono text-[var(--qa-tinta-2)] truncate"
                     title={cpfFmt ? `Copiar CPF: ${cpfFmt}` : "Sem CPF"}
                   >
-                    <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                    <Copy className="h-2.5 w-2.5 shrink-0 text-[var(--qa-tinta-4)]" />
                     <span className="truncate">CPF: {cpfFmt || "—"}</span>
                   </button>
                   <button
@@ -307,13 +307,13 @@ export default function DashboardPrazosRecursais() {
                           setGovLoading((prev) => ({ ...prev, [id]: false }));
                         });
                     }}
-                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-slate-200/60 text-[9px] font-mono text-slate-700 truncate"
+                    className="flex items-center gap-1 px-1 py-0.5 rounded hover:bg-[var(--qa-chip-bg)] text-[9px] font-mono text-[var(--qa-tinta-2)] truncate"
                     title={r.cadastroCrId ? (govSenhas[r.cadastroCrId] ? "Copiar Senha Gov" : "Autenticar e copiar Senha Gov") : "Sem CR"}
                   >
                     {r.cadastroCrId && govLoading[r.cadastroCrId] ? (
-                      <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-slate-400" />
+                      <Loader2 className="h-2.5 w-2.5 shrink-0 animate-spin text-[var(--qa-tinta-4)]" />
                     ) : (
-                      <Copy className="h-2.5 w-2.5 shrink-0 text-slate-400" />
+                      <Copy className="h-2.5 w-2.5 shrink-0 text-[var(--qa-tinta-4)]" />
                     )}
                     <span className="truncate select-text">
                       GOV: {r.cadastroCrId ? govSenhas[r.cadastroCrId] || "•••• autenticar" : "—"}
@@ -324,7 +324,7 @@ export default function DashboardPrazosRecursais() {
                   <span className={`text-xl font-black leading-none ${tone.text}`}>{r.diasRestantes}</span>
                   <span className={`text-[9px] font-bold uppercase ${tone.text}`}>d. restantes</span>
                 </div>
-                <div className="text-[9px] font-semibold uppercase tracking-wider text-rose-600 leading-none">
+                <div className="text-[9px] font-semibold uppercase tracking-wider text-[var(--qa-vermelho)] leading-none">
                   Fatal: {dataLimiteBr}
                 </div>
               </Link>
@@ -334,12 +334,12 @@ export default function DashboardPrazosRecursais() {
           {/* 10º card = agregador "+N" */}
           {overflow.length > 0 && (
             <div
-              className="flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 min-h-[88px]"
+              className="flex flex-col items-center justify-center gap-1 px-3 py-3 bg-[var(--qa-paper-2)] min-h-[88px]"
               title={overflow.map(o => `${o.clienteNome} (${o.diasRestantes}d)`).join(" · ")}
             >
-              <Plus className="h-4 w-4 text-slate-500" />
-              <span className="text-2xl font-black text-slate-700 leading-none">+{overflow.length}</span>
-              <span className="text-[9px] font-bold uppercase text-slate-500 text-center">
+              <Plus className="h-4 w-4 text-[var(--qa-tinta-3)]" />
+              <span className="text-2xl font-black text-[var(--qa-tinta-2)] leading-none">+{overflow.length}</span>
+              <span className="text-[9px] font-bold uppercase text-[var(--qa-tinta-3)] text-center">
                 outros em prazo
               </span>
             </div>

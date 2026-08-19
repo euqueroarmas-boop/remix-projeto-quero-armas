@@ -183,6 +183,15 @@
   --qa-tinta: #0A0A0A;
   --qa-tinta-2: #3A3A3A;
   --qa-tinta-3: #6A6A6A;
+  --qa-tinta-4: #9A9A9A;
+  --qa-tinta-5: #BDBDBD;
+  --qa-paper-3: #FCFCFC;
+  --qa-linha-4: #EFEFEF;
+  --qa-chip-bg: #F4F4F4;
+  --qa-chip-bg-2: #FBFBFA;
+  --qa-chip-ativo-bg: #ECEDEF;
+  --qa-hover: #F6F6F6;
+  --qa-trilho: #EDEDED;
   --qa-neutro-bg: #F0EFEC;
   --qa-neutro-borda: #CFCCC5;
   --qa-verde: #0F7A45;
@@ -339,6 +348,61 @@ html.qa-noite [data-qa-sidebar] {
 /* A regra genérica de mídia do modo noturno inverteria o logo dentro da
    sidebar, que já não está invertida. Neutraliza. */
 html.qa-noite [data-qa-sidebar] :where(img, video, canvas, iframe, svg image) {
+  filter: none;
+}
+
+/* =====================================================================
+   PÁGINAS — tema real, fora do filtro de inversão.
+   ETAPA 2 da migração do painel para tokens de tema.
+
+   Uma tela migrada carrega `data-qa-pagina` + `data-nao-inverter`: sai do
+   truque de inverter a tela inteira e passa a desenhar nas cores abaixo —
+   a mesma combinação da sidebar. Os valores CLAROS continuam sendo os de
+   sempre (declarados em .qa-scope), então o modo claro não muda; só o
+   noturno ganha paleta de verdade.
+
+   Para migrar a próxima tela: marcar o container dela com os dois atributos
+   e trocar as cores fixas pelos tokens --qa-*. Telas não migradas seguem no
+   modo antigo, sem conflito.
+   ===================================================================== */
+html.qa-noite [data-qa-pagina] {
+  /* Superfícies */
+  --qa-app: hsl(240 6% 7%);
+  --qa-paper: hsl(240 6% 10%);
+  --qa-paper-2: hsl(240 5% 13%);
+  --qa-paper-3: hsl(240 6% 11%);
+  --qa-chip-bg: hsl(240 5% 16%);
+  --qa-chip-bg-2: hsl(240 5% 14%);
+  --qa-chip-ativo-bg: hsl(210 8% 22%);
+  --qa-hover: hsl(240 5% 15%);
+  --qa-trilho: hsl(240 5% 20%);
+  /* Linhas */
+  --qa-linha: hsl(240 5% 18%);
+  --qa-linha-2: hsl(240 5% 24%);
+  --qa-linha-3: hsl(240 5% 15%);
+  --qa-linha-4: hsl(240 5% 16%);
+  /* Tintas */
+  --qa-tinta: hsl(0 0% 96%);
+  --qa-tinta-2: hsl(240 5% 80%);
+  --qa-tinta-3: hsl(240 4% 62%);
+  --qa-tinta-4: hsl(240 4% 52%);
+  --qa-tinta-5: hsl(240 4% 42%);
+  /* Semânticas: verde = em dia, âmbar = atenção, vermelho = crítico */
+  --qa-neutro-bg: hsl(240 5% 16%);
+  --qa-neutro-borda: hsl(240 5% 26%);
+  --qa-verde: hsl(142 52% 62%);
+  --qa-verde-bg: hsl(142 35% 14%);
+  --qa-verde-borda: hsl(142 28% 30%);
+  --qa-ambar: hsl(41 78% 66%);
+  --qa-ambar-bg: hsl(41 42% 14%);
+  --qa-ambar-borda: hsl(41 34% 32%);
+  --qa-vermelho: hsl(0 72% 72%);
+  --qa-vermelho-bg: hsl(0 45% 15%);
+  --qa-vermelho-borda: hsl(0 34% 34%);
+}
+
+/* Imagem dentro de tela migrada não leva a inversão genérica do noturno. */
+html.qa-noite [data-qa-pagina] :where(img, video, canvas, iframe, svg image) {
   filter: none;
 }
 
