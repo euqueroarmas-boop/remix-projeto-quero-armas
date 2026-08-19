@@ -1,5 +1,5 @@
 /**
- * Piloto Real Quero Armas — Contratação Assistida pela Equipe
+ * Nova Venda Quero Armas — venda assistida pela equipe
  *
  * Wizard admin que orquestra o fluxo real de venda→contrato→liberação
  * usando SOMENTE Edge Functions oficiais. Nenhum INSERT/UPDATE manual
@@ -93,7 +93,7 @@ function money(v: unknown): string {
 
 type StepState = "done" | "pending" | "current" | "blocked";
 
-export default function QAPilotoRealPage() {
+export default function QANovaVendaPage() {
   const { user, profile } = useQAAuthContext();
   const location = useLocation();
   const prePilotoState = (location.state as { clienteId?: number; clienteNome?: string; vendaId?: number } | null);
@@ -220,7 +220,7 @@ export default function QAPilotoRealPage() {
   const tentarSelecionarCliente = useCallback(
     (c: Cliente) => {
       if (isCandidatoStaff(c)) {
-        toast.error("Staff/admin não pode ser contratante do piloto. Selecione um cliente externo.");
+        toast.error("Staff/admin não pode ser o contratante. Selecione um cliente externo.");
         return;
       }
       setCliente(c);
@@ -639,7 +639,7 @@ export default function QAPilotoRealPage() {
       ? (!temDiferencaPacote || (motivoPacoteOk && custoFinCamposOk))
       : (!precoDiferente || (motivoOk && !!tipoAjuste && confirmadoPreco)));
 
-  // Composição estruturada do valor final (Piloto Real B).
+  // Composição estruturada do valor final (Nova Venda, passada B).
   // Fonte de verdade para qa_vendas.composicao_valor_final. Deriva do state do
   // wizard: serviços (servico_qa) + custos embutidos (despesa_operacional) +
   // custo financeiro adquirente (custo_financeiro_adquirente). A soma bate
@@ -737,7 +737,7 @@ export default function QAPilotoRealPage() {
               preco_negociado: e.aplicado,
             })),
           ],
-          // Piloto Real: vincula a venda ao CLIENTE selecionado no Passo 1,
+          // Nova Venda: vincula a venda ao CLIENTE selecionado no Passo 1,
           // não ao staff que está logado disparando o wizard.
           target_qa_cliente_id: cliente.id,
           identificacao: {
@@ -784,7 +784,7 @@ export default function QAPilotoRealPage() {
             custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
               ? Number(custosEmbutidosTotal.toFixed(2))
               : null,
-            // Piloto Real B: envia composição estruturada quando houver.
+            // Nova Venda, passada B: envia composição estruturada quando houver.
             composicao_valor_final: composicaoValorFinalDerivada.length > 0
               ? composicaoValorFinalDerivada
               : null,
@@ -990,7 +990,7 @@ export default function QAPilotoRealPage() {
       return;
     }
     if (vinculoBloqueado) {
-      toast.error("Vínculo do contratante bloqueado. Arquive este piloto e gere uma nova venda para o cliente correto.");
+      toast.error("Vínculo do contratante bloqueado. Arquive esta venda e recomece com o cliente correto.");
       return;
     }
     if (!forcarConfirmacao) {
@@ -1155,13 +1155,13 @@ export default function QAPilotoRealPage() {
       smoke: origemSmoke || eventoSmoke,
       clienteStaff: clienteStaff || operadorComoCliente,
       motivo: statusInativo
-        ? "Piloto cancelado/arquivado não é retomado como fluxo atual."
+        ? "Venda cancelada/arquivada não é retomada como fluxo atual."
         : eventoArquivado
-          ? "Piloto arquivado não é retomado como fluxo atual."
+          ? "Venda arquivada não é retomada como fluxo atual."
           : (origemSmoke || eventoSmoke)
-            ? "Smoke test arquivado não é retomado como piloto ativo."
+            ? "Smoke test arquivado não é retomado como venda ativa."
             : (clienteStaff || operadorComoCliente)
-              ? "Piloto vinculado a staff/admin não é retomado como fluxo atual."
+              ? "Venda vinculada a staff/admin não é retomada como fluxo atual."
               : null,
     };
   }
@@ -1195,7 +1195,7 @@ export default function QAPilotoRealPage() {
 
       const elegibilidade = await avaliarRetomadaPermitida(v, clienteVenda);
       if (!elegibilidade.permitido) {
-        limparPilotoAtivo(elegibilidade.motivo || "Piloto não elegível para retomada automática.");
+        limparPilotoAtivo(elegibilidade.motivo || "Venda não elegível para retomada automática.");
         setResumos((prev) => prev.filter((r) => r.venda_id !== v.id));
         setResumosArquivados((prev) => prev.filter((r) => r.venda_id !== v.id));
         try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
@@ -1290,7 +1290,7 @@ export default function QAPilotoRealPage() {
       }
       setArquivado(arq);
 
-      // Metadados do arquivamento (para card "Piloto arquivado").
+      // Metadados do arquivamento (para card "Venda arquivada").
       if (arq) {
         const { data: evMeta } = await supabase
           .from("qa_venda_eventos")
@@ -1337,9 +1337,9 @@ export default function QAPilotoRealPage() {
         setExibicaoContratoSnap(null);
       }
 
-      toast.success(`Piloto da venda #${v.id} restaurado.`);
+      toast.success(`Venda #${v.id} restaurada.`);
     } catch (e: any) {
-      toast.error(`Falha ao restaurar piloto: ${e?.message || e}`);
+      toast.error(`Falha ao restaurar a venda: ${e?.message || e}`);
     } finally {
       setHidratando(false);
     }
@@ -1378,7 +1378,7 @@ export default function QAPilotoRealPage() {
     }, 300);
   }, [hidratado, hidratando, venda?.id, venda?.status_validacao_valor, venda?.cobranca_status, contrato?.id]);
 
-  // Lista de pilotos em andamento (não arquivados/cancelados/concluídos).
+  // Lista de vendas em andamento (não arquivados/cancelados/concluídos).
   const carregarResumos = useCallback(async () => {
     setCarregandoResumos(true);
     try {
@@ -1457,7 +1457,7 @@ export default function QAPilotoRealPage() {
       setResumos(linhas.filter((r) => !r.arquivado && !concluidoSet.has(String(r.status || "").toUpperCase())));
       setResumosArquivados(linhas.filter((r) => r.arquivado));
     } catch (e: any) {
-      toast.error(`Falha ao listar pilotos: ${e?.message || e}`);
+      toast.error(`Falha ao listar as vendas: ${e?.message || e}`);
     } finally {
       setCarregandoResumos(false);
     }
@@ -1527,10 +1527,10 @@ export default function QAPilotoRealPage() {
 
   const arquivarPiloto = useCallback(async () => {
     if (!venda) return;
-    if (arquivado) { toast.info("Este piloto já está arquivado."); setMostrarArq(false); return; }
+    if (arquivado) { toast.info("Esta venda já está arquivada."); setMostrarArq(false); return; }
     if (motivoArq.trim().length < 20) { toast.error("Motivo obrigatório (mín. 20 caracteres)."); return; }
     if (!policyIsValid(notifPolicyArquivar)) { toast.error("Preencha a política de notificação (motivo mín. 20 chars se não notificar)."); return; }
-    if (!confirm("Arquivar este piloto? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
+    if (!confirm("Arquivar esta venda? Nada será apagado, mas venda/contrato/processos ficarão cancelados.")) return;
     setArquivando(true);
     try {
       const { data, error } = await supabase.functions.invoke("qa-piloto-arquivar", {
@@ -1543,7 +1543,7 @@ export default function QAPilotoRealPage() {
       if (error) throw error;
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_arquivar");
       const jaArq = !!(data as any)?.ja_arquivada;
-      toast.success(jaArq ? "Piloto já estava arquivado." : "Piloto arquivado.");
+      toast.success(jaArq ? "Venda já estava arquivada." : "Venda arquivada.");
       // Idempotência de auditoria: só registra piloto_arquivado se foi efetivo agora.
       if (!jaArq) {
         await logPilotoEvento("piloto_arquivado", {
@@ -1558,7 +1558,7 @@ export default function QAPilotoRealPage() {
         motivo: motivoArq.trim(),
         ator: staffEmail ? `staff:${staffEmail}` : "staff",
       });
-      // Limpa referência local a "último piloto em andamento".
+      // Limpa referência local a "última venda em andamento".
       try { localStorage.removeItem(PILOTO_LS_KEY); } catch {}
       setUltimoLocal(null);
       await recarregarVenda(venda.id);
@@ -1889,34 +1889,34 @@ export default function QAPilotoRealPage() {
 
   /* ---------- Render ---------- */
   return (
-    <div className="qa-piloto qp-page">
+    <div className="qa-nova-venda nv-page">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-5 lg:gap-6">
         {/* Coluna principal */}
         <div className="space-y-5">
           <header>
-            <p className="qp-eyebrow">Administração · Contratação assistida</p>
-            <h1 className="qp-title mt-1.5">Piloto Real</h1>
-            <p className="qp-subtitle">
+            <p className="nv-eyebrow">Administração · Venda assistida pela equipe</p>
+            <h1 className="nv-title mt-1.5">Nova Venda</h1>
+            <p className="nv-subtitle">
               Fluxo real do sistema, sem atalhos. Todas as ações geram evento em <code>qa_venda_eventos</code>,{" "}
               <code>qa_pagamento_auditoria</code> e <code>qa_contract_events</code>.
             </p>
             {arquivado && (
-              <div className="qp-note qp-note--danger mt-4 flex items-center gap-2">
-                <Archive className="h-4 w-4 shrink-0" /> Piloto arquivado. Ações do wizard bloqueadas — apenas visualização/auditoria.
+              <div className="nv-note nv-note--danger mt-4 flex items-center gap-2">
+                <Archive className="h-4 w-4 shrink-0" /> Venda arquivada. Ações do wizard bloqueadas — apenas visualização/auditoria.
               </div>
             )}
             {hidratando && (
-              <div className="qp-note qp-note--warn mt-4 flex items-center gap-2">
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> Restaurando piloto {hidratado ? `#${hidratado.venda_id}` : ""}…
+              <div className="nv-note nv-note--warn mt-4 flex items-center gap-2">
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> Restaurando venda {hidratado ? `#${hidratado.venda_id}` : ""}…
               </div>
             )}
             {venda && hidratado && !hidratando && (
-              <div className="qp-note qp-note--ok mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="nv-note nv-note--ok mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <span className="flex items-center gap-2">
                   <History className="h-4 w-4 shrink-0" />
-                  Piloto <strong>#{venda.id}</strong>
+                  Venda <strong>#{venda.id}</strong>
                   {venda.id_legado ? <> · legado <code>{String(venda.id_legado)}</code></> : null}
-                  {" "}restaurado via {hidratado.via === "url" ? "URL" : "último local"}.
+                  {" "}restaurada via {hidratado.via === "url" ? "URL" : "último local"}.
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
                   <Button
@@ -1927,7 +1927,7 @@ export default function QAPilotoRealPage() {
                         !!motivoPreco || !!evidenciaFile || !!motivoPacote ||
                         !!comprovante || !!assinado || !!valorBrutoStr ||
                         !!precoAplicadoStr || !!valorFinalPacoteStr;
-                      if (dirty && !window.confirm("Existem alterações não salvas. Deseja voltar para a lista de pilotos mesmo assim?")) {
+                      if (dirty && !window.confirm("Existem alterações não salvas. Deseja voltar para a lista de vendas mesmo assim?")) {
                         return;
                       }
                       const url = new URL(window.location.href);
@@ -1937,11 +1937,11 @@ export default function QAPilotoRealPage() {
                     }}
                   >
                     <ArrowLeft className="h-3 w-3 mr-1" />
-                    Voltar para pilotos em andamento
+                    Voltar para vendas em andamento
                   </Button>
                   <button
                     type="button"
-                    className="qp-linkbtn shrink-0"
+                    className="nv-linkbtn shrink-0"
                     onClick={() => {
                       try {
                         localStorage.removeItem(PILOTO_LS_KEY);
@@ -1953,27 +1953,27 @@ export default function QAPilotoRealPage() {
                       window.location.assign(url.pathname);
                     }}
                   >
-                    Iniciar novo piloto
+                    Iniciar nova venda
                   </button>
                 </span>
               </div>
             )}
             {venda && vinculoBloqueado && (
-              <div className="qp-note qp-note--danger mt-4">
+              <div className="nv-note nv-note--danger mt-4">
                 <div className="flex items-center gap-2 font-bold">
                   <ShieldAlert className="h-4 w-4 shrink-0" /> Continuação bloqueada por divergência de contratante.
                 </div>
                 <div className="mt-1.5">
-                  {motivoBloqueioVinculo} Arquive este piloto e crie uma nova venda usando o cliente correto no Passo 1.
+                  {motivoBloqueioVinculo} Arquive esta venda e recomece usando o cliente correto no Passo 1.
                 </div>
               </div>
             )}
           </header>
 
-          {/* Retomar piloto em andamento (só quando nenhum piloto foi carregado ainda) */}
+          {/* Retomar venda em andamento (só quando nenhuma venda foi carregada ainda) */}
           {!venda && !hidratando && (
-            <Card title={abaLista === "andamento" ? "Retomar piloto em andamento" : "Pilotos arquivados"} state="pending">
-              <div className="qp-toggle">
+            <Card title={abaLista === "andamento" ? "Retomar venda em andamento" : "Vendas arquivadas"} state="pending">
+              <div className="nv-toggle">
                 <button
                   type="button"
                   aria-pressed={abaLista === "andamento"}
@@ -1990,18 +1990,18 @@ export default function QAPilotoRealPage() {
                 </button>
               </div>
               {abaLista === "andamento" && ultimoLocal && !hidratado && resumos.some((r) => r.venda_id === ultimoLocal) && (
-                <div className="qp-note flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <span>Último piloto aberto neste navegador: <strong>venda #{ultimoLocal}</strong></span>
+                <div className="nv-note flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span>Última venda aberta neste navegador: <strong>#{ultimoLocal}</strong></span>
                   <Button size="sm" variant="outline" onClick={() => abrirPiloto(ultimoLocal)}>
                     <Play className="h-3 w-3 mr-1" /> Retomar
                   </Button>
                 </div>
               )}
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <p className="qp-help">
+                <p className="nv-help">
                   {abaLista === "andamento"
                     ? <>Vendas criadas pelo fluxo <code>piloto_real</code> que ainda não foram concluídas ou arquivadas.</>
-                    : <>Pilotos <code>arquivados</code> (somente leitura). Nenhuma ação é permitida — apenas visualização de auditoria.</>}
+                    : <>Vendas <code>arquivadas</code> (somente leitura). Nenhuma ação é permitida — apenas visualização de auditoria.</>}
                 </p>
                 <Button size="sm" variant="outline" className="shrink-0 self-start" onClick={carregarResumos} disabled={carregandoResumos}>
                   {carregandoResumos ? <Loader2 className="h-3 w-3 animate-spin" /> : <><RefreshCw className="h-3 w-3 mr-1" /> Atualizar</>}
@@ -2010,12 +2010,12 @@ export default function QAPilotoRealPage() {
               {(() => {
                 const linhas = abaLista === "andamento" ? resumos : resumosArquivados;
                 if (linhas.length === 0 && !carregandoResumos) {
-                  return <p className="qp-help">{abaLista === "andamento" ? "Nenhum piloto em andamento." : "Nenhum piloto arquivado."}</p>;
+                  return <p className="nv-help">{abaLista === "andamento" ? "Nenhuma venda em andamento." : "Nenhuma venda arquivada."}</p>;
                 }
                 if (linhas.length === 0) return null;
                 return (
-                <div className="qp-tablewrap max-h-80">
-                  <table className="qp-table">
+                <div className="nv-tablewrap max-h-80">
+                  <table className="nv-table">
                     <thead>
                       <tr>
                         <th>Venda</th>
@@ -2031,22 +2031,22 @@ export default function QAPilotoRealPage() {
                       {linhas.map((r) => (
                         <tr key={r.venda_id}>
                           <td className="whitespace-nowrap">
-                            <div className="qp-td-strong">#{r.venda_id}</div>
-                            {r.id_legado ? <div className="qp-td-sub">leg {String(r.id_legado)}</div> : null}
+                            <div className="nv-td-strong">#{r.venda_id}</div>
+                            {r.id_legado ? <div className="nv-td-sub">leg {String(r.id_legado)}</div> : null}
                           </td>
                           <td>
-                            <div className="qp-td-strong">{r.cliente_nome || "—"}</div>
-                            <div className="qp-td-sub">{r.cliente_cpf || "—"}</div>
+                            <div className="nv-td-strong">{r.cliente_nome || "—"}</div>
+                            <div className="nv-td-sub">{r.cliente_cpf || "—"}</div>
                           </td>
-                          <td className="qp-num whitespace-nowrap">{money(r.valor_a_pagar)}</td>
+                          <td className="nv-num whitespace-nowrap">{money(r.valor_a_pagar)}</td>
                           <td>
                             <div>{r.cobranca_status || "—"}</div>
-                            <div className="qp-td-sub">{r.status || "—"}</div>
+                            <div className="nv-td-sub">{r.status || "—"}</div>
                           </td>
                           <td>{r.contrato_status || "—"}</td>
                           <td>
                             <div>{r.ultimo_evento || "—"}</div>
-                            <div className="qp-td-sub">
+                            <div className="nv-td-sub">
                               {r.ultimo_evento_at ? new Date(r.ultimo_evento_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : ""}
                             </div>
                           </td>
@@ -2077,7 +2077,7 @@ export default function QAPilotoRealPage() {
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Buscar por nome, CPF ou e-mail…"
                     onKeyDown={(e) => e.key === "Enter" && buscarCliente()}
-                    className="qp-input qp-input--caps"
+                    className="nv-input nv-input--caps"
                   />
                   <Button onClick={buscarCliente} disabled={searching} className="shrink-0">
                     {searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -2091,23 +2091,23 @@ export default function QAPilotoRealPage() {
                         key={c.id}
                         onClick={() => tentarSelecionarCliente(c)}
                         disabled={staff}
-                        className="qp-pick qp-plain"
+                        className="nv-pick nv-plain"
                       >
-                        <div className="qp-pick__name flex items-center gap-2">
+                        <div className="nv-pick__name flex items-center gap-2">
                           <User className="h-3.5 w-3.5 shrink-0" /> {c.nome_completo}
-                          {staff && <span className="qp-chip qp-chip--danger ml-auto">Staff · não selecionável</span>}
+                          {staff && <span className="nv-chip nv-chip--danger ml-auto">Staff · não selecionável</span>}
                         </div>
-                        <div className="qp-pick__meta">
+                        <div className="nv-pick__meta">
                           CPF {c.cpf || "—"} · {c.email || "—"} · {c.celular || "—"}
                         </div>
                       </button>
                     );
                   })}
                   {candidatos.length === 0 && !searching && query && (
-                    <p className="qp-help">Nenhum cliente encontrado.</p>
+                    <p className="nv-help">Nenhum cliente encontrado.</p>
                   )}
                 </div>
-                <p className="qp-hint">
+                <p className="nv-hint">
                   Contratantes com perfil staff/admin ou o e-mail <code>{EMAIL_ADMIN_BLOQUEADO}</code>{" "}
                   são bloqueados automaticamente.
                 </p>
@@ -2115,8 +2115,8 @@ export default function QAPilotoRealPage() {
             ) : (
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="qp-lead font-bold">{cliente.nome_completo}</div>
-                  <div className="qp-help mt-1">
+                  <div className="nv-lead font-bold">{cliente.nome_completo}</div>
+                  <div className="nv-help mt-1">
                     #{cliente.id} · CPF {cliente.cpf} · {cliente.email}
                   </div>
                 </div>
@@ -2147,7 +2147,7 @@ export default function QAPilotoRealPage() {
                     value={servicoQ}
                     onChange={(e) => setServicoQ(e.target.value)}
                     placeholder="Filtrar serviço por nome ou slug…"
-                    className="qp-input qp-input--caps"
+                    className="nv-input nv-input--caps"
                   />
                   <div className="mt-3 max-h-72 overflow-y-auto space-y-1">
                     {carregandoServicos && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -2155,13 +2155,13 @@ export default function QAPilotoRealPage() {
                       <button
                         key={s.id}
                         onClick={() => setServico(s)}
-                        className="qp-pick qp-plain flex items-center justify-between gap-3"
+                        className="nv-pick nv-plain flex items-center justify-between gap-3"
                       >
                         <span className="min-w-0">
-                          <span className="qp-pick__name block truncate">{s.nome}</span>
-                          <span className="qp-pick__meta block">{s.slug}</span>
+                          <span className="nv-pick__name block truncate">{s.nome}</span>
+                          <span className="nv-pick__meta block">{s.slug}</span>
                         </span>
-                        <span className="qp-num qp-small shrink-0">{money(s.preco)}</span>
+                        <span className="nv-num nv-small shrink-0">{money(s.preco)}</span>
                       </button>
                     ))}
                   </div>
@@ -2191,11 +2191,11 @@ export default function QAPilotoRealPage() {
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-2">
                             {itensExtras.length > 0 && (
-                              <span className="qp-chip qp-chip--solid">
+                              <span className="nv-chip nv-chip--solid">
                                 {1 + itensExtras.length} serviços no pacote
                               </span>
                             )}
-                            <span className={`qp-chip ${ehPacote ? "qp-chip--warn" : ""}`}>
+                            <span className={`nv-chip ${ehPacote ? "nv-chip--warn" : ""}`}>
                               Modo: {ehPacote ? "pacote fechado / valor final único" : "itens separados"}
                             </span>
                           </div>
@@ -2212,34 +2212,34 @@ export default function QAPilotoRealPage() {
 
                         <ol>
                           {todos.map((sv, i) => (
-                            <li key={`${sv?.id ?? "srv"}-${i}`} className="qp-itemrow">
+                            <li key={`${sv?.id ?? "srv"}-${i}`} className="nv-itemrow">
                               <div className="min-w-0 flex-1">
-                                <div className="qp-itemrow__name">
-                                  <span className="qp-ink-4 mr-1">{i + 1}.</span>{sv?.nome}
+                                <div className="nv-itemrow__name">
+                                  <span className="nv-ink-4 mr-1">{i + 1}.</span>{sv?.nome}
                                 </div>
-                                <div className="qp-itemrow__slug">{sv?.slug}</div>
+                                <div className="nv-itemrow__slug">{sv?.slug}</div>
                               </div>
                               {/* Preço individual: escondido no modo pacote fechado */}
                               {!ehPacote && (
-                                <div className="qp-num qp-small">{money(sv?.preco ?? null)}</div>
+                                <div className="nv-num nv-small">{money(sv?.preco ?? null)}</div>
                               )}
                             </li>
                           ))}
                         </ol>
 
                         {ehPacote ? (
-                          <div className="qp-note qp-note--warn space-y-1">
-                            <div className="qp-total qp-total--strong">
+                          <div className="nv-note nv-note--warn space-y-1">
+                            <div className="nv-total nv-total--strong">
                               <span>Valor final do pacote</span>
-                              <span className="qp-num">{money(valorFinal)}</span>
+                              <span className="nv-num">{money(valorFinal)}</span>
                             </div>
                             <div>Contrato: <strong>preços individuais ocultos</strong>. Auditoria completa no Passo 3.</div>
                           </div>
                         ) : (
                           itensExtras.length > 0 && (
-                            <div className="qp-note qp-total qp-total--strong">
+                            <div className="nv-note nv-total nv-total--strong">
                               <span>Total dos serviços</span>
-                              <span className="qp-num">{money(totalSeparados)}</span>
+                              <span className="nv-num">{money(totalSeparados)}</span>
                             </div>
                           )
                         )}
@@ -2247,12 +2247,12 @@ export default function QAPilotoRealPage() {
                     );
                   })()}
 
-                  {/* Itens adicionais do pacote (Piloto Real multi-item) */}
+                  {/* Itens adicionais do pacote (Nova Venda multi-item) */}
                   {!venda && (
-                    <div className="qp-block">
+                    <div className="nv-block">
                       <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="qp-block__title mb-0">
-                          Adicionar / editar serviços {itensExtras.length > 0 && <span className="qp-ink-4">({itensExtras.length} extras)</span>}
+                        <div className="nv-block__title mb-0">
+                          Adicionar / editar serviços {itensExtras.length > 0 && <span className="nv-ink-4">({itensExtras.length} extras)</span>}
                         </div>
                         {!extraPickerAberto && (
                           <Button size="sm" variant="outline" onClick={() => setExtraPickerAberto(true)}>
@@ -2262,7 +2262,7 @@ export default function QAPilotoRealPage() {
                       </div>
 
                       {itensExtras.length === 0 && !extraPickerAberto && (
-                        <p className="qp-help">
+                        <p className="nv-help">
                           Use quando o cliente contratou mais de um serviço em uma condição única (ex.: Concessão de CR + Curso Operador de Pistola).
                         </p>
                       )}
@@ -2270,13 +2270,13 @@ export default function QAPilotoRealPage() {
                       {itensExtras.length > 0 && (
                         <ul className="space-y-2 mb-2">
                           {itensExtras.map((ie, idx) => (
-                            <li key={ie.servico.id} className="qp-itemrow flex-wrap">
+                            <li key={ie.servico.id} className="nv-itemrow flex-wrap">
                               <div className="min-w-0 flex-1">
-                                <div className="qp-itemrow__name">{ie.servico.nome}</div>
-                                <div className="qp-itemrow__slug">{ie.servico.slug} · catálogo {money(ie.servico.preco)}</div>
+                                <div className="nv-itemrow__name">{ie.servico.nome}</div>
+                                <div className="nv-itemrow__slug">{ie.servico.slug} · catálogo {money(ie.servico.preco)}</div>
                               </div>
                               <div className="w-32 shrink-0">
-                                <Label className="qp-label">Preço aplicado</Label>
+                                <Label className="nv-label">Preço aplicado</Label>
                                 <Input
                                   value={ie.precoStr}
                                   onChange={(e) => {
@@ -2284,7 +2284,7 @@ export default function QAPilotoRealPage() {
                                     setItensExtras((prev) => prev.map((p, i) => i === idx ? { ...p, precoStr: v } : p));
                                   }}
                                   placeholder="0,00"
-                                  className="qp-input qp-input--num"
+                                  className="nv-input nv-input--num"
                                   inputMode="decimal"
                                 />
                               </div>
@@ -2302,13 +2302,13 @@ export default function QAPilotoRealPage() {
                       )}
 
                       {extraPickerAberto && (
-                        <div className="qp-block qp-block--muted">
+                        <div className="nv-block nv-block--muted">
                           <div className="flex items-center gap-2 mb-2">
                             <Input
                               value={extraQ}
                               onChange={(e) => setExtraQ(e.target.value)}
                               placeholder="Filtrar serviço para adicionar…"
-                              className="qp-input qp-input--caps"
+                              className="nv-input nv-input--caps"
                             />
                             <Button size="sm" variant="ghost" onClick={() => { setExtraPickerAberto(false); setExtraQ(""); }}>
                               Fechar
@@ -2326,17 +2326,17 @@ export default function QAPilotoRealPage() {
                                   setExtraQ("");
                                   setExtraPickerAberto(false);
                                 }}
-                                className="qp-pick qp-plain flex items-center justify-between gap-3"
+                                className="nv-pick nv-plain flex items-center justify-between gap-3"
                               >
                                 <span className="min-w-0">
-                                  <span className="qp-pick__name block truncate">{s.nome}</span>
-                                  <span className="qp-pick__meta block">{s.slug}</span>
+                                  <span className="nv-pick__name block truncate">{s.nome}</span>
+                                  <span className="nv-pick__meta block">{s.slug}</span>
                                 </span>
-                                <span className="qp-num qp-small shrink-0">{money(s.preco)}</span>
+                                <span className="nv-num nv-small shrink-0">{money(s.preco)}</span>
                               </button>
                             ))}
                             {servicosExtraFiltrados.length === 0 && (
-                              <p className="qp-help">Sem serviços disponíveis para adicionar.</p>
+                              <p className="nv-help">Sem serviços disponíveis para adicionar.</p>
                             )}
                           </div>
                         </div>
@@ -2354,34 +2354,34 @@ export default function QAPilotoRealPage() {
               {!venda ? (
                 <div className="space-y-3">
                   {/* Composição do valor final — SEMPRE visível para auditoria */}
-                  <div className="qp-block">
+                  <div className="nv-block">
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between mb-2.5">
-                      <div className="qp-block__title mb-0">Composição do valor final</div>
-                      <div className="qp-hint">
+                      <div className="nv-block__title mb-0">Composição do valor final</div>
+                      <div className="nv-hint">
                         Fonte de verdade → <code>qa_vendas.composicao_valor_final</code>
                       </div>
                     </div>
                     {composicaoValorFinalDerivada.length === 0 ? (
-                      <p className="qp-help">
+                      <p className="nv-help">
                         Nenhum item na composição ainda. Selecione serviços no Passo 2 e defina o valor final abaixo.
                       </p>
                     ) : (
                       <div className="space-y-1">
                         {composicaoValorFinalDerivada.map((c, i) => (
-                          <div key={i} className="qp-total border-b border-dashed border-[--qp-line] py-1.5">
+                          <div key={i} className="nv-total border-b border-dashed border-[--nv-line] py-1.5">
                             <span className="flex min-w-0 flex-wrap items-baseline gap-x-2">
-                              <span className="qp-eyebrow">{c.tipo}</span>
+                              <span className="nv-eyebrow">{c.tipo}</span>
                               <span>{c.descricao}</span>
                             </span>
-                            <span className="qp-num">{money(c.valor)}</span>
+                            <span className="nv-num">{money(c.valor)}</span>
                           </div>
                         ))}
-                        <div className="qp-total qp-total--strong pt-1.5">
+                        <div className="nv-total nv-total--strong pt-1.5">
                           <span>Total da composição</span>
-                          <span className="qp-num">{money(totalComposicaoDerivada)}</span>
+                          <span className="nv-num">{money(totalComposicaoDerivada)}</span>
                         </div>
                         {modoPacote && Math.abs(totalComposicaoDerivada - valorFinalPacoteNum) > 0.01 && (
-                          <div className="qp-note qp-note--danger mt-2">
+                          <div className="nv-note nv-note--danger mt-2">
                             Composição ({money(totalComposicaoDerivada)}) diverge do valor final do pacote ({money(valorFinalPacoteNum)}).
                             Ajuste os itens antes de criar a venda.
                           </div>
@@ -2392,12 +2392,12 @@ export default function QAPilotoRealPage() {
 
                   {/* Modo de exibição do contrato — visível apenas em pacote multi-item */}
                   {temExtras && (
-                    <div className="qp-note qp-note--warn space-y-2.5">
-                      <div className="qp-block__title mb-0" style={{ color: "inherit" }}>
-                        Como exibir o valor no contrato? <span className="qp-req">*</span>
+                    <div className="nv-note nv-note--warn space-y-2.5">
+                      <div className="nv-block__title mb-0" style={{ color: "inherit" }}>
+                        Como exibir o valor no contrato? <span className="nv-req">*</span>
                       </div>
                       <div className="space-y-2.5">
-                        <label className="qp-choice">
+                        <label className="nv-choice">
                           <input
                             type="radio"
                             name="modo_exibicao"
@@ -2409,7 +2409,7 @@ export default function QAPilotoRealPage() {
                             individual e depois o total. Preços editáveis por item na seção acima.
                           </span>
                         </label>
-                        <label className="qp-choice">
+                        <label className="nv-choice">
                           <input
                             type="radio"
                             name="modo_exibicao"
@@ -2426,37 +2426,37 @@ export default function QAPilotoRealPage() {
                       </div>
 
                       {modoPacote && (
-                        <div className="border-t border-[--qp-warn-line] pt-3 space-y-3">
-                          <div className="qp-kv qp-kv--2">
+                        <div className="border-t border-[--nv-warn-line] pt-3 space-y-3">
+                          <div className="nv-kv nv-kv--2">
                             <div>
-                              <Label className="qp-label">
-                                Valor final do pacote (R$) <span className="qp-req">*</span>
+                              <Label className="nv-label">
+                                Valor final do pacote (R$) <span className="nv-req">*</span>
                               </Label>
                               <Input
                                 value={valorFinalPacoteStr}
                                 onChange={(e) => setValorFinalPacoteStr(e.target.value)}
                                 placeholder="Ex.: 5136,26"
-                                className="qp-input qp-input--num"
+                                className="nv-input nv-input--num"
                                 inputMode="decimal"
                               />
-                              <p className="qp-hint mt-1.5">
+                              <p className="nv-hint mt-1.5">
                                 Total catálogo: {money(precoCatalogo)}. O catálogo NÃO será alterado.
                               </p>
                               {temDiferencaPacote && (
-                                <p className={`qp-small mt-1.5 font-bold ${diferencaPacoteValor < 0 ? "text-emerald-700" : "text-amber-700"}`}>
+                                <p className={`nv-small mt-1.5 font-bold ${diferencaPacoteValor < 0 ? "text-emerald-700" : "text-amber-700"}`}>
                                   Diferença: {money(diferencaPacoteValor)} ({percentualDifPacote > 0 ? "+" : ""}{percentualDifPacote}%)
                                 </p>
                               )}
                             </div>
                             <div>
-                              <Label className="qp-label">
+                              <Label className="nv-label">
                                 {modoPacoteCustoFin
                                   ? "Serviços mantidos pelo valor de catálogo"
                                   : temDiferencaPacote
                                     ? "Distribuição interna do ajuste comercial"
                                     : "Distribuição interna (auditoria)"}
                               </Label>
-                              <ul className="qp-num qp-small qp-ink-3 space-y-0.5">
+                              <ul className="nv-num nv-small nv-ink-3 space-y-0.5">
                                 {servico && (
                                   <li>• {servico.slug}: {money(precoAplicadoPrincipal)}</li>
                                 )}
@@ -2465,7 +2465,7 @@ export default function QAPilotoRealPage() {
                                 ))}
                               </ul>
                               {modoPacoteCustoFin && (
-                                <p className="qp-hint mt-1.5">
+                                <p className="nv-hint mt-1.5">
                                   Diferença registrada como custo financeiro da adquirente.
                                 </p>
                               )}
@@ -2473,11 +2473,11 @@ export default function QAPilotoRealPage() {
                           </div>
 
                           {temDiferencaPacote && (
-                            <div className="qp-block space-y-2.5">
-                              <Label className="qp-label">
-                                Como tratar a diferença entre catálogo e valor final? <span className="qp-req">*</span>
+                            <div className="nv-block space-y-2.5">
+                              <Label className="nv-label">
+                                Como tratar a diferença entre catálogo e valor final? <span className="nv-req">*</span>
                               </Label>
-                              <label className="qp-choice">
+                              <label className="nv-choice">
                                 <input
                                   type="radio"
                                   name="tipo_diferenca_pacote"
@@ -2490,7 +2490,7 @@ export default function QAPilotoRealPage() {
                                   contrato exibe o valor final do pacote como preço dos serviços.
                                 </span>
                               </label>
-                              <label className="qp-choice">
+                              <label className="nv-choice">
                                 <input
                                   type="radio"
                                   name="tipo_diferenca_pacote"
@@ -2508,43 +2508,43 @@ export default function QAPilotoRealPage() {
                           )}
 
                           {modoPacoteCustoFin && temDiferencaPacote && (
-                            <div className="qp-kv qp-kv--3">
+                            <div className="nv-kv nv-kv--3">
                               <div>
-                                <Label className="qp-label">Adquirente <span className="qp-req">*</span></Label>
+                                <Label className="nv-label">Adquirente <span className="nv-req">*</span></Label>
                                 <Input
                                   value={adquirentePacote}
                                   onChange={(e) => setAdquirentePacote(e.target.value)}
                                   placeholder="Ex.: STONE"
-                                  className="qp-input"
+                                  className="nv-input"
                                 />
                               </div>
                               <div>
-                                <Label className="qp-label">Parcelas <span className="qp-req">*</span></Label>
+                                <Label className="nv-label">Parcelas <span className="nv-req">*</span></Label>
                                 <Input
                                   type="number"
                                   min={1}
                                   max={24}
                                   value={parcelasPacote}
                                   onChange={(e) => setParcelasPacote(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
-                                  className="qp-input qp-input--num"
+                                  className="nv-input nv-input--num"
                                 />
                               </div>
                               <div>
-                                <Label className="qp-label">Valor da parcela</Label>
-                                <div className="qp-num qp-lead font-bold">{money(valorParcelaPacote)}</div>
+                                <Label className="nv-label">Valor da parcela</Label>
+                                <div className="nv-num nv-lead font-bold">{money(valorParcelaPacote)}</div>
                               </div>
-                              <div className="qp-kv qp-kv--3 sm:col-span-3">
-                                <div><div className="qp-kv__k">Serviços (catálogo)</div><div className="qp-kv__v qp-num">{money(precoCatalogo)}</div></div>
-                                <div><div className="qp-kv__k">Custo financeiro</div><div className="qp-kv__v qp-num">{money(custoFinanceiroAdquirente)}</div></div>
-                                <div><div className="qp-kv__k">Total parcelado</div><div className="qp-kv__v qp-num">{money(valorFinalPacoteNum)}</div></div>
+                              <div className="nv-kv nv-kv--3 sm:col-span-3">
+                                <div><div className="nv-kv__k">Serviços (catálogo)</div><div className="nv-kv__v nv-num">{money(precoCatalogo)}</div></div>
+                                <div><div className="nv-kv__k">Custo financeiro</div><div className="nv-kv__v nv-num">{money(custoFinanceiroAdquirente)}</div></div>
+                                <div><div className="nv-kv__k">Total parcelado</div><div className="nv-kv__v nv-num">{money(valorFinalPacoteNum)}</div></div>
                               </div>
                             </div>
                           )}
 
                           {modoPacoteCustoFin && (
-                            <div className="qp-block space-y-2.5">
+                            <div className="nv-block space-y-2.5">
                               <div className="flex items-center justify-between gap-2">
-                                <Label className="qp-label mb-0">
+                                <Label className="nv-label mb-0">
                                   Custos operacionais embutidos no parcelamento
                                 </Label>
                                 <Button
@@ -2559,7 +2559,7 @@ export default function QAPilotoRealPage() {
                                   + Adicionar custo
                                 </Button>
                               </div>
-                              <p className="qp-help">
+                              <p className="nv-help">
                                 Repasses de terceiros pagos pelo cliente e embutidos no parcelamento
                                 (ex.: exames psicotécnico/toxicológico, GRU, taxas de despachante). NÃO são
                                 serviços da CONTRATADA. Entram na Cláusula 1.A do contrato como custos
@@ -2567,14 +2567,14 @@ export default function QAPilotoRealPage() {
                                 adquirente passa a considerar esse total.
                               </p>
                               {custosEmbutidos.length === 0 && (
-                                <p className="qp-hint italic">
+                                <p className="nv-hint italic">
                                   Nenhum custo embutido informado.
                                 </p>
                               )}
                               {custosEmbutidos.map((c, idx) => (
                                 <div key={idx} className="grid grid-cols-[minmax(0,1fr)_110px_auto] gap-2 items-end">
                                   <div>
-                                    <Label className="qp-label">Descrição</Label>
+                                    <Label className="nv-label">Descrição</Label>
                                     <Input
                                       value={c.descricao}
                                       onChange={(e) =>
@@ -2583,11 +2583,11 @@ export default function QAPilotoRealPage() {
                                         )
                                       }
                                       placeholder="Ex.: EXAMES PSICO+TOXI / GRU / DESPACHANTE"
-                                      className="qp-input qp-input--caps"
+                                      className="nv-input nv-input--caps"
                                     />
                                   </div>
                                   <div>
-                                    <Label className="qp-label">Valor (R$)</Label>
+                                    <Label className="nv-label">Valor (R$)</Label>
                                     <Input
                                       value={c.valorStr}
                                       onChange={(e) =>
@@ -2597,7 +2597,7 @@ export default function QAPilotoRealPage() {
                                       }
                                       placeholder="0,00"
                                       inputMode="decimal"
-                                      className="qp-input qp-input--num"
+                                      className="nv-input nv-input--num"
                                     />
                                   </div>
                                   <Button
@@ -2614,16 +2614,16 @@ export default function QAPilotoRealPage() {
                                 </div>
                               ))}
                               {custosEmbutidosValidos.length > 0 && (
-                                <div className="border-t border-[--qp-line] pt-2.5">
-                                  <div className="qp-kv qp-kv--3">
-                                    <div><div className="qp-kv__k">Serviços (catálogo)</div><div className="qp-kv__v qp-num">{money(precoCatalogo)}</div></div>
-                                    <div><div className="qp-kv__k">Custos embutidos</div><div className="qp-kv__v qp-num">{money(custosEmbutidosTotal)}</div></div>
-                                    <div><div className="qp-kv__k">Valor contratado (1.A.2)</div><div className="qp-kv__v qp-num">{money(valorContratadoPacote)}</div></div>
+                                <div className="border-t border-[--nv-line] pt-2.5">
+                                  <div className="nv-kv nv-kv--3">
+                                    <div><div className="nv-kv__k">Serviços (catálogo)</div><div className="nv-kv__v nv-num">{money(precoCatalogo)}</div></div>
+                                    <div><div className="nv-kv__k">Custos embutidos</div><div className="nv-kv__v nv-num">{money(custosEmbutidosTotal)}</div></div>
+                                    <div><div className="nv-kv__k">Valor contratado (1.A.2)</div><div className="nv-kv__v nv-num">{money(valorContratadoPacote)}</div></div>
                                   </div>
-                                  <p className="qp-hint mt-2">
+                                  <p className="nv-hint mt-2">
                                     Juros/tarifa da adquirente = {money(valorFinalPacoteNum)} −{" "}
                                     {money(valorContratadoPacote)} ={" "}
-                                    <span className="qp-num">{money(custoFinanceiroAdquirente)}</span>
+                                    <span className="nv-num">{money(custoFinanceiroAdquirente)}</span>
                                   </p>
                                 </div>
                               )}
@@ -2632,8 +2632,8 @@ export default function QAPilotoRealPage() {
 
                           {temDiferencaPacote && (
                             <div>
-                              <Label className="qp-label">
-                                Motivo/observação do valor do pacote (mín. 20 caracteres) <span className="qp-req">*</span>
+                              <Label className="nv-label">
+                                Motivo/observação do valor do pacote (mín. 20 caracteres) <span className="nv-req">*</span>
                               </Label>
                               <Textarea
                                 value={motivoPacote}
@@ -2643,9 +2643,9 @@ export default function QAPilotoRealPage() {
                                     ? "Ex.: PARCELAMENTO EM 18X VIA STONE. DIFERENÇA É JUROS/TARIFA DA ADQUIRENTE, ITENS MANTIDOS PELO CATÁLOGO."
                                     : "Ex.: CONDIÇÃO NEGOCIADA CR + CURSO POP I EM PACOTE FECHADO COM DESCONTO COMERCIAL DE X%."
                                 }
-                                className="qp-input"
+                                className="nv-input"
                               />
-                              <div className="qp-counter">{motivoPacote.trim().length} caracteres</div>
+                              <div className="nv-counter">{motivoPacote.trim().length} caracteres</div>
                             </div>
                           )}
                         </div>
@@ -2653,59 +2653,59 @@ export default function QAPilotoRealPage() {
                     </div>
                   )}
 
-                  <div className="qp-block qp-block--muted space-y-3">
-                    <div className="qp-block__title mb-0">
+                  <div className="nv-block nv-block--muted space-y-3">
+                    <div className="nv-block__title mb-0">
                       Preço aplicado {itensExtras.length > 0 ? "no pacote" : "nesta venda"}
                     </div>
-                    <div className="qp-kv qp-kv--3">
+                    <div className="nv-kv nv-kv--3">
                       <div>
-                        <Label className="qp-label">
+                        <Label className="nv-label">
                           {itensExtras.length > 0 ? "Total catálogo (pacote)" : "Preço do catálogo"}
                         </Label>
-                        <div className="qp-num qp-lead font-bold">{money(precoCatalogo)}</div>
+                        <div className="nv-num nv-lead font-bold">{money(precoCatalogo)}</div>
                       </div>
                       <div>
-                        <Label className="qp-label">
+                        <Label className="nv-label">
                           {itensExtras.length > 0 ? "Total aplicado (pacote)" : "Preço sugerido"}
                         </Label>
-                        <div className="qp-num qp-lead font-bold">
+                        <div className="nv-num nv-lead font-bold">
                           {precoValido ? money(precoAplicadoNum) : money(precoCatalogo)}
                         </div>
                       </div>
                       <div>
-                        <Label className="qp-label">
+                        <Label className="nv-label">
                           {itensExtras.length > 0 ? `Preço item principal (R$)` : "Preço aplicado (R$)"}
                         </Label>
                         <Input
                           value={precoAplicadoStr}
                           onChange={(e) => setPrecoAplicadoStr(e.target.value)}
                           placeholder="0,00"
-                          className="qp-input qp-input--num"
+                          className="nv-input nv-input--num"
                           inputMode="decimal"
                         />
                       </div>
                     </div>
                     {itensExtras.length > 0 && (
-                      <p className="qp-hint border-t border-[--qp-line] pt-2.5">
+                      <p className="nv-hint border-t border-[--nv-line] pt-2.5">
                         Total do pacote = item principal + itens adicionais (preços editáveis na seção acima).
                       </p>
                     )}
                     {precoValido && precoDiferente && (
-                      <div className="border-t border-[--qp-line] pt-2.5">
-                        <div className={`qp-small font-bold ${diferencaValor < 0 ? "text-emerald-700" : "text-amber-700"}`}>
+                      <div className="border-t border-[--nv-line] pt-2.5">
+                        <div className={`nv-small font-bold ${diferencaValor < 0 ? "text-emerald-700" : "text-amber-700"}`}>
                           Diferença: {money(diferencaValor)} ({percentualDif > 0 ? "+" : ""}{percentualDif}%)
                         </div>
                       </div>
                     )}
                     {precoValido && precoDiferente && !modoPacote && (
                       <>
-                        <div className="qp-kv qp-kv--2">
+                        <div className="nv-kv nv-kv--2">
                           <div>
-                            <Label className="qp-label">Tipo de ajuste</Label>
+                            <Label className="nv-label">Tipo de ajuste</Label>
                             <select
                               value={tipoAjuste}
                               onChange={(e) => setTipoAjuste(e.target.value)}
-                              className="qp-input qp-input--caps"
+                              className="nv-input nv-input--caps"
                             >
                               {TIPOS_AJUSTE.map((t) => (
                                 <option key={t.v} value={t.v}>{t.l}</option>
@@ -2713,29 +2713,29 @@ export default function QAPilotoRealPage() {
                             </select>
                           </div>
                           <div>
-                            <Label className="qp-label">Evidência (PDF/JPG/PNG/ZIP/RAR — opcional)</Label>
+                            <Label className="nv-label">Evidência (PDF/JPG/PNG/ZIP/RAR — opcional)</Label>
                             <Input
                               type="file"
                               accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.zip,.rar,.7z,application/pdf,image/*,application/zip,application/x-zip-compressed,application/x-rar-compressed,application/vnd.rar,application/x-7z-compressed"
                               onChange={(e) => { setEvidenciaFile(e.target.files?.[0] ?? null); setEvidenciaPath(null); }}
-                              className="qp-input"
+                              className="nv-input"
                             />
                             {evidenciaPath && (
-                              <p className="qp-hint text-emerald-700 mt-1.5">Salvo: {evidenciaPath}</p>
+                              <p className="nv-hint text-emerald-700 mt-1.5">Salvo: {evidenciaPath}</p>
                             )}
                           </div>
                         </div>
                         <div>
-                          <Label className="qp-label">Motivo (mín. 20 caracteres — obrigatório)</Label>
+                          <Label className="nv-label">Motivo (mín. 20 caracteres — obrigatório)</Label>
                           <Textarea
                             value={motivoPreco}
                             onChange={(e) => setMotivoPreco(e.target.value)}
                             placeholder="Ex.: CONDIÇÃO NEGOCIADA VIA WHATSAPP EM 18/12/2025 — 18X DE R$285,35, TOTAL R$5.136,26."
-                            className="qp-input"
+                            className="nv-input"
                           />
-                          <div className="qp-counter">{motivoPreco.trim().length} caracteres</div>
+                          <div className="nv-counter">{motivoPreco.trim().length} caracteres</div>
                         </div>
-                        <label className="qp-choice">
+                        <label className="nv-choice">
                           <input
                             type="checkbox"
                             checked={confirmadoPreco}
@@ -2755,7 +2755,7 @@ export default function QAPilotoRealPage() {
                       : <>Criar venda oficial <ArrowRight className="ml-2 h-4 w-4" /></>}
                   </Button>
                   {precoDiferente && !podeCriarVenda && (
-                    <p className="qp-note qp-note--danger">
+                    <p className="nv-note nv-note--danger">
                       {modoPacote
                         ? "Informe o motivo do pacote (≥20 caracteres) para prosseguir."
                         : "Preencha motivo (≥20), tipo de ajuste e marque a confirmação para prosseguir."}
@@ -2763,18 +2763,18 @@ export default function QAPilotoRealPage() {
                   )}
                 </div>
               ) : (
-                <div className="qp-kv qp-kv--3">
+                <div className="nv-kv nv-kv--3">
                   <div>
-                    <div className="qp-kv__k">Venda</div>
-                    <div className="qp-kv__v"><strong>#{venda.id}</strong> · {venda.status}</div>
+                    <div className="nv-kv__k">Venda</div>
+                    <div className="nv-kv__v"><strong>#{venda.id}</strong> · {venda.status}</div>
                   </div>
                   <div>
-                    <div className="qp-kv__k">Valor</div>
-                    <div className="qp-kv__v qp-num">{money(venda.valor_a_pagar)}</div>
+                    <div className="nv-kv__k">Valor</div>
+                    <div className="nv-kv__v nv-num">{money(venda.valor_a_pagar)}</div>
                   </div>
                   <div>
-                    <div className="qp-kv__k">Cobrança / validação</div>
-                    <div className="qp-kv__v">{venda.cobranca_status} · {venda.status_validacao_valor || "pendente"}</div>
+                    <div className="nv-kv__k">Cobrança / validação</div>
+                    <div className="nv-kv__v">{venda.cobranca_status} · {venda.status_validacao_valor || "pendente"}</div>
                   </div>
                 </div>
               )}
@@ -2785,7 +2785,7 @@ export default function QAPilotoRealPage() {
           {venda && (
             <Card id="step-valor" step={4} title="Aprovar valor" state={stepStates.valor}>
               {venda.status_validacao_valor === "aprovado" ? (
-                <p className="qp-note qp-note--ok">Valor aprovado — evento gravado.</p>
+                <p className="nv-note nv-note--ok">Valor aprovado — evento gravado.</p>
               ) : (
                 <Button onClick={aprovarValor} disabled={aprovando || arquivado || vinculoBloqueado}>
                   {aprovando ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar valor da venda"}
@@ -2797,11 +2797,11 @@ export default function QAPilotoRealPage() {
           {/* Passo 5 */}
           {venda && venda.status_validacao_valor === "aprovado" && venda.cobranca_status !== "confirmada" && (
             <Card id="step-pagamento" step={5} title="Registrar pagamento manual" state={stepStates.pagamento}>
-              <div className={`qp-note ${vinculoBloqueado ? "qp-note--danger" : ""}`}>
-                <div className="qp-block__title mb-2.5" style={{ color: "inherit" }}>Conferência obrigatória do contratante</div>
-                <div className="qp-kv qp-kv--2">
+              <div className={`nv-note ${vinculoBloqueado ? "nv-note--danger" : ""}`}>
+                <div className="nv-block__title mb-2.5" style={{ color: "inherit" }}>Conferência obrigatória do contratante</div>
+                <div className="nv-kv nv-kv--2">
                   <div>
-                    <div className="qp-eyebrow mb-1">Cliente do contrato</div>
+                    <div className="nv-eyebrow mb-1">Cliente do contrato</div>
                     <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
                     <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
                     <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
@@ -2809,7 +2809,7 @@ export default function QAPilotoRealPage() {
                     <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
                   </div>
                   <div>
-                    <div className="qp-eyebrow mb-1">Operador/staff</div>
+                    <div className="nv-eyebrow mb-1">Operador/staff</div>
                     <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
                     <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
                     <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
@@ -2822,37 +2822,37 @@ export default function QAPilotoRealPage() {
                   </div>
                 )}
               </div>
-              <div className="qp-kv qp-kv--2">
+              <div className="nv-kv nv-kv--2">
                 <div>
-                  <Label className="qp-label">Forma de pagamento</Label>
+                  <Label className="nv-label">Forma de pagamento</Label>
                   <select
                     value={forma}
                     onChange={(e) => setForma(e.target.value)}
-                    className="qp-input qp-input--caps"
+                    className="nv-input nv-input--caps"
                   >
                     {FORMAS_MANUAL.map((f) => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
                 <div>
-                  <Label className="qp-label">Parcelas</Label>
+                  <Label className="nv-label">Parcelas</Label>
                   <Input
                     type="number" min={1} max={24} value={parcelas}
                     onChange={(e) => setParcelas(Math.max(1, Number(e.target.value) || 1))}
-                    className="qp-input qp-input--num"
+                    className="nv-input nv-input--num"
                   />
                 </div>
               </div>
               {parcelas > 1 && (
-                <div className="qp-kv qp-kv--2 border-t border-[--qp-line] pt-3">
+                <div className="nv-kv nv-kv--2 border-t border-[--nv-line] pt-3">
                   <div>
-                    <Label className="qp-label">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
+                    <Label className="nv-label">Adquirente (Stone, Rede, PagSeguro, Cielo, Asaas…)</Label>
                     <select
                       value={ADQUIRENTES_CATALOGO.includes(adquirente as any) ? adquirente : (adquirente ? "OUTRA" : "")}
                       onChange={(e) => {
                         const v = e.target.value;
                         setAdquirente(v === "OUTRA" ? "" : v);
                       }}
-                      className="qp-input qp-input--caps"
+                      className="nv-input nv-input--caps"
                     >
                       <option value="">— selecione —</option>
                       {ADQUIRENTES_CATALOGO.map((a) => (
@@ -2864,23 +2864,23 @@ export default function QAPilotoRealPage() {
                         value={adquirente}
                         onChange={(e) => setAdquirente(e.target.value.toUpperCase())}
                         placeholder="ADQUIRENTE (LIVRE — SE 'OUTRA')"
-                        className="qp-input qp-input--caps"
+                        className="nv-input nv-input--caps"
                         maxLength={60}
                       />
                     )}
                   </div>
                   <div>
-                    <Label className="qp-label">
+                    <Label className="nv-label">
                       Valor bruto parcelado (com juros/tarifa) — R$
                     </Label>
                     <Input
                       value={valorBrutoStr}
                       onChange={(e) => setValorBrutoStr(e.target.value)}
                       placeholder="Ex.: 5136,26"
-                      className="qp-input qp-input--num"
+                      className="nv-input nv-input--num"
                       inputMode="decimal"
                     />
-                    <p className="qp-hint mt-1.5">
+                    <p className="nv-hint mt-1.5">
                       Total efetivamente cobrado no cartão (parcelas × valor da parcela). Só preencha se houver juros ou tarifa da adquirente — isso entra no contrato como cláusula 3.2.1/3.2.2.
                     </p>
                   </div>
@@ -2891,25 +2891,25 @@ export default function QAPilotoRealPage() {
                 if (!Number.isFinite(bruto) || bruto <= 0) return null;
                 const parc = Number((bruto / parcelas).toFixed(2));
                 return (
-                  <div className="qp-kv qp-kv--3 border-t border-[--qp-line] pt-3">
-                    <div><div className="qp-kv__k">Valor da parcela</div><div className="qp-kv__v qp-num">{money(parc)}</div></div>
-                    <div><div className="qp-kv__k">Total parcelado</div><div className="qp-kv__v qp-num">{money(bruto)}</div></div>
-                    <div><div className="qp-kv__k">Parcelas</div><div className="qp-kv__v qp-num">{parcelas}x</div></div>
+                  <div className="nv-kv nv-kv--3 border-t border-[--nv-line] pt-3">
+                    <div><div className="nv-kv__k">Valor da parcela</div><div className="nv-kv__v nv-num">{money(parc)}</div></div>
+                    <div><div className="nv-kv__k">Total parcelado</div><div className="nv-kv__v nv-num">{money(bruto)}</div></div>
+                    <div><div className="nv-kv__k">Parcelas</div><div className="nv-kv__v nv-num">{parcelas}x</div></div>
                   </div>
                 );
               })()}
-              <div className="qp-field">
-                <Label className="qp-label">Observação (mín. 20 caracteres — obrigatória) <span className="qp-req">*</span></Label>
+              <div className="nv-field">
+                <Label className="nv-label">Observação (mín. 20 caracteres — obrigatória) <span className="nv-req">*</span></Label>
                 <Textarea
                   value={observacao}
                   onChange={(e) => setObservacao(e.target.value)}
                   placeholder="Ex.: PAGAMENTO PIX RECEBIDO EM 17/07 CONFORME COMPROVANTE ANEXO."
-                  className="qp-input"
+                  className="nv-input"
                 />
-                <div className="qp-counter">{observacao.trim().length} caracteres</div>
+                <div className="nv-counter">{observacao.trim().length} caracteres</div>
               </div>
-              <div className="qp-field">
-                <Label className="qp-label">Comprovante (PDF/JPG/PNG — obrigatório) <span className="qp-req">*</span></Label>
+              <div className="nv-field">
+                <Label className="nv-label">Comprovante (PDF/JPG/PNG — obrigatório) <span className="nv-req">*</span></Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="file"
@@ -2929,19 +2929,19 @@ export default function QAPilotoRealPage() {
                       setComprovante(f);
                       setComprovantePath(null);
                     }}
-                    className="qp-input"
+                    className="nv-input"
                   />
                   {comprovantePath && <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" />}
                 </div>
-                <p className="qp-hint mt-1.5">
+                <p className="nv-hint mt-1.5">
                   Arquivos ZIP/RAR (export do WhatsApp) devem ser anexados no passo 3 como
                   <strong> Evidência de negociação</strong>, não como comprovante.
                 </p>
                 {comprovantePath && (
-                  <p className="qp-hint text-emerald-700 mt-1">Salvo em: {comprovantePath}</p>
+                  <p className="nv-hint text-emerald-700 mt-1">Salvo em: {comprovantePath}</p>
                 )}
               </div>
-              <div className="qp-field">
+              <div className="nv-field">
                 <NotificacaoPolicyPicker
                   value={notifPolicyPagamento}
                   onChange={setNotifPolicyPagamento}
@@ -2952,7 +2952,7 @@ export default function QAPilotoRealPage() {
               <Button className="w-full bg-emerald-700 hover:bg-emerald-600 sm:w-auto" onClick={() => confirmarPagamento()} disabled={confirmandoPag || arquivado || vinculoBloqueado}>
                 {confirmandoPag ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Confirmando…</> : <><Upload className="h-4 w-4 mr-2" /> Confirmar pagamento e gerar contrato</>}
               </Button>
-              <p className="qp-hint">
+              <p className="nv-hint">
                 Ao confirmar: qa_vendas.status=PAGO, evento imutável em qa_venda_eventos, auditoria em qa_pagamento_auditoria, pipeline
                 pós-pagamento canônico (protocolo + qa-generate-contract + notificações).
               </p>
@@ -2963,29 +2963,29 @@ export default function QAPilotoRealPage() {
           {venda?.cobranca_status === "confirmada" && (
             <Card id="step-contrato" step={6} title="Contrato · assinatura · liberação" state={stepStates.contrato}>
               {vinculoBloqueado && (
-                <div className="qp-note qp-note--danger">
-                  <strong>Continuação bloqueada:</strong> {motivoBloqueioVinculo} Use apenas a opção de arquivar piloto abaixo.
+                <div className="nv-note nv-note--danger">
+                  <strong>Continuação bloqueada:</strong> {motivoBloqueioVinculo} Use apenas a opção de arquivar venda abaixo.
                 </div>
               )}
               {!contrato ? (
-                <div className="qp-note flex items-center gap-2">
+                <div className="nv-note flex items-center gap-2">
                   <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> Aguardando geração do contrato…
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="qp-kv qp-kv--2">
+                  <div className="nv-kv nv-kv--2">
                     <div>
-                      <div className="qp-kv__k">Contrato</div>
-                      <div className="qp-kv__v"><code>{contrato.id.slice(0, 8)}</code></div>
+                      <div className="nv-kv__k">Contrato</div>
+                      <div className="nv-kv__v"><code>{contrato.id.slice(0, 8)}</code></div>
                     </div>
                     <div>
-                      <div className="qp-kv__k">Status</div>
-                      <div className="qp-kv__v font-bold">{contrato.status}</div>
+                      <div className="nv-kv__k">Status</div>
+                      <div className="nv-kv__v font-bold">{contrato.status}</div>
                     </div>
                   </div>
                   {linkContratoCliente && (
                     <div className="flex items-center gap-2">
-                      <Input value={linkContratoCliente} readOnly className="qp-input" />
+                      <Input value={linkContratoCliente} readOnly className="nv-input" />
                       <Button size="sm" variant="ghost" onClick={() => { navigator.clipboard.writeText(linkContratoCliente); toast.success("Link copiado"); }}>
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -2994,7 +2994,7 @@ export default function QAPilotoRealPage() {
                       </Button>
                     </div>
                   )}
-                  <p className="qp-help">
+                  <p className="nv-help">
                     O cliente entra no portal, assina digitalmente e faz upload do contrato assinado (qa-upload-signed-contract →
                     qa-validate-customer-signature). Quando o contrato ficar <strong>validated</strong>, o trigger
                     qa_contracts_after_validated_release aciona qa-liberar-servicos-contrato automaticamente.
@@ -3004,8 +3004,8 @@ export default function QAPilotoRealPage() {
                   </Button>
 
                   {processos.length > 0 && (
-                    <div className="qp-note qp-note--ok">
-                      <div className="qp-block__title mb-2 flex items-center gap-1.5" style={{ color: "inherit" }}>
+                    <div className="nv-note nv-note--ok">
+                      <div className="nv-block__title mb-2 flex items-center gap-1.5" style={{ color: "inherit" }}>
                         <CheckCircle2 className="h-3.5 w-3.5" /> Processos criados pela liberação oficial
                       </div>
                       <ul className="space-y-1.5">
@@ -3021,23 +3021,23 @@ export default function QAPilotoRealPage() {
 
                   {/* Upload assistido pela equipe */}
                   {!arquivado && !vinculoBloqueado && !["validated","customer_signed"].includes(contrato.status) && (
-                    <div className="qp-block space-y-3">
-                      <div className="qp-block__title mb-0">
+                    <div className="nv-block space-y-3">
+                      <div className="nv-block__title mb-0">
                         Upload assistido pela equipe (WhatsApp / e-mail / presencial)
                       </div>
-                      <p className="qp-help">
+                      <p className="nv-help">
                         Use esta opção apenas quando o cliente enviar o contrato assinado por fora do portal.
                         O envio é marcado como <code>upload_assistido_por_staff=true</code> e cai na MESMA
                         validação oficial (qa-validate-customer-signature). O contrato só chega em <strong>validated</strong> se
                         a validação oficial aprovar.
                       </p>
-                      <div className="qp-kv qp-kv--2">
+                      <div className="nv-kv nv-kv--2">
                         <div>
-                          <Label className="qp-label">Origem</Label>
+                          <Label className="nv-label">Origem</Label>
                           <select
                             value={origemAssinado}
                             onChange={(e) => setOrigemAssinado(e.target.value)}
-                            className="qp-input qp-input--caps"
+                            className="nv-input nv-input--caps"
                           >
                             <option>WhatsApp</option>
                             <option>E-mail</option>
@@ -3046,21 +3046,21 @@ export default function QAPilotoRealPage() {
                           </select>
                         </div>
                         <div>
-                          <Label className="qp-label">PDF assinado (máx. 25MB) <span className="qp-req">*</span></Label>
+                          <Label className="nv-label">PDF assinado (máx. 25MB) <span className="nv-req">*</span></Label>
                           <Input
                             type="file" accept=".pdf"
                             onChange={(e) => setAssinado(e.target.files?.[0] ?? null)}
-                            className="qp-input"
+                            className="nv-input"
                           />
                         </div>
                       </div>
                       <div>
-                        <Label className="qp-label">Observação (mín. 20 caracteres — obrigatória) <span className="qp-req">*</span></Label>
+                        <Label className="nv-label">Observação (mín. 20 caracteres — obrigatória) <span className="nv-req">*</span></Label>
                         <Textarea
                           value={obsAssinado}
                           onChange={(e) => setObsAssinado(e.target.value)}
                           placeholder="Ex.: CONTRATO ASSINADO RECEBIDO POR WHATSAPP EM 17/07 CONFIRMADO COM O CLIENTE."
-                          className="qp-input"
+                          className="nv-input"
                         />
                       </div>
                       <NotificacaoPolicyPicker
@@ -3086,13 +3086,13 @@ export default function QAPilotoRealPage() {
             </Card>
           )}
 
-          {/* Arquivar Piloto */}
+          {/* Arquivar venda */}
           {venda && (
-            <Card title={arquivado ? "Piloto arquivado" : "Arquivar piloto"} state={arquivado ? "blocked" : "pending"}>
+            <Card title={arquivado ? "Venda arquivada" : "Arquivar venda"} state={arquivado ? "blocked" : "pending"}>
               {arquivado ? (
-                <div className="qp-note qp-note--danger space-y-1.5">
+                <div className="nv-note nv-note--danger space-y-1.5">
                   <p>
-                    Este piloto foi arquivado
+                    Esta venda foi arquivada
                     {arquivadoInfo?.arquivado_em
                       ? <> em <strong>{new Date(arquivadoInfo.arquivado_em).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}</strong></>
                       : null}
@@ -3105,26 +3105,26 @@ export default function QAPilotoRealPage() {
                 </div>
               ) : !mostrarArq ? (
                 <Button size="sm" variant="outline" onClick={() => setMostrarArq(true)} className="border-rose-400 text-rose-600 hover:bg-rose-50">
-                  <Archive className="h-4 w-4 mr-1" /> Arquivar piloto
+                  <Archive className="h-4 w-4 mr-1" /> Arquivar venda
                 </Button>
               ) : (
                 <div className="space-y-2">
-                  <p className="qp-help">
+                  <p className="nv-help">
                     Nada será apagado. Venda/itens ficam CANCELADO, contrato recebe <code>arquivado_em</code>,
                     processos (se existirem) ficam <code>cancelado</code>, e um evento imutável <code>venda_arquivada_piloto</code> é registrado.
                   </p>
-                  <Label className="qp-label">Motivo (mín. 20 caracteres — obrigatório) <span className="qp-req">*</span></Label>
+                  <Label className="nv-label">Motivo (mín. 20 caracteres — obrigatório) <span className="nv-req">*</span></Label>
                   <Textarea
                     value={motivoArq}
                     onChange={(e) => setMotivoArq(e.target.value)}
                     placeholder="Ex.: TESTE ENCERRADO — CLIENTE DESISTIU E VAI RECONTRATAR NO FLUXO NORMAL."
-                    className="qp-input"
+                    className="nv-input"
                   />
                   <NotificacaoPolicyPicker
                     value={notifPolicyArquivar}
                     onChange={setNotifPolicyArquivar}
                     clienteEmail={cliente?.email ?? null}
-                    acaoLabel="ARQUIVAR PILOTO"
+                    acaoLabel="Arquivar venda"
                   />
                   <div className="flex gap-2">
                     <Button size="sm" variant="ghost" onClick={() => { setMostrarArq(false); setMotivoArq(""); }}>Cancelar</Button>
@@ -3139,9 +3139,9 @@ export default function QAPilotoRealPage() {
 
           {/* Auditoria (somente leitura) */}
           {venda && (
-            <Card title="Auditoria do piloto (somente leitura)" state="pending">
+            <Card title="Auditoria da venda (somente leitura)" state="pending">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <p className="qp-help">
+                <p className="nv-help">
                   Eventos vinculados a esta venda
                   {contrato ? `, contrato ${contrato.id.slice(0, 8)}` : ""}
                   {processos.length > 0 ? ` e ${processos.length} processo(s)` : ""}.
@@ -3153,9 +3153,9 @@ export default function QAPilotoRealPage() {
                 </Button>
               </div>
               {profile?.perfil === "administrador" && (
-                <div className="qp-note qp-note--warn flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="nv-note nv-note--warn flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span>
-                    Corrigir composição/parcelamento financeiro deste piloto (auditado em <code>qa_piloto_reprocessamentos</code>).
+                    Corrigir composição/parcelamento financeiro desta venda (auditado em <code>qa_piloto_reprocessamentos</code>).
                   </span>
                   <Button size="sm" variant="outline" className="shrink-0 self-start border-amber-400 text-amber-900 hover:bg-amber-100" onClick={() => setReprocOpen(true)}>
                     <RefreshCw className="h-3 w-3 mr-1" /> Reprocessar financeiro
@@ -3163,10 +3163,10 @@ export default function QAPilotoRealPage() {
                 </div>
               )}
               {auditRows.length === 0 && !carregandoAudit && (
-                <p className="qp-help">Nenhum evento ainda.</p>
+                <p className="nv-help">Nenhum evento ainda.</p>
               )}
-              <div className="qp-tablewrap max-h-[420px]">
-                <table className="qp-table">
+              <div className="nv-tablewrap max-h-[420px]">
+                <table className="nv-table">
                   <thead>
                     <tr>
                       <th>Data/Hora</th>
@@ -3185,12 +3185,12 @@ export default function QAPilotoRealPage() {
                       const preview = dadosStr.length > 80 ? dadosStr.slice(0, 80) + "…" : dadosStr;
                       return (
                         <tr key={r.id}>
-                          <td className="whitespace-nowrap qp-num">{dt}</td>
+                          <td className="whitespace-nowrap nv-num">{dt}</td>
                           <td><code>{r.fonte}</code></td>
-                          <td className="qp-td-strong whitespace-nowrap">{r.tipo}</td>
+                          <td className="nv-td-strong whitespace-nowrap">{r.tipo}</td>
                           <td className="whitespace-nowrap">
                             {r.ator || "—"}
-                            {r.user_id && <div className="qp-td-sub">{r.user_id.slice(0, 8)}</div>}
+                            {r.user_id && <div className="nv-td-sub">{r.user_id.slice(0, 8)}</div>}
                           </td>
                           <td className="whitespace-nowrap">{r.ref}</td>
                           <td>
@@ -3198,7 +3198,7 @@ export default function QAPilotoRealPage() {
                               <button
                                 type="button"
                                 onClick={() => setExpandido((p) => ({ ...p, [r.id]: !isOpen }))}
-                                className="qp-plain text-left"
+                                className="nv-plain text-left"
                                 title={isOpen ? "Recolher" : "Expandir"}
                               >
                                 {isOpen ? (
@@ -3206,7 +3206,7 @@ export default function QAPilotoRealPage() {
                                     {JSON.stringify(r.dados, null, 2)}
                                   </pre>
                                 ) : (
-                                  <span className="qp-ink-4 line-clamp-2 max-w-[320px] break-all">{preview || "—"}</span>
+                                  <span className="nv-ink-4 line-clamp-2 max-w-[320px] break-all">{preview || "—"}</span>
                                 )}
                               </button>
                             ) : "—"}
@@ -3222,9 +3222,9 @@ export default function QAPilotoRealPage() {
         </div>
 
         {/* Sidebar Checklist */}
-        <aside className="qp-aside h-fit lg:sticky lg:top-4">
-          <div className="qp-aside__section">
-            <h2 className="qp-aside__title">Checklist do piloto</h2>
+        <aside className="nv-aside h-fit lg:sticky lg:top-4">
+          <div className="nv-aside__section">
+            <h2 className="nv-aside__title">Checklist da venda</h2>
             <ol>
               <ChecklistItem state={stepStates.cliente} label="Cliente real selecionado" />
               <ChecklistItem state={stepStates.servico} label="Serviço escolhido no catálogo" />
@@ -3234,7 +3234,7 @@ export default function QAPilotoRealPage() {
               <ChecklistItem state={stepStates.contrato} label="Contrato gerado / assinado / validado" />
               <ChecklistItem state={stepStates.liberacao} label="Processo + checklist liberados" />
             </ol>
-            <p className="qp-hint mt-4 flex gap-1.5">
+            <p className="nv-hint mt-4 flex gap-1.5">
               <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" />
               <span>
                 Fluxo baseado em Lei 10.826/03, Dec. 11.615/23, Dec. 12.345/24 e IN 201/311.
@@ -3243,16 +3243,16 @@ export default function QAPilotoRealPage() {
             </p>
           </div>
 
-          <div className="qp-aside__section">
-            <h3 className="qp-aside__title">
+          <div className="nv-aside__section">
+            <h3 className="nv-aside__title">
               <FlaskConical className="h-3.5 w-3.5 text-emerald-600" /> Smoke test
             </h3>
-            <p className="qp-hint mb-3">
+            <p className="nv-hint mb-3">
               Cria venda descartável, chama confirmação manual 2x, valida idempotência e arquiva. Rode antes de cliente real.
             </p>
 
             {/* Modo de seleção */}
-            <div className="qp-toggle mb-3">
+            <div className="nv-toggle mb-3">
               <button type="button" aria-pressed={smokeModo === "auto"} onClick={() => setSmokeModo("auto")}>
                 Automático seguro
               </button>
@@ -3263,22 +3263,22 @@ export default function QAPilotoRealPage() {
 
             {/* Preview do cliente-alvo */}
             {smokeModo === "auto" ? (
-              <div className="qp-block qp-block--muted mb-3">
-                <div className="qp-eyebrow mb-1.5">Cliente que será usado</div>
+              <div className="nv-block nv-block--muted mb-3">
+                <div className="nv-eyebrow mb-1.5">Cliente que será usado</div>
                 {smokePreviewLoading ? (
-                  <span className="qp-hint">Buscando candidato seguro…</span>
+                  <span className="nv-hint">Buscando candidato seguro…</span>
                 ) : smokeAutoPreview ? (
                   <div>
-                    <div className="qp-small font-bold">{smokeAutoPreview.nome_completo}</div>
-                    <div className="qp-hint mt-0.5">
+                    <div className="nv-small font-bold">{smokeAutoPreview.nome_completo}</div>
+                    <div className="nv-hint mt-0.5">
                       #{smokeAutoPreview.id} · CPF {smokeAutoPreview.cpf || "—"} · {smokeAutoPreview.email || "—"}
                     </div>
-                    <button type="button" onClick={carregarSmokeAutoPreview} className="qp-linkbtn mt-2">
+                    <button type="button" onClick={carregarSmokeAutoPreview} className="nv-linkbtn mt-2">
                       Recalcular
                     </button>
                   </div>
                 ) : (
-                  <span className="qp-hint text-rose-700">Nenhum candidato externo elegível encontrado.</span>
+                  <span className="nv-hint text-rose-700">Nenhum candidato externo elegível encontrado.</span>
                 )}
               </div>
             ) : (
@@ -3291,7 +3291,7 @@ export default function QAPilotoRealPage() {
                         onChange={(e) => setSmokeQuery(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && buscarSmokeCliente()}
                         placeholder="Nome, CPF, e-mail…"
-                        className="qp-input qp-input--caps"
+                        className="nv-input nv-input--caps"
                       />
                       <Button size="sm" onClick={buscarSmokeCliente} disabled={smokeSearching} className="shrink-0">
                         {smokeSearching ? <Loader2 className="h-3 w-3 animate-spin" /> : <Search className="h-3 w-3" />}
@@ -3306,26 +3306,26 @@ export default function QAPilotoRealPage() {
                             type="button"
                             disabled={staff}
                             onClick={() => setSmokeCliente(c)}
-                            className="qp-pick qp-plain"
+                            className="nv-pick nv-plain"
                           >
-                            <div className="qp-small font-bold">
+                            <div className="nv-small font-bold">
                               {c.nome_completo}
-                              {staff && <span className="qp-chip qp-chip--danger ml-1.5">staff</span>}
+                              {staff && <span className="nv-chip nv-chip--danger ml-1.5">staff</span>}
                             </div>
-                            <div className="qp-hint mt-0.5">#{c.id} · {c.cpf || "—"} · {c.email || "—"}</div>
+                            <div className="nv-hint mt-0.5">#{c.id} · {c.cpf || "—"} · {c.email || "—"}</div>
                           </button>
                         );
                       })}
                     </div>
                   </>
                 ) : (
-                  <div className="qp-block qp-block--muted">
-                    <div className="qp-eyebrow mb-1.5">Cliente selecionado</div>
-                    <div className="qp-small font-bold">{smokeCliente.nome_completo}</div>
-                    <div className="qp-hint mt-0.5">
+                  <div className="nv-block nv-block--muted">
+                    <div className="nv-eyebrow mb-1.5">Cliente selecionado</div>
+                    <div className="nv-small font-bold">{smokeCliente.nome_completo}</div>
+                    <div className="nv-hint mt-0.5">
                       #{smokeCliente.id} · {smokeCliente.cpf || "—"} · {smokeCliente.email || "—"}
                     </div>
-                    <button type="button" onClick={() => setSmokeCliente(null)} className="qp-linkbtn mt-2">
+                    <button type="button" onClick={() => setSmokeCliente(null)} className="nv-linkbtn mt-2">
                       Trocar
                     </button>
                   </div>
@@ -3334,8 +3334,8 @@ export default function QAPilotoRealPage() {
             )}
 
             {/* Notificações — sempre suprimidas */}
-            <div className="qp-note qp-note--warn mb-3">
-              <span className="qp-eyebrow" style={{ color: "inherit" }}>Notificações</span>{" "}
+            <div className="nv-note nv-note--warn mb-3">
+              <span className="nv-eyebrow" style={{ color: "inherit" }}>Notificações</span>{" "}
               suprimidas automaticamente. Smoke padrão nunca notifica cliente real (e-mail, sino, WhatsApp).
             </div>
 
@@ -3345,12 +3345,12 @@ export default function QAPilotoRealPage() {
             {smokeResult && (
               <div className="mt-2 relative">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="qp-eyebrow">Resultado</span>
+                  <span className="nv-eyebrow">Resultado</span>
                   <button
                     type="button"
                     onClick={copiarSmokeResult}
                     title="Copiar resultado"
-                    className="qp-chip"
+                    className="nv-chip"
                   >
                     {smokeCopiado ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
                     {smokeCopiado ? "Copiado" : "Copiar"}
@@ -3366,32 +3366,32 @@ export default function QAPilotoRealPage() {
       </div>
 
       <Dialog open={confirmacaoContratoAberta} onOpenChange={(open) => { setConfirmacaoContratoAberta(open); if (!open) setConfirmacaoVinculoMarcada(false); }}>
-        <DialogContent className="qa-piloto qa-piloto-dialog max-w-md max-h-[85vh] overflow-y-auto bg-white">
+        <DialogContent className="qa-nova-venda qa-nova-venda-dialog max-w-md max-h-[85vh] overflow-y-auto bg-white">
           <DialogHeader>
-            <DialogTitle className="qp-dialog-title">Confirmar cliente do contrato</DialogTitle>
+            <DialogTitle className="nv-dialog-title">Confirmar cliente do contrato</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="qp-block qp-block--muted">
-              <div className="qp-eyebrow mb-1.5">Cliente do contrato</div>
+            <div className="nv-block nv-block--muted">
+              <div className="nv-eyebrow mb-1.5">Cliente do contrato</div>
               <div><strong>Nome:</strong> {cliente?.nome_completo || "—"}</div>
               <div><strong>CPF:</strong> {cliente?.cpf || "—"}</div>
               <div><strong>E-mail:</strong> {cliente?.email || "—"}</div>
               <div><strong>ID cliente:</strong> {cliente?.id ?? "—"}</div>
               <div><strong>ID legado:</strong> {cliente?.id_legado ?? "—"}</div>
             </div>
-            <div className="qp-note qp-note--warn">
-              <div className="qp-eyebrow mb-1.5" style={{ color: "inherit" }}>Operador/staff</div>
+            <div className="nv-note nv-note--warn">
+              <div className="nv-eyebrow mb-1.5" style={{ color: "inherit" }}>Operador/staff</div>
               <div><strong>Nome/e-mail:</strong> {profile?.nome || user?.email || "—"} / {profile?.email || user?.email || "—"}</div>
               <div><strong>Perfil:</strong> {profile?.perfil || "—"}</div>
               <div><strong>ID usuário:</strong> {user?.id ? user.id.slice(0, 8) : "—"}</div>
               <div className="mt-2 font-bold">O operador/staff NÃO é o contratante.</div>
             </div>
             {vinculoBloqueado ? (
-              <div className="qp-note qp-note--danger font-bold">
+              <div className="nv-note nv-note--danger font-bold">
                 {motivoBloqueioVinculo} Arquive este piloto e gere uma nova venda para o cliente correto.
               </div>
             ) : (
-              <label className="qp-choice">
+              <label className="nv-choice">
                 <input
                   type="checkbox"
                   checked={confirmacaoVinculoMarcada}
@@ -3417,39 +3417,39 @@ export default function QAPilotoRealPage() {
       </Dialog>
 
       <Dialog open={reprocOpen} onOpenChange={setReprocOpen}>
-        <DialogContent className="qa-piloto qa-piloto-dialog max-w-md max-h-[85vh] overflow-y-auto bg-white">
+        <DialogContent className="qa-nova-venda qa-nova-venda-dialog max-w-md max-h-[85vh] overflow-y-auto bg-white">
           <DialogHeader>
-            <DialogTitle className="qp-dialog-title">Reprocessar financeiro do piloto</DialogTitle>
+            <DialogTitle className="nv-dialog-title">Reprocessar financeiro da venda</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p>
               A composição atual do Passo 3 será enviada para <code>qa-piloto-reprocessar-financeiro</code>.
               Nada é apagado — snapshots "antes/depois" ficam em <code>qa_piloto_reprocessamentos</code>.
             </p>
-            <div className="qp-block qp-block--muted">
-              <div className="qp-eyebrow mb-1.5">Composição derivada</div>
+            <div className="nv-block nv-block--muted">
+              <div className="nv-eyebrow mb-1.5">Composição derivada</div>
               {composicaoValorFinalDerivada.length === 0 ? (
-                <div className="qp-small text-rose-700">Nenhum item — reconfigure o Passo 3.</div>
+                <div className="nv-small text-rose-700">Nenhum item — reconfigure o Passo 3.</div>
               ) : (
                 <ul className="space-y-1">
                   {composicaoValorFinalDerivada.map((c, i) => (
-                    <li key={i} className="qp-total">
+                    <li key={i} className="nv-total">
                       <span>{c.tipo} · {c.descricao}</span>
-                      <span className="qp-num">{money(c.valor)}</span>
+                      <span className="nv-num">{money(c.valor)}</span>
                     </li>
                   ))}
-                  <li className="qp-total qp-total--strong border-t border-[--qp-line] pt-1.5">
-                    <span>Total</span><span className="qp-num">{money(totalComposicaoDerivada)}</span>
+                  <li className="nv-total nv-total--strong border-t border-[--nv-line] pt-1.5">
+                    <span>Total</span><span className="nv-num">{money(totalComposicaoDerivada)}</span>
                   </li>
                 </ul>
               )}
             </div>
             <div>
-              <Label className="qp-label">Motivo do reprocesso (mín. 20 caracteres) <span className="qp-req">*</span></Label>
+              <Label className="nv-label">Motivo do reprocesso (mín. 20 caracteres) <span className="nv-req">*</span></Label>
               <Textarea value={reprocMotivo} onChange={(e) => setReprocMotivo(e.target.value)}
                 placeholder="EX.: CORRIGIR COMPOSIÇÃO — EXAMES/GRU EMBUTIDOS NÃO HAVIAM SIDO LANÇADOS."
-                className="qp-input" />
-              <div className="qp-counter">{reprocMotivo.trim().length} caracteres</div>
+                className="nv-input" />
+              <div className="nv-counter">{reprocMotivo.trim().length} caracteres</div>
             </div>
             <NotificacaoPolicyPicker
               value={notifPolicyReproc}
@@ -3487,15 +3487,15 @@ function Card({
   action?: React.ReactNode;
 }) {
   return (
-    <section id={id} className="qp-card">
-      <div className="qp-card__head">
+    <section id={id} className="nv-card">
+      <div className="nv-card__head">
         {step != null
-          ? <span className="qp-step" data-state={state}>{step}</span>
-          : <span className="qp-dot" data-state={state} />}
-        <h2 className="qp-card__title flex-1 truncate">{title}</h2>
+          ? <span className="nv-step" data-state={state}>{step}</span>
+          : <span className="nv-dot" data-state={state} />}
+        <h2 className="nv-card__title flex-1 truncate">{title}</h2>
         {action}
       </div>
-      <div className="qp-card__body">{children}</div>
+      <div className="nv-card__body">{children}</div>
     </section>
   );
 }
@@ -3503,7 +3503,7 @@ function Card({
 function ChecklistItem({ state, label }: { state: StepState; label: string }) {
   const Icon = state === "done" ? CheckCircle2 : Circle;
   return (
-    <li className="qp-check" data-state={state}>
+    <li className="nv-check" data-state={state}>
       <Icon className="h-3.5 w-3.5" />
       <span>{label}</span>
     </li>

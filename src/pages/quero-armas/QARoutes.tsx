@@ -61,7 +61,7 @@ const QAContratarPublicoPage = lazyRetry(() => import("./QAContratarPublicoPage"
 const QAContratarSucessoPage = lazyRetry(() => import("./QAContratarSucessoPage"), "QAContratarSucessoPage");
 const QAContratacoesPendentesPage = lazyRetry(() => import("./QAContratacoesPendentesPage"), "QAContratacoesPendentesPage");
 const QAVendasPendentesPage = lazyRetry(() => import("./QAVendasPendentesPage"), "QAVendasPendentesPage");
-const QAPilotoRealPage = lazyRetry(() => import("./admin/QAPilotoRealPage"), "QAPilotoRealPage");
+const QANovaVendaPage = lazyRetry(() => import("./admin/QANovaVendaPage"), "QANovaVendaPage");
 const QAPrePilotoPage = lazyRetry(() => import("./admin/QAPrePilotoPage"), "QAPrePilotoPage");
 const QAContratacoesTabsPage = lazyRetry(() => import("./QAContratacoesTabsPage"), "QAContratacoesTabsPage");
 const QAClientesTabsPage = lazyRetry(() => import("./QAClientesTabsPage"), "QAClientesTabsPage");
@@ -131,6 +131,16 @@ function CadastroV2Redirect({ extraParams }: { extraParams?: Record<string, stri
   }
   const qs = sp.toString();
   return <Navigate to={`/cadastro${qs ? `?${qs}` : ""}`} replace />;
+}
+
+/**
+ * Redirect /admin/piloto-real → /admin/nova-venda preservando ?search.
+ * A tela foi renomeada, mas links salvos pela equipe trazem ?venda_id= /
+ * ?id_legado= — sem preservar a query o retorno abriria a lista vazia.
+ */
+function PilotoRealRedirect() {
+  const location = useLocation();
+  return <Navigate to={`/admin/nova-venda${location.search}`} replace />;
 }
 
 function CatchAllRedirect() {
@@ -285,7 +295,9 @@ export default function QARoutes() {
           <Route path="casos" element={<QACasosPage />} />
           <Route path="processos" element={<QAProcessosPage />} />
           <Route path="contratacoes-pendentes" element={<QAContratacoesPendentesPage />} />
-          <Route path="admin/piloto-real" element={<QAPilotoRealPage />} />
+          <Route path="admin/nova-venda" element={<QANovaVendaPage />} />
+          {/* Nome antigo da tela ("Piloto Real"): link salvo continua abrindo. */}
+          <Route path="admin/piloto-real" element={<PilotoRealRedirect />} />
           <Route path="admin/pre-piloto" element={<QAPrePilotoPage />} />
           <Route path="admin/central-adesao" element={<QAPrePilotoPage />} />
           <Route path="operacao/contratacoes" element={<QAContratacoesTabsPage />} />

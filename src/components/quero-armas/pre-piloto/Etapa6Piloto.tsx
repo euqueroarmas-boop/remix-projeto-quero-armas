@@ -13,7 +13,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
   const navigate = useNavigate();
 
   function irParaPiloto() {
-    navigate("/admin/piloto-real", {
+    navigate("/admin/nova-venda", {
       state: { clienteId: clienteSalvo.id, clienteNome: clienteSalvo.nome_completo, vendaId },
     });
   }
@@ -29,7 +29,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
       <div>
         <h2 className="text-sm font-semibold mb-1">Etapa 6 — Pronto</h2>
         <p className="text-xs text-muted-foreground">
-          Contrato gerado e disponível no Arsenal Inteligente do cliente. Aguarde a assinatura e siga pelo histórico abaixo ou inicie o Piloto Real agora.
+          Contrato gerado e disponível no Arsenal Inteligente do cliente. Aguarde a assinatura e siga pelo histórico abaixo ou abra a Nova Venda agora.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
         <ul className="mt-1 list-disc pl-4 space-y-1">
           <li>Cliente assina pelo GOV.BR e envia por WhatsApp</li>
           <li>Faça upload do contrato assinado no histórico desta página</li>
-          <li>Confirme o pagamento no Piloto Real</li>
+          <li>Confirme o pagamento na Nova Venda</li>
         </ul>
       </div>
 
@@ -79,7 +79,7 @@ export default function Etapa6Piloto({ clienteSalvo, vendaId, onVoltar }: Props)
             size="sm"
             className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           >
-            <Play className="w-3.5 h-3.5" /> Piloto Real
+            <Play className="w-3.5 h-3.5" /> Nova Venda
           </Button>
         </div>
       </div>

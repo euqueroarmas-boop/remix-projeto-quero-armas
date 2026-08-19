@@ -18,8 +18,8 @@ const AdminNotificacoesOverlay = lazy(() => import("./notificacoes/AdminNotifica
 function canAccessRoute(perfil: string, pathname: string): boolean {
   const blockedForLeitura = ["/gerar-peca", "/modelos-docx", "/modelos-declaracao", "/correcoes-ia", "/correcoes-ia/"];
   const blockedForAssistente = ["/configuracoes"];
-  // Piloto Real (contratação assistida) — restrito a administrador.
-  const adminOnly = ["/admin/piloto-real", "/admin/pre-piloto", "/admin/central-adesao"];
+  // Nova Venda (venda assistida) e Central de Adesão — restritas a administrador.
+  const adminOnly = ["/admin/nova-venda", "/admin/piloto-real", "/admin/pre-piloto", "/admin/central-adesao"];
   if (adminOnly.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
     if (perfil !== "administrador") return false;
   }

@@ -1,0 +1,553 @@
+/* =======================================================================
+   QA PILOTO — Sistema visual da tela "Piloto Real / Contratação Assistida"
+   (rotas /admin/piloto-real e derivadas)
+
+   REGRAS CANÔNICAS DESTA TELA
+   1. Tema CLARO. O modo noturno do admin é obtido por `filter: invert()`
+      no .qa-scope (index.css) — cor escura fixa aqui vira branco no escuro.
+   2. Escala tipográfica fechada: micro(11) / small(12) / base(13) / lead(15).
+      Proibido text-[9px], text-[10px] e afins dentro de .qa-nova-venda.
+   3. CAIXA ALTA só em título de página, título de card, eyebrow, label,
+      chip e botão. Texto corrido, valor e ajuda são sempre caixa natural.
+   4. Tabela SEMPRE dentro de .nv-tablewrap — no celular ela rola na
+      horizontal em vez de espremer a coluna e empilhar letra por letra.
+   ======================================================================= */
+
+.qa-nova-venda {
+  --nv-ink: #14161A;
+  --nv-ink-2: #3D434B;
+  --nv-ink-3: #6A7079;
+  --nv-ink-4: #9AA0A8;
+
+  --nv-line: #E4E6EA;
+  --nv-line-2: #CFD3D9;
+  --nv-surface: #FFFFFF;
+  --nv-surface-2: #F6F7F9;
+  --nv-surface-3: #EEF0F3;
+
+  --nv-ok-line: #A7D8BC;
+  --nv-ok-bg: #F0F9F4;
+  --nv-ok-ink: #1B6B45;
+
+  --nv-warn-line: #E6CE9A;
+  --nv-warn-bg: #FDF8EC;
+  --nv-warn-ink: #7A5A12;
+
+  --nv-danger-line: #E9B4B4;
+  --nv-danger-bg: #FDF3F3;
+  --nv-danger-ink: #8E2020;
+
+  --nv-radius: 10px;
+  --nv-radius-sm: 6px;
+
+  font-family: var(--qa-font-body, Arial, Helvetica, sans-serif);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nv-ink);
+  text-transform: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- Superfície da página ---------- */
+.qa-nova-venda.nv-page {
+  min-height: 100vh;
+  background: var(--nv-surface-2);
+  padding: 24px 16px 40px;
+}
+@media (min-width: 640px) { .qa-nova-venda.nv-page { padding: 32px 24px 48px; } }
+
+/* ---------- Escala tipográfica (as ÚNICAS permitidas) ---------- */
+.qa-nova-venda .nv-micro { font-size: 11px; line-height: 1.4; }
+.qa-nova-venda .nv-small { font-size: 12px; line-height: 1.45; }
+.qa-nova-venda .nv-base  { font-size: 13px; line-height: 1.5; }
+.qa-nova-venda .nv-lead  { font-size: 15px; line-height: 1.4; }
+
+/* ---------- Tons de texto ---------- */
+.qa-nova-venda .nv-ink   { color: var(--nv-ink); }
+.qa-nova-venda .nv-ink-2 { color: var(--nv-ink-2); }
+.qa-nova-venda .nv-ink-3 { color: var(--nv-ink-3); }
+.qa-nova-venda .nv-ink-4 { color: var(--nv-ink-4); }
+
+/* ---------- Cabeçalho da página ---------- */
+.qa-nova-venda .nv-title {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--nv-ink);
+  margin: 0;
+}
+.qa-nova-venda .nv-subtitle {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nv-ink-3);
+  margin: 6px 0 0;
+  max-width: 68ch;
+}
+
+/* ---------- Eyebrow / label / ajuda ---------- */
+.qa-nova-venda .nv-eyebrow {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--nv-ink-4);
+  line-height: 1.2;
+}
+.qa-nova-venda .nv-label,
+.qa-nova-venda label.nv-label {
+  display: block;
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--nv-ink-3);
+  line-height: 1.3;
+  margin: 0 0 6px;
+}
+.qa-nova-venda .nv-req { color: #B4322C; font-weight: 700; }
+.qa-nova-venda .nv-help {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--nv-ink-3);
+}
+.qa-nova-venda .nv-hint {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--nv-ink-4);
+}
+
+/* ---------- Números / dinheiro ---------- */
+.qa-nova-venda .nv-num {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
+/* ---------- Código inline (nomes de tabela / edge function) ---------- */
+.qa-nova-venda code {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: .9em;
+  text-transform: none;
+  color: var(--nv-ink-2);
+  background: var(--nv-surface-2);
+  border: 1px solid var(--nv-line);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+/* ---------- Card / passo ---------- */
+.qa-nova-venda .nv-card {
+  background: var(--nv-surface);
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius);
+  box-shadow: 0 1px 2px rgba(16, 20, 26, .04);
+  scroll-margin-top: 16px;
+  overflow: hidden;
+}
+.qa-nova-venda .nv-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--nv-line);
+  background: var(--nv-surface-2);
+}
+.qa-nova-venda .nv-card__title {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--nv-ink);
+  margin: 0;
+  min-width: 0;
+}
+.qa-nova-venda .nv-card__body { padding: 16px; }
+.qa-nova-venda .nv-card__body > * + * { margin-top: 12px; }
+
+/* Selo numérico do passo */
+.qa-nova-venda .nv-step {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--nv-line-2);
+  background: var(--nv-surface);
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nv-ink-3);
+  line-height: 1;
+}
+.qa-nova-venda .nv-step[data-state="done"]    { border-color: var(--nv-ok-line);     background: var(--nv-ok-bg);     color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-step[data-state="current"] { border-color: var(--nv-warn-line);   background: var(--nv-warn-bg);   color: var(--nv-warn-ink); }
+.qa-nova-venda .nv-step[data-state="blocked"] { border-color: var(--nv-danger-line); background: var(--nv-danger-bg); color: var(--nv-danger-ink); }
+
+/* Ponto de estado (listas e cards sem número) */
+.qa-nova-venda .nv-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--nv-ink-4);
+  display: inline-block;
+}
+.qa-nova-venda .nv-dot[data-state="done"]    { background: #2F9E68; }
+.qa-nova-venda .nv-dot[data-state="current"] { background: #D9A32B; }
+.qa-nova-venda .nv-dot[data-state="blocked"] { background: #C0453F; }
+
+/* ---------- Sub-bloco dentro do card ---------- */
+.qa-nova-venda .nv-block {
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius-sm);
+  background: var(--nv-surface);
+  padding: 12px;
+}
+.qa-nova-venda .nv-block--muted { background: var(--nv-surface-2); }
+.qa-nova-venda .nv-block__title {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nv-ink-2);
+  margin: 0 0 8px;
+}
+
+/* ---------- Avisos ---------- */
+.qa-nova-venda .nv-note {
+  border: 1px solid var(--nv-line);
+  background: var(--nv-surface-2);
+  color: var(--nv-ink-2);
+  border-radius: var(--nv-radius-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.qa-nova-venda .nv-note--ok     { border-color: var(--nv-ok-line);     background: var(--nv-ok-bg);     color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-note--warn   { border-color: var(--nv-warn-line);   background: var(--nv-warn-bg);   color: var(--nv-warn-ink); }
+.qa-nova-venda .nv-note--danger { border-color: var(--nv-danger-line); background: var(--nv-danger-bg); color: var(--nv-danger-ink); }
+.qa-nova-venda .nv-note strong { font-weight: 700; }
+
+/* ---------- Chip ---------- */
+.qa-nova-venda .nv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--nv-line-2);
+  background: var(--nv-surface-2);
+  color: var(--nv-ink-2);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.qa-nova-venda .nv-chip--solid  { background: var(--nv-ink); border-color: var(--nv-ink); color: #FFF; }
+.qa-nova-venda .nv-chip--ok     { border-color: var(--nv-ok-line);     background: var(--nv-ok-bg);     color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-chip--warn   { border-color: var(--nv-warn-line);   background: var(--nv-warn-bg);   color: var(--nv-warn-ink); }
+.qa-nova-venda .nv-chip--danger { border-color: var(--nv-danger-line); background: var(--nv-danger-bg); color: var(--nv-danger-ink); }
+
+/* ---------- Par rótulo/valor ---------- */
+.qa-nova-venda .nv-kv { display: grid; gap: 10px; }
+.qa-nova-venda .nv-kv--2 { grid-template-columns: 1fr; }
+.qa-nova-venda .nv-kv--3 { grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .qa-nova-venda .nv-kv--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .qa-nova-venda .nv-kv--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.qa-nova-venda .nv-kv__k {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nv-ink-4);
+  line-height: 1.3;
+}
+.qa-nova-venda .nv-kv__v { font-size: 13px; color: var(--nv-ink); margin-top: 2px; }
+
+/* ---------- Item selecionável (cliente / serviço) ---------- */
+.qa-nova-venda .nv-pick {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius-sm);
+  background: var(--nv-surface);
+  padding: 10px 12px;
+  transition: border-color .12s ease, background-color .12s ease;
+}
+.qa-nova-venda .nv-pick:hover:not(:disabled) { border-color: var(--nv-ok-line); background: var(--nv-ok-bg); }
+.qa-nova-venda .nv-pick:disabled { border-color: var(--nv-danger-line); background: var(--nv-danger-bg); opacity: .75; cursor: not-allowed; }
+.qa-nova-venda .nv-pick__name { font-size: 13px; font-weight: 700; color: var(--nv-ink); }
+.qa-nova-venda .nv-pick__meta { font-size: 12px; color: var(--nv-ink-3); margin-top: 2px; }
+
+/* ---------- Tabela ---------- */
+.qa-nova-venda .nv-tablewrap {
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius-sm);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--nv-surface);
+}
+.qa-nova-venda .nv-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+  text-transform: none;
+}
+.qa-nova-venda .nv-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--nv-surface-3);
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--nv-ink-3);
+  text-align: left;
+  padding: 8px 10px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--nv-line);
+}
+.qa-nova-venda .nv-table tbody td {
+  padding: 9px 10px;
+  border-top: 1px solid var(--nv-line);
+  vertical-align: top;
+  color: var(--nv-ink-2);
+}
+.qa-nova-venda .nv-table tbody tr:first-child td { border-top: 0; }
+.qa-nova-venda .nv-table tbody tr:hover td { background: var(--nv-surface-2); }
+.qa-nova-venda .nv-table .nv-td-strong { color: var(--nv-ink); font-weight: 700; }
+.qa-nova-venda .nv-table .nv-td-sub { font-size: 11px; color: var(--nv-ink-4); margin-top: 2px; }
+
+/* JSON de auditoria: caixa natural e fonte mono, nunca caixa alta */
+.qa-nova-venda .nv-json,
+.qa-nova-venda pre {
+  text-transform: none;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+.qa-nova-venda pre {
+  font-size: 11px;
+  line-height: 1.45;
+  background: var(--nv-surface-2);
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius-sm);
+  padding: 10px;
+  color: var(--nv-ink-2);
+}
+
+/* ---------- Formulário ---------- */
+.qa-nova-venda :where(input, select, textarea) {
+  font-family: var(--qa-font-body, Arial, Helvetica, sans-serif);
+  font-size: 13px;
+  color: var(--nv-ink);
+  text-transform: none;
+}
+.qa-nova-venda :where(input, textarea)::placeholder { color: var(--nv-ink-4); text-transform: none; }
+.qa-nova-venda .nv-input,
+.qa-nova-venda select.nv-input {
+  width: 100%;
+  height: 38px;
+  background: var(--nv-surface);
+  border: 1px solid var(--nv-line-2);
+  border-radius: var(--nv-radius-sm);
+  padding: 0 10px;
+}
+.qa-nova-venda textarea.nv-input { height: auto; min-height: 84px; padding: 9px 10px; line-height: 1.45; }
+.qa-nova-venda input.nv-input[type="file"] { height: auto; padding: 8px 10px; font-size: 12px; }
+.qa-nova-venda .nv-input--caps { text-transform: uppercase; }
+.qa-nova-venda .nv-input--num { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+.qa-nova-venda .nv-field + .nv-field { margin-top: 12px; }
+.qa-nova-venda .nv-counter { font-size: 11px; color: var(--nv-ink-4); margin-top: 5px; }
+
+/* Escolha (radio/checkbox) com texto corrido */
+.qa-nova-venda .nv-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--nv-ink-2);
+  cursor: pointer;
+  text-transform: none;
+}
+.qa-nova-venda .nv-choice input { margin-top: 3px; flex: 0 0 auto; accent-color: #2F5E45; }
+.qa-nova-venda .nv-choice strong { color: var(--nv-ink); font-weight: 700; }
+
+/* ---------- Botões ---------- */
+.qa-nova-venda button:not(.nv-plain),
+.qa-nova-venda a[role="button"] {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  font-weight: 600;
+}
+.qa-nova-venda .nv-plain { text-transform: none; letter-spacing: 0; }
+.qa-nova-venda .nv-linkbtn {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--nv-ok-ink);
+}
+.qa-nova-venda .nv-linkbtn:hover { text-decoration: underline; }
+
+/* Alternador de duas opções (abas / modo do smoke) */
+.qa-nova-venda .nv-toggle { display: flex; gap: 6px; }
+.qa-nova-venda .nv-toggle > button {
+  flex: 1 1 0;
+  border: 1px solid var(--nv-line-2);
+  background: var(--nv-surface);
+  border-radius: var(--nv-radius-sm);
+  padding: 7px 8px;
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--nv-ink-3);
+}
+.qa-nova-venda .nv-toggle > button[aria-pressed="true"] {
+  border-color: var(--nv-ok-line);
+  background: var(--nv-ok-bg);
+  color: var(--nv-ok-ink);
+  font-weight: 700;
+}
+
+/* ---------- Política de notificação (NotificacaoPolicyPicker) ---------- */
+.qa-nova-venda .nv-optbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--nv-line-2);
+  background: var(--nv-surface);
+  color: var(--nv-ink-3);
+  border-radius: var(--nv-radius-sm);
+  padding: 9px 12px;
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+.qa-nova-venda .nv-optbtn:hover { background: var(--nv-surface-2); }
+.qa-nova-venda .nv-optbtn--ok     { border-color: var(--nv-ok-line);     background: var(--nv-ok-bg);     color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-optbtn--danger { border-color: var(--nv-danger-line); background: var(--nv-danger-bg); color: var(--nv-danger-ink); }
+
+.qa-nova-venda .nv-chan {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--nv-line-2);
+  background: var(--nv-surface);
+  color: var(--nv-ink-2);
+  border-radius: var(--nv-radius-sm);
+  padding: 9px 12px;
+  cursor: pointer;
+  min-width: 0;
+}
+.qa-nova-venda .nv-chan input { accent-color: #2F5E45; flex: 0 0 auto; }
+.qa-nova-venda .nv-chan--on   { border-color: var(--nv-ok-line);   background: var(--nv-ok-bg);   color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-chan--warn { border-color: var(--nv-warn-line); background: var(--nv-warn-bg); color: var(--nv-warn-ink); }
+.qa-nova-venda .nv-chan--off  { border-color: var(--nv-line); background: var(--nv-surface-2); color: var(--nv-ink-4); cursor: not-allowed; }
+.qa-nova-venda .nv-chan__name {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.qa-nova-venda .nv-chan__meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: inherit;
+  opacity: .8;
+  text-align: right;
+  min-width: 0;
+}
+
+/* ---------- Checklist lateral ---------- */
+.qa-nova-venda .nv-aside {
+  background: var(--nv-surface);
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius);
+  box-shadow: 0 1px 2px rgba(16, 20, 26, .04);
+  overflow: hidden;
+}
+.qa-nova-venda .nv-aside__section { padding: 14px 16px; }
+.qa-nova-venda .nv-aside__section + .nv-aside__section { border-top: 1px solid var(--nv-line); }
+.qa-nova-venda .nv-aside__title {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--nv-ink);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qa-nova-venda .nv-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; line-height: 1.4; color: var(--nv-ink-4); }
+.qa-nova-venda .nv-check + .nv-check { margin-top: 8px; }
+.qa-nova-venda .nv-check[data-state="done"]    { color: var(--nv-ok-ink); }
+.qa-nova-venda .nv-check[data-state="current"] { color: var(--nv-warn-ink); font-weight: 700; }
+.qa-nova-venda .nv-check[data-state="blocked"] { color: var(--nv-danger-ink); }
+.qa-nova-venda .nv-check svg { flex: 0 0 auto; margin-top: 1px; }
+
+/* ---------- Lista de serviços do pacote ---------- */
+.qa-nova-venda .nv-itemrow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--nv-line);
+  border-radius: var(--nv-radius-sm);
+  padding: 10px 12px;
+  background: var(--nv-surface);
+}
+.qa-nova-venda .nv-itemrow + .nv-itemrow { margin-top: 6px; }
+.qa-nova-venda .nv-itemrow__name { font-size: 13px; font-weight: 700; color: var(--nv-ink); }
+.qa-nova-venda .nv-itemrow__slug { font-size: 11px; color: var(--nv-ink-4); margin-top: 2px; }
+
+/* ---------- Linha de totais ---------- */
+.qa-nova-venda .nv-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--nv-ink-2);
+}
+.qa-nova-venda .nv-total--strong { font-size: 13px; font-weight: 700; color: var(--nv-ink); }
+
+/* ---------- Diálogo ---------- */
+.qa-nova-venda-dialog { font-family: var(--qa-font-body, Arial, Helvetica, sans-serif); }
+.qa-nova-venda-dialog .nv-dialog-title {
+  font-family: var(--qa-font-display, 'Oswald', Arial, sans-serif);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}

@@ -246,7 +246,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             <li>Cliente baixa o contrato no Arsenal Inteligente</li>
             <li>Assina pelo GOV.BR e devolve por WhatsApp</li>
             <li>Você faz upload do contrato assinado no Histórico abaixo</li>
-            <li>Depois confirma o pagamento no Piloto Real</li>
+            <li>Depois confirma o pagamento na Nova Venda</li>
           </ul>
         </div>
 
@@ -259,7 +259,7 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
             onClick={() => onConcluido(vendaGerada.id, vendaGerada.legado)}
             className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1"
           >
-            Ir para Piloto Real <ChevronRight className="w-3.5 h-3.5" />
+            Ir para Nova Venda <ChevronRight className="w-3.5 h-3.5" />
           </Button>
         </div>
       </div>

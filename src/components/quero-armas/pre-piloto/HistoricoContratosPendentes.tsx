@@ -674,7 +674,7 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                   </div>
                 )}
 
-                {/* Regenerar contrato / Excluir / Ir para Piloto Real */}
+                {/* Regenerar contrato / Excluir / Abrir na Nova Venda */}
                 <div className="flex flex-wrap justify-between items-center pt-1 border-t gap-2">
                   <Button
                     size="sm"
@@ -719,11 +719,11 @@ const HistoricoContratosPendentes = forwardRef<HistoricoContratosPendentesHandle
                       size="sm"
                       variant="outline"
                       className="text-xs gap-1 h-7"
-                      onClick={() => navigate("/admin/piloto-real", {
+                      onClick={() => navigate("/admin/nova-venda", {
                         state: { clienteId: c.cliente_id, clienteNome: c.cliente_nome, vendaId: c.venda_id },
                       })}
                     >
-                      <Play className="w-3 h-3" /> Abrir no Piloto Real
+                      <Play className="w-3 h-3" /> Abrir na Nova Venda
                     </Button>
                   </div>
                 </div>

@@ -25,7 +25,7 @@ const NAV_GROUPS = [
     label: "Operação",
     items: [
       { title: "Contratações", url: "/operacao/contratacoes", icon: ClipboardList },
-      { title: "Nova Venda", url: "/admin/piloto-real", icon: PlusCircle },
+      { title: "Nova Venda", url: "/admin/nova-venda", icon: PlusCircle },
       { title: "Central de Adesão", url: "/admin/central-adesao", icon: FileSignature },
       { title: "Processos & Documentos", url: "/processos", icon: FileStack },
       { title: "Alertas de Vencimento", url: "/operacao/alertas-vencimento", icon: Activity },
