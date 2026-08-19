@@ -3260,7 +3260,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                         title: "Petição — via entregue ao órgão",
                                       })
                                     }
-                                    className="text-[10px] uppercase tracking-wider font-bold text-[#7A1F2B] hover:underline"
+                                    className="text-[10px] uppercase tracking-wider font-bold text-[#2F3337] hover:underline"
                                   >
                                     VER A VIA DO ÓRGÃO
                                   </button>
@@ -3301,7 +3301,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             <button
                               onClick={() => enviarPecaAoCliente(pc.id)}
                               disabled={enviandoPeca === pc.id}
-                              className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-[#7A1F2B] hover:bg-[#661925] disabled:opacity-60"
+                              className="h-8 px-3 shrink-0 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold text-white bg-[#2F3337] hover:bg-[#272A2E] disabled:opacity-60"
                             >
                               <FileSignature className="h-3 w-3" />
                               {enviandoPeca === pc.id
