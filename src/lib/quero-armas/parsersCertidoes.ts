@@ -199,11 +199,25 @@ function cpf11(v: string | undefined): string | undefined {
   return d.length === 11 ? d : undefined;
 }
 
-const NADA = /NADA\s+CONSTA|NAO\s+(?:CONSTA(?:R|M)?|FOI\s+LOCALIZAD[AO]|EXISTE\s+REGISTRO)|NEGATIV[AO]\s+DE\s+ANTECEDENTES|SEM\s+REGISTROS?/i;
+const NADA = /NADA\s+CONSTA|NAO\s+(?:CONSTA(?:R|M)?|FOI\s+LOCALIZAD[AO]|EXISTEM?\s+REGISTROS?)|NEGATIV[AO]\s+DE\s+ANTECEDENTES|SEM\s+REGISTROS?/i;
+
+/**
+ * Resultado POSITIVO.
+ *
+ * O atestado do IIRGD nunca escreve a palavra "consta": ele diz "existe
+ * registro de antecedentes judiciário-criminais" e nega essa mesma frase com
+ * um "NÃO" na frente. Sem esta linha, o atestado positivo saía como resultado
+ * ILEGÍVEL — e documento ilegível vai para conferência humana, não para a
+ * mesa de quem precisa ver logo que veio registro.
+ *
+ * A negativa é testada ANTES desta, sempre: "NÃO existe registro" é lido como
+ * NADA CONSTA e nunca chega aqui.
+ */
+const CONSTA = /\bCONSTA\b|EXISTEM?\s+REGISTROS?\s+DE\s+ANTECEDENTES/i;
 
 function resultado(t: string): "NADA_CONSTA" | "CONSTA" | undefined {
   if (NADA.test(t)) return "NADA_CONSTA";
-  if (/\bCONSTA\b/i.test(t)) return "CONSTA";
+  if (CONSTA.test(t)) return "CONSTA";
   return undefined;
 }
 

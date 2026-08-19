@@ -67,36 +67,65 @@ const VAO_COLUNA = 8;
  *   - quebra de linha real (`\n`), que os parsers usam com `^` e `$`;
  *   - salto de coluna (dois espaços), que separa "MAE: X" de "PAI: Y" quando
  *     os dois estão impressos lado a lado na mesma linha.
+ *
+ * O agrupamento é POSICIONAL, não sequencial, e isso é o ponto.
+ *
+ * A ordem em que o PDF DESENHA os fragmentos não é a ordem em que eles
+ * aparecem na página. O atestado do IIRGD/SSP-SP desenha primeiro a coluna
+ * inteira dos rótulos ("Nº RG de SP:", "Filiação:", "Data de Nascimento:") e
+ * só depois a coluna inteira dos valores ("42357200", "DIOCLECIO...",
+ * "MARIA MARLUCE...", "05/05/1985"). Agrupando na ordem do desenho, cada
+ * rótulo virava uma linha sozinho e cada valor virava outra — e o parser,
+ * lendo "as duas linhas depois de Filiação:", devolvia o NÚMERO DO RG como se
+ * fosse o nome do pai. Foi assim que o Fábio teve a certidão recusada por
+ * "a filiação não contém o nome da mãe: na certidão consta 42357200".
+ *
+ * O mesmo defeito escondia o resultado: o "NÃO" de "NÃO existe registro" é
+ * desenhado por último, depois do rodapé. Fora da linha, o texto lido dizia
+ * "existe registro de antecedentes" — a leitura de um atestado NEGATIVO ficava
+ * indistinguível da de um POSITIVO.
+ *
+ * Por isso a linha aqui é definida pela COORDENADA VERTICAL do fragmento, e a
+ * ordem dentro dela pela horizontal. `hasEOL` deixa de mandar: ele descreve o
+ * fluxo do desenho, não a geometria da página.
  */
 export function reconstruirLinhasPdf(items: ItemTextoPdf[]): string {
-  type Frag = { x: number; fim: number; texto: string };
-  const linhas: Frag[][] = [];
-  let atual: Frag[] = [];
-  let yAtual: number | null = null;
+  type Frag = { x: number; fim: number; y: number; texto: string };
 
-  const fechar = () => {
-    if (atual.length) linhas.push(atual);
-    atual = [];
-  };
-
+  const frags: Frag[] = [];
   for (const it of items) {
     const texto = String(it?.str ?? "");
+    if (!texto.trim()) continue;
     const t = it?.transform;
     const x = Array.isArray(t) && typeof t[4] === "number" ? t[4] : 0;
     const y = Array.isArray(t) && typeof t[5] === "number" ? t[5] : 0;
     const largura = typeof it?.width === "number" ? it.width : texto.length * 4;
-
-    if (yAtual !== null && Math.abs(y - yAtual) > TOLERANCIA_LINHA) fechar();
-    yAtual = y;
-
-    if (texto.trim()) atual.push({ x, fim: x + largura, texto });
-
-    if (it?.hasEOL) {
-      fechar();
-      yAtual = null;
-    }
+    frags.push({ x, fim: x + largura, y, texto });
   }
-  fechar();
+
+  // Ordem de leitura: de cima para baixo (no PDF o y cresce para cima).
+  // A ordenação é estável, então fragmentos com o mesmo y mantêm a ordem de
+  // desenho — que é o desempate certo quando a página não dá outro.
+  const porAltura = frags
+    .map((f, i) => ({ f, i }))
+    .sort((a, b) => b.f.y - a.f.y || a.i - b.i)
+    .map(({ f }) => f);
+
+  // Uma linha é o conjunto de fragmentos cujo y cabe na tolerância a partir do
+  // PRIMEIRO fragmento da linha. A referência é fixa de propósito: comparar
+  // com o fragmento anterior encadearia linhas próximas até virar um bloco só.
+  const linhas: Frag[][] = [];
+  let atual: Frag[] = [];
+  let referencia: number | null = null;
+  for (const f of porAltura) {
+    if (referencia === null || referencia - f.y > TOLERANCIA_LINHA) {
+      if (atual.length) linhas.push(atual);
+      atual = [];
+      referencia = f.y;
+    }
+    atual.push(f);
+  }
+  if (atual.length) linhas.push(atual);
 
   return linhas
     .map((frags) => {
@@ -112,7 +141,7 @@ export function reconstruirLinhasPdf(items: ItemTextoPdf[]): string {
           // campo engolir o campo impresso ao lado dele.
           linha += vao >= VAO_COLUNA ? `  ${f.texto}` : vao > 0.8 ? ` ${f.texto}` : f.texto;
         }
-        fimAnterior = f.fim;
+        fimAnterior = Math.max(fimAnterior ?? f.fim, f.fim);
       }
       return linha.replace(/[ \t]+$/g, "");
     })

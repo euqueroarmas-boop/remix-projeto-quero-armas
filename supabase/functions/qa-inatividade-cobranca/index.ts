@@ -103,7 +103,10 @@ serve(async (req) => {
       notifRows.push({
         cliente_id: r.cliente_id,
         categoria: "inatividade_processo",
-        urgencia: dias >= primeira + intervalo * 2 ? "urgente" : "atencao",
+        // Mesmo motivo do aviso de certidão recusada: a tabela só aceita
+        // "urgente" ou "normal". Com "atencao" a linha era recusada e o
+        // lembrete de processo parado não chegava ao portal.
+        urgencia: dias >= primeira + intervalo * 2 ? "urgente" : "normal",
         titulo: `Seu processo está parado há ${dias} dias`,
         mensagem: `Faltam ${Number(r.total_docs) - Number(r.entregues)} documento(s) para seguir com ${r.servico_nome || "seu processo"}. Próximo: ${r.proximo_doc || "documento pendente"}.`,
         link: "/area-do-cliente",

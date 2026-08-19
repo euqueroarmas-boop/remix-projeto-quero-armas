@@ -423,7 +423,14 @@ Deno.serve(async (req) => {
         if (!body.somente_admin) await supabase.from("qa_notificacoes_cliente").upsert({
           cliente_id: body.cliente_id,
           categoria,
-          urgencia: body.evento === "certidao_rejeitada" || body.evento === "documento_rejeitado" ? "alta" : "normal",
+          // "urgente" ou "normal" — são os DOIS únicos valores que a tabela
+          // aceita (CHECK em qa_notificacoes_cliente) e que o portal sabe
+          // desenhar. Aqui estava "alta": o banco recusava a linha, o catch
+          // abaixo engolia o erro e o cliente NUNCA via o aviso de que a
+          // certidão dele tinha sido recusada — enquanto a equipe recebia o
+          // espelho normalmente. Recusa é urgente: o aviso volta a aparecer
+          // depois de fechado, em vez de sumir na sessão.
+          urgencia: body.evento === "certidao_rejeitada" || body.evento === "documento_rejeitado" ? "urgente" : "normal",
           titulo,
           mensagem,
           link: "/area-do-cliente",
