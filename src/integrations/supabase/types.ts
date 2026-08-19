@@ -11562,44 +11562,6 @@ export type Database = {
           },
         ]
       }
-      qa_servicos_limite_compra: {
-        Row: {
-          categoria_titular: string | null
-          created_at: string
-          id: number
-          limite: number
-          observacao: string | null
-          servico_slug: string
-          updated_at: string
-        }
-        Insert: {
-          categoria_titular?: string | null
-          created_at?: string
-          id?: number
-          limite: number
-          observacao?: string | null
-          servico_slug: string
-          updated_at?: string
-        }
-        Update: {
-          categoria_titular?: string | null
-          created_at?: string
-          id?: number
-          limite?: number
-          observacao?: string | null
-          servico_slug?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "qa_servicos_limite_compra_servico_slug_fkey"
-            columns: ["servico_slug"]
-            isOneToOne: false
-            referencedRelation: "qa_servicos_catalogo"
-            referencedColumns: ["slug"]
-          },
-        ]
-      }
       qa_servicos_prerequisitos: {
         Row: {
           ativo: boolean
