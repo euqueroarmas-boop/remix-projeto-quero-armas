@@ -110,6 +110,7 @@ import JuntadaAssinaturaPanel from "@/components/quero-armas/portal/JuntadaAssin
 import PecaAprovacaoPanel, { type PecaParaAprovar } from "@/components/quero-armas/portal/PecaAprovacaoPanel";
 import DeferimentoEntregaPanel from "@/components/quero-armas/portal/DeferimentoEntregaPanel";
 import { calcularTravaGrupos } from "@/lib/quero-armas/ordemGruposChecklist";
+import { exigenciaCobravelAgora } from "@/lib/quero-armas/etapaFinalProtocolo";
 import { gruposPermitidosPorServico } from "@/lib/quero-armas/servicoGruposConfig";
 import { useVarreduraSilenciosaPendencias } from "@/hooks/quero-armas/useVarreduraSilenciosaPendencias";
 import {
@@ -2462,14 +2463,13 @@ export default function QAClientePortalPage() {
       // é inútil: ele expira em minutos. A exigência existe desde o começo no
       // catálogo (para contar no total do processo), mas só entra na FILA
       // quando a equipe marca o processo como pronto para protocolar.
-      const statusProcessoDoc = String(
-        procById.get(String(doc?.processo_id))?.status ?? "",
-      ).toLowerCase();
-      const ehEtapaFinal = (doc as any)?.regra_validacao?.etapa_final === true;
-      const protocoloLiberado = ["pronto_para_protocolar", "protocolado", "em_analise_orgao"].includes(
-        statusProcessoDoc,
-      );
-      if (ehEtapaFinal && !protocoloLiberado) return;
+      // A GRU entrou nesta lista em 19/08/2026. Ela já trazia impresso "só
+      // pague DEPOIS que a nossa equipe liberar o seu requerimento", mas isso
+      // era só texto: assim que o grupo do requerimento abria, o sistema
+      // oferecia o boleto e convidava o cliente a pagar R$ 88 antes da hora.
+      // A decisão de quando pagar deixou de depender de ele ler o aviso.
+      const statusProcessoDoc = procById.get(String(doc?.processo_id))?.status ?? "";
+      if (!exigenciaCobravelAgora(doc as any, statusProcessoDoc)) return;
 
       jaAdicionados.add(dedupKey);
       const nomeFallback = doc?.nome_documento
