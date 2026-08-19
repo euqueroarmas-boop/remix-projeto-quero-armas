@@ -32,6 +32,23 @@ chegou a ser escrita e foi removida antes de qualquer deploy: a modalidade não
 
 ---
 
+## ✅ Leva 11 · Central de Adesão — atualizar o cadastro existente
+
+Publicada em **19/08/2026, 12:40 BRT**.
+
+| Função | Estado | O que quebra sem ela |
+|---|---|---|
+| `qa-central-adesao-salvar-cliente` | ✅ publicada (primeiro deploy) | A Etapa 4 grava o cadastro existente pelo caminho alternativo (UPDATE direto do front, sem a validação de service role) |
+
+Migrations: nenhuma nesta leva.
+
+**Conferência:** rodar a Etapa 4 com um CPF já cadastrado, clicar em
+*Atualizar cadastro existente* e conferir que `qa_clientes.updated_at` mudou e
+que o endereço lido no documento entrou no registro antigo, sem criar um
+segundo cliente com o mesmo CPF.
+
+---
+
 > **NÃO HÁ NADA PENDENTE.** As 9 levas estão publicadas e as 9 migrations
 > aplicadas e conferidas. Este documento vira registro histórico: use-o como
 > modelo quando houver uma leva nova.
