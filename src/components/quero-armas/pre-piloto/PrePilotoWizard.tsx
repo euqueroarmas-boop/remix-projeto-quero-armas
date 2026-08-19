@@ -100,7 +100,9 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
       </div>
 
       {/* Stepper */}
-      <div className="flex items-center gap-0 mb-8 overflow-x-auto pb-1">
+      {/* No celular só o passo atual mostra o nome: com os seis nomes abertos a
+          régua ficava mais larga que a tela e o último passo saía do quadro. */}
+      <div className="flex items-start gap-0 mb-8 overflow-x-auto pb-1">
         {ETAPAS.map((e, i) => {
           const Icon = e.icon;
           const ativa = i === etapa;
@@ -121,6 +123,8 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
                 </div>
                 <span
                   className={`text-[10px] font-medium whitespace-nowrap ${
+                    ativa ? "block" : "hidden sm:block"
+                  } ${
                     ativa ? "text-[#2E3236]" : concluida ? "text-[#2E3236]/70" : "text-muted-foreground"
                   }`}
                 >
@@ -129,7 +133,7 @@ export default function PrePilotoWizard({ onContratoGerado }: PrePilotoWizardPro
               </div>
               {i < ETAPAS.length - 1 && (
                 <div
-                  className={`h-px w-8 mx-1 mt-[-12px] flex-shrink-0 transition-colors ${
+                  className={`h-px w-4 sm:w-8 mx-1 mt-4 flex-shrink-0 transition-colors ${
                     concluida ? "bg-[#2E3236]/40" : "bg-muted"
                   }`}
                 />

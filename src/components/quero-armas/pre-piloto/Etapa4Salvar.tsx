@@ -706,13 +706,15 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
             </div>
           </div>
           <p className="text-xs text-amber-700">O que deseja fazer?</p>
-          <div className="flex gap-2">
+          {/* Um botão embaixo do outro no celular: lado a lado o texto não cabia
+              na largura da tela e o segundo botão ficava cortado pela metade. */}
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => salvar(true)}
               disabled={salvando}
-              className="text-xs gap-1 flex-1"
+              className="text-xs gap-1 w-full sm:flex-1 h-auto min-h-9 py-2 whitespace-normal text-center"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
               {existenteArquivado ? "Reativar e atualizar" : "Atualizar cadastro existente"}
@@ -721,7 +723,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               size="sm"
               onClick={() => salvar(false)}
               disabled={salvando}
-              className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 flex-1"
+              className="bg-[#2E3236] hover:bg-[#282B2F] text-white text-xs gap-1 w-full sm:flex-1 h-auto min-h-9 py-2 whitespace-normal text-center"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserPlus className="w-3 h-3" />}
               Criar novo mesmo assim
