@@ -84,32 +84,31 @@ function QALayoutInner() {
         onFecharMobile={() => setMenuMobile(false)}
       />
 
-      {/* Botão do menu no celular. Canto inferior direito, ao alcance do polegar.
-          O envelope com `h-[100dvh]` existe por causa do Safari do iPhone: ali
-          `position: fixed` se ancora na viewport de layout, que fica POR BAIXO
-          da barra do navegador — o botão sumia atrás dela. A altura dinâmica
-          (dvh) acompanha a barra e mantém o botão sempre visível. */}
+      {/* Botão do menu no celular: fixo no alto, à direita. Não é uma barra —
+          é só o botão flutuando sobre a faixa vazia que o `main` reserva logo
+          abaixo, então nada de conteúdo passa por baixo dele. */}
       {!menuMobile && (
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-40 h-[100dvh] md:hidden">
-          <button
-            type="button"
-            data-qa-sidebar="true"
-            data-nao-inverter
-            onClick={() => setMenuMobile(true)}
-            aria-label="Abrir menu"
-            className="pointer-events-auto absolute right-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl shadow-xl ring-1 ring-black/10 transition-transform active:scale-95"
-            style={{
-              bottom: "calc(1.25rem + env(safe-area-inset-bottom))",
-              background: "var(--qa-sb-accent)",
-              color: "var(--qa-sb-accent-text)",
-            }}
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-        </div>
+        <button
+          type="button"
+          data-qa-sidebar="true"
+          data-nao-inverter
+          onClick={() => setMenuMobile(true)}
+          aria-label="Abrir menu"
+          className="fixed right-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl shadow-lg ring-1 ring-black/10 transition-transform active:scale-95 md:hidden"
+          style={{
+            top: "calc(0.5rem + env(safe-area-inset-top))",
+            background: "var(--qa-sb-accent)",
+            color: "var(--qa-sb-accent-text)",
+          }}
+        >
+          <Menu className="h-5 w-5" />
+        </button>
       )}
 
-      <main className="flex min-h-screen min-w-0 flex-col pb-16 md:pb-0" style={{ background: "var(--qa-app)" }}>
+      <main className="flex min-h-screen min-w-0 flex-col" style={{ background: "var(--qa-app)" }}>
+        {/* Faixa vazia sob o botão do menu. Reserva o espaço sem desenhar barra
+            nenhuma — o conteúdo começa logo abaixo, sem nada encoberto. */}
+        <div aria-hidden className="shrink-0 md:hidden" style={{ height: "calc(3.25rem + env(safe-area-inset-top))" }} />
         <QABreadcrumb />
         <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />

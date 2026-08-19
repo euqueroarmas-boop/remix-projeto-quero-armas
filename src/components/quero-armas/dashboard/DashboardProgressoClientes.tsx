@@ -628,7 +628,7 @@ export default function DashboardProgressoClientes() {
   return (
     <div ref={wrapperRef} className="qa-card overflow-hidden qa-dash-compact">
       <div className="relative px-4 py-3 border-b border-[#E4E4E4] flex items-center gap-2">
-        <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold" style={{ color: TINTA }}>
+        <h3 className="text-[11.5px] uppercase tracking-[0.14em] font-bold leading-none" style={{ color: TINTA }}>
           PROGRESSO DOS CLIENTES
         </h3>
         <button
@@ -660,11 +660,13 @@ export default function DashboardProgressoClientes() {
           {noturno ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </button>
         {atualizadoEm && (
-          <span className="text-[9px] uppercase tracking-[0.12em] font-bold" style={{ color: TINTA_3 }}>
+          <span className="whitespace-nowrap text-[9px] uppercase tracking-[0.12em] font-bold leading-none" style={{ color: TINTA_3 }}>
             ATUALIZADO ÀS {atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
           </span>
         )}
-        <span className="ml-auto self-start text-[10px] uppercase tracking-wider font-bold" style={{ color: TINTA_3 }}>
+        {/* Contador da lista: alinhado com o resto da linha (o `self-start` o
+            jogava para cima) e na mesma tipografia do "ATUALIZADO ÀS". */}
+        <span className="ml-auto shrink-0 whitespace-nowrap text-[9px] uppercase tracking-[0.12em] font-bold leading-none" style={{ color: TINTA_3 }}>
           {filtradas.length === rows.length ? `${rows.length} ATIVOS` : `${filtradas.length} DE ${rows.length}`}
         </span>
 
