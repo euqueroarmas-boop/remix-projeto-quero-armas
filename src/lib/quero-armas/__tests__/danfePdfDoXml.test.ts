@@ -172,33 +172,70 @@ describe("DANFE gerado do XML — paginação", () => {
   });
 });
 
-describe("DANFE gerado do XML — NFS-e tem folha própria", () => {
+describe("DANFSe — a nota de serviço tem folha própria", () => {
   /**
-   * A nota de serviço não tem ICMS, IPI nem transportador. Imprimi-la no grid
-   * da NF-e produziria colunas vazias que não existem nesse tipo de nota.
+   * A NFS-e não tem ICMS, IPI nem transportador. Imprimi-la no grid da NF-e
+   * produziria colunas vazias que não existem nesse tipo de nota.
+   *
+   * Os rótulos conferidos aqui são os mesmos que `parseNotaFiscal` lê das
+   * DANFSe reais que chegam ao Hub — é essa a referência de layout enquanto
+   * não houver um XML de NFS-e nacional de verdade em mãos.
    */
-  const servico: NotaFiscalXml = {
-    ...nota(),
-    modelo: "nfse",
-    rotulo: "NFS-e",
-    competencia: "2026-08-01",
-    itens: [{ numero: 1, descricao: "SERVICO DE MANUTENCAO INDUSTRIAL PRESTADO NO MES" }],
-  };
+  const XML_NFSE = readFileSync(resolve(__dirname, "fixtures/nfse-nacional.xml"), "utf8");
 
-  it("usa os quadros de serviço, não os de mercadoria", async () => {
-    const texto = await textoUnico(servico);
-    expect(texto).toContain("NFS-e");
-    expect(texto).toContain("PRESTADOR DE SERVIÇOS");
-    expect(texto).toContain("TOMADOR DE SERVIÇOS");
-    expect(texto).toContain("DISCRIMINAÇÃO DOS SERVIÇOS");
-    expect(texto).toContain("VALOR LÍQUIDO DA NFS-e");
-    expect(texto).toContain("SERVICO DE MANUTENCAO INDUSTRIAL PRESTADO NO MES");
+  function notaServico(): NotaFiscalXml {
+    const r = lerNotaFiscalXml(XML_NFSE);
+    if (r.ok === false) throw new Error(r.motivo);
+    return r.nota;
+  }
+
+  it("usa os quadros da DANFSe, não os da nota de mercadoria", async () => {
+    const texto = await textoUnico(notaServico());
+    for (const quadro of [
+      "NOTA FISCAL DE SERVIÇO ELETRÔNICA - NFS-e",
+      "DANFSe - Documento Auxiliar da NFS-e",
+      "Chave de Acesso",
+      "EMITENTE DA NFS-e",
+      "TOMADOR DO SERVIÇO",
+      "SERVIÇO PRESTADO",
+      "TRIBUTAÇÃO MUNICIPAL",
+      "VALOR TOTAL DA NFS-e",
+    ]) {
+      expect(texto).toContain(quadro);
+    }
 
     expect(texto).not.toContain("CÁLCULO DO IMPOSTO");
     expect(texto).not.toContain("TRANSPORTADOR / VOLUMES TRANSPORTADOS");
+    expect(texto).not.toContain("RECEBEMOS DE");
+  });
+
+  it("imprime os campos do serviço e da tributação municipal", async () => {
+    const texto = await textoUnico(notaServico());
+    expect(texto).toContain("Código de Tributação Nacional");
+    expect(texto).toContain("140601");
+    expect(texto).toContain("Descrição do Serviço");
+    expect(texto).toContain("Manutencao e reparacao de maquinas");
+    expect(texto).toContain("Operação tributável");
+    expect(texto).toContain("Não retido");
+    expect(texto).toContain("Optante — ME/EPP");
+    expect(texto).toContain("1.500,00");
+  });
+
+  it("imprime a prefeitura pelo NOME do município, nunca pelo código", async () => {
+    const texto = await textoUnico(notaServico());
+    expect(texto).toContain("PREFEITURA MUNICIPAL DE FERRAZ DE VASCONCELOS");
+    expect(texto).not.toContain("PREFEITURA MUNICIPAL DE 3515707");
+  });
+
+  it("sem nome de município, a linha da prefeitura simplesmente não sai", async () => {
+    const r = lerNotaFiscalXml(XML_NFSE.replace("<xLocEmi>Ferraz de Vasconcelos</xLocEmi>", ""));
+    if (r.ok === false) throw new Error(r.motivo);
+    const texto = await textoUnico(r.nota);
+    expect(texto).not.toContain("PREFEITURA MUNICIPAL");
+    expect(texto).toContain("NOTA FISCAL DE SERVIÇO ELETRÔNICA - NFS-e");
   });
 
   it("nomeia o arquivo como NFSe", () => {
-    expect(nomeArquivoDanfe(servico).startsWith("NFSe-")).toBe(true);
+    expect(nomeArquivoDanfe(notaServico()).startsWith("NFSe-")).toBe(true);
   });
 });

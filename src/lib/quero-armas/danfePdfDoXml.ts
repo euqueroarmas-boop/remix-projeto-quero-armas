@@ -51,6 +51,7 @@ const FIM = ALTURA - MARGEM;
 const H_TITULO = 3.4; // faixa "DESTINATÁRIO / REMETENTE" etc.
 const H_CAMPO = 7.6; // linha comum de campos rotulados
 const H_ITEM = 3.5; // uma linha da tabela de produtos
+const H_RODAPE_NFSE = 4; // faixa do rodapé na folha da NFS-e
 
 /** Corpos de texto, em pontos. */
 const PT_ROTULO = 4.6;
@@ -601,126 +602,192 @@ function quadroAdicionais(f: Folha, nota: NotaFiscalXml, altura: number) {
  * mercadoria produziria um documento com colunas vazias que não existem nesse
  * tipo de nota — parece erro de emissão para quem recebe.
  *
- * Por isso a NFS-e tem folha própria, com os quadros que ela de fato possui:
- * prestador, tomador, discriminação do serviço e valores.
+ * Por isso a NFS-e tem folha própria, com os quadros que a DANFSe do padrão
+ * nacional de fato possui — e com os MESMOS rótulos que ela imprime: EMITENTE
+ * DA NFS-e, TOMADOR DO SERVIÇO, SERVIÇO PRESTADO, TRIBUTAÇÃO MUNICIPAL e VALOR
+ * TOTAL DA NFS-e.
+ *
+ * Os rótulos não são escolha de estilo: são os mesmos que `parseNotaFiscal`
+ * (em `parsersCertidoes.ts`) lê das DANFSe reais que chegam ao Hub. Foi dali
+ * que eles vieram — o parser é a evidência de layout mais confiável que o
+ * projeto tem enquanto não houver um XML de NFS-e nacional em mãos.
  */
 function folhaNfse(f: Folha, nota: NotaFiscalXml) {
   const p = nota.emitente;
   const t = nota.destinatario;
-  const altura = 22;
-  const y0 = f.y;
-  const wPrest = UTIL * 0.44;
-  const wNfse = UTIL * 0.22;
-  const wChave = UTIL - wPrest - wNfse;
+  const s = nota.servico ?? {};
 
-  f.moldura(MARGEM, y0, wPrest, altura);
-  f.pdf.setFont("times", "italic");
-  f.pdf.setFontSize(5);
-  f.pdf.text("IDENTIFICAÇÃO DO PRESTADOR", MARGEM + 2, y0 + 3);
-  const centro = MARGEM + wPrest / 2;
+  /* ── Cabeçalho ────────────────────────────────────────────────────────
+   * SEM código de barras, de propósito. A DANFSe do padrão nacional não traz
+   * CODE 128 — quem carrega a chave ali é um QR Code para o portal nacional.
+   * Imprimir o barcode da NF-e aqui seria inventar um elemento que o original
+   * não tem; e o QR fica de fora enquanto a URL exata do portal não estiver
+   * confirmada, porque QR que leva a lugar nenhum é pior que QR nenhum. */
+  const alturaTopo = 13;
+  const y0 = f.y;
+  f.moldura(MARGEM, y0, UTIL, alturaTopo);
+  const centro = MARGEM + UTIL / 2;
   f.pdf.setFont("times", "bold");
   f.pdf.setFontSize(8);
-  (f.pdf.splitTextToSize(p.nome ?? "", wPrest - 4) as string[])
-    .slice(0, 2)
-    .forEach((linha, i) => f.pdf.text(linha, centro, y0 + 8.5 + i * 3.8, { align: "center" }));
-  f.pdf.setFont("times", "normal");
-  f.pdf.setFontSize(6.2);
-  [ruaNumero(p), [p.bairro, cepFormatado(p.cep)].filter(Boolean).join(" - "), municipioUf(p)]
-    .filter(Boolean)
-    .forEach((linha, i) =>
-      f.pdf.text(linha, centro, y0 + 14.6 + i * 2.6, { align: "center", maxWidth: wPrest - 4 }),
-    );
-
-  const xNfse = MARGEM + wPrest;
-  const centroNfse = xNfse + wNfse / 2;
-  f.moldura(xNfse, y0, wNfse, altura);
-  f.pdf.setFont("times", "bold");
-  f.pdf.setFontSize(11);
-  f.pdf.text("NFS-e", centroNfse, y0 + 6, { align: "center" });
-  f.pdf.setFont("times", "normal");
-  f.pdf.setFontSize(5.4);
-  f.pdf.text("Documento Auxiliar da Nota Fiscal", centroNfse, y0 + 9.4, { align: "center" });
-  f.pdf.text("de Serviço eletrônica", centroNfse, y0 + 11.8, { align: "center" });
-  f.pdf.setFont("times", "bold");
-  f.pdf.setFontSize(7);
-  f.pdf.text(`Nº. ${numeroFormatado(nota.numero)}`, centroNfse, y0 + 16, { align: "center" });
-  if (nota.competencia) {
-    f.pdf.setFontSize(6);
-    f.pdf.text(`Competência ${dataBr(nota.competencia)}`, centroNfse, y0 + 19.4, { align: "center" });
+  // Só imprime a prefeitura quando temos o NOME do município. O layout
+  // nacional identifica município por código IBGE em quase todo lugar, e
+  // "PREFEITURA MUNICIPAL DE 3515707" num documento que vai para terceiro é
+  // pior do que linha nenhuma.
+  const nomeMunicipio = nota.municipioEmissor ?? "";
+  if (nomeMunicipio && !/^\d+$/.test(nomeMunicipio)) {
+    f.pdf.text(`PREFEITURA MUNICIPAL DE ${nomeMunicipio}`.toUpperCase(), centro, y0 + 4, {
+      align: "center",
+    });
   }
-
-  const xChave = xNfse + wNfse;
-  f.moldura(xChave, y0, wChave, 11);
-  codigoDeBarras(f.pdf, nota.chave, xChave + 3, y0 + 1.4, wChave - 6, 8);
-  f.moldura(xChave, y0 + 11, wChave, 6.6);
-  f.rotulo("CHAVE DE ACESSO", xChave, y0 + 11);
-  f.pdf.setFont("times", "bold");
-  f.pdf.setFontSize(6);
-  f.pdf.text(chaveFormatada(nota.chave), xChave + wChave / 2, y0 + 16, { align: "center" });
-  f.moldura(xChave, y0 + 17.6, wChave, altura - 17.6);
+  f.pdf.setFontSize(10.5);
+  f.pdf.text("NOTA FISCAL DE SERVIÇO ELETRÔNICA - NFS-e", centro, y0 + 8.6, { align: "center" });
   f.pdf.setFont("times", "normal");
-  f.pdf.setFontSize(5.4);
-  f.pdf.text("Consulte a autenticidade no portal da NFS-e nacional", xChave + wChave / 2, y0 + 21, {
-    align: "center",
-  });
-  f.y = y0 + altura;
+  f.pdf.setFontSize(5.8);
+  f.pdf.text("DANFSe - Documento Auxiliar da NFS-e", centro, y0 + 11.6, { align: "center" });
+  f.y = y0 + alturaTopo;
+
+  const alturaChave = 10;
+  f.moldura(MARGEM, f.y, UTIL, alturaChave);
+  f.rotulo("Chave de Acesso", MARGEM, f.y);
+  f.pdf.setFont("times", "bold");
+  f.pdf.setFontSize(8);
+  f.pdf.text(chaveFormatada(nota.chave), centro, f.y + 6, { align: "center" });
+  f.pdf.setFont("times", "normal");
+  f.pdf.setFontSize(5.2);
+  f.pdf.text(
+    "Consulte a autenticidade desta NFS-e pela chave de acesso no portal nacional da NFS-e.",
+    centro,
+    f.y + 8.8,
+    { align: "center" },
+  );
+  f.y += alturaChave;
 
   f.linha([
-    { rotulo: "DATA DE EMISSÃO", valor: soData(nota.dataHoraEmissao ?? nota.dataEmissao), fr: 0.3, alinhar: "center" },
-    { rotulo: "MUNICÍPIO EMISSOR", valor: nota.municipioEmissor ?? "", fr: 0.4, alinhar: "center" },
-    { rotulo: "PROTOCOLO / Nº DFS-e", valor: nota.protocolo ?? "", fr: 0.3, alinhar: "center" },
+    { rotulo: "Número da NFS-e", valor: nota.numero ?? "", fr: 0.34, alinhar: "center" },
+    { rotulo: "Competência da NFS-e", valor: dataBr(nota.competencia), fr: 0.33, alinhar: "center" },
+    {
+      rotulo: "Data e Hora da emissão",
+      valor: dataHoraBr(nota.dataHoraEmissao ?? nota.dataEmissao),
+      fr: 0.33,
+      alinhar: "center",
+    },
+  ]);
+  f.linha([
+    { rotulo: "Número da DPS", valor: nota.numero ?? "", fr: 0.34, alinhar: "center" },
+    { rotulo: "Série da DPS", valor: nota.serie ?? "", fr: 0.33, alinhar: "center" },
+    { rotulo: "Município Emissor", valor: nota.municipioEmissor ?? "", fr: 0.33, alinhar: "center" },
   ]);
 
-  f.titulo("PRESTADOR DE SERVIÇOS");
+  /* ── EMITENTE DA NFS-e ── */
+  f.titulo("EMITENTE DA NFS-e");
   f.linha([
-    { rotulo: "NOME / RAZÃO SOCIAL", valor: p.nome ?? "", fr: 0.55 },
-    { rotulo: "CNPJ / CPF", valor: documentoFormatado(p.documento), fr: 0.25, alinhar: "center" },
-    { rotulo: "INSCRIÇÃO MUNICIPAL", valor: p.inscricaoMunicipal ?? "", fr: 0.2, alinhar: "center" },
+    { rotulo: "Nome / Nome Empresarial", valor: p.nome ?? "", fr: 0.55 },
+    { rotulo: "CNPJ / CPF / NIF", valor: documentoFormatado(p.documento), fr: 0.25, alinhar: "center" },
+    { rotulo: "Inscrição Municipal", valor: p.inscricaoMunicipal ?? "", fr: 0.2, alinhar: "center" },
   ]);
   f.linha([
-    { rotulo: "ENDEREÇO", valor: ruaNumero(p), fr: 0.45 },
-    { rotulo: "MUNICÍPIO", valor: municipioUf(p) ?? "", fr: 0.3 },
-    { rotulo: "CEP", valor: cepFormatado(p.cep), fr: 0.25, alinhar: "center" },
+    { rotulo: "Endereço", valor: ruaNumero(p), fr: 0.5 },
+    { rotulo: "Município", valor: municipioUf(p) ?? "", fr: 0.3 },
+    { rotulo: "CEP", valor: cepFormatado(p.cep), fr: 0.2, alinhar: "center" },
+  ]);
+  f.linha([
+    { rotulo: "Telefone", valor: p.telefone ?? "", fr: 0.2, alinhar: "center" },
+    {
+      rotulo: "Simples Nacional na Data de Competência",
+      valor: s.simplesNacional ?? "",
+      fr: 0.42,
+      alinhar: "center",
+      pt: 6.6,
+    },
+    {
+      rotulo: "Regime de Apuração Tributária",
+      valor: s.regimeApuracao ?? "",
+      fr: 0.38,
+      alinhar: "center",
+      pt: 6.6,
+    },
   ]);
 
-  f.titulo("TOMADOR DE SERVIÇOS");
+  /* ── TOMADOR DO SERVIÇO ── */
+  f.titulo("TOMADOR DO SERVIÇO");
   f.linha([
-    { rotulo: "NOME / RAZÃO SOCIAL", valor: t.nome ?? "", fr: 0.55 },
-    { rotulo: "CNPJ / CPF", valor: documentoFormatado(t.documento), fr: 0.25, alinhar: "center" },
-    { rotulo: "INSCRIÇÃO MUNICIPAL", valor: t.inscricaoMunicipal ?? "", fr: 0.2, alinhar: "center" },
+    { rotulo: "Nome / Nome Empresarial", valor: t.nome ?? "", fr: 0.55 },
+    { rotulo: "CNPJ / CPF / NIF", valor: documentoFormatado(t.documento), fr: 0.25, alinhar: "center" },
+    { rotulo: "Inscrição Municipal", valor: t.inscricaoMunicipal ?? "", fr: 0.2, alinhar: "center" },
   ]);
   f.linha([
-    { rotulo: "ENDEREÇO", valor: ruaNumero(t), fr: 0.45 },
-    { rotulo: "MUNICÍPIO", valor: municipioUf(t) ?? "", fr: 0.3 },
-    { rotulo: "CEP", valor: cepFormatado(t.cep), fr: 0.25, alinhar: "center" },
+    { rotulo: "Endereço", valor: ruaNumero(t), fr: 0.5 },
+    { rotulo: "Município", valor: municipioUf(t) ?? "", fr: 0.3 },
+    { rotulo: "CEP", valor: cepFormatado(t.cep), fr: 0.2, alinhar: "center" },
   ]);
 
-  // Discriminação: ocupa a folha até sobrar espaço para valores e adicionais.
-  f.titulo("DISCRIMINAÇÃO DOS SERVIÇOS");
-  const alturaValores = H_CAMPO;
-  const alturaAdicionais = H_TITULO + 20;
-  const alturaDiscriminacao = FIM - MARGEM - f.y - alturaValores - alturaAdicionais - H_RODAPE_NFSE;
-  f.moldura(MARGEM, f.y, UTIL, alturaDiscriminacao);
+  /* ── SERVIÇO PRESTADO ── */
+  f.titulo("SERVIÇO PRESTADO");
+  f.linha([
+    {
+      rotulo: "Código de Tributação Nacional",
+      valor: s.codigoTributacaoNacional ?? "",
+      fr: 0.5,
+      alinhar: "center",
+    },
+    {
+      rotulo: "Código de Tributação Municipal",
+      valor: s.codigoTributacaoMunicipal ?? "",
+      fr: 0.5,
+      alinhar: "center",
+    },
+  ]);
+  f.linha([
+    { rotulo: "Local da Prestação", valor: s.localPrestacao ?? "", fr: 0.5, alinhar: "center" },
+    { rotulo: "País da Prestação", valor: s.paisPrestacao ?? "", fr: 0.5, alinhar: "center" },
+  ]);
+
+  // A descrição cresce até sobrar o espaço dos quadros que vêm depois.
+  const alturaFixaRestante = H_TITULO + H_CAMPO + H_TITULO + H_CAMPO + H_TITULO + 20 + H_RODAPE_NFSE;
+  const alturaDescricao = Math.max(24, FIM - MARGEM - f.y - alturaFixaRestante);
+  f.moldura(MARGEM, f.y, UTIL, alturaDescricao);
+  f.rotulo("Descrição do Serviço", MARGEM, f.y);
   f.pdf.setFont("times", "normal");
   f.pdf.setFontSize(6.6);
   const descricao = nota.itens.map((i) => i.descricao).filter(Boolean).join("\n");
-  let yTexto = f.y + 4;
+  let yTexto = f.y + 6;
   for (const linha of f.pdf.splitTextToSize(descricao, UTIL - 4) as string[]) {
-    if (yTexto > f.y + alturaDiscriminacao - 2) break;
+    if (yTexto > f.y + alturaDescricao - 2) break;
     f.pdf.text(linha, MARGEM + 2, yTexto);
     yTexto += 3;
   }
-  f.y += alturaDiscriminacao;
+  f.y += alturaDescricao;
 
+  /* ── TRIBUTAÇÃO MUNICIPAL ── */
+  f.titulo("TRIBUTAÇÃO MUNICIPAL");
   f.linha([
-    { rotulo: "VALOR DOS SERVIÇOS", valor: moedaBr(nota.valorProdutos), fr: 0.5, alinhar: "right", pt: 9 },
-    { rotulo: "VALOR LÍQUIDO DA NFS-e", valor: moedaBr(nota.valorTotal), fr: 0.5, alinhar: "right", pt: 9 },
+    { rotulo: "Tributação do ISSQN", valor: s.tributacaoIssqn ?? "", fr: 0.38, alinhar: "center", pt: 6.6 },
+    {
+      rotulo: "Município de Incidência do ISSQN",
+      valor: s.municipioIncidenciaIssqn ?? "",
+      fr: 0.34,
+      alinhar: "center",
+      pt: 6.6,
+    },
+    { rotulo: "Retenção do ISSQN", valor: s.retencaoIssqn ?? "", fr: 0.28, alinhar: "center", pt: 6.6 },
+  ]);
+
+  /* ── VALORES ── */
+  f.titulo("VALOR TOTAL DA NFS-e");
+  f.linha([
+    { rotulo: "Valor do Serviço", valor: moedaBr(nota.valorProdutos), fr: 0.5, alinhar: "right", pt: 9 },
+    {
+      rotulo: "Valor Líquido da NFS-e",
+      valor: moedaBr(s.valorLiquido ?? nota.valorTotal),
+      fr: 0.5,
+      alinhar: "right",
+      pt: 9,
+    },
   ]);
 
   quadroAdicionais(f, nota, 20);
 }
 
-const H_RODAPE_NFSE = 4;
 
 /**
  * Rodapé: de onde veio este papel.

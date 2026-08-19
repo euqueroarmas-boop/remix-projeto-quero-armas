@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  NFS-e do PADRÃO NACIONAL — fixture montada a partir do leiaute, ANONIMIZADA.
+
+  ATENÇÃO AO LER ESTE ARQUIVO: ele foi escrito a partir da especificação do
+  Sistema Nacional NFS-e, não copiado de uma nota real. Serve para fixar o
+  contrato do leitor (onde cada campo mora, quem tem precedência sobre quem),
+  e é honesto sobre o que exercita:
+
+    - o prestador é publicado em `infNFSe/emit`, e a DPS (`infDPS/prest`)
+      declara apenas CNPJ e inscrição municipal. É por isso que o leitor lê
+      `emit` PRIMEIRO: lendo `prest`, o prestador saía sem nome e sem endereço;
+    - município vem como CÓDIGO IBGE (`cMun`), não como nome — daí a UF ser
+      derivada do prefixo do código;
+    - o tomador guarda logradouro e bairro FORA de `endNac`;
+    - a chave de acesso tem 50 dígitos, e não 44 como a da NF-e.
+
+  Quando chegar um XML de NFS-e nacional de verdade, esta fixture deve ser
+  substituída por ele (anonimizado) — e qualquer divergência que aparecer é
+  defeito do leitor, não do arquivo real.
+-->
+<NFSe xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
+  <infNFSe Id="NFS35157071211222333000181000000000000120260800000123">
+    <xLocEmi>Ferraz de Vasconcelos</xLocEmi>
+    <xLocPrestacao>Ferraz de Vasconcelos</xLocPrestacao>
+    <nNFSe>12</nNFSe>
+    <cLocIncid>3515707</cLocIncid>
+    <ambGer>2</ambGer>
+    <tpEmis>1</tpEmis>
+    <procEmi>1</procEmi>
+    <verAplic>1.00</verAplic>
+    <dhProc>2026-08-14T10:22:31-03:00</dhProc>
+    <nDFSe>987654</nDFSe>
+    <emit>
+      <CNPJ>11222333000181</CNPJ>
+      <IM>123456</IM>
+      <xNome>METALURGICA EXEMPLO LTDA ME</xNome>
+      <xFant>METALURGICA EXEMPLO</xFant>
+      <enderNac>
+        <xLgr>Rua Exemplo Um</xLgr>
+        <nro>117</nro>
+        <xCpl>Casa</xCpl>
+        <xBairro>Bairro Exemplo</xBairro>
+        <cMun>3515707</cMun>
+        <UF>SP</UF>
+        <CEP>08545090</CEP>
+      </enderNac>
+      <fone>1140028922</fone>
+      <email>contato@exemplo.com.br</email>
+    </emit>
+    <valores>
+      <vCalcDR>0.00</vCalcDR>
+      <vCalcBM>0.00</vCalcBM>
+      <vBC>1500.00</vBC>
+      <pAliqAplic>2.00</pAliqAplic>
+      <vISSQN>30.00</vISSQN>
+      <vTotalRet>0.00</vTotalRet>
+      <vLiq>1500.00</vLiq>
+    </valores>
+    <DPS>
+      <infDPS Id="DPS351570721122233300018100001000000000000012">
+        <tpAmb>1</tpAmb>
+        <dhEmi>2026-08-14T10:20:05-03:00</dhEmi>
+        <verAplic>1.00</verAplic>
+        <serie>00001</serie>
+        <nDPS>12</nDPS>
+        <dCompet>2026-08-01</dCompet>
+        <tpEmit>1</tpEmit>
+        <cLocEmi>3515707</cLocEmi>
+        <prest>
+          <CNPJ>11222333000181</CNPJ>
+          <IM>123456</IM>
+          <regTrib>
+            <opSimpNac>3</opSimpNac>
+            <regEspTrib>0</regEspTrib>
+          </regTrib>
+        </prest>
+        <toma>
+          <CNPJ>44555666000177</CNPJ>
+          <IM>654321</IM>
+          <xNome>COMERCIO DE METAIS EXEMPLO LTDA</xNome>
+          <end>
+            <endNac>
+              <cMun>3550308</cMun>
+              <CEP>08151000</CEP>
+            </endNac>
+            <xLgr>Avenida Exemplo Dois</xLgr>
+            <nro>3444</nro>
+            <xBairro>Bairro Modelo</xBairro>
+          </end>
+          <fone>1133334444</fone>
+          <email>financeiro@exemplo.com.br</email>
+        </toma>
+        <serv>
+          <locPrest>
+            <cLocPrestacao>3515707</cLocPrestacao>
+            <cPaisPrestacao>BR</cPaisPrestacao>
+          </locPrest>
+          <cServ>
+            <cTribNac>140601</cTribNac>
+            <cTribMun>1406</cTribMun>
+            <xDescServ>Manutencao e reparacao de maquinas e equipamentos industriais, conforme contrato de prestacao de servicos.</xDescServ>
+          </cServ>
+        </serv>
+        <valores>
+          <vServPrest>
+            <vServ>1500.00</vServ>
+          </vServPrest>
+          <trib>
+            <tribMun>
+              <tribISSQN>1</tribISSQN>
+              <tpRetISSQN>1</tpRetISSQN>
+            </tribMun>
+            <totTrib>
+              <indTotTrib>0</indTotTrib>
+            </totTrib>
+          </trib>
+        </valores>
+      </infDPS>
+    </DPS>
+  </infNFSe>
+</NFSe>

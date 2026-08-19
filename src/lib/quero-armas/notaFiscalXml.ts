@@ -90,6 +90,34 @@ export interface VolumesNotaFiscalXml {
   pesoLiquido?: string;
 }
 
+/**
+ * Bloco SERVIÇO PRESTADO / TRIBUTAÇÃO MUNICIPAL da NFS-e do padrão nacional.
+ *
+ * Os nomes dos campos seguem os rótulos que a DANFSe imprime — os mesmos que
+ * `parseNotaFiscal` (em `parsersCertidoes.ts`) já lê das notas reais. Manter o
+ * mesmo vocabulário é o que permite conferir a nota gerada aqui com o parser
+ * que o sistema usa nas notas de verdade.
+ */
+export interface ServicoNotaFiscalXml {
+  codigoTributacaoNacional?: string;
+  codigoTributacaoMunicipal?: string;
+  /** Código IBGE do município da prestação. */
+  localPrestacao?: string;
+  paisPrestacao?: string;
+  /** Tributação do ISSQN, já traduzida do código do layout. */
+  tributacaoIssqn?: string;
+  /** Município de incidência do ISSQN (código IBGE de `cLocIncid`). */
+  municipioIncidenciaIssqn?: string;
+  /** Retenção do ISSQN, traduzida do código do layout. */
+  retencaoIssqn?: string;
+  /** Situação no Simples Nacional, traduzida do código do layout. */
+  simplesNacional?: string;
+  /** Regime especial de tributação, traduzido do código do layout. */
+  regimeApuracao?: string;
+  /** Valor líquido da NFS-e (`vLiq`). */
+  valorLiquido?: number;
+}
+
 /** Quadro TRANSPORTADOR / VOLUMES TRANSPORTADOS. */
 export interface TransporteNotaFiscalXml {
   /** Código do `modFrete`, cru. O rótulo é montado na impressão. */
@@ -158,6 +186,9 @@ export interface NotaFiscalXml {
   transporte?: TransporteNotaFiscalXml;
   /** Informações de interesse do Fisco (`infAdFisco`). */
   informacoesFisco?: string;
+
+  /** Só na NFS-e do padrão nacional. */
+  servico?: ServicoNotaFiscalXml;
 }
 
 export type LeituraNotaFiscalXml =
@@ -501,23 +532,83 @@ function leNfe(doc: Document): LeituraNotaFiscalXml {
 
 /* ── NFS-e padrão nacional (municipal) ──────────────────────────────────── */
 
+/**
+ * UF pelo prefixo do código IBGE do município (2 primeiros dígitos).
+ *
+ * A NFS-e do padrão nacional identifica município por CÓDIGO (`cMun`), não por
+ * nome — e o projeto não tem tabela de código→cidade offline. O prefixo, esse
+ * sim, é fixo e cabe em 27 linhas: com ele o endereço sai pelo menos com o
+ * estado certo, em vez de sair vazio.
+ */
+const UF_POR_CODIGO_IBGE: Record<string, string> = {
+  "11": "RO", "12": "AC", "13": "AM", "14": "RR", "15": "PA", "16": "AP", "17": "TO",
+  "21": "MA", "22": "PI", "23": "CE", "24": "RN", "25": "PB", "26": "PE", "27": "AL",
+  "28": "SE", "29": "BA",
+  "31": "MG", "32": "ES", "33": "RJ", "35": "SP",
+  "41": "PR", "42": "SC", "43": "RS",
+  "50": "MS", "51": "MT", "52": "GO", "53": "DF",
+};
+
+export function ufPeloCodigoMunicipio(codigo?: string | null): string | undefined {
+  const d = digitos(codigo);
+  return d.length === 7 ? UF_POR_CODIGO_IBGE[d.slice(0, 2)] : undefined;
+}
+
 function leParteNfse(el: Element | null): ParteNotaFiscalXml {
-  const ender = acha(el, "enderNac") ?? acha(el, "endNac") ?? acha(el, "end") ?? el;
+  // `enderNac` é o bloco do emitente; `end`/`endNac`, o do tomador. No layout
+  // do tomador, logradouro e bairro ficam FORA de `endNac` — por isso a busca
+  // de rua/número/bairro cai no bloco `end` inteiro.
+  const enderNac = acha(el, "enderNac");
+  const end = acha(el, "end");
+  const endNac = acha(el, "endNac");
+  const ender = enderNac ?? end ?? el;
+  const municipal = enderNac ?? endNac ?? end ?? el;
+  const codigoMunicipio = txt(municipal, "cMun");
   return {
     documento: documentoDaParte(el),
     nome: txtQualquer(el, "xNome", "xFant"),
     inscricaoMunicipal: txt(el, "IM"),
+    inscricaoEstadual: txt(el, "IE"),
     logradouro: txt(ender, "xLgr"),
     numero: txt(ender, "nro"),
     complemento: txt(ender, "xCpl"),
     bairro: txt(ender, "xBairro"),
-    municipio: txtQualquer(ender, "xMun", "xLocalidade"),
-    uf: txt(ender, "UF"),
-    cep: digitos(txt(ender, "CEP")) || undefined,
+    // `xMun` quando o emissor o informa; senão fica o código IBGE, que é o que
+    // o layout nacional de fato traz. Nunca se inventa nome de cidade.
+    municipio: txtQualquer(municipal, "xMun", "xLocalidade") ?? codigoMunicipio,
+    uf: txt(municipal, "UF") ?? ufPeloCodigoMunicipio(codigoMunicipio),
+    cep: digitos(txt(municipal, "CEP")) || digitos(txt(ender, "CEP")) || undefined,
     telefone: digitos(txt(el, "fone")) || undefined,
     email: txt(el, "email"),
   };
 }
+
+/* Traduções dos códigos do layout nacional. Valor fora da tabela sai como o
+ * próprio código — melhor mostrar o código cru do que rotular errado. */
+const traduz = (mapa: Record<string, string>, codigo?: string): string | undefined => {
+  const c = String(codigo ?? "").trim();
+  if (!c) return undefined;
+  return mapa[c] ?? c;
+};
+
+const TRIBUTACAO_ISSQN: Record<string, string> = {
+  "1": "Operação tributável",
+  "2": "Exportação de serviço",
+  "3": "Não incidência",
+  "4": "Imunidade",
+};
+
+const RETENCAO_ISSQN: Record<string, string> = {
+  "1": "Não retido",
+  "2": "Retido pelo tomador",
+  "3": "Retido pelo intermediário",
+};
+
+const SIMPLES_NACIONAL: Record<string, string> = {
+  "1": "Não optante",
+  "2": "Optante — MEI",
+  "3": "Optante — ME/EPP",
+};
 
 function leNfse(doc: Document): LeituraNotaFiscalXml {
   const infNFSe = acha(doc, "infNFSe");
@@ -556,6 +647,22 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
     numero(txt(acha(infDPS, "vServPrest"), "vServ")) ??
     numero(txtQualquer(base, "vServ"));
 
+  // ── NOME DO MUNICÍPIO ───────────────────────────────────────────────────
+  // Os blocos de endereço do padrão nacional identificam município por CÓDIGO
+  // IBGE. O NOME aparece uma única vez, no topo: `xLocEmi` (município do
+  // emitente) e `xLocPrestacao` (município da prestação). Sem ler estes dois, a
+  // DANFSe saía com "PREFEITURA MUNICIPAL DE 3515707" — número no lugar de
+  // cidade, num documento que vai para a mão de terceiro.
+  const nomeLocalEmissao = txt(infNFSe, "xLocEmi");
+  const nomeLocalPrestacao = txt(infNFSe, "xLocPrestacao");
+  const soDigitos = (v?: string) => !!v && /^\d+$/.test(v);
+
+  const prestador = leParteNfse(prest);
+  const emitente: ParteNotaFiscalXml = {
+    ...prestador,
+    municipio: soDigitos(prestador.municipio) ? nomeLocalEmissao ?? prestador.municipio : prestador.municipio,
+  };
+
   return {
     ok: true,
     nota: {
@@ -568,7 +675,7 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
       dataHoraEmissao: dhEmi,
       competencia: isoData(txtQualquer(infDPS, "dCompet")),
       naturezaOperacao: "Prestação de serviço",
-      emitente: leParteNfse(prest),
+      emitente,
       destinatario: leParteNfse(toma),
       itens: descricao
         ? [{ numero: 1, descricao, valorTotal: valorLiquido }]
@@ -579,7 +686,21 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
       dataHoraProtocolo: txtQualquer(infNFSe, "dhProc"),
       situacao: undefined,
       informacoesComplementares: descricao,
-      municipioEmissor: txtQualquer(acha(infNFSe, "emit"), "xMun"),
+      municipioEmissor: nomeLocalEmissao ?? txtQualquer(acha(infNFSe, "emit"), "xMun"),
+      servico: {
+        codigoTributacaoNacional: txt(serv, "cTribNac"),
+        codigoTributacaoMunicipal: txt(serv, "cTribMun"),
+        // Nome quando o layout o publica; código só como último recurso — é
+        // o nome que a DANFSe imprime em "Local da Prestação".
+        localPrestacao: nomeLocalPrestacao ?? txt(acha(serv, "locPrest"), "cLocPrestacao"),
+        paisPrestacao: txt(acha(serv, "locPrest"), "cPaisPrestacao"),
+        tributacaoIssqn: traduz(TRIBUTACAO_ISSQN, txt(acha(infDPS, "tribMun"), "tribISSQN")),
+        municipioIncidenciaIssqn: txt(infNFSe, "cLocIncid"),
+        retencaoIssqn: traduz(RETENCAO_ISSQN, txt(acha(infDPS, "tribMun"), "tpRetISSQN")),
+        simplesNacional: traduz(SIMPLES_NACIONAL, txt(acha(infDPS, "regTrib"), "opSimpNac")),
+        regimeApuracao: txt(acha(infDPS, "regTrib"), "regEspTrib"),
+        valorLiquido: numero(txt(acha(infNFSe, "valores"), "vLiq")),
+      },
     },
   };
 }
@@ -697,6 +818,20 @@ export function camposCertidaoDaNotaXml(nota: NotaFiscalXml): CamposCertidao {
 
     descricao_servico: descricao,
     itens_servico: itens.length ? itens : undefined,
-    local_prestacao: municipioUf(nota.emitente)?.toUpperCase(),
+
+    /* ── Só na NFS-e: quadros SERVIÇO PRESTADO e TRIBUTAÇÃO MUNICIPAL ──
+     * Numa NF-e de mercadoria nada disso existe, e preencher com o município
+     * do emitente (como a primeira versão fazia com `local_prestacao`) daria
+     * ao Golden Record um "local da prestação" para uma nota que não presta
+     * serviço nenhum. */
+    codigo_tributacao_nacional: nota.servico?.codigoTributacaoNacional,
+    codigo_tributacao_municipal: nota.servico?.codigoTributacaoMunicipal,
+    local_prestacao: nota.servico?.localPrestacao,
+    pais_prestacao: nota.servico?.paisPrestacao,
+    tributacao_issqn: nota.servico?.tributacaoIssqn,
+    municipio_incidencia_issqn: nota.servico?.municipioIncidenciaIssqn,
+    retencao_issqn: nota.servico?.retencaoIssqn,
+    prestador_simples_nacional: nota.servico?.simplesNacional,
+    prestador_regime_apuracao: nota.servico?.regimeApuracao,
   };
 }
