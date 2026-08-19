@@ -58,6 +58,11 @@ import {
 } from "@/lib/quero-armas/somentePdfOriginal";
 import { ehCcmei, parseCcmei } from "@/lib/quero-armas/parserCcmei";
 import {
+  ehArquivoXml,
+  importarNotaFiscalXml,
+  type NotaFiscalImportada,
+} from "@/lib/quero-armas/notaFiscalXmlImport";
+import {
   hojeISOBRT,
   isDocumentoConstitutivoPerpetuo,
   isDocumentoEmpresa30Dias,
@@ -1730,6 +1735,15 @@ export function ClienteDocsHubModal({
    * Sem essa distinção, uma falha técnica nossa viraria acusação ao cliente.
    */
   const extracaoPdfOkRef = useRef(false);
+  /**
+   * Nota fiscal lida do XML anexado pelo cliente.
+   *
+   * Quando está preenchido, o arquivo que segue no fluxo é o DANFE que NÓS
+   * geramos a partir do XML autorizado — e a leitura já está pronta, campo a
+   * campo, vinda do layout oficial. Nada é reextraído do PDF e a IA não é
+   * consultada: reler o que já sabemos exato só criaria chance de errar.
+   */
+  const notaXmlRef = useRef<NotaFiscalImportada | null>(null);
   const [resultadoCarimbo, setResultadoCarimbo] = useState<
     { tipo: "aprovado" | "analise" | "reprovado"; percentual?: number | null; mensagem?: string | null; titulo?: string | null } | null
   >(null);
@@ -3557,6 +3571,113 @@ export function ClienteDocsHubModal({
     }
   }
 
+  /**
+   * NOTA FISCAL A PARTIR DO XML — leitura sem PDF, sem OCR e sem IA.
+   *
+   * Tudo o que entra aqui veio etiquetado pelo layout oficial da nota assinada
+   * e autorizada pela SEFAZ. A função só distribui esses valores pelos mesmos
+   * canais que qualquer outro documento usa (conferência, conformidade,
+   * formulário), para o restante do Hub — Golden Record, trava de emissão
+   * entre parentes, carimbo — continuar funcionando sem saber que a origem foi
+   * um XML.
+   */
+  function aplicarNotaFiscalDoXml(importada: NotaFiscalImportada) {
+    const { nota, campos, camposPlanos, tipoDocumento, papelDoCliente, texto } = importada;
+
+    const conf = conferirCertidao(
+      campos,
+      {
+        nome_completo: refClienteNome,
+        cpf: refClienteCpf,
+        data_nascimento: refClienteDataNascimento,
+        nome_mae: refClienteNomeMae,
+        naturalidade_municipio: clienteAutoFetch.naturalidade_municipio,
+        naturalidade_uf: clienteAutoFetch.naturalidade_uf,
+        rg: clienteAutoFetch.rg,
+      },
+      texto,
+    );
+    setConferenciaLocal({ doc: campos, conf, texto });
+
+    setConformidade(
+      calcularConformidade(
+        camposPlanos,
+        refClienteNome,
+        refClienteCpf,
+        refClienteDataNascimento,
+        refClienteNomeMae,
+        docsEfetivos,
+        null,
+        tipoDocumento,
+        [clienteAutoFetch.naturalidade_municipio, clienteAutoFetch.naturalidade_uf]
+          .filter(Boolean)
+          .join(" ") || null,
+        {
+          cnpj: clienteAutoFetch.ocupacao_licita_cnpj,
+          razao_social: clienteAutoFetch.ocupacao_licita_razao_social,
+        },
+      ),
+    );
+
+    setClassificacao({
+      tipoDetectado: "NOTA_FISCAL",
+      confianca: 1,
+      justificativa: `Leitura determinística do XML autorizado pela SEFAZ${
+        nota.protocolo ? ` (protocolo ${nota.protocolo})` : ""
+      } — sem IA.`,
+      camposExtraidos: camposPlanos,
+      recomendacao: "aceitar",
+    });
+
+    setForm((prev) => ({
+      ...prev,
+      tipo_documento: tipoDocumento,
+      nome_documento:
+        [`${nota.rotulo}${nota.numero ? ` nº ${nota.numero}` : ""}`, nota.emitente.nome]
+          .filter(Boolean)
+          .join(" — ") || prev.nome_documento,
+      numero_documento: nota.numero ?? prev.numero_documento,
+      orgao_emissor: ORGAO_LABEL.nota_fiscal,
+      data_emissao: nota.dataEmissao ?? prev.data_emissao,
+      // Nota fiscal NÃO vence (`exigeDatasOcupacao`). Fixar vazio impede que a
+      // validade de um arquivo anexado antes sobreviva ao `...prev` e vire
+      // carimbo de "documento vencido" numa nota que não tem prazo nenhum.
+      data_validade: "",
+      observacoes:
+        [
+          `Chave de acesso: ${nota.chave}`,
+          nota.protocolo ? `Protocolo de autorização: ${nota.protocolo}` : "",
+          nota.emitente.documento ? `Emitente: ${nota.emitente.documento}` : "",
+          nota.destinatario.nome ? `Destinatário: ${nota.destinatario.nome}` : "",
+          nota.valorTotal != null ? `Valor total: R$ ${nota.valorTotal.toFixed(2)}` : "",
+          "DANFE gerado pelo Hub a partir do XML autorizado pela SEFAZ.",
+        ]
+          .filter(Boolean)
+          .join("\n") || prev.observacoes,
+    }));
+    setCategoriaHub(inferHubCategoriaFromTipo(tipoDocumento));
+
+    if (papelDoCliente === "nenhum") {
+      // Não é rejeição: pode ser cadastro de empresa ainda vazio. O painel de
+      // conformidade mostra o confronto e a equipe decide.
+      toast.warning(
+        "Nota lida do XML, mas nem o emitente nem o destinatário têm o seu CPF/CNPJ. Confira os dados antes de salvar.",
+      );
+    } else if (conf.veredicto === "rejeitado") {
+      toast.error("Nota fiscal recusada na conferência. Veja o motivo no painel.");
+    } else if (papelDoCliente === "emitente") {
+      toast.success(
+        `Nota fiscal lida direto do XML autorizado pela SEFAZ${
+          nota.protocolo ? ` (protocolo ${nota.protocolo})` : ""
+        }. Geramos o DANFE em PDF para você.`,
+      );
+    } else {
+      toast.success(
+        "Nota fiscal de compra lida direto do XML autorizado pela SEFAZ. Geramos o DANFE em PDF para você.",
+      );
+    }
+  }
+
   async function tentarLeituraLocal(f: File): Promise<boolean> {
     if (f.type !== "application/pdf") return false;
     let texto = "";
@@ -3570,6 +3691,16 @@ export function ClienteDocsHubModal({
       console.warn("[leitura local] pdf.js falhou:", e);
       return false;
     }
+
+    // ── NOTA FISCAL VINDA DO XML ──────────────────────────────────────────
+    // Precede TODOS os parsers: os campos já foram lidos do XML assinado, com
+    // rótulo do layout oficial. Reler o PDF que nós mesmos acabamos de gerar
+    // seria trocar dado exato por adivinhação de regex.
+    if (notaXmlRef.current) {
+      aplicarNotaFiscalDoXml(notaXmlRef.current);
+      return true;
+    }
+
     // Canal paralelo: a UF do comprovante decide qual TRF e qual tribunal
     // estadual cobrem o cliente. Roda antes de qualquer `return` para não
     // depender de o documento ser uma certidão — e NÃO encerra o fluxo: o
@@ -3951,11 +4082,51 @@ export function ClienteDocsHubModal({
     return true;
   }
 
-  async function handleFileChange(f: File | null) {
+  async function handleFileChange(f: File | null, notaXml?: NotaFiscalImportada | null) {
     // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
     // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
     toast.dismiss();
+
+    // ── XML DA NOTA FISCAL → DANFE EM PDF COM TEXTO ───────────────────────
+    // O DANFE que o celular salva pelo botão "Compartilhar" chega sem camada
+    // de texto: arquivo legítimo, ilegível para qualquer leitor. Em vez de
+    // devolver "salve de novo" e travar o cliente, aceitamos o XML — que é o
+    // documento fiscal de verdade — e geramos aqui o PDF com texto.
+    //
+    // Roda ANTES de qualquer trava: o que segue no fluxo é o PDF gerado, e é
+    // ele que passa por todas as verificações normais do Hub.
+    if (f && ehArquivoXml(f)) {
+      setFile(f);
+      setExtracting(true);
+      let resultado: Awaited<ReturnType<typeof importarNotaFiscalXml>>;
+      try {
+        resultado = await importarNotaFiscalXml(f, {
+          cpf: refClienteCpf,
+          cnpj: clienteAutoFetch.ocupacao_licita_cnpj,
+          tipoSlot: form.tipo_documento,
+        });
+      } catch (e) {
+        console.error("[nota-fiscal-xml] falha inesperada", e);
+        resultado = { ok: false, motivo: "Não conseguimos ler este XML. Anexe o arquivo de novo." };
+      } finally {
+        setExtracting(false);
+      }
+      if (resultado.ok === false) {
+        const motivo = resultado.motivo;
+        const id = toast.error(motivo, {
+          duration: Infinity,
+          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+        });
+        setFile(null);
+        return;
+      }
+      // Segue o fluxo normal com o PDF gerado — que não é XML e, portanto,
+      // não volta para este ramo.
+      return handleFileChange(resultado.importada.pdf, resultado.importada);
+    }
+
     setFile(f);
+    notaXmlRef.current = notaXml ?? null;
     setClassificacao(null);
     setConferenciaLocal(null);
     setShowTipoOverride(false);
@@ -4946,10 +5117,22 @@ export function ClienteDocsHubModal({
       // Golden Record da nota fiscal (grupo de ocupação lícita): tabela própria
       // com cabeçalho da DANFSe + descrição do serviço já parseada.
       if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
+        // Quando a nota entrou pelo XML sabemos o modelo com certeza; quando
+        // veio de PDF, o Golden Record deduz pela chave. NF-e e NFS-e dividem
+        // a tabela e não podem ficar indistinguíveis.
+        const notaDoXml = notaXmlRef.current?.nota;
         void salvarNotaFiscalGoldenRecord({
           campos: conferenciaLocal.doc,
           clienteId: qaClienteId ?? null,
           documentoId: novoDocId ?? null,
+          // Texto integral do que foi lido. Quando a nota entrou pelo XML, é
+          // ele que fica guardado — o registro de origem da leitura.
+          textoBruto: conferenciaLocal.texto ?? null,
+          modelo: notaDoXml?.modelo ?? null,
+          naturezaOperacao: notaDoXml?.naturezaOperacao ?? null,
+          protocoloAutorizacao: notaDoXml?.protocolo ?? null,
+          serie: notaDoXml?.serie ?? null,
+          valorProdutos: notaDoXml?.valorProdutos ?? null,
         });
       }
       if (isStaff && novoDocId) {

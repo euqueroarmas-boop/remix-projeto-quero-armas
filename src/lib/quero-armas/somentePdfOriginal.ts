@@ -37,7 +37,26 @@ export const MSG_SOMENTE_PDF_ORIGINAL =
 export const MSG_FOTO_SOMENTE_IMAGEM =
   "Para a foto 3x4 envie um arquivo de imagem (JPG ou PNG) já reenquadrado.";
 
+/**
+ * SEGUNDA exceção (18/08/2026): o XML da nota fiscal.
+ *
+ * Não é uma flexibilização da regra — é a aplicação dela. Quem tem valor
+ * fiscal é o XML assinado e autorizado pela SEFAZ; o DANFE em PDF é só o
+ * "Documento Auxiliar", uma representação impressa. O XML é MAIS original que
+ * o PDF, não menos.
+ *
+ * Entrou porque o DANFE salvo pelo botão "Compartilhar" do celular chega sem
+ * camada de texto — arquivo legítimo que nenhum leitor consegue abrir — e o
+ * cliente ficava travado sem ter errado nada. Recebendo o XML, o Hub gera o
+ * DANFE com texto de verdade (`danfePdfDoXml`) e segue o fluxo normal.
+ *
+ * A trava real não está no seletor de arquivo e sim no parser: XML que não for
+ * nota fiscal autorizada em produção é recusado com o motivo na tela.
+ */
+export const ACCEPT_XML_NOTA_FISCAL = "text/xml,application/xml,.xml";
+
 /** `accept` do <input type="file"> conforme o tipo de documento. */
 export function acceptPorTipo(tipo: string | null | undefined): string {
-  return tipoAceitaImagem(tipo) ? "image/jpeg,image/png,image/webp" : "application/pdf";
+  if (tipoAceitaImagem(tipo)) return "image/jpeg,image/png,image/webp";
+  return `application/pdf,${ACCEPT_XML_NOTA_FISCAL}`;
 }
