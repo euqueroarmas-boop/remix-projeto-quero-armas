@@ -90,7 +90,10 @@ function QALayoutInner() {
 
       <main className="flex min-h-screen min-w-0 flex-col" style={{ background: "var(--qa-app)" }}>
         <QABreadcrumb />
-        <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
+        {/* Casca do conteúdo. Telas migradas (data-qa-pagina) fazem esta casca
+            sair do modo invertido junto — é ela que pinta o fundo em volta dos
+            cartões. Ver "PÁGINAS — tema real" em index.css. */}
+        <div data-qa-conteudo className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />
         </div>
         <QAFooter />

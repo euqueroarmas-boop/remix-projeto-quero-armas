@@ -365,22 +365,32 @@ html.qa-noite [data-qa-sidebar] :where(img, video, canvas, iframe, svg image) {
    e trocar as cores fixas pelos tokens --qa-*. Telas não migradas seguem no
    modo antigo, sem conflito.
    ===================================================================== */
-html.qa-noite [data-qa-pagina] {
-  /* Superfícies */
-  --qa-app: hsl(240 6% 7%);
-  --qa-paper: hsl(240 6% 10%);
-  --qa-paper-2: hsl(240 5% 13%);
-  --qa-paper-3: hsl(240 6% 11%);
-  --qa-chip-bg: hsl(240 5% 16%);
-  --qa-chip-bg-2: hsl(240 5% 14%);
-  --qa-chip-ativo-bg: hsl(210 8% 22%);
-  --qa-hover: hsl(240 5% 15%);
-  --qa-trilho: hsl(240 5% 20%);
-  /* Linhas */
-  --qa-linha: hsl(240 5% 18%);
-  --qa-linha-2: hsl(240 5% 24%);
-  --qa-linha-3: hsl(240 5% 15%);
-  --qa-linha-4: hsl(240 5% 16%);
+/* A régua fica na CASCA do conteúdo, não na tela: assim o fundo em volta dos
+   cartões também sai do modo invertido e ganha o tom do menu — sem emenda
+   entre a área da página e a folga em volta dela.
+
+   Tudo (tokens + a des-inversão) mora numa regra só, presa ao `:has()`. Em
+   navegador sem `:has()` a regra inteira é ignorada e a tela volta ao
+   comportamento antigo, invertida e legível — nunca meio migrada. */
+html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) {
+  /* Desfaz a inversão do pai: o que for declarado abaixo é o que aparece. */
+  filter: invert(1) hue-rotate(180deg);
+
+  /* Superfícies — mesma escada do menu: fundo, cartão um degrau acima. */
+  --qa-app: hsl(240 6% 10%);
+  --qa-paper: hsl(240 6% 16%);
+  --qa-paper-2: hsl(240 5% 19%);
+  --qa-paper-3: hsl(240 6% 17%);
+  --qa-chip-bg: hsl(240 5% 22%);
+  --qa-chip-bg-2: hsl(240 5% 20%);
+  --qa-chip-ativo-bg: hsl(210 8% 29%);
+  --qa-hover: hsl(240 5% 21%);
+  --qa-trilho: hsl(240 5% 27%);
+  /* Linhas — firmes o bastante para desenhar o cartão. */
+  --qa-linha: hsl(240 5% 25%);
+  --qa-linha-2: hsl(240 5% 31%);
+  --qa-linha-3: hsl(240 5% 21%);
+  --qa-linha-4: hsl(240 5% 22%);
   /* Tintas */
   --qa-tinta: hsl(0 0% 96%);
   --qa-tinta-2: hsl(240 5% 80%);
@@ -388,21 +398,23 @@ html.qa-noite [data-qa-pagina] {
   --qa-tinta-4: hsl(240 4% 52%);
   --qa-tinta-5: hsl(240 4% 42%);
   /* Semânticas: verde = em dia, âmbar = atenção, vermelho = crítico */
-  --qa-neutro-bg: hsl(240 5% 16%);
-  --qa-neutro-borda: hsl(240 5% 26%);
+  --qa-neutro-bg: hsl(240 5% 22%);
+  --qa-neutro-borda: hsl(240 5% 33%);
   --qa-verde: hsl(142 52% 62%);
-  --qa-verde-bg: hsl(142 35% 14%);
-  --qa-verde-borda: hsl(142 28% 30%);
+  --qa-verde-bg: hsl(142 35% 16%);
+  --qa-verde-borda: hsl(142 28% 32%);
   --qa-ambar: hsl(41 78% 66%);
-  --qa-ambar-bg: hsl(41 42% 14%);
-  --qa-ambar-borda: hsl(41 34% 32%);
+  --qa-ambar-bg: hsl(41 42% 16%);
+  --qa-ambar-borda: hsl(41 34% 34%);
   --qa-vermelho: hsl(0 72% 72%);
-  --qa-vermelho-bg: hsl(0 45% 15%);
-  --qa-vermelho-borda: hsl(0 34% 34%);
+  --qa-vermelho-bg: hsl(0 45% 17%);
+  --qa-vermelho-borda: hsl(0 34% 36%);
+
+  background: var(--qa-app);
 }
 
 /* Imagem dentro de tela migrada não leva a inversão genérica do noturno. */
-html.qa-noite [data-qa-pagina] :where(img, video, canvas, iframe, svg image) {
+html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) :where(img, video, canvas, iframe, svg image) {
   filter: none;
 }
 

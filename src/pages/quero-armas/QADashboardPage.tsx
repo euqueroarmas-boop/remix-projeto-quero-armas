@@ -20,11 +20,10 @@ function Spinner() {
 export default function QADashboardPage() {
   return (
     <div
-      /* Tela migrada para o tema real: sai do filtro de inversão do modo
-         noturno e passa a desenhar nos tokens --qa-* (a mesma combinação da
-         sidebar). Ver o bloco "PÁGINAS — tema real" em index.css. */
+      /* Tela migrada para o tema real: a casca do conteúdo sai do filtro de
+         inversão do modo noturno e a tela passa a desenhar nos tokens --qa-*
+         (a mesma combinação do menu). Ver "PÁGINAS — tema real" em index.css. */
       data-qa-pagina
-      data-nao-inverter
       className="space-y-5 md:space-y-6 w-full max-w-[1760px] ml-0 mr-auto"
     >
       {/* Progresso por cliente — primeiro bloco do painel */}
