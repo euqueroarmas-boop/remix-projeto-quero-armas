@@ -26,6 +26,20 @@ function formatCpf(cpf: string | null): string | null {
   return `${d.slice(0, 3)}.${d.slice(3, 6)}.${d.slice(6, 9)}-${d.slice(9)}`;
 }
 
+/**
+ * As duas formas em que o CPF aparece em qa_clientes.
+ *
+ * A Central de Adesão grava "000.000.000-00"; o cadastro público grava só os
+ * dígitos. Procurar por uma forma só deixava o cadastro existente invisível e
+ * o operador acabava criando um segundo registro para a mesma pessoa.
+ */
+function cpfVariantes(cpf: string | null): string[] {
+  const d = String(cpf || "").replace(/\D/g, "");
+  if (!d) return [];
+  const fmt = formatCpf(d);
+  return Array.from(new Set([fmt, d].filter(Boolean))) as string[];
+}
+
 function campoPreenchido(v: string | null | undefined): boolean {
   const s = String(v || "").trim();
   return !!s && !/^não extra[ií]do$/i.test(s);
@@ -150,6 +164,90 @@ async function notificarExigenciasCumpridas(clienteId: number) {
   }
 }
 
+/**
+ * Descarta o que veio vazio ou como "não extraído": campo em branco nunca pode
+ * apagar o que já estava gravado no cadastro do cliente.
+ */
+function camposComValor(campos: Record<string, unknown>): Record<string, unknown> {
+  const limpo: Record<string, unknown> = {};
+  for (const [chave, valor] of Object.entries(campos)) {
+    if (typeof valor === "boolean") { limpo[chave] = valor; continue; }
+    if (valor === null || valor === undefined) continue;
+    const texto = String(valor).trim();
+    if (!campoPreenchido(texto)) continue;
+    limpo[chave] = texto;
+  }
+  return limpo;
+}
+
+/**
+ * Grava os dados revisados por cima do cadastro que já existe.
+ *
+ * Caminho preferencial: a edge function, que confere o operador e grava com
+ * service role. Se ela não estiver publicada — o deploy da função é manual e
+ * independe do push do front — o UPDATE direto assume: a policy
+ * `qa_clientes_staff_update` já autoriza o operador logado, e o cadastro do
+ * cliente não pode deixar de ser atualizado por causa de um deploy pendente.
+ * Recusa explícita da função (permissão, campo obrigatório) não tenta de novo
+ * por fora: o UPDATE direto falharia pelo mesmo motivo.
+ */
+async function atualizarCadastroExistente(
+  clienteId: number,
+  campos: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const { data: saveResult, error: saveError } = await supabase.functions.invoke(
+    "qa-central-adesao-salvar-cliente",
+    { body: { cliente_id: clienteId, campos } },
+  );
+  if (!saveError && saveResult?.ok && saveResult.cliente) {
+    return saveResult.cliente as Record<string, unknown>;
+  }
+
+  // A mensagem padrão do supabase-js ("non-2xx status code") esconde o motivo
+  // real; lemos o corpo da resposta para o operador saber o que corrigir.
+  let motivo = saveResult?.error as string | undefined;
+  let status: number | undefined;
+  const ctx: any = (saveError as any)?.context;
+  if (ctx) {
+    if (typeof ctx.status === "number") status = ctx.status;
+    if (!motivo && typeof ctx.json === "function") {
+      try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+    }
+  }
+  if (status !== undefined && status >= 400 && status < 500 && status !== 404) {
+    throw new Error(motivo || "Falha ao atualizar o cadastro único do cliente");
+  }
+  console.warn("[Etapa4Salvar] edge function indisponível, atualizando direto:", motivo || saveError?.message);
+
+  // Marca os campos como preenchidos pela equipe, igual à edge function: sem
+  // isso o auto-preenchimento por IA pode sobrescrever depois o que o operador
+  // acabou de conferir.
+  const { data: atual } = await supabase
+    .from("qa_clientes" as any)
+    .select("campo_origens")
+    .eq("id", clienteId)
+    .maybeSingle();
+  const origemAtual = (atual as any)?.campo_origens;
+  const campoOrigens: Record<string, unknown> = {
+    ...(origemAtual && typeof origemAtual === "object" ? origemAtual : {}),
+  };
+  const agora = new Date().toISOString();
+  for (const chave of Object.keys(campos)) {
+    if (chave !== "arquivado") campoOrigens[chave] = { source: "manual_override_ai", updated_at: agora };
+  }
+
+  const { data: salvo, error: updateError } = await supabase
+    .from("qa_clientes" as any)
+    .update({ ...campos, campo_origens: campoOrigens })
+    .eq("id", clienteId)
+    .select("id, nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep, pais")
+    .maybeSingle();
+  if (updateError || !salvo) {
+    throw new Error(motivo || updateError?.message || "Falha ao atualizar o cadastro único do cliente");
+  }
+  return salvo as Record<string, unknown>;
+}
+
 function sanitizeFileName(name: string): string {
   return name
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -191,16 +289,23 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
     }
     setSalvando(true);
     try {
-      const { data } = await supabase
+      // Sem maybeSingle: se houver duplicata antiga do mesmo CPF, ela derruba a
+      // consulta e o cadastro existente some da tela. Ordenamos para o não
+      // arquivado mais recente vir primeiro e é ele que o operador atualiza.
+      const { data, error } = await supabase
         .from("qa_clientes" as any)
         .select("id, nome_completo, cpf, email, celular, arquivado, excluido")
-        .eq("cpf", formatCpf(cpfNorm))
+        .in("cpf", cpfVariantes(cpfNorm))
         .eq("excluido", false)
-        .maybeSingle();
+        .order("arquivado", { ascending: true })
+        .order("id", { ascending: false })
+        .limit(1);
+      if (error) throw error;
+      const achado = Array.isArray(data) ? (data[0] as any) : null;
 
-      if (data) {
-        setExistente({ id: (data as any).id, nome_completo: (data as any).nome_completo, cpf: (data as any).cpf, email: (data as any).email, celular: (data as any).celular, existia: true });
-        setExistenteArquivado(!!(data as any).arquivado);
+      if (achado) {
+        setExistente({ id: achado.id, nome_completo: achado.nome_completo, cpf: achado.cpf, email: achado.email, celular: achado.celular, existia: true });
+        setExistenteArquivado(!!achado.arquivado);
       } else {
         setExistente(null);
         setExistenteArquivado(false);
@@ -286,24 +391,10 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
           ocupacao_licita_telefone: dadosRevisados.ocupacao_licita_telefone || null,
           ...(existenteArquivado ? { arquivado: false } : {}),
         };
-        const { data: saveResult, error: saveError } = await supabase.functions.invoke(
-          "qa-central-adesao-salvar-cliente",
-          { body: { cliente_id: clienteId, campos: camposCanonicos } },
-        );
-        if (saveError || !saveResult?.ok) {
-          // A mensagem padrão do supabase-js ("non-2xx status code") esconde o
-          // motivo real; lemos o corpo da resposta para o operador saber o que
-          // corrigir (permissão, campo obrigatório etc.).
-          let motivo = saveResult?.error as string | undefined;
-          const ctx: any = (saveError as any)?.context;
-          if (!motivo && ctx?.json) {
-            try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
-          }
-          throw new Error(motivo || saveError?.message || "Falha ao atualizar o cadastro único do cliente");
-        }
-        const salvo = saveResult.cliente;
-        const enderecoEsperado = String(camposCanonicos.endereco || "").trim();
-        if (enderecoEsperado && !String(salvo?.endereco || "").trim()) {
+        const camposParaGravar = camposComValor(camposCanonicos);
+        const salvo = await atualizarCadastroExistente(clienteId, camposParaGravar);
+        const enderecoEsperado = String(camposParaGravar.endereco || "").trim();
+        if (enderecoEsperado && !String((salvo as any)?.endereco || "").trim()) {
           throw new Error("O endereço não foi confirmado no cadastro único do cliente");
         }
       } else {
@@ -560,7 +651,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
       <div>
         <h2 className="text-sm font-semibold mb-1">Etapa 4 — Salvar Cliente</h2>
         <p className="text-xs text-muted-foreground">
-          Verificamos se o CPF já está cadastrado antes de criar um novo registro.
+          Verificamos o CPF: se já houver cadastro, ele é atualizado com os dados revisados agora; se não houver, criamos um novo.
         </p>
       </div>
 
@@ -609,6 +700,9 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
                   Este cliente estava arquivado. Você pode reativá-lo ou criar um novo cadastro (o arquivado será excluído).
                 </p>
               )}
+              <p className="text-xs text-amber-600 mt-1">
+                Atualizar mantém o ID {existente.id}, o histórico e os documentos, e grava por cima os dados revisados. Campo que não foi lido nos documentos fica como está.
+              </p>
             </div>
           </div>
           <p className="text-xs text-amber-700">O que deseja fazer?</p>
@@ -621,7 +715,7 @@ export default function Etapa4Salvar({ dadosRevisados, senhagov, arquivos, onSal
               className="text-xs gap-1 flex-1"
             >
               {salvando ? <Loader2 className="w-3 h-3 animate-spin" /> : <UserCheck className="w-3 h-3" />}
-              {existenteArquivado ? "Reativar cadastro" : "Usar cadastro existente"}
+              {existenteArquivado ? "Reativar e atualizar" : "Atualizar cadastro existente"}
             </Button>
             <Button
               size="sm"
