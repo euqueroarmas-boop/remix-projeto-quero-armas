@@ -43,3 +43,43 @@ do Supabase. Portanto:
 - Se o bloco for longo, mostre mesmo assim. Tamanho não é motivo para omitir.
 - Junto do bloco, diga em uma linha o que ele faz e qual consulta roda depois para
   conferir se funcionou.
+
+## Edge functions — SEMPRE MANDAR O COMANDO DO LOVABLE
+
+O push publica o front, mas **edge function não sai junto**. Toda vez que eu criar
+ou alterar qualquer arquivo em `supabase/functions/`, a resposta tem que trazer o
+**comando pronto para colar no chat do Lovable**, no mesmo lugar e com o mesmo
+peso do bloco de SQL. Vale a mesma regra do SQL: mostrar na tela, por inteiro,
+sem abreviar e sem mandar abrir arquivo nenhum.
+
+O comando é um texto em bloco, endereçado ao Lovable, que:
+
+- lista **todas** as funções tocadas, separando as **novas** (primeiro deploy)
+  das **alteradas** (redeploy) — função alterada precisa de deploy igual à nova;
+  esquecer disso deixa banco novo conversando com código velho;
+- manda **publicar sem alterar código**, porque o Lovable tende a "melhorar" o
+  que encontra pela frente;
+- diz em uma linha o que quebra se aquela função não subir;
+- termina pedindo a confirmação de quais funções subiram.
+
+Modelo:
+
+```
+Faça o deploy das edge functions abaixo. NÃO altere nenhum código-fonte,
+NÃO refatore e NÃO crie migrations — apenas publique as funções.
+
+NOVAS (primeiro deploy):
+- supabase/functions/<nome>/index.ts — <o que quebra sem ela>
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/<nome>/index.ts — <o que quebra sem ela>
+
+Ao terminar, confirme quais funções foram publicadas.
+```
+
+Se eu estiver no terminal, o equivalente é
+`supabase functions deploy <nome> --project-ref ogkltfqvzweeqkfmrzts` — mas o
+padrão da resposta é o comando do Lovable, que é onde eu trabalho.
+
+Registrar a leva em `docs/DEPLOY-FUNCOES-PENDENTES.md` NÃO substitui mostrar o
+comando na resposta. O arquivo é o registro; o comando na tela é o que eu uso.
