@@ -55,6 +55,49 @@ export const MSG_FOTO_SOMENTE_IMAGEM =
  */
 export const ACCEPT_XML_NOTA_FISCAL = "text/xml,application/xml,.xml";
 
+/**
+ * O slot é de nota fiscal? Só nele o XML tem serventia — e só nele a tela pode
+ * dizer ao cliente que o XML serve.
+ *
+ * Existe porque, sem isso, a instrução da tela continuava dizendo apenas
+ * "Anexe o PDF ORIGINAL": a função de importar o XML estava pronta e NENHUM
+ * texto avisava o cliente de que ela existia. Foi o que aconteceu em 19/08 —
+ * o cliente ficou tentando o PDF porque era o que a tela mandava fazer.
+ */
+export function tipoAceitaXmlNotaFiscal(tipo: string | null | undefined): boolean {
+  const t = String(tipo || "").toLowerCase().trim();
+  if (!t) return false;
+  return t.includes("nota_fiscal") || /(^|_)nf(_|$)/.test(t);
+}
+
+/** Instrução do topo do Hub, conforme o que o slot aceita. */
+export function instrucaoAnexoPorTipo(tipo: string | null | undefined): string {
+  if (tipoAceitaImagem(tipo)) {
+    return "Envie a foto 3x4 já reenquadrada (JPG ou PNG) — a leitura automática confere e preenche os campos. Você só revisa antes de salvar.";
+  }
+  if (tipoAceitaXmlNotaFiscal(tipo)) {
+    return (
+      "Anexe o PDF ORIGINAL da nota — ou, melhor ainda, o arquivo XML que o emissor gera junto com ela: " +
+      "com o XML nós montamos o DANFE aqui, e a leitura sai exata. Print, foto ou digitalização não são aceitos."
+    );
+  }
+  return "Anexe o PDF ORIGINAL emitido pelo órgão — print, foto ou digitalização não são aceitos. A leitura automática identifica o tipo e preenche os campos; você só revisa antes de salvar.";
+}
+
+/**
+ * Recusa de arquivo que não é PDF. No slot de nota fiscal a mensagem aponta a
+ * saída que o cliente tem na mão: o XML.
+ */
+export function mensagemSomentePdf(tipo: string | null | undefined): string {
+  if (tipoAceitaXmlNotaFiscal(tipo)) {
+    return (
+      "Este arquivo não é um PDF. Na nota fiscal você pode anexar o PDF ORIGINAL da nota OU o arquivo XML " +
+      "(terminado em .xml) que o emissor gera junto com ela. Foto, print ou digitalização não são aceitos."
+    );
+  }
+  return MSG_SOMENTE_PDF_ORIGINAL;
+}
+
 /** `accept` do <input type="file"> conforme o tipo de documento. */
 export function acceptPorTipo(tipo: string | null | undefined): string {
   if (tipoAceitaImagem(tipo)) return "image/jpeg,image/png,image/webp";

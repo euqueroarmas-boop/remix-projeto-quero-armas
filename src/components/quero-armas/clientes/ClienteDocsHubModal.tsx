@@ -53,6 +53,9 @@ import {
 import {
   tipoAceitaImagem,
   acceptPorTipo,
+  instrucaoAnexoPorTipo,
+  mensagemSomentePdf,
+  // Segue em uso no caminho do Arsenal (auto-insert), que não converte XML.
   MSG_SOMENTE_PDF_ORIGINAL,
   MSG_FOTO_SOMENTE_IMAGEM,
 } from "@/lib/quero-armas/somentePdfOriginal";
@@ -4163,7 +4166,7 @@ export function ClienteDocsHubModal({
       const ehPdf = f.type === "application/pdf";
       const ehImagem = f.type.startsWith("image/");
       if (!aceitaImagem && !ehPdf) {
-        const id = toast.error(MSG_SOMENTE_PDF_ORIGINAL, {
+        const id = toast.error(mensagemSomentePdf(form.tipo_documento), {
           duration: Infinity,
           action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
         });
@@ -5427,9 +5430,7 @@ export function ClienteDocsHubModal({
                 Adicionar Documento
               </h2>
               <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-[#4A4A4A]">
-                {tipoAceitaImagem(form.tipo_documento)
-                  ? "Envie a foto 3x4 já reenquadrada (JPG ou PNG) — a leitura automática confere e preenche os campos. Você só revisa antes de salvar."
-                  : "Anexe o PDF ORIGINAL emitido pelo órgão — print, foto ou digitalização não são aceitos. A leitura automática identifica o tipo e preenche os campos; você só revisa antes de salvar."}
+                {instrucaoAnexoPorTipo(form.tipo_documento)}
               </p>
             </div>
 
