@@ -94,6 +94,23 @@ function rgDoCadastroPresenteNoTexto(texto: string, rgCadastro: unknown): boolea
   return t.includes(alvo);
 }
 
+/**
+ * Documento e cadastro trazem o MESMO RG?
+ *
+ * O RG de SP sai impresso com dígito verificador ("42357200-3") e o cadastro
+ * costuma guardar só o número ("42357200"). O DV é derivado do próprio número:
+ * não é outro RG, é o mesmo escrito por inteiro. A tolerância é essa e nada
+ * além dela — um lado é o outro mais UM caractere no fim. Dois RGs diferentes
+ * não se encaixam nisso, então isto não abre espaço para "parecido".
+ */
+function rgConfere(doDoc: string, doCadastro: string): boolean {
+  if (!doDoc || !doCadastro) return false;
+  if (doDoc === doCadastro) return true;
+  const [curto, longo] =
+    doDoc.length < doCadastro.length ? [doDoc, doCadastro] : [doCadastro, doDoc];
+  return longo.length === curto.length + 1 && longo.startsWith(curto);
+}
+
 /** A data de nascimento do cadastro aparece no texto, em dd/mm/aaaa? */
 function dataDoCadastroPresenteNoTexto(texto: string, dataCadastro: unknown): boolean {
   const iso = String(dataCadastro ?? "").slice(0, 10);
@@ -456,10 +473,16 @@ export function conferirCertidao(
     `O CPF na certidão não é o seu. Na certidão: ${doc.cpf}. No cadastro: ${cadastro.cpf}. Emita novamente com o CPF correto.`,
   );
 
+  // RG: o documento imprime o dígito verificador ("42357200-3") e o cadastro
+  // quase sempre guarda o número sem ele ("42357200"). É o MESMO RG — o DV é
+  // derivado do número, não outro número —, então comparar caractere a
+  // caractere recusaria a certidão certa. Ver `rgConfere`.
+  const rgDoDoc = String(doc.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  const rgDoCadastro = String(cadastro.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
   comparar(
     "rg",
-    String(doc.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(),
-    String(cadastro.rg ?? "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(),
+    rgDoDoc,
+    rgConfere(rgDoDoc, rgDoCadastro) ? rgDoDoc : rgDoCadastro,
     `O RG na certidão está diferente do cadastro. Na certidão: ${doc.rg}. No cadastro: ${cadastro.rg}. Emita novamente com o RG correto.`,
   );
 
