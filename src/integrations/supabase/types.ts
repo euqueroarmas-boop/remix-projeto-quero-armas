@@ -13832,6 +13832,10 @@ export type Database = {
         Args: { _categoria: string; _tipo: string }
         Returns: boolean
       }
+      qa_documento_do_mes: {
+        Args: { p_nome?: string; p_tipo: string }
+        Returns: boolean
+      }
       qa_documento_duplicado_por_arquivo: {
         Args: {
           p_customer_id?: string
@@ -14089,6 +14093,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      qa_manutencao_validade_documentos: { Args: never; Returns: Json }
       qa_marcar_contrato_ack: {
         Args: { _contract_id: string }
         Returns: undefined
@@ -14144,6 +14149,8 @@ export type Database = {
         Args: { p_processo_id: string }
         Returns: Json
       }
+      qa_prazo_certidao: { Args: { p_tipo: string }; Returns: number }
+      qa_preencher_validade_por_prazo_catalogo: { Args: never; Returns: number }
       qa_processo_definir_modalidade: {
         Args: { p_modalidade: string; p_processo_id: string }
         Returns: {
@@ -14207,6 +14214,10 @@ export type Database = {
         Returns: number
       }
       qa_realinhar_ordem_checklist: {
+        Args: { p_servico_id?: number }
+        Returns: number
+      }
+      qa_realinhar_validade_dias_checklist: {
         Args: { p_servico_id?: number }
         Returns: number
       }
