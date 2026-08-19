@@ -210,6 +210,22 @@ export function chaveNfeValida(chave: string): boolean {
   return dv === Number(c[43]);
 }
 
+/**
+ * Modelo da nota deduzido da CHAVE, e só dela.
+ *
+ * Existe porque o Golden Record guarda NFS-e e NF-e na mesma tabela e precisa
+ * saber qual é qual — inclusive nas linhas antigas, gravadas antes de haver
+ * coluna de modelo, onde a chave é a única evidência disponível.
+ *
+ * Regra: 44 dígitos é chave de NF-e / NFC-e (SEFAZ estadual); a chave da NFS-e
+ * do padrão nacional tem 50. A migration
+ * `20260819010000_nf_golden_record_modelo.sql` aplica ESTA MESMA regra em SQL —
+ * as duas não podem divergir.
+ */
+export function modeloPelaChave(chave?: string | null): ModeloNotaFiscalXml {
+  return digitos(chave).length === 44 ? "nfe" : "nfse";
+}
+
 /** O arquivo escolhido é um XML? (extensão ou MIME — celular varia). */
 export function ehArquivoXml(f: { name?: string; type?: string } | null | undefined): boolean {
   if (!f) return false;
@@ -523,7 +539,13 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
     };
   }
 
-  const prest = acha(infDPS, "prest") ?? acha(infNFSe, "emit");
+  // ── PRESTADOR: `emit` PRIMEIRO, `prest` como reserva ────────────────────
+  // No padrão nacional a DPS (`infDPS/prest`) declara apenas o CNPJ e a
+  // inscrição municipal de quem emite — nome, endereço e CEP são publicados
+  // pelo sistema nacional em `infNFSe/emit`. Lendo `prest` primeiro, o
+  // prestador saía sem nome e sem endereço, e a conferência de ocupação lícita
+  // ficava sem o que confrontar.
+  const prest = acha(infNFSe, "emit") ?? acha(infDPS, "prest");
   const toma = acha(infDPS, "toma") ?? acha(infNFSe, "toma");
   const serv = acha(base, "serv");
   const descricao = txtQualquer(serv, "xDescServ", "xDescricao");
@@ -649,8 +671,12 @@ export function camposCertidaoDaNotaXml(nota: NotaFiscalXml): CamposCertidao {
     valor_liquido: moedaBr(nota.valorTotal) || undefined,
     chave_acesso: nota.chave,
     data_emissao: nota.dataEmissao,
-    competencia: nota.competencia ?? nota.dataEmissao,
-    serie_dps: nota.serie,
+    // Competência e DPS existem SÓ na NFS-e do padrão nacional. Preenchê-las a
+    // partir de uma NF-e de mercadoria — usando a data de emissão como se
+    // fosse competência, ou a série da nota como se fosse série da DPS —
+    // fabricaria dado fiscal que a nota não tem.
+    competencia: nota.modelo === "nfse" ? nota.competencia : undefined,
+    serie_dps: nota.modelo === "nfse" ? nota.serie : undefined,
     municipio_emissor: nota.municipioEmissor?.toUpperCase(),
 
     prestador_inscricao_municipal: nota.emitente.inscricaoMunicipal,

@@ -5039,6 +5039,10 @@ export function ClienteDocsHubModal({
       // Golden Record da nota fiscal (grupo de ocupação lícita): tabela própria
       // com cabeçalho da DANFSe + descrição do serviço já parseada.
       if (conferenciaLocal?.doc?.orgao === "nota_fiscal") {
+        // Quando a nota entrou pelo XML sabemos o modelo com certeza; quando
+        // veio de PDF, o Golden Record deduz pela chave. NF-e e NFS-e dividem
+        // a tabela e não podem ficar indistinguíveis.
+        const notaDoXml = notaXmlRef.current?.nota;
         void salvarNotaFiscalGoldenRecord({
           campos: conferenciaLocal.doc,
           clienteId: qaClienteId ?? null,
@@ -5046,6 +5050,11 @@ export function ClienteDocsHubModal({
           // Texto integral do que foi lido. Quando a nota entrou pelo XML, é
           // ele que fica guardado — o registro de origem da leitura.
           textoBruto: conferenciaLocal.texto ?? null,
+          modelo: notaDoXml?.modelo ?? null,
+          naturezaOperacao: notaDoXml?.naturezaOperacao ?? null,
+          protocoloAutorizacao: notaDoXml?.protocolo ?? null,
+          serie: notaDoXml?.serie ?? null,
+          valorProdutos: notaDoXml?.valorProdutos ?? null,
         });
       }
       if (isStaff && novoDocId) {

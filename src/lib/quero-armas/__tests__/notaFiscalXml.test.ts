@@ -7,6 +7,7 @@ import {
   ehArquivoXml,
   enderecoEmLinha,
   lerNotaFiscalXml,
+  modeloPelaChave,
 } from "../notaFiscalXml";
 import {
   camposPlanosDaNotaXml,
@@ -230,6 +231,35 @@ describe("ponte com o Hub", () => {
     expect(campos.nome_completo).toBe("COMERCIO DE METAIS EXEMPLO LTDA");
     expect(campos.tomador_nome).toBeUndefined();
     expect(campos.tomador_endereco).toBeUndefined();
+  });
+
+  /**
+   * NF-e e NFS-e dividem `qa_nf_golden_records`, que nasceu só para a nota de
+   * SERVIÇO do padrão nacional. Sem separação, uma venda de sucata entraria na
+   * tabela como prestação de serviço, com competência e DPS que não existem.
+   */
+  it("não inventa competência nem DPS a partir de uma NF-e de mercadoria", () => {
+    const campos = camposCertidaoDaNotaXml(nota());
+    expect(campos.competencia).toBeUndefined();
+    expect(campos.serie_dps).toBeUndefined();
+    expect(campos.numero_dps).toBeUndefined();
+  });
+
+  it("a NFS-e continua trazendo competência e série da DPS", () => {
+    const servico = { ...nota(), modelo: "nfse" as const, competencia: "2026-08-01", serie: "1" };
+    const campos = camposCertidaoDaNotaXml(servico);
+    expect(campos.competencia).toBe("2026-08-01");
+    expect(campos.serie_dps).toBe("1");
+  });
+
+  it("modeloPelaChave separa os dois padrões pelo tamanho da chave", () => {
+    // 44 dígitos = NF-e/NFC-e da SEFAZ; a chave do padrão nacional de serviço
+    // tem 50. É a mesma regra aplicada em SQL na migration do Golden Record.
+    expect(modeloPelaChave(CHAVE)).toBe("nfe");
+    expect(modeloPelaChave("3526 0811 2223 3300 0181 5500 1000 0000 0113 0000 0020")).toBe("nfe");
+    expect(modeloPelaChave("3".repeat(50))).toBe("nfse");
+    expect(modeloPelaChave("")).toBe("nfse");
+    expect(modeloPelaChave(null)).toBe("nfse");
   });
 
   it("o texto do documento é classificado como nota fiscal, não como conta de consumo", () => {
