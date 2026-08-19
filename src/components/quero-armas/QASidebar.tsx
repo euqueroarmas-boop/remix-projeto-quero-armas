@@ -134,7 +134,9 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
     return true;
   };
 
-  const itemBase = "flex items-center rounded-lg text-[13px] font-medium transition-all";
+  // Celular: alvo de toque maior e cantos mais suaves. Desktop: o de sempre.
+  const itemBase =
+    "flex items-center font-medium transition-all rounded-xl text-[14px] md:rounded-lg md:text-[13px]";
 
   return (
     <aside
@@ -145,11 +147,12 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
          invertido é preto. Tokens em index.css ([data-qa-sidebar]). */
       data-nao-inverter
       className={[
-        "flex flex-col overflow-x-hidden overflow-y-auto border-r",
-        // CELULAR: fora do fluxo, deslizando pela esquerda. Não rouba largura
-        // do conteúdo — antes o trilho de ícones comia 68px de uma tela de 390.
-        "fixed left-0 top-0 z-50 h-dvh w-[17rem] transition-transform duration-200",
-        mobileAberto ? "translate-x-0 shadow-2xl" : "-translate-x-full",
+        // A casca não rola: rola só a lista de itens. Assim o cabeçalho (logo +
+        // fechar) e o rodapé (perfil + sair) ficam sempre à mão.
+        "flex flex-col overflow-hidden border-r",
+        // CELULAR: gaveta em TELA CHEIA. Fora do fluxo, deslizando pela esquerda.
+        "fixed left-0 top-0 z-50 h-dvh w-full transition-transform duration-300 ease-out",
+        mobileAberto ? "translate-x-0" : "-translate-x-full",
         // DESKTOP: volta a ser a coluna do grid, exatamente como era.
         "md:sticky md:z-auto md:h-screen md:w-[var(--qa-sb-w)] md:shrink-0",
         "md:translate-x-0 md:self-start md:shadow-none md:transition-[width]",
@@ -164,16 +167,37 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
            `align-self: start` sozinho não resolve: a linha continua dimensionada
            pela altura natural da sidebar. O que resolve é limitá-la a 100vh e
            dar rolagem própria. O sticky mantém o menu visível em telas longas. */
-        background: "var(--qa-sb-bg)",
+        background: "var(--qa-sb-shell, var(--qa-sb-bg))",
         borderColor: "var(--qa-sb-border)",
       }}
     >
-      <div className="py-3 flex flex-col">
-        {/* Header / toggle */}
+      {/* ---------- Cabeçalho do CELULAR ----------
+          Logo pequena à esquerda, botão de fechar redondo à direita. Sem a
+          linha "Inteligência Jurídica": em 390px ela virava um "I..." solto. */}
+      <div
+        className="flex items-center justify-between gap-3 border-b px-4 pb-3.5 md:hidden"
+        style={{
+          borderColor: "var(--qa-sb-divider)",
+          paddingTop: "max(0.875rem, env(safe-area-inset-top))",
+        }}
+      >
+        <QALogo linkTo={null} className="h-10 w-auto max-w-[120px] rounded-xl" />
+        <button
+          onClick={onFecharMobile}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border bg-[var(--qa-sb-hover-bg)] transition-transform active:scale-95"
+          style={{ borderColor: "var(--qa-sb-divider)", color: "var(--qa-sb-toggle)" }}
+          aria-label="Fechar menu"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* ---------- Cabeçalho do DESKTOP (inalterado) ---------- */}
+      <div className="hidden pt-3 md:block">
         {collapsed ? (
           <button
             onClick={toggleSidebar}
-            className="mx-auto mb-3 hidden h-9 w-9 items-center justify-center rounded-lg transition-colors md:flex"
+            className="mx-auto mb-3 flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
             style={{ color: "var(--qa-sb-toggle)" }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -185,14 +209,14 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
         ) : (
           <div className="px-4 pb-3 mb-1 border-b flex items-center justify-between" style={{ borderColor: "var(--qa-sb-divider)" }}>
             <div className="flex items-center gap-2.5 min-w-0">
-              <QALogo className="h-9 w-auto max-w-[110px] rounded-lg" />
+              <QALogo className="h-8 w-auto max-w-[96px] rounded-lg" />
               <div className="text-[10px] tracking-widest uppercase truncate" style={{ color: "var(--qa-sb-label)" }}>
                 Inteligência Jurídica
               </div>
             </div>
             <button
               onClick={toggleSidebar}
-              className="hidden h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors md:flex"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors"
               style={{ color: "var(--qa-sb-toggle)" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-toggle-hover-bg)"; }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -201,32 +225,24 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
             >
               <PanelLeftOpen className="h-4 w-4 rotate-180" />
             </button>
-            {/* Fechar a gaveta — só existe no celular. */}
-            <button
-              onClick={onFecharMobile}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors md:hidden"
-              style={{ color: "var(--qa-sb-toggle)" }}
-              aria-label="Fechar menu"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
         )}
+      </div>
 
-        {/* Nav groups */}
-        <nav className="overflow-x-hidden">
+      {/* ---------- Itens ---------- */}
+      <nav className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-2 md:py-0">
           {NAV_GROUPS.map(group => {
             const visibleItems = group.items.filter(i => canAccess(i.url));
             if (visibleItems.length === 0) return null;
             return (
               <div key={group.label} className={`py-1 ${collapsed ? "" : "px-1"}`}>
                 {!collapsed && (
-                  <div className="text-[10px] uppercase tracking-[0.15em] font-semibold px-4 py-1.5"
+                  <div className="px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] md:pt-1.5"
                     style={{ color: "var(--qa-sb-label)" }}>
                     {group.label}
                   </div>
                 )}
-                <ul className="flex flex-col gap-0.5">
+                <ul className="flex flex-col gap-1 md:gap-0.5">
                   {visibleItems.map(item => {
                     const active = isActive(item.url);
                     return (
@@ -234,7 +250,7 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
                         <Link
                           to={item.url}
                           title={collapsed ? item.title : undefined}
-                          className={`${itemBase} relative ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
+                          className={`${itemBase} relative ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-3 px-4 py-2.5 mx-2 md:gap-2.5 md:px-3 md:py-2 md:mx-1"}`}
                           style={{
                             background: active ? "var(--qa-sb-active-bg)" : "transparent",
                             color: active ? "var(--qa-sb-active-text)" : "var(--qa-sb-text)",
@@ -252,7 +268,15 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
                             }
                           }}
                         >
-                          <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{
+                          {/* Marcador do item ativo — só no celular, onde não há
+                              trilho lateral para dar a referência de posição. */}
+                          {active && !collapsed && (
+                            <span
+                              className="absolute left-1 top-1/2 h-6 w-1 -translate-y-1/2 rounded-full bg-[var(--qa-sb-accent)] md:hidden"
+                              aria-hidden
+                            />
+                          )}
+                          <item.icon className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-[18px] w-[18px] md:h-4 md:w-4"}`} style={{
                             color: active ? "var(--qa-sb-active-icon)" : "var(--qa-sb-icon)",
                           }} />
                           {!collapsed && <span className="truncate flex-1">{item.title}</span>}
@@ -275,27 +299,33 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
         </nav>
 
         {/* Footer: profile + back to site + logout */}
-        <div className={`pt-2 border-t ${collapsed ? "" : "px-1"}`} style={{ borderColor: "var(--qa-sb-divider)" }}>
+        <div
+          className={`shrink-0 border-t pt-2 ${collapsed ? "" : "px-1"}`}
+          style={{
+            borderColor: "var(--qa-sb-divider)",
+            paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
+          }}
+        >
           {!collapsed && (
-            <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1">
-              <div className="h-8 w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
+            <div className="mx-1 mb-1 flex items-center gap-3 rounded-xl bg-[var(--qa-sb-hover-bg)] px-3 py-3 md:mx-0 md:gap-2.5 md:rounded-none md:bg-transparent md:py-2.5">
+              <div className="h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-[12px] font-bold text-white md:h-8 md:w-8 md:text-[11px]"
                 style={{ background: "var(--qa-sb-accent)" }}>
                 {initials}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium truncate" style={{ color: "var(--qa-sb-name)" }}>{nome}</div>
-                <div className="text-[10px] capitalize" style={{ color: "var(--qa-sb-label)" }}>{perfil.replace(/_/g, " ")}</div>
+                <div className="truncate text-[13px] font-semibold md:text-xs md:font-medium" style={{ color: "var(--qa-sb-name)" }}>{nome}</div>
+                <div className="text-[11px] capitalize md:text-[10px]" style={{ color: "var(--qa-sb-label)" }}>{perfil.replace(/_/g, " ")}</div>
               </div>
             </div>
           )}
 
-          <ul className="flex flex-col gap-0.5 pb-1">
+          <ul className="flex flex-col gap-1 pb-1 md:gap-0.5">
             {/* Voltar para Home (site público) */}
             <li>
               <a
                 href="/"
                 title={collapsed ? "Voltar ao site" : undefined}
-                className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
+                className={`${itemBase} ${collapsed ? "justify-center w-9 h-9 mx-auto" : "gap-3 px-4 py-2.5 mx-2 md:gap-2.5 md:px-3 md:py-2 md:mx-1"}`}
                 style={{ color: "var(--qa-sb-text)" }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.background = "var(--qa-sb-hover-bg)";
@@ -306,7 +336,7 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
                   (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-text)";
                 }}
               >
-                <Home className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} style={{ color: "var(--qa-sb-icon)" }} />
+                <Home className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-[18px] w-[18px] md:h-4 md:w-4"}`} style={{ color: "var(--qa-sb-icon)" }} />
                 {!collapsed && <span>Voltar ao site</span>}
               </a>
             </li>
@@ -316,7 +346,7 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
               <button
                 onClick={signOut}
                 title={collapsed ? "Sair" : undefined}
-                className={`${itemBase} w-full ${collapsed ? "justify-center !w-9 h-9 mx-auto" : "gap-2.5 px-3 py-2 mx-1"}`}
+                className={`${itemBase} w-[calc(100%-1rem)] md:w-full ${collapsed ? "justify-center !w-9 h-9 mx-auto" : "gap-3 px-4 py-2.5 mx-2 md:gap-2.5 md:px-3 md:py-2 md:mx-1"}`}
                 style={{ color: "var(--qa-sb-icon)" }}
                 onMouseEnter={e => {
                   (e.currentTarget as HTMLElement).style.color = "var(--qa-sb-danger-text)";
@@ -327,13 +357,12 @@ export function QASidebar({ perfil, nome, signOut, mobileAberto = false, onFecha
                   (e.currentTarget as HTMLElement).style.background = "transparent";
                 }}
               >
-                <LogOut className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-4 w-4"}`} />
+                <LogOut className={`shrink-0 ${collapsed ? "h-5 w-5" : "h-[18px] w-[18px] md:h-4 md:w-4"}`} />
                 {!collapsed && <span>Sair</span>}
               </button>
             </li>
           </ul>
         </div>
-      </div>
     </aside>
   );
 }

@@ -291,6 +291,9 @@ html.qa-noite .qa-scope [class*="shadow"] { box-shadow: none; }
    ===================================================================== */
 [data-qa-sidebar] {
   --qa-sb-bg: hsl(0 0% 100%);
+  /* Fundo da casca do menu: degradê discreto, para a gaveta de tela cheia do
+     celular não ficar um retângulo chapado. Cai em --qa-sb-bg onde não existir. */
+  --qa-sb-shell: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 16% 98%) 100%);
   --qa-sb-border: hsl(220 13% 91%);
   --qa-sb-divider: hsl(220 13% 93%);
   --qa-sb-label: hsl(220 10% 62%);
@@ -312,6 +315,7 @@ html.qa-noite .qa-scope [class*="shadow"] { box-shadow: none; }
 /* Modo noturno: ícone branco, item ativo em grafite claro. */
 html.qa-noite [data-qa-sidebar] {
   --qa-sb-bg: hsl(240 6% 9%);
+  --qa-sb-shell: linear-gradient(180deg, hsl(240 6% 12%) 0%, hsl(240 6% 8%) 100%);
   --qa-sb-border: hsl(240 5% 18%);
   --qa-sb-divider: hsl(240 5% 16%);
   --qa-sb-label: hsl(240 4% 50%);
@@ -525,6 +529,10 @@ html {
   .qa-scope .text-xs        { font-size: 13px;   line-height: 1.4; }
 
   .qa-scope img, .qa-scope video, .qa-scope canvas { max-width: 100%; height: auto; }
+  /* Exceção: a logo do menu tem tamanho próprio. A regra genérica acima
+     (height:auto) vencia as classes utilitárias e a logo tomava a gaveta
+     inteira no celular. */
+  .qa-scope [data-qa-sidebar] img { height: 2.5rem; width: auto; max-width: 120px; }
   /* Palavras longas (e-mails, CPFs, protocolos) quebram em vez de empurrar o layout */
   .qa-scope p, .qa-scope span, .qa-scope h1, .qa-scope h2,
   .qa-scope h3, .qa-scope h4, .qa-scope td, .qa-scope th, .qa-scope li {
