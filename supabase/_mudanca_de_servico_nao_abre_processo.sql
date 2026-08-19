@@ -15,7 +15,7 @@
 -- ("Gerar processo") — esse caminho continua funcionando normalmente.
 --
 -- Nada é apagado: os processos que já nasceram assim viram 'cancelado' com
--- evento, e a solicitação volta a "contratado, processo não aberto".
+-- evento, e a solicitação volta a "processo não aberto".
 -- ============================================================================
 
 BEGIN;
@@ -48,9 +48,12 @@ UPDATE public.qa_processos p
    AND p.status IN ('aguardando_pagamento', 'aguardando_assinatura', 'aguardando_documentos');
 
 -- 4) A solicitação continua vendida, mas sem processo aberto -----------------
+-- `status_servico` fica como está: a máquina de status de qa_solicitacoes_servico
+-- não anda para trás (de 'aguardando_documentacao' só sai para 'em_verificacao'
+-- ou 'finalizado'), e forçar isso aqui seria furar a trava. O que precisa mudar
+-- é só o vínculo com o processo.
 UPDATE public.qa_solicitacoes_servico s
-   SET status_servico  = 'contratado',
-       status_processo = 'processo_nao_aberto',
+   SET status_processo = 'processo_nao_aberto',
        processo_id     = NULL,
        updated_at      = now()
  WHERE s.service_slug = 'mudanca-servico'
