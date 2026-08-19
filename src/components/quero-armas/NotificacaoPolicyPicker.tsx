@@ -50,34 +50,23 @@ export function NotificacaoPolicyPicker({
 
   return (
     <div
-      className={
-        "rounded-lg border border-neutral-300 bg-white p-4 text-neutral-900 " +
-        (className || "")
-      }
+      className={"qp-block " + (className || "")}
     >
-      <div className="mb-3 flex items-center gap-2">
-        <Bell className="h-4 w-4 text-neutral-700" />
-        <span className="text-xs font-bold uppercase tracking-wider text-neutral-700">
-          NOTIFICAR CLIENTE?
-        </span>
-        {acaoLabel ? (
-          <span className="ml-auto text-[10px] uppercase tracking-wider text-neutral-500">
-            {acaoLabel}
-          </span>
-        ) : null}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <Bell className="h-4 w-4 shrink-0" />
+        <span className="qp-block__title mb-0">Notificar cliente?</span>
+        {acaoLabel ? <span className="qp-eyebrow ml-auto">{acaoLabel}</span> : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           onClick={() =>
             onChange({ ...value, notificar_cliente: true, motivo_nao_notificar: "" })
           }
           className={
-            "flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold uppercase " +
-            (value.notificar_cliente
-              ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-              : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50")
+            "qp-optbtn " +
+            (value.notificar_cliente ? "qp-optbtn--ok" : "")
           }
         >
           <Bell className="h-4 w-4" /> Sim, notificar
@@ -92,10 +81,8 @@ export function NotificacaoPolicyPicker({
             })
           }
           className={
-            "flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm font-semibold uppercase " +
-            (!value.notificar_cliente
-              ? "border-red-700 bg-red-50 text-red-800"
-              : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50")
+            "qp-optbtn " +
+            (!value.notificar_cliente ? "qp-optbtn--danger" : "")
           }
         >
           <BellOff className="h-4 w-4" /> Não notificar
@@ -104,17 +91,11 @@ export function NotificacaoPolicyPicker({
 
       {value.notificar_cliente ? (
         <div className="mt-4 space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            CANAIS
-          </div>
+          <div className="qp-eyebrow">Canais</div>
           <label
             className={
-              "flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm " +
-              (emailDisabled
-                ? "cursor-not-allowed border-neutral-200 bg-neutral-50 text-neutral-400"
-                : value.canais.email
-                ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-                : "border-neutral-300 bg-white text-neutral-700")
+              "qp-chan " +
+              (emailDisabled ? "qp-chan--off" : value.canais.email ? "qp-chan--on" : "")
             }
           >
             <input
@@ -128,19 +109,14 @@ export function NotificacaoPolicyPicker({
                 })
               }
             />
-            <Mail className="h-4 w-4" />
-            <span className="font-semibold uppercase">E-MAIL</span>
-            <span className="ml-auto text-[11px] text-neutral-500">
-              {clienteEmail || "sem e-mail cadastrado"}
-            </span>
+            <Mail className="h-4 w-4 shrink-0" />
+            <span className="qp-chan__name">E-mail</span>
+            <span className="qp-chan__meta">{clienteEmail || "sem e-mail cadastrado"}</span>
           </label>
 
           <label
             className={
-              "flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm " +
-              (value.canais.whatsapp
-                ? "border-amber-600 bg-amber-50 text-amber-900"
-                : "border-neutral-300 bg-white text-neutral-700")
+              "qp-chan " + (value.canais.whatsapp ? "qp-chan--warn" : "")
             }
           >
             <input
@@ -153,19 +129,14 @@ export function NotificacaoPolicyPicker({
                 })
               }
             />
-            <MessageCircle className="h-4 w-4" />
-            <span className="font-semibold uppercase">WHATSAPP</span>
-            <span className="ml-auto text-[11px] text-amber-800">
-              PREPARADO (PROVEDOR PODE NÃO ESTAR CONFIGURADO)
-            </span>
+            <MessageCircle className="h-4 w-4 shrink-0" />
+            <span className="qp-chan__name">WhatsApp</span>
+            <span className="qp-chan__meta">preparado — provedor pode não estar configurado</span>
           </label>
 
           <label
             className={
-              "flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm " +
-              (value.canais.portal
-                ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-                : "border-neutral-300 bg-white text-neutral-700")
+              "qp-chan " + (value.canais.portal ? "qp-chan--on" : "")
             }
           >
             <input
@@ -178,28 +149,24 @@ export function NotificacaoPolicyPicker({
                 })
               }
             />
-            <Monitor className="h-4 w-4" />
-            <span className="font-semibold uppercase">PORTAL (SINO DO CLIENTE)</span>
+            <Monitor className="h-4 w-4 shrink-0" />
+            <span className="qp-chan__name">Portal (sino do cliente)</span>
           </label>
         </div>
       ) : (
         <div className="mt-4 space-y-2">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            MOTIVO PARA NÃO NOTIFICAR (MÍNIMO 20 CARACTERES)
-          </div>
+          <div className="qp-eyebrow">Motivo para não notificar (mínimo 20 caracteres)</div>
           <textarea
             value={value.motivo_nao_notificar}
             onChange={(e) =>
               onChange({ ...value, motivo_nao_notificar: e.target.value.toUpperCase() })
             }
             rows={3}
-            className="w-full rounded border border-neutral-300 bg-white p-2 text-sm uppercase text-neutral-900 focus:outline-none focus:ring-1 focus:ring-red-700"
+            className="qp-input qp-input--caps"
             placeholder="EX: TESTE ADMINISTRATIVO, CLIENTE JÁ CONTACTADO POR WHATSAPP INTERNO..."
           />
           <div
-            className={
-              "text-[11px] " + (motivoInvalido ? "text-red-700" : "text-neutral-500")
-            }
+            className={"qp-counter " + (motivoInvalido ? "text-red-700" : "")}
           >
             {value.motivo_nao_notificar.trim().length}/20 caracteres
           </div>
