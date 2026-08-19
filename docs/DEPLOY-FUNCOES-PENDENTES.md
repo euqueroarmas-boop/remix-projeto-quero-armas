@@ -3,6 +3,35 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
+## 🟠 PENDENTE — Leva 10 · Concessão de CR (serviço 44)
+
+Aberta em 19/08/2026.
+
+**Migrations — aplicar nesta ordem:**
+
+| Arquivo | O que faz | Estado |
+|---|---|---|
+| `20260819030000_concessao_cr_checklist_in311` | Monta o checklist do CR pela IN 311/2025 | ✅ aplicada — 47 exigências ativas, nenhuma sem grupo |
+| `20260819040000_modalidade_cac_vem_da_compra` | Modalidade CAC passa a vir do item comprado; a pergunta ao cliente sai do checklist | ✅ aplicada — 46 exigências ativas |
+| `20260819050000_concessao_cr_e_atirador_esportivo` | Marca `concessao-cr` como atirador desportivo | ✅ aplicada — `modalidade_cac = atirador` |
+| `20260819060000_cr_nome_explicito_e_backfill_modalidade` | Nome explícito na vitrine + modalidade nos processos de CR abertos | ✅ aplicada |
+| `20260819070000_cr_completa_checklist_dos_processos_abertos` | Completa o checklist dos 2 processos de CR abertos que nasceram com a versão antiga | ⬜ **a aplicar** |
+
+**Edge functions:**
+
+| Função | Estado |
+|---|---|
+| `qa-processo-responder-pergunta` | **ALTERADA e depois revertida** — voltou ao conteúdo publicado. Nada a fazer. |
+
+Não há função nova para publicar nesta leva. A `qa-processo-set-modalidade`
+chegou a ser escrita e foi removida antes de qualquer deploy: a modalidade não
+é escolha do cliente, é carimbo do gatilho de banco.
+
+**Conferência depois das migrations:** criar um processo de CR e verificar que
+`qa_processos.modalidade` nasce como `atirador`, sem ninguém escolher nada.
+
+---
+
 > **NÃO HÁ NADA PENDENTE.** As 9 levas estão publicadas e as 9 migrations
 > aplicadas e conferidas. Este documento vira registro histórico: use-o como
 > modelo quando houver uma leva nova.

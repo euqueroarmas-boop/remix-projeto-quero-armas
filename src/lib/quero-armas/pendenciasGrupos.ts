@@ -164,6 +164,11 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t.startsWith("declaracao_habitualidade") ||
     t.startsWith("declaracao_compromisso_treino") ||
     t.startsWith("declaracao_compromisso_habitualidade") ||
+    // Caçador excepcional: a habilitação do Ibama é o que prova a atividade,
+    // como a filiação prova a do atirador. Sem esta linha ela caía em
+    // "Fechamento" e o cliente do CR de caça nunca era cobrado dela.
+    t === "habilitacao_cacador_ibama" ||
+    t.startsWith("habilitacao_cacador") ||
     t === "gt_declaracao" ||
     t.startsWith("gt_")
   ) {
