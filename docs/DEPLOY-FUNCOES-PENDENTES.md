@@ -15,7 +15,8 @@ Aberta em 19/08/2026.
 | `20260819040000_modalidade_cac_vem_da_compra` | Modalidade CAC passa a vir do item comprado; a pergunta ao cliente sai do checklist | ✅ aplicada — 46 exigências ativas |
 | `20260819050000_concessao_cr_e_atirador_esportivo` | Marca `concessao-cr` como atirador desportivo | ✅ aplicada — `modalidade_cac = atirador` |
 | `20260819060000_cr_nome_explicito_e_backfill_modalidade` | Nome explícito na vitrine + modalidade nos processos de CR abertos | ✅ aplicada |
-| `20260819070000_cr_completa_checklist_dos_processos_abertos` | Completa o checklist dos 2 processos de CR abertos que nasceram com a versão antiga | ⬜ **a aplicar** |
+| `20260819070000_cr_completa_checklist_dos_processos_abertos` | Completa o checklist dos 2 processos de CR abertos que nasceram com a versão antiga | ✅ aplicada — 35 e 39 exigências |
+| `20260819080000_cr_dega_sempre_e_segundo_endereco_declarado` | DEGA sempre obrigatória + declaração positiva/negativa do 2º endereço (achado dos 4 dossiês deferidos) | ⬜ **a aplicar** |
 
 **Edge functions:**
 

@@ -52,6 +52,10 @@ const TIPOS_CONCESSAO_CR = [
   "dsa_declaracao_seguranca_acervo",
   "pergunta_segundo_endereco_acervo",
   "declaracao_endereco_acervo",
+  // Achado dos 4 dossiês deferidos (19/08): DEGA é sempre entregue, e o
+  // segundo endereço sempre gera declaração — positiva ou negativa.
+  "declaracao_guarda_acervo_2enderecos",
+  "declaracao_nao_possuir_segundo_endereco",
   "exames_instituicao_definir",
   "atestado_aptidao_psicologica_instituicao",
   "atestado_capacidade_tecnica_instituicao",
