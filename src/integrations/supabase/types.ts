@@ -9551,8 +9551,11 @@ export type Database = {
           id: string
           itens_servico: Json
           local_prestacao: string | null
+          modelo: string
           municipio_emissor: string | null
           municipio_incidencia_issqn: string | null
+          natureza_operacao: string | null
+          numero_documento: string | null
           numero_dps: string | null
           numero_nfse: string | null
           pais_prestacao: string | null
@@ -9567,7 +9570,9 @@ export type Database = {
           prestador_simples_nacional: string | null
           prestador_telefone: string | null
           processo_documento_id: string | null
+          protocolo_autorizacao: string | null
           retencao_issqn: string | null
+          serie: string | null
           serie_dps: string | null
           texto_bruto: string | null
           tomador_cep: string | null
@@ -9581,6 +9586,7 @@ export type Database = {
           tributacao_issqn: string | null
           updated_at: string
           valor_liquido: number | null
+          valor_produtos: number | null
           valor_servico: number | null
         }
         Insert: {
@@ -9597,8 +9603,11 @@ export type Database = {
           id?: string
           itens_servico?: Json
           local_prestacao?: string | null
+          modelo?: string
           municipio_emissor?: string | null
           municipio_incidencia_issqn?: string | null
+          natureza_operacao?: string | null
+          numero_documento?: string | null
           numero_dps?: string | null
           numero_nfse?: string | null
           pais_prestacao?: string | null
@@ -9613,7 +9622,9 @@ export type Database = {
           prestador_simples_nacional?: string | null
           prestador_telefone?: string | null
           processo_documento_id?: string | null
+          protocolo_autorizacao?: string | null
           retencao_issqn?: string | null
+          serie?: string | null
           serie_dps?: string | null
           texto_bruto?: string | null
           tomador_cep?: string | null
@@ -9627,6 +9638,7 @@ export type Database = {
           tributacao_issqn?: string | null
           updated_at?: string
           valor_liquido?: number | null
+          valor_produtos?: number | null
           valor_servico?: number | null
         }
         Update: {
@@ -9643,8 +9655,11 @@ export type Database = {
           id?: string
           itens_servico?: Json
           local_prestacao?: string | null
+          modelo?: string
           municipio_emissor?: string | null
           municipio_incidencia_issqn?: string | null
+          natureza_operacao?: string | null
+          numero_documento?: string | null
           numero_dps?: string | null
           numero_nfse?: string | null
           pais_prestacao?: string | null
@@ -9659,7 +9674,9 @@ export type Database = {
           prestador_simples_nacional?: string | null
           prestador_telefone?: string | null
           processo_documento_id?: string | null
+          protocolo_autorizacao?: string | null
           retencao_issqn?: string | null
+          serie?: string | null
           serie_dps?: string | null
           texto_bruto?: string | null
           tomador_cep?: string | null
@@ -9673,6 +9690,7 @@ export type Database = {
           tributacao_issqn?: string | null
           updated_at?: string
           valor_liquido?: number | null
+          valor_produtos?: number | null
           valor_servico?: number | null
         }
         Relationships: []
