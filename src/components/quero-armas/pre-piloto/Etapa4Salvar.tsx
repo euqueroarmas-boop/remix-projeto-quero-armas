@@ -260,7 +260,9 @@ async function atualizarCadastroExistente(
   if (updateError || !salvo) {
     throw new Error(updateError?.message || motivo || "Falha ao atualizar o cadastro único do cliente");
   }
-  return salvo as Record<string, unknown>;
+  // `from("qa_clientes" as any)` derruba a inferência do supabase-js: o retorno
+  // vira SelectQueryError e o cast direto não compila. Passa por `unknown`.
+  return salvo as unknown as Record<string, unknown>;
 }
 
 function sanitizeFileName(name: string): string {
