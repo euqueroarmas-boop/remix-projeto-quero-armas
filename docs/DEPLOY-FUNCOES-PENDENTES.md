@@ -3,6 +3,30 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
+## 🟠 PENDENTE — Leva 10 · Concessão de CR (serviço 44)
+
+Aberta em 19/08/2026. A migration `20260819030000_concessao_cr_checklist_in311`
+**já foi aplicada e conferida** (47 exigências ativas no serviço 44, nenhuma sem
+grupo). Falta publicar a edge function:
+
+| Função | Chamada por | Ator | Estado |
+|---|---|---|---|
+| `qa-processo-set-modalidade` | portal do cliente, ao responder "Qual atividade você vai registrar no seu CR?" | cliente ou equipe | **NOVA — precisa de Publish** |
+| `qa-processo-responder-pergunta` | portal do cliente | cliente ou equipe | **ALTERADA** — passa a recusar `modalidade_cac`, para a resposta não desviar da função acima |
+
+Sem essas duas publicadas, o cliente do CR escolhe a atividade e nada acontece:
+a modalidade não é gravada e as exigências de atirador/caçador (filiação,
+compromisso de habitualidade, documento do Ibama) não entram no checklist.
+
+`verify_jwt` fica no padrão (`true`), igual às irmãs `qa-processo-set-condicao`
+e `qa-processo-responder-pergunta` — nenhuma entrada nova em `config.toml`.
+
+**Conferência depois do Publish:** abrir um processo de CR no portal, responder
+a atividade e verificar que o evento `pergunta_respondida` com
+`via: qa-processo-set-modalidade` aparece em `qa_processo_eventos`.
+
+---
+
 > **NÃO HÁ NADA PENDENTE.** As 9 levas estão publicadas e as 9 migrations
 > aplicadas e conferidas. Este documento vira registro histórico: use-o como
 > modelo quando houver uma leva nova.
