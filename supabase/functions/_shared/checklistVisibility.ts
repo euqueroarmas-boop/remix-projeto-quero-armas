@@ -74,9 +74,14 @@ export function itemVisivelGuia(
 export function ehExigenciaEtapaFinal(d: ChecklistItemLike): boolean {
   if (d?.regra_validacao?.etapa_final === true) return true;
   // Rede de segurança para bases onde a marca ainda não foi aplicada.
-  return ["credencial_gov_br", "senha_gov_br", "acesso_gov_br", "juntada_assinada"].includes(
-    String(d?.tipo_documento ?? "").trim().toLowerCase(),
-  );
+  // A GRU entrou aqui em 19/08/2026: pagar a taxa é ato do dia do protocolo,
+  // não pré-requisito para o processo ficar pronto. Contá-la como pendência
+  // criaria o mesmo impasse circular do gov.br e da juntada.
+  // ESPELHO de src/lib/quero-armas/etapaFinalProtocolo.ts.
+  return [
+    "gru", "gru_boleto", "gru_comprovante", "gru_paga",
+    "credencial_gov_br", "senha_gov_br", "acesso_gov_br", "juntada_assinada",
+  ].includes(String(d?.tipo_documento ?? "").trim().toLowerCase());
 }
 
 export function itemContaParaConclusao(
