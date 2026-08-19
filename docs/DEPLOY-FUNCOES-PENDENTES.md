@@ -250,3 +250,18 @@ continuam contando isso como pendência — o processo nunca chega a
 ALTERADAS (redeploy obrigatório):
 - supabase/functions/qa-processo-checar-conclusao-checklist/index.ts
 - supabase/functions/qa-processo-etapa-auto-liberar/index.ts
+
+## Leva 12 — aviso de recusa volta a chegar ao portal do cliente (19/08/2026)
+
+Motivo: as duas funções gravavam em `qa_notificacoes_cliente` um valor de
+`urgencia` que a tabela não aceita (`alta` e `atencao`, contra o CHECK que só
+admite `urgente`/`normal`). O banco recusava a linha, o try/catch engolia o
+erro e o cliente nunca via o aviso — enquanto a equipe recebia o espelho na
+Central de Notificação normalmente. Sem o redeploy, o front publicado continua
+conversando com as funções velhas e o aviso segue sumindo.
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/qa-notify-event/index.ts — sem ela, certidão recusada e
+  documento recusado continuam sem avisar o cliente no portal.
+- supabase/functions/qa-inatividade-cobranca/index.ts — sem ela, o lembrete de
+  processo parado continua sem aparecer no portal.
