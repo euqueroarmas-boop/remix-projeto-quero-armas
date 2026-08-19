@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun } from "lucide-react";
+import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
+import { estadoPeticao, pecasPorProcesso, type EstadoPeticao, type PecaDoProcesso, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
@@ -79,7 +80,7 @@ const SORT_KEYS_VALIDAS: readonly string[] = [
   "dias_parado", "cobrancas", "criado_em", "online", "efetiva", "protocolo",
 ];
 const CONTADORES_VALIDOS: readonly string[] = [
-  "todos", "online", "pronto", "analise", "pendencia", "parado", "bloqueado",
+  "todos", "online", "pronto", "peticao", "analise", "pendencia", "parado", "bloqueado",
 ];
 
 function lerOrdemSalva(): { key: string; asc: boolean } | null {
@@ -194,7 +195,7 @@ function LinhaTopo({ children, className = "" }: { children: React.ReactNode; cl
   return <div className={`min-h-[22px] leading-[22px] ${className}`}>{children}</div>;
 }
 
-type ContadorKey = "todos" | "online" | "pronto" | "analise" | "pendencia" | "parado" | "bloqueado";
+type ContadorKey = "todos" | "online" | "pronto" | "peticao" | "analise" | "pendencia" | "parado" | "bloqueado";
 
 /** "3 HOJE · 12 NO TOTAL" — leitura de quantas vezes o cliente entrou no portal. */
 function fmtEntradas(a?: { hoje: number; total: number }) {
@@ -269,12 +270,29 @@ function LinhaGrupos({ r }: { r: Row }) {
   );
 }
 
+/** Cor real de cada tom semântico da fase da petição. */
+const CORES_TOM_PETICAO: Record<TomPeticao, { cor: string; fundo: string }> = {
+  verde: { cor: VERDE, fundo: VERDE_BG },
+  ambar: { cor: AMBAR, fundo: AMBAR_BG },
+  vermelho: { cor: VERMELHO, fundo: VERMELHO_BG },
+  neutro: { cor: TINTA_2, fundo: "var(--qa-chip-bg)" },
+};
+
+/** Chip da fase da PET — só aparece para quem já chegou nela. */
+function ChipPeticao({ estado }: { estado: EstadoPeticao | null | undefined }) {
+  if (!estado) return null;
+  const { cor, fundo } = CORES_TOM_PETICAO[estado.tom];
+  return <Chip cor={cor} fundo={fundo} titulo={estado.descricao}><PenTool className="h-3 w-3" />{estado.label}</Chip>;
+}
+
 export default function DashboardProgressoClientes() {
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>(() => (lerOrdemSalva()?.key as SortKey) ?? "dias_parado");
   const [asc, setAsc] = useState<boolean>(() => lerOrdemSalva()?.asc ?? false);
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
+  /** Peças por processo — de onde sai a fase da PET no card. */
+  const [pecas, setPecas] = useState<Record<string, PecaDoProcesso[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
     try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
   });
@@ -479,7 +497,7 @@ export default function DashboardProgressoClientes() {
         }
 
         if (ids.length > 0) {
-          const [{ data: docs }, { data: procs }] = await Promise.all([
+          const [{ data: docs }, { data: procs }, { data: pecasDoc }] = await Promise.all([
             supabase
               .from("qa_processo_documentos")
               .select("processo_id, tipo_documento, status")
@@ -488,7 +506,13 @@ export default function DashboardProgressoClientes() {
               .from("qa_processos")
               .select("id, condicao_profissional")
               .in("id", ids),
+            // Fase da PET: a vida da peça vive em outra tabela e nunca chegava ao card.
+            supabase
+              .from("qa_geracoes_pecas")
+              .select("processo_id, status_cliente")
+              .in("processo_id", ids),
           ]);
+          if (!cancelled) setPecas(pecasPorProcesso((pecasDoc ?? []) as PecaDoProcesso[]));
           const condicaoPorProcesso: Record<string, string | null> = {};
           for (const p of ((procs as any[]) ?? [])) condicaoPorProcesso[p.id] = p.condicao_profissional ?? null;
 
@@ -524,6 +548,7 @@ export default function DashboardProgressoClientes() {
       .channel("painel-progresso-clientes")
       .on("postgres_changes", { event: "*", schema: "public", table: "qa_processo_documentos" }, () => { void carregar(); })
       .on("postgres_changes", { event: "*", schema: "public", table: "qa_processos" }, () => { void carregar(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "qa_geracoes_pecas" }, () => { void carregar(); })
       .subscribe();
 
     return () => {
@@ -565,6 +590,13 @@ export default function DashboardProgressoClientes() {
     return mapa;
   }, [rows, trilhas]);
 
+  /** Fase da PET por processo: null = ainda não chegou lá. */
+  const peticoes = useMemo(() => {
+    const mapa: Record<string, EstadoPeticao | null> = {};
+    for (const r of rows) mapa[r.processo_id] = estadoPeticao(r, pecas[r.processo_id] ?? []);
+    return mapa;
+  }, [rows, pecas]);
+
   const contadores = useMemo(() => {
     const ativos = rows.filter((r) => !r.bloqueado_por_prerequisito);
     const pronto = ativos.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs).length;
@@ -573,8 +605,15 @@ export default function DashboardProgressoClientes() {
     const parado = ativos.filter((r) => r.dias_parado >= 15).length;
     const bloqueado = rows.filter((r) => !!r.bloqueado_por_prerequisito).length;
     const online = ativos.filter((r) => !!r.online).length;
-    return { todos: ativos.length, online, pronto, analise, pendencia, parado, bloqueado };
-  }, [rows]);
+    const naPeticao = ativos.filter((r) => !!peticoes[r.processo_id]);
+    const peticao = naPeticao.length;
+    const petComCliente = naPeticao.filter((r) => peticoes[r.processo_id]?.id === "com_cliente").length;
+    const petComEquipe = naPeticao.filter((r) => {
+      const id = peticoes[r.processo_id]?.id;
+      return id === "aguardando_equipe" || id === "redigida" || id === "devolvida";
+    }).length;
+    return { todos: ativos.length, online, pronto, peticao, petComCliente, petComEquipe, analise, pendencia, parado, bloqueado };
+  }, [rows, peticoes]);
 
   const filtradas = useMemo(() => {
     // Processos "aguardando etapa anterior" só aparecem quando o filtro BLOQUEADOS está ativo.
@@ -585,6 +624,7 @@ export default function DashboardProgressoClientes() {
     switch (contador) {
       case "online": base = base.filter((r) => !!r.online); break;
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
+      case "peticao": base = base.filter((r) => !!peticoes[r.processo_id]); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
       case "pendencia": base = base.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0); break;
       case "parado": base = base.filter((r) => r.dias_parado >= 15); break;
@@ -592,7 +632,7 @@ export default function DashboardProgressoClientes() {
       default: break;
     }
     return base;
-  }, [rows, trilhasEfetivas, filtroTrilha, contador, modoCred, credPorCliente]);
+  }, [rows, trilhasEfetivas, filtroTrilha, contador, modoCred, credPorCliente, peticoes]);
 
   const ordenadas = useMemo(() => {
     const val = (r: Row) => {
@@ -705,11 +745,12 @@ export default function DashboardProgressoClientes() {
       </div>
 
       {/* CONTADORES VISUAIS — clicáveis como filtro */}
-      <div className="px-4 py-3 border-b border-[var(--qa-linha)] grid grid-cols-3 md:grid-cols-10 gap-2">
+      <div className="px-4 py-3 border-b border-[var(--qa-linha)] grid grid-cols-3 md:grid-cols-11 gap-2">
         {([
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "var(--qa-chip-bg)" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
           { k: "pronto", label: "PRONTOS", v: contadores.pronto, cor: VERDE, fundo: VERDE_BG },
+          { k: "peticao", label: "NA PETIÇÃO", v: contadores.peticao, cor: TINTA, fundo: "var(--qa-chip-bg)" },
           { k: "analise", label: "EM ANÁLISE", v: contadores.analise, cor: AMBAR, fundo: AMBAR_BG },
           { k: "pendencia", label: "COM PENDÊNCIA", v: contadores.pendencia, cor: AMBAR, fundo: AMBAR_BG },
           { k: "parado", label: "PARADOS 15+", v: contadores.parado, cor: VERMELHO, fundo: VERMELHO_BG },
@@ -733,6 +774,12 @@ export default function DashboardProgressoClientes() {
             <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: TINTA_3 }}>
               {c.label}
             </div>
+            {c.k === "peticao" && (
+              <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
+                <div>{contadores.petComEquipe} COM A EQUIPE</div>
+                <div>{contadores.petComCliente} COM O CLIENTE</div>
+              </div>
+            )}
             {c.k === "online" && (
               <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
                 <div>{acessosGlobais.hoje} ACESSOS HOJE</div>
@@ -972,6 +1019,7 @@ export default function DashboardProgressoClientes() {
                       {passoAtual(r) ? ` ${passoAtual(r)!.atual}/${passoAtual(r)!.total}` : ""}
                     </Chip>
                   )}
+                  <ChipPeticao estado={peticoes[r.processo_id]} />
                   <LinhaGrupos r={r} />
                   {retroativas[r.processo_id] && (
                     <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
@@ -1143,6 +1191,9 @@ export default function DashboardProgressoClientes() {
                       ) : (
                         <div>
                           <LinhaTopo><Chip cor={TINTA} fundo="var(--qa-chip-bg)">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
+                          {peticoes[r.processo_id] && (
+                            <div className="mt-1"><ChipPeticao estado={peticoes[r.processo_id]} /></div>
+                          )}
                           <div className="mt-1"><LinhaGrupos r={r} /></div>
                           {retroativas[r.processo_id] && (
                             <div className="mt-1">
