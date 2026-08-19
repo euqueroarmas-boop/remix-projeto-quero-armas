@@ -49,6 +49,34 @@ describe("descricaoDoArquivo — o que distingue PDF de XML na tela", () => {
       .toBe("Arquivo enviado: arquivo — formato desconhecido.");
   });
 
+  /**
+   * REGRESSÃO 19/08/2026, 00h08. A trilha do próprio caso registrou:
+   *
+   *     Arquivo enviado: Nota.gilson — GILSON, 235 KB.
+   *
+   * O ponto no meio do nome não é extensão, e anunciar o sobrenome do cliente
+   * como formato de arquivo confunde quem lê e não informa nada.
+   */
+  it("ponto no meio do nome não vira formato", () => {
+    expect(descricaoDoArquivo({ name: "Nota.gilson", type: "", size: 240708 }))
+      .toBe("Arquivo enviado: Nota.gilson — formato desconhecido, 235 KB.");
+    expect(descricaoDoArquivo({ name: "Contrato.assinado", type: "", size: 1024 }))
+      .toBe("Arquivo enviado: Contrato.assinado — formato desconhecido, 1 KB.");
+  });
+
+  it("extensão de verdade continua sendo mostrada", () => {
+    expect(descricaoDoArquivo({ name: "planilha.xlsx", type: "", size: 10 })).toContain("XLSX");
+    expect(descricaoDoArquivo({ name: "assinatura.p7s", type: "", size: 10 })).toContain("P7S");
+  });
+
+  it("o conteúdo real vence o nome — nome enganoso com MIME certo", () => {
+    // O celular pode entregar nome torto, mas quando informa o tipo, ele manda.
+    expect(descricaoDoArquivo({ name: "Nota.gilson", type: "application/pdf", size: 10 }))
+      .toContain("PDF");
+    expect(descricaoDoArquivo({ name: "Documento de gilson", type: "text/xml", size: 10 }))
+      .toContain("XML");
+  });
+
   it("aguenta arquivo sem nome e ausência de arquivo", () => {
     expect(descricaoDoArquivo({ name: "", type: "application/pdf", size: 10 }))
       .toContain("sem nome");

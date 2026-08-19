@@ -98,9 +98,24 @@ function formatoDoArquivo(f: { name?: string | null; type?: string | null }): st
   if (mime.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "heic"].includes(ext)) {
     return `imagem${ext ? ` ${ext.toUpperCase()}` : ""}`;
   }
-  if (ext) return ext.toUpperCase();
+  // Só uma extensão DE VERDADE vira rótulo de formato.
+  //
+  // Sem esta lista, um arquivo chamado "Nota.gilson" saía como "formato
+  // GILSON" — aconteceu na trilha do próprio caso, em 19/08 00h08. O ponto no
+  // meio do nome não é extensão coisa nenhuma, e anunciar o sobrenome do
+  // cliente como formato de arquivo confunde quem lê e não informa nada.
+  if (EXTENSOES_CONHECIDAS.has(ext)) return ext.toUpperCase();
   return mime || "formato desconhecido";
 }
+
+/** Extensões que o Hub reconhece como formato de documento. */
+const EXTENSOES_CONHECIDAS = new Set([
+  "doc", "docx", "odt", "rtf", "txt",
+  "xls", "xlsx", "ods", "csv",
+  "zip", "rar", "7z",
+  "p7s", "pfx", "p12",
+  "html", "htm", "json",
+]);
 
 function tamanhoLegivel(bytes?: number | null): string {
   if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return "";
