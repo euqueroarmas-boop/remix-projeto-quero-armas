@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { AgendarExameModal } from "./AgendarExame/AgendarExameModal";
 
 import { agruparDocumentosPorFamilia, familiaDocumento } from "@/lib/quero-armas/documentosAgrupamento";
+import OndeEstaSeuProcesso from "./OndeEstaSeuProcesso";
 import { diasAteBRT, faixaVencimento } from "@/lib/quero-armas/validadeDocumento";
 import { documentoSobGestaoDeAlerta, instrucaoAindaExigida } from "@/lib/quero-armas/gestaoAlertaDocumento";
 
@@ -1034,6 +1035,20 @@ export default function ClienteResumoKanban({
         </div>
 
         <div className="qa-client-summary-print__cards-scroll">
+        {/* ── ONDE ESTÁ O SEU PROCESSO ────────────────────────────────────
+            Vem ANTES do aviso de vencimento, de propósito. Quando o cliente
+            termina de entregar tudo, a lista de pendências esvazia e a granada
+            para de piscar — e a primeira coisa que ele via continuava sendo um
+            alerta vermelho mandando renovar certidão. Nada dizia que o processo
+            existe, que chegou e que alguém está olhando. Ele lê isso como
+            abandono, e liga. */}
+        <div className="mb-4">
+          <OndeEstaSeuProcesso
+            processos={processos}
+            processoDocs={processoDocs}
+            onAbrirProcesso={onOpenProtocolo}
+          />
+        </div>
         {(() => {
           // Mobile: sem documento crítico, não renderiza o banner vazio.
           if (isMobile && !activeUrgent) return null;
