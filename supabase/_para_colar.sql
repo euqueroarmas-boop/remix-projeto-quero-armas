@@ -75,12 +75,37 @@ ON CONFLICT (tipo_documento) DO UPDATE
 -- Uma linha por exigência. O `regra_validacao` carrega o grupo do checklist
 -- guiado (o mesmo vocabulário de `pendenciasGrupos.ts`) e é MESCLADO com o que
 -- já estiver gravado.
-WITH exigencias(
-  tipo_documento, nome_documento, etapa, ordem, obrigatorio, escopo,
-  condicao_profissional, condicao_modalidade, validade_dias,
-  grupo_checklist, ordem_grupo, orgao_emissor, instrucoes, observacoes_cliente
-) AS (
-  VALUES
+--
+-- POR QUE NÃO É UM `INSERT ... ON CONFLICT DO UPDATE`:
+-- a tabela tem o gatilho `qa_trg_sd_sem_sobreposicao`, que proíbe duas linhas
+-- ATIVAS do mesmo tipo cobrindo a mesma condição profissional. Em Postgres o
+-- gatilho de BEFORE INSERT roda ANTES de o ON CONFLICT decidir atualizar —
+-- então toda exigência que já existia no serviço 44 (identidade, certidões,
+-- laudos) estourava CONDICAO_SOBREPOSTA contra ela mesma, antes de chegar no
+-- update. A separação abaixo resolve: primeiro ATUALIZA o que já existe,
+-- depois INSERE só o que falta. Assim o gatilho só é acionado por linha
+-- realmente nova, que é o caso que ele existe para vigiar.
+--
+-- A tabela temporária evita repetir a lista inteira duas vezes e some sozinha
+-- no COMMIT.
+CREATE TEMP TABLE cr_exigencias (
+  tipo_documento        text,
+  nome_documento        text,
+  etapa                 text,
+  ordem                 integer,
+  obrigatorio           boolean,
+  escopo                text,
+  condicao_profissional text,
+  condicao_modalidade   text[],
+  validade_dias         integer,
+  grupo_checklist       text,
+  ordem_grupo           integer,
+  orgao_emissor         text,
+  instrucoes            text,
+  observacoes_cliente   text
+) ON COMMIT DROP;
+
+INSERT INTO cr_exigencias VALUES
   -- Modalidade: primeira pergunta do processo. Sem ela o checklist não sabe se
   -- pede filiação a clube (atirador/caçador) ou nada (colecionador).
   ('pergunta_modalidade_cac',
@@ -291,8 +316,34 @@ WITH exigencias(
    'requerimento', 73, NULL, NULL, NULL),
   ('juntada_assinada', 'Juntada final assinada no gov.br',
    'final', 504, true, 'processo', NULL, NULL, NULL,
-   'requerimento', 74, NULL, NULL, NULL)
-)
+   'requerimento', 74, NULL, NULL, NULL);
+
+-- 2.1) O que JÁ EXISTE no serviço 44 é atualizado no lugar.
+UPDATE public.qa_servicos_documentos sd
+   SET nome_documento      = e.nome_documento,
+       etapa               = e.etapa,
+       ordem               = e.ordem,
+       obrigatorio         = e.obrigatorio,
+       ativo               = true,
+       escopo              = e.escopo,
+       condicao_modalidade = e.condicao_modalidade,
+       validade_dias       = e.validade_dias,
+       orgao_emissor       = COALESCE(e.orgao_emissor, sd.orgao_emissor),
+       instrucoes          = COALESCE(e.instrucoes, sd.instrucoes),
+       observacoes_cliente = COALESCE(e.observacoes_cliente, sd.observacoes_cliente),
+       -- Mescla: o que já estava gravado manda, o grupo entra por cima. Assim a
+       -- pergunta híbrida do laudo psicológico (chave/opções/dispensa_quando)
+       -- sobrevive à reaplicação deste bloco.
+       regra_validacao     = COALESCE(sd.regra_validacao, '{}'::jsonb)
+                             || jsonb_build_object('grupo_checklist', e.grupo_checklist,
+                                                   'ordem_grupo_checklist', e.ordem_grupo),
+       updated_at          = now()
+  FROM cr_exigencias e
+ WHERE sd.servico_id = 44
+   AND sd.tipo_documento = e.tipo_documento
+   AND sd.condicao_profissional IS NOT DISTINCT FROM e.condicao_profissional;
+
+-- 2.2) O que FALTA entra como linha nova.
 INSERT INTO public.qa_servicos_documentos (
   servico_id, tipo_documento, nome_documento, etapa, ordem, obrigatorio,
   obrigatorio_etapa02, ativo, emissor, escopo, formato_aceito,
@@ -309,25 +360,13 @@ SELECT 44, e.tipo_documento, e.nome_documento, e.etapa, e.ordem, e.obrigatorio,
        e.instrucoes, e.observacoes_cliente,
        jsonb_build_object('grupo_checklist', e.grupo_checklist,
                           'ordem_grupo_checklist', e.ordem_grupo)
-  FROM exigencias e
-ON CONFLICT (servico_id, tipo_documento, condicao_profissional) DO UPDATE
-  SET nome_documento      = EXCLUDED.nome_documento,
-      etapa               = EXCLUDED.etapa,
-      ordem               = EXCLUDED.ordem,
-      obrigatorio         = EXCLUDED.obrigatorio,
-      ativo               = true,
-      escopo              = EXCLUDED.escopo,
-      condicao_modalidade = EXCLUDED.condicao_modalidade,
-      validade_dias       = EXCLUDED.validade_dias,
-      orgao_emissor       = COALESCE(EXCLUDED.orgao_emissor, public.qa_servicos_documentos.orgao_emissor),
-      instrucoes          = COALESCE(EXCLUDED.instrucoes, public.qa_servicos_documentos.instrucoes),
-      observacoes_cliente = COALESCE(EXCLUDED.observacoes_cliente, public.qa_servicos_documentos.observacoes_cliente),
-      -- Mescla: o que já estava gravado manda, o grupo entra por cima. Assim a
-      -- pergunta híbrida do laudo psicológico (chave/opções/dispensa_quando)
-      -- sobrevive à reaplicação deste bloco.
-      regra_validacao     = COALESCE(public.qa_servicos_documentos.regra_validacao, '{}'::jsonb)
-                            || EXCLUDED.regra_validacao,
-      updated_at          = now();
+  FROM cr_exigencias e
+ WHERE NOT EXISTS (
+   SELECT 1 FROM public.qa_servicos_documentos sd
+    WHERE sd.servico_id = 44
+      AND sd.tipo_documento = e.tipo_documento
+      AND sd.condicao_profissional IS NOT DISTINCT FROM e.condicao_profissional
+ );
 
 -- ── 2b) As três linhas que são PERGUNTA precisam de chave e opções ──────────
 -- Sem `chave`/`opcoes` o portal desenha um upload no lugar do seletor, e o
@@ -403,8 +442,11 @@ COMMIT;
 --  WHERE servico_id = 44 AND ativo
 --  ORDER BY ordem;
 --
--- Esperado: 40 linhas, começando na pergunta da modalidade (ordem 5) e
--- terminando na juntada assinada (ordem 504).
+-- Esperado: 47 linhas, começando na pergunta da modalidade (ordem 5) e
+-- terminando na juntada assinada (ordem 504). São 45 exigências distintas —
+-- `renda_carteira_funcional` e `renda_contra_cheque_mes_atual` aparecem duas
+-- vezes cada, uma para servidor público e outra para segurança pública, que é
+-- como os demais serviços já tratam essas duas.
 --
 -- 2) Nenhuma exigência pode ficar sem grupo:
 --
