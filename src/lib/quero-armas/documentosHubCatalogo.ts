@@ -611,6 +611,30 @@ export function getNomeDocumentoDisplay(doc: Record<string, unknown> | null | un
   return inferred || explicit || meta?.label || meta?.short || cleanDocumentoName(doc?.arquivo_nome) || fallback;
 }
 
+/**
+ * Resgata o código do catálogo a partir do rótulo devolvido pela leitura.
+ *
+ * O front traduz o rótulo da classificação por um mapa de chaves EXATAS. Rótulo
+ * que o mapa não conhece vira "outro documento" — e aí o slot, que pedia
+ * justamente aquele documento, reprova o arquivo certo. Foi assim que o
+ * requerimento da PF foi recusado mesmo depois de a leitura tê-lo identificado
+ * corretamente: o servidor já devolvia
+ * "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO" e a versão do site em uso ainda não
+ * tinha essa chave.
+ *
+ * Rótulo e código são a mesma palavra em caixas diferentes. Comparar assim
+ * fecha o buraco para QUALQUER tipo, não só para o que já quebrou.
+ */
+export function tipoDoCatalogoPorRotulo(rotulo: unknown): string | null {
+  const codigo = String(rotulo ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return codigo && getTipoDocumentoMeta(codigo) ? codigo : null;
+}
+
 export function inferHubCategoriaFromTipo(tipoDocumento: string | null | undefined): HubCategoria {
   const tipo = String(tipoDocumento || "").trim().toLowerCase();
   if (!tipo) return "outros";

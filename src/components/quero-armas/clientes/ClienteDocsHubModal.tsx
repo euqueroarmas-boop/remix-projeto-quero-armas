@@ -128,6 +128,7 @@ import {
   getHubCategoriaMeta,
   getNomeDocumentoDisplay,
   getTipoDocumentoMeta,
+  tipoDoCatalogoPorRotulo,
   inferEscopoDocumental,
   inferHubCategoriaFromTipo,
   isCategoriaArmaAcervo,
@@ -478,9 +479,12 @@ const TIPOS_GENERICOS_RECLASSIFICAVEIS = new Set([
  * variação conhecida ("de posse", "de aquisição", "SINARM").
  */
 function tipoHubDoRotuloIA(rotulo: unknown): string | null {
-  return rotuloIndicaRequerimentoSinarm(rotulo)
-    ? "requerimento_de_posse_de_arma_de_fogo"
-    : null;
+  const bruto = String(rotulo ?? "").trim();
+  if (!bruto) return null;
+  return (
+    tipoDoCatalogoPorRotulo(bruto) ??
+    (rotuloIndicaRequerimentoSinarm(bruto) ? "requerimento_de_posse_de_arma_de_fogo" : null)
+  );
 }
 
 /**
