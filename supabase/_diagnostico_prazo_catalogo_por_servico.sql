@@ -34,14 +34,14 @@ SELECT 'A · CATÁLOGO DA CONCESSÃO DE CR' AS bloco,
        ) AS dados
   FROM public.qa_servicos_documentos sd
   JOIN public.qa_servicos s ON s.id = sd.servico_id
- WHERE s.nome ILIKE '%CONCESS%CR%'
+ WHERE s.nome_servico ILIKE '%CONCESS%CR%'
    AND sd.ativo = true
 
 UNION ALL
 
 SELECT 'B · PRAZO FALTANDO NO CATÁLOGO' AS bloco,
        2 AS ord,
-       s.nome || ' · ' || sd.nome_documento AS origem,
+       s.nome_servico || ' · ' || sd.nome_documento AS origem,
        jsonb_build_object(
          'tipo',       sd.tipo_documento,
          'prazo_dias', sd.validade_dias,
