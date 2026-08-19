@@ -4,6 +4,7 @@ import { valorAusente, normalizarAptidao } from "@/lib/quero-armas/valorAusente"
 import {
   apagarArquivoRecusado,
   checarArquivoRepetido,
+  descricaoDoArquivo,
   mensagemArquivoRepetido,
   registrarTentativaBloqueada,
   type ArquivoRepetido,
@@ -4085,6 +4086,59 @@ export function ClienteDocsHubModal({
     return true;
   }
 
+  /**
+   * RECUSA DE ANEXO — caminho único.
+   *
+   * Nasceu do caso do Gilson (19/08/2026). Ele recebeu duas recusas seguidas e
+   * NENHUMA das duas telas dizia qual arquivo tinha sido anexado; nenhuma das
+   * duas deixou registro. Levou uma conversa inteira para descobrir que numa
+   * vez ele mandou o PDF e na outra o XML — e virou palavra contra palavra.
+   *
+   * Daqui em diante toda recusa de anexo passa por aqui, e faz as duas coisas
+   * juntas, sempre:
+   *   1. mostra o NOME do arquivo dentro da própria mensagem, para a foto de
+   *      tela do cliente já provar sozinha o que foi enviado;
+   *   2. grava a tentativa na trilha, como a regra canônica sempre mandou
+   *      (docs/RASTRO-DOCUMENTAL.md) e estas recusas não cumpriam.
+   *
+   * O arquivo não subiu: a recusa acontece na escolha, antes do upload — daí
+   * `arquivoApagado: false`.
+   */
+  function recusarAnexo(
+    arquivo: File,
+    codigo: TentativaBloqueada["codigo"],
+    mensagem: string,
+    opcoes?: { carimbo?: string },
+  ) {
+    const identificacao = descricaoDoArquivo(arquivo);
+    const textoCompleto = [mensagem, identificacao].filter(Boolean).join("\n\n");
+
+    if (opcoes?.carimbo) {
+      setResultadoCarimbo({ tipo: "reprovado", titulo: opcoes.carimbo, mensagem: textoCompleto });
+    } else {
+      const id = toast.error(textoCompleto, {
+        duration: Infinity,
+        action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
+      });
+      setFile(null);
+    }
+
+    void registrarTentativaBloqueada({
+      qaClienteId: qaClienteId ?? null,
+      customerId: customerId ?? null,
+      codigo,
+      // Mesmo texto que o cliente leu — a spec proíbe a trilha divergir da tela.
+      motivo: textoCompleto,
+      tipoPretendido: form.tipo_documento || null,
+      tipoLido: null,
+      exigenciaAlvo: expectedTipoMeta?.value ?? null,
+      arquivoNome: arquivo.name ?? null,
+      arquivoMime: arquivo.type || null,
+      arquivoTamanho: arquivo.size ?? null,
+      arquivoApagado: false,
+    });
+  }
+
   async function handleFileChange(f: File | null, notaXml?: NotaFiscalImportada | null) {
     // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
     // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
@@ -4115,12 +4169,7 @@ export function ClienteDocsHubModal({
         setExtracting(false);
       }
       if (resultado.ok === false) {
-        const motivo = resultado.motivo;
-        const id = toast.error(motivo, {
-          duration: Infinity,
-          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
-        });
-        setFile(null);
+        recusarAnexo(f, "xml_recusado", resultado.motivo);
         return;
       }
       // Segue o fluxo normal com o PDF gerado — que não é XML e, portanto,
@@ -4166,19 +4215,11 @@ export function ClienteDocsHubModal({
       const ehPdf = f.type === "application/pdf";
       const ehImagem = f.type.startsWith("image/");
       if (!aceitaImagem && !ehPdf) {
-        const id = toast.error(mensagemSomentePdf(form.tipo_documento), {
-          duration: Infinity,
-          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
-        });
-        setFile(null);
+        recusarAnexo(f, "formato_recusado", mensagemSomentePdf(form.tipo_documento));
         return;
       }
       if (aceitaImagem && !ehImagem) {
-        const id = toast.error(MSG_FOTO_SOMENTE_IMAGEM, {
-          duration: Infinity,
-          action: { label: "ENTENDI", onClick: () => toast.dismiss(id) },
-        });
-        setFile(null);
+        recusarAnexo(f, "formato_recusado", MSG_FOTO_SOMENTE_IMAGEM);
         return;
       }
     }
@@ -4187,14 +4228,7 @@ export function ClienteDocsHubModal({
     //    da Carteira de Documentos do gov.br. Foto/print é recusado na hora.
     if (isTipoIdentidadeComQr(form.tipo_documento)) {
       if (f.type !== "application/pdf") {
-        const id = toast.error(MSG_IDENTIDADE_SOMENTE_PDF, {
-          duration: Infinity,
-          action: {
-            label: "ENTENDI",
-            onClick: () => toast.dismiss(id),
-          },
-        });
-        setFile(null);
+        recusarAnexo(f, "formato_recusado", MSG_IDENTIDADE_SOMENTE_PDF);
         return;
       }
       setExtracting(true);
@@ -4228,14 +4262,7 @@ export function ClienteDocsHubModal({
       // navegador), o documento NÃO é culpado: seguimos para a IA classificar
       // em vez de recusar um PDF oficial.
       if (!veredicto.ok && !aprovadoPorQrVisual && !falhaTecnicaLeitura) {
-        const id = toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF, {
-          duration: Infinity,
-          action: {
-            label: "ENTENDI",
-            onClick: () => toast.dismiss(id),
-          },
-        });
-        setFile(null);
+        recusarAnexo(f, "formato_recusado", veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF);
         return;
       }
     }
@@ -4275,13 +4302,13 @@ export function ClienteDocsHubModal({
       !String(textoLocalRef.current || "").trim() &&
       !documentoNasceImagem
     ) {
-      setResultadoCarimbo({
-        tipo: "reprovado",
-        titulo: "Salve de novo",
-        mensagem:
-          "O PDF ficou sem texto, só imagem. Use o botão IMPRIMIR da página da Receita, não o Compartilhar. " +
+      recusarAnexo(
+        f,
+        "pdf_sem_texto",
+        "O PDF ficou sem texto, só imagem. Use o botão IMPRIMIR da página da Receita, não o Compartilhar. " +
           "Depois: Salvar como PDF (Android) ou Salvar em Arquivos (iPhone).",
-      });
+        { carimbo: "Salve de novo" },
+      );
       return;
     }
 

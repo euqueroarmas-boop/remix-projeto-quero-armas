@@ -41,7 +41,17 @@ export interface TentativaBloqueada {
     | "duplicidade_tipo"
     | "certidao_incorreta"
     | "titular_divergente"
-    | "grupo_bloqueado";
+    | "grupo_bloqueado"
+    /* ── Recusas de ANEXO (19/08/2026) ────────────────────────────────────
+     * Acontecem no instante em que o cliente escolhe o arquivo, antes de
+     * qualquer upload. Até aqui elas não deixavam registro nenhum: o cliente
+     * dizia "eu enviei", a equipe não achava rastro, e virava palavra contra
+     * palavra — foi exatamente o que aconteceu no caso do Gilson. A regra
+     * canônica (docs/RASTRO-DOCUMENTAL.md) já mandava registrar; estas três
+     * estavam de fora. */
+    | "pdf_sem_texto"
+    | "formato_recusado"
+    | "xml_recusado";
   tipoPretendido?: string | null;
   tipoLido?: string | null;
   exigenciaAlvo?: string | null;
@@ -56,6 +66,48 @@ export interface TentativaBloqueada {
    * leitura, antes de qualquer envio ao bucket — não há arquivo para apagar.
    */
   arquivoApagado?: boolean;
+}
+
+/**
+ * O arquivo, escrito de um jeito que serve de PROVA na foto de tela.
+ *
+ * Nasceu do caso do Gilson (19/08/2026): duas recusas seguidas, e nenhuma das
+ * duas telas dizia QUAL arquivo tinha sido anexado. Levou uma conversa inteira
+ * para descobrir que numa vez ele mandou o PDF e na outra o XML — informação
+ * que estava ali na mão do cliente e o sistema simplesmente não mostrava.
+ *
+ * Vai junto de toda recusa de anexo. Nome primeiro, porque é o que identifica;
+ * formato e tamanho porque são o que distingue um `.pdf` de um `.xml` quando o
+ * nome é parecido.
+ */
+export function descricaoDoArquivo(
+  f: { name?: string | null; type?: string | null; size?: number | null } | null | undefined,
+): string {
+  if (!f) return "";
+  const nome = String(f.name ?? "").trim() || "sem nome";
+  const partes = [formatoDoArquivo(f), tamanhoLegivel(f.size)].filter(Boolean);
+  return `Arquivo enviado: ${nome}${partes.length ? ` — ${partes.join(", ")}` : ""}.`;
+}
+
+/** Rótulo curto do formato: o que o cliente reconhece, não o MIME cru. */
+function formatoDoArquivo(f: { name?: string | null; type?: string | null }): string {
+  const mime = String(f.type ?? "").toLowerCase();
+  const ext = String(f.name ?? "").toLowerCase().match(/\.([a-z0-9]{1,6})$/)?.[1] ?? "";
+  if (mime === "application/pdf" || ext === "pdf") return "PDF";
+  if (/(^|\/|\+)xml$/.test(mime) || ext === "xml") return "XML";
+  if (mime.startsWith("image/") || ["jpg", "jpeg", "png", "webp", "heic"].includes(ext)) {
+    return `imagem${ext ? ` ${ext.toUpperCase()}` : ""}`;
+  }
+  if (ext) return ext.toUpperCase();
+  return mime || "formato desconhecido";
+}
+
+function tamanhoLegivel(bytes?: number | null): string {
+  if (bytes == null || !Number.isFinite(bytes) || bytes <= 0) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(0)} KB`;
+  return `${(kb / 1024).toFixed(1).replace(".", ",")} MB`;
 }
 
 const dataBr = (iso?: string | null) => {
