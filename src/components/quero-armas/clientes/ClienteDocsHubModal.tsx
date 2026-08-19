@@ -86,6 +86,7 @@ import { carregarCatalogoValidade } from "@/lib/quero-armas/catalogoValidade";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
 import { salvarNotaFiscalGoldenRecord } from "@/lib/quero-armas/notaFiscalGoldenRecord";
 import { conferirCertidao, naturalidadeConfere } from "@/lib/quero-armas/conferenciaCertidao";
+import { regraValidadeCertidao } from "@/lib/quero-armas/validadeCertidoes";
 import {
   isCartaoCnpj,
   isConstitutivoEmpresa,
@@ -1292,13 +1293,18 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   if (isTipoSemVencimento(tipo)) return "";
   const emissao = dataIsoFromBr(dataEmissao) || String(dataEmissao || "").slice(0, 10);
   if (!emissao) return "";
-  if (
-    tipo === "antecedentes_federal_trf3_regional" ||
-    tipo === "antecedentes_militar" ||
-    tipo === "antecedentes_militar_estadual"
-  ) {
-    return addDaysIso(emissao, 90);
-  }
+  // Certidões de antecedentes: a tabela única vive em `validadeCertidoes.ts`.
+  // Isto aqui é FALLBACK — quando o parser consegue ler o prazo impresso no
+  // PDF, aquele valor tem precedência e nem chega nesta função.
+  //
+  // `antecedentes_federal_sjsp_jef` entrou no grupo dos 90 em 19/08/2026: é a
+  // mesma certidão do mesmo tribunal que a `trf3_regional`, sai do mesmo
+  // parser, e estava caindo no grupo de um mês. No acervo isso produziu cinco
+  // arquivos com 90 dias (parser leu) e dois com 31 (parser falhou) — mesma
+  // certidão, validade decidida por o PDF ter saído legível ou não.
+  const regraCertidao = regraValidadeCertidao(tipo);
+  if (regraCertidao === "90_dias") return addDaysIso(emissao, 90);
+  if (regraCertidao === "um_mes") return addCalendarMonthsIso(emissao, 1);
   // Procuração (assinada ou não): 12 meses a partir da emissão — regra oficial.
   if (tipo === "procuracao" || tipo === "procuracao_assinada") {
     return addCalendarMonthsIso(emissao, 12);
@@ -1318,18 +1324,10 @@ function calcularValidadeHubPorTipo(tipo: string, dataEmissao?: string | null): 
   ) {
     return addCalendarMonthsIso(emissao, 120);
   }
-  if (
-    [
-      "comprovante_residencia",
-      "antecedentes_criminais",
-      "antecedentes_eleitoral",
-      "antecedentes_federal",
-      "antecedentes_federal_sjsp_jef",
-      "antecedentes_estadual",
-      "antecedentes_estadual_distribuicao",
-      "antecedentes_estadual_execucoes",
-    ].includes(tipo)
-  ) {
+  // Comprovante de residência: um mês da emissão. As certidões que ficavam
+  // nesta mesma lista saíram daqui e vivem em `validadeCertidoes.ts`, tratadas
+  // no topo desta função — havia duas listas concorrentes decidindo o mesmo.
+  if (tipo === "comprovante_residencia") {
     return addCalendarMonthsIso(emissao, 1);
   }
   // OCUPAÇÃO LÍCITA E RENDA: 30 dias da emissão. Nota fiscal é perpétua.
