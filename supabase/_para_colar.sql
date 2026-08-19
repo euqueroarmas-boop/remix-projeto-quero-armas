@@ -1,236 +1,57 @@
 -- ============================================================================
--- A SEGUNDA VERDADE: o processo anda e a solicitação fica parada
--- ----------------------------------------------------------------------------
--- Achado da REAUDITORIA de 18/08/2026, depois de fechados os 18 furos originais.
---
--- Existem dois lugares que guardam "onde está o processo":
---   • `qa_processos.status`               — o que a Equipe opera
---   • `qa_solicitacoes_servico.status_servico` — o que os KPIs, o Arsenal e a
---                                            aba Serviços mostram ao cliente
---
--- Até a metade do fluxo eles conversam: `qa_recalcular_status_servico` deriva o
--- status da solicitação a partir do progresso do checklist. Mas ela tem esta
--- guarda logo no começo:
---
---     IF v_atual IN ('enviado_ao_orgao','em_analise_orgao','notificado',
---                    'restituido','recurso_administrativo','deferido',
---                    'indeferido','finalizado') THEN RETURN;
---
--- Ou seja: a partir do protocolo, ela sai de cena — e NINGUÉM assume. O único
--- ponto do sistema que escreve esses status é um popover manual
--- (`SolicitacaoStatusPopover`), em que alguém escolhe na mão.
---
--- Resultado prático: agora que o processo avança sozinho (protocolado,
--- notificado, recurso, deferido), a solicitação continua marcada
--- "PRONTO PARA PROTOCOLO" — e é ela que o cliente vê no Arsenal e que alimenta
--- os KPIs. Processo deferido aparecendo como pronto para protocolar é
--- exatamente o "KPI verde com problema" que a Regra-Mãe proíbe.
---
--- ── POR QUE GATILHO, E NÃO CHAMADA NAS EDGES ────────────────────────────────
--- São muitos os pontos que mexem em `qa_processos.status`: o painel, quatro
--- edge functions, o webhook do Asaas. Espalhar a cópia por todos eles é garantir
--- que o próximo ponto novo esqueça. No gatilho é um lugar só, e cobre até quem
--- escrever direto pelo SQL Editor.
---
--- ── DIVISÃO DE TRABALHO, SEM BRIGA ──────────────────────────────────────────
--- Este gatilho trata SOMENTE os status pós-protocolo — exatamente aqueles em
--- que `qa_recalcular_status_servico` desiste. Antes do protocolo, quem manda
--- continua sendo ela, pelo progresso do checklist. Os dois nunca disputam a
--- mesma linha.
---
--- Reexecutável.
+-- DIAGNÓSTICO · REQUERIMENTO DO ANTHONY REPROVADO COMO "OUTRO DOCUMENTO"
+-- Cole as três consultas no SQL Editor do Supabase e me mande o resultado.
+-- Nenhuma delas altera dado nenhum — são só leituras.
 -- ============================================================================
 
-BEGIN;
+-- 1) O QUE A LEITURA DEVOLVEU EM CADA TENTATIVA BLOQUEADA
+--    `tipo_lido` é exatamente o rótulo que a classificação cravou. É este
+--    campo que diz se o problema está na leitura, no mapa de tipos ou no slot.
+select
+  e.created_at,
+  e.detalhes->>'codigo'          as codigo,
+  e.detalhes->>'tipo_lido'       as tipo_lido,
+  e.detalhes->>'tipo_pretendido' as tipo_pretendido,
+  e.detalhes->>'exigencia_alvo'  as exigencia_alvo,
+  e.detalhes->>'arquivo_nome'    as arquivo_nome,
+  e.detalhes->>'arquivo_mime'    as arquivo_mime,
+  e.detalhes->>'arquivo_tamanho' as arquivo_tamanho,
+  e.ator_tipo,
+  e.detalhes->>'motivo'          as motivo
+from qa_documentos_cliente_eventos e
+left join qa_clientes c on c.id = e.qa_cliente_id
+where e.acao = 'tentativa_bloqueada'
+  and (c.nome_completo ilike '%ANTHONY NELSON%' or replace(replace(c.cpf,'.',''),'-','') = '30372708889')
+order by e.created_at desc
+limit 30;
 
-CREATE OR REPLACE FUNCTION public.qa_espelhar_status_processo_na_solicitacao()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_novo   text;
-  v_atual  text;
-BEGIN
-  -- Só reage a mudança real de status, e só quando há solicitação ligada.
-  IF NEW.status IS NOT DISTINCT FROM OLD.status THEN RETURN NEW; END IF;
-  IF NEW.solicitacao_id IS NULL THEN RETURN NEW; END IF;
+-- 2) O REQUERIMENTO CHEGOU A SER SALVO ALGUMA VEZ?
+select
+  d.created_at,
+  d.tipo_documento,
+  d.status,
+  d.arquivo_nome,
+  d.numero_documento,
+  d.data_emissao,
+  d.data_validade,
+  d.ia_dados_extraidos->>'tipoDetectado' as tipo_detectado,
+  d.ia_dados_extraidos->>'confianca'     as confianca
+from qa_documentos_cliente d
+join qa_clientes c on c.id = d.qa_cliente_id
+where (c.nome_completo ilike '%ANTHONY NELSON%' or replace(replace(c.cpf,'.',''),'-','') = '30372708889')
+order by d.created_at desc
+limit 20;
 
-  -- Mapa processo → serviço. Só o trecho pós-protocolo: antes disso quem
-  -- decide é qa_recalcular_status_servico, pelo progresso do checklist.
-  v_novo := CASE NEW.status
-    WHEN 'protocolado'            THEN 'enviado_ao_orgao'
-    WHEN 'em_analise_orgao'       THEN 'em_analise_orgao'
-    WHEN 'notificado'             THEN 'notificado'
-    WHEN 'recurso_administrativo' THEN 'recurso_administrativo'
-    WHEN 'deferido'               THEN 'deferido'
-    WHEN 'indeferido'             THEN 'indeferido'
-    WHEN 'concluido'              THEN 'finalizado'
-    ELSE NULL
-  END;
-
-  IF v_novo IS NULL THEN RETURN NEW; END IF;
-
-  SELECT status_servico INTO v_atual
-    FROM public.qa_solicitacoes_servico
-   WHERE id = NEW.solicitacao_id;
-
-  IF v_atual IS NULL OR v_atual = v_novo THEN RETURN NEW; END IF;
-
-  -- `finalizado` é terminal: não se volta dele por espelhamento.
-  IF v_atual = 'finalizado' THEN RETURN NEW; END IF;
-
-  -- O guarda de transições de `qa_solicitacoes_servico` recusa saltos legítimos
-  -- daqui (ex.: `aguardando_documentacao` → `enviado_ao_orgao`, que acontece
-  -- quando a equipe protocola um processo cujo checklist ficou incompleto por
-  -- decisão dela). A máquina de estados do PROCESSO é a autoridade; a
-  -- solicitação espelha. Mesmo bypass que `qa_recalcular_status_servico` usa.
-  PERFORM set_config('qa.bypass_transicao', 'on', true);
-  UPDATE public.qa_solicitacoes_servico
-     SET status_servico = v_novo,
-         updated_at     = now()
-   WHERE id = NEW.solicitacao_id;
-  PERFORM set_config('qa.bypass_transicao', 'off', true);
-
-  RETURN NEW;
-
-EXCEPTION WHEN OTHERS THEN
-  -- Espelho quebrado NÃO pode derrubar o avanço do processo. O protocolo, o
-  -- deferimento e o recurso são o dado que não pode se perder; o status da
-  -- solicitação é leitura derivada e se conserta depois.
-  RAISE WARNING 'qa_espelhar_status_processo_na_solicitacao falhou (processo %): %',
-    NEW.id, SQLERRM;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_qa_processos_espelha_solicitacao ON public.qa_processos;
-CREATE TRIGGER trg_qa_processos_espelha_solicitacao
-  AFTER UPDATE OF status ON public.qa_processos
-  FOR EACH ROW
-  EXECUTE FUNCTION public.qa_espelhar_status_processo_na_solicitacao();
-
--- ── BACKFILL: alinha o que já divergiu ──────────────────────────────────────
--- Roda o mesmo mapa sobre os processos que já passaram do protocolo e cuja
--- solicitação ficou para trás.
-DO $backfill$
-DECLARE
-  r record;
-  v_novo text;
-  v_n int := 0;
-BEGIN
-  PERFORM set_config('qa.bypass_transicao', 'on', true);
-  FOR r IN
-    SELECT p.id, p.status, p.solicitacao_id, s.status_servico
-      FROM public.qa_processos p
-      JOIN public.qa_solicitacoes_servico s ON s.id = p.solicitacao_id
-     WHERE p.status IN ('protocolado','em_analise_orgao','notificado',
-                        'recurso_administrativo','deferido','indeferido','concluido')
-  LOOP
-    v_novo := CASE r.status
-      WHEN 'protocolado'            THEN 'enviado_ao_orgao'
-      WHEN 'em_analise_orgao'       THEN 'em_analise_orgao'
-      WHEN 'notificado'             THEN 'notificado'
-      WHEN 'recurso_administrativo' THEN 'recurso_administrativo'
-      WHEN 'deferido'               THEN 'deferido'
-      WHEN 'indeferido'             THEN 'indeferido'
-      WHEN 'concluido'              THEN 'finalizado'
-    END;
-    IF v_novo IS DISTINCT FROM r.status_servico AND r.status_servico <> 'finalizado' THEN
-      UPDATE public.qa_solicitacoes_servico
-         SET status_servico = v_novo, updated_at = now()
-       WHERE id = r.solicitacao_id;
-      v_n := v_n + 1;
-    END IF;
-  END LOOP;
-  PERFORM set_config('qa.bypass_transicao', 'off', true);
-  RAISE NOTICE 'Solicitacoes realinhadas: %', v_n;
-END
-$backfill$;
-
-COMMIT;
-
--- ── CONFERÊNCIA ─────────────────────────────────────────────────────────────
--- Esperado: ZERO linhas. Cada linha aqui é um processo cujo status o cliente
--- vê errado no Arsenal e que entra torto nos KPIs.
---
--- SELECT p.id, p.status AS processo, s.status_servico AS solicitacao
---   FROM public.qa_processos p
---   JOIN public.qa_solicitacoes_servico s ON s.id = p.solicitacao_id
---  WHERE (p.status, s.status_servico) NOT IN (
---          ('protocolado','enviado_ao_orgao'),
---          ('em_analise_orgao','em_analise_orgao'),
---          ('notificado','notificado'),
---          ('recurso_administrativo','recurso_administrativo'),
---          ('deferido','deferido'),
---          ('indeferido','indeferido'),
---          ('concluido','finalizado'))
---    AND p.status IN ('protocolado','em_analise_orgao','notificado',
---                     'recurso_administrativo','deferido','indeferido','concluido')
---    AND s.status_servico <> 'finalizado';
--- ============================================================================
--- TIRA O INSERT ANÔNIMO-LOGADO DA TABELA DE PEÇAS
--- ----------------------------------------------------------------------------
--- Resíduo anotado quando fechamos o vazamento de `qa_geracoes_pecas`
--- (migration 20260818100000) e confirmado na reauditoria de 18/08/2026.
---
--- A policy `qa_geracoes_own` é `FOR ALL TO authenticated USING (usuario_id =
--- auth.uid())`. `FOR ALL` inclui INSERT — e `authenticated` inclui o CLIENTE,
--- porque `qa-cliente-criar-conta-publica` é aberta: basta se cadastrar no site.
---
--- Não vaza nada (o `WITH CHECK` prende cada linha ao próprio uid), mas permite
--- injetar peças na tabela que alimenta a fila de revisão humana, as contagens
--- do painel e o treino da IA. Ninguém precisa disso: TODA criação de peça
--- acontece em `qa-gerar-peca`, com service role, que não passa por RLS. Não há
--- um único INSERT vindo do front — conferido na reauditoria.
---
--- Trocamos o `FOR ALL` por SELECT + UPDATE, que é o que as telas realmente
--- usam (histórico, fila de revisão, marcação de status). DELETE também sai:
--- não existe exclusão de peça pelo front, e apagar peça é apagar rastro.
---
--- As demais policies da tabela ficam intactas: `qa_geracoes_service`
--- (service_role), `qa_geracoes_staff_select` e `qa_geracoes_cliente_select`.
---
--- Reexecutável.
--- ============================================================================
-
-BEGIN;
-
-DROP POLICY IF EXISTS "qa_geracoes_own" ON public.qa_geracoes_pecas;
-
--- Cada operador continua enxergando o que gerou (a leitura ampla da Equipe vem
--- de `qa_geracoes_staff_select`, criada em 20260818100000).
-DROP POLICY IF EXISTS "qa_geracoes_own_select" ON public.qa_geracoes_pecas;
-CREATE POLICY "qa_geracoes_own_select" ON public.qa_geracoes_pecas
-  FOR SELECT TO authenticated
-  USING (usuario_id = auth.uid());
-
--- E continua podendo revisar/atualizar a própria peça pelo painel.
-DROP POLICY IF EXISTS "qa_geracoes_own_update" ON public.qa_geracoes_pecas;
-CREATE POLICY "qa_geracoes_own_update" ON public.qa_geracoes_pecas
-  FOR UPDATE TO authenticated
-  USING (usuario_id = auth.uid())
-  WITH CHECK (usuario_id = auth.uid());
-
-COMMIT;
-
--- ── CONFERÊNCIA ─────────────────────────────────────────────────────────────
--- (a) Nenhuma policy de INSERT/ALL para `authenticated`. Esperado: só
---     service_role pode inserir.
---
--- SELECT policyname, cmd, roles
---   FROM pg_policies
---  WHERE schemaname = 'public' AND tablename = 'qa_geracoes_pecas'
---  ORDER BY cmd, policyname;
---
--- Esperado (5 linhas):
---   ALL    qa_geracoes_service        {service_role}
---   SELECT qa_geracoes_cliente_select {authenticated}
---   SELECT qa_geracoes_own_select     {authenticated}
---   SELECT qa_geracoes_staff_select   {authenticated}
---   UPDATE qa_geracoes_own_update     {authenticated}
---
--- (b) A geração de peça continua funcionando: ela roda em qa-gerar-peca com
---     service role. Gere uma peça pelo painel depois de aplicar e confirme que
---     ela aparece no histórico.
+-- 3) O CADASTRO QUE VAI SER USADO NA CONFERÊNCIA CAMPO A CAMPO
+--    Campo vazio aqui não reprova ninguém (entra como "sem referência"), mas
+--    campo PREENCHIDO E DIFERENTE do que ele digitou na PF passa a acusar
+--    divergência. É por isso que preciso ver a linha inteira.
+select
+  id, nome_completo, cpf, nome_mae, nome_pai, data_nascimento, sexo, estado_civil,
+  naturalidade_pais, naturalidade_uf, naturalidade_municipio,
+  rg, emissor_rg, uf_emissor_rg, expedicao_rg, titulo_eleitor,
+  profissao, email, celular,
+  cep, endereco, numero, complemento, bairro, cidade, estado
+from qa_clientes
+where nome_completo ilike '%ANTHONY NELSON%'
+   or replace(replace(cpf,'.',''),'-','') = '30372708889';

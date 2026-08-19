@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseRequerimentoSinarm,
+  rotuloIndicaRequerimentoSinarm,
   textoIndicaRequerimentoSinarm,
 } from "@/lib/quero-armas/parserRequerimentoSinarm";
 
@@ -97,5 +98,32 @@ describe("textoIndicaRequerimentoSinarm", () => {
 
   it("não reage a menção solta de arma de fogo", () => {
     expect(textoIndicaRequerimentoSinarm("CERTIDAO NEGATIVA POLICIA FEDERAL ARMA DE FOGO")).toBe(false);
+  });
+});
+
+describe("rotuloIndicaRequerimentoSinarm — rótulo que o mapa fixo não conhece", () => {
+  // Rótulo novo caindo em "outro documento" foi o segundo jeito de o mesmo
+  // documento ser reprovado: a classificação acertou, o mapa do Hub é que não
+  // tinha a chave.
+  it.each([
+    "REQUERIMENTO_DE_POSSE_DE_ARMA_DE_FOGO",
+    "REQUERIMENTO_DE_AQUISICAO_DE_ARMA_DE_FOGO",
+    "REQUERIMENTO DE AQUISIÇÃO DE ARMA DE FOGO",
+    "requerimento_sinarm",
+    "Requerimento de Posse",
+  ])("reconhece %s", (rotulo) => {
+    expect(rotuloIndicaRequerimentoSinarm(rotulo)).toBe(true);
+  });
+
+  it.each([
+    "PROTOCOLO_PROCESSO",
+    "SINARM",
+    "CONTRATO_SOCIAL",
+    "REQUERIMENTO_DE_EMPRESARIO",
+    "DESCONHECIDO",
+    "",
+    null,
+  ])("não reage a %s", (rotulo) => {
+    expect(rotuloIndicaRequerimentoSinarm(rotulo)).toBe(false);
   });
 });

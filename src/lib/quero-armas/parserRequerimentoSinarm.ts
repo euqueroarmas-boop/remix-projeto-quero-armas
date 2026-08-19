@@ -174,6 +174,23 @@ export function parseRequerimentoSinarm(texto: unknown): RequerimentoSinarmLido 
 }
 
 /**
+ * O rótulo devolvido pela classificação nomeia o requerimento da PF?
+ *
+ * O mapa de rótulos do Hub é uma tabela de chaves exatas. Rótulo novo ou
+ * escrito de outro jeito ("REQUERIMENTO_DE_AQUISICAO_DE_ARMA_DE_FOGO",
+ * "requerimento sinarm") cai em "outro documento" — e o slot, que pedia
+ * justamente este documento, reprova o arquivo certo. Aqui a comparação é por
+ * conteúdo do rótulo, não por igualdade.
+ */
+export function rotuloIndicaRequerimentoSinarm(rotulo: unknown): boolean {
+  const x = normalizar(String(rotulo ?? "").replace(/[_\-/|.]+/g, " "));
+  if (!x.includes("REQUERIMENTO")) return false;
+  return (
+    x.includes("ARMA") || x.includes("POSSE") || x.includes("AQUISICAO") || x.includes("SINARM")
+  );
+}
+
+/**
  * Sinal de texto para reclassificar o que a IA já chutou. Serve o caminho em
  * que o PDF não tem camada de texto (digitalizado) e a leitura veio da visão:
  * a justificativa do modelo cita o título impresso, e o título é suficiente

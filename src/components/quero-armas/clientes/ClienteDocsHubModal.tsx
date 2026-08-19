@@ -101,6 +101,7 @@ import { parseDanf3e } from "@/lib/quero-armas/parserComprovanteResidencia";
 import {
   lerCamposRequerimentoPorGeometria,
   parseRequerimentoSinarm,
+  rotuloIndicaRequerimentoSinarm,
   textoIndicaRequerimentoSinarm,
 } from "@/lib/quero-armas/parserRequerimentoSinarm";
 import {
@@ -467,6 +468,54 @@ const TIPOS_GENERICOS_RECLASSIFICAVEIS = new Set([
   "sinarm",
   "autorizacao_compra",
 ]);
+
+/**
+ * Rótulo da IA que o mapa fixo não conhece.
+ *
+ * `IA_TO_TIPO` é uma tabela de chaves exatas: rótulo novo do classificador cai
+ * em "outro documento" — e o slot, que pedia outra coisa, reprova o documento
+ * certo. Aqui só o requerimento é resgatado, porque é o único cujo rótulo tem
+ * variação conhecida ("de posse", "de aquisição", "SINARM").
+ */
+function tipoHubDoRotuloIA(rotulo: unknown): string | null {
+  return rotuloIndicaRequerimentoSinarm(rotulo)
+    ? "requerimento_de_posse_de_arma_de_fogo"
+    : null;
+}
+
+/**
+ * O documento é o requerimento da PF, mesmo que a classificação não tenha dito
+ * isso?
+ *
+ * `buildDocumentoHaystack` NÃO carrega o texto do PDF nem a justificativa da
+ * IA — de propósito, porque a justificativa realimentava as heurísticas de
+ * certidão (um STM cita "Justiça Federal" para NEGAR a equivalência, e isso o
+ * classificava como TRF3). Só que, sem essas duas fontes, o requerimento
+ * enviado como PDF DIGITALIZADO não tinha como ser reconhecido: o nome do
+ * arquivo sozinho não prova nada, e a única frase que diz o que o documento é
+ * está justamente na justificativa.
+ *
+ * Por isso o sinal do requerimento é calculado à parte, com texto e
+ * justificativa, e exige DOIS marcadores simultâneos (título impresso +
+ * Polícia Federal/SINARM/Lei 10.826). É estreito o bastante para não capturar
+ * documento nenhum que apenas mencione arma de fogo.
+ */
+function ehRequerimentoPeloConjuntoDeSinais(input: {
+  textoPdf?: string | null;
+  classificacao?: IAClass | null;
+  arquivoNome?: string | null;
+  campos?: unknown;
+}): boolean {
+  const partes = collectTextParts([
+    input.textoPdf,
+    input.arquivoNome,
+    input.classificacao?.tipoDetectado,
+    input.classificacao?.justificativa,
+    input.classificacao?.camposExtraidos,
+    input.campos,
+  ]);
+  return textoIndicaRequerimentoSinarm(normalizeStr(partes.join(" ")));
+}
 
 function refinarTipoDocumentoPorTexto(tipoAtual: string, hay: string): string {
   // ── REQUERIMENTO DA PF ────────────────────────────────────────────────────
@@ -2950,7 +2999,7 @@ export function ClienteDocsHubModal({
         }
       })();
 
-      let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || "outro";
+      let tipoIA = IA_TO_TIPO[ia.tipoDetectado] || tipoHubDoRotuloIA(ia.tipoDetectado) || "outro";
       // Refinamento de subtipo para certidões TJSP e Federal: cada uma tem seu
       // slot próprio. A IA pode retornar o pai genérico ou até "outro" numa
       // página de QR/autenticação; por isso usamos também nome do arquivo,
@@ -2964,6 +3013,21 @@ export function ClienteDocsHubModal({
           campos: ia.camposExtraidos,
         }),
       );
+      // REQUERIMENTO DA PF · última rede. Chega aqui o requerimento que veio
+      // digitalizado (sem camada de texto, então o parser determinístico não
+      // rodou) ou cuja classificação caiu num rótulo genérico. Sem isto o
+      // documento certo era carimbado "outro documento" contra o slot que
+      // pedia justamente ele.
+      if (
+        TIPOS_GENERICOS_RECLASSIFICAVEIS.has(tipoIA) &&
+        ehRequerimentoPeloConjuntoDeSinais({
+          textoPdf: textoLocalRef.current,
+          classificacao: ia,
+          arquivoNome: target.name,
+        })
+      ) {
+        tipoIA = "requerimento_de_posse_de_arma_de_fogo";
+      }
       const categoriaIA = inferHubCategoriaFromTipo(tipoIA);
       // ── Foto 3x4 do requerente ───────────────────────────────────────────
       // Retrato não tem texto: a IA sempre cai em "outro documento" e o slot
@@ -4187,7 +4251,17 @@ export function ClienteDocsHubModal({
       classificacao,
       campos: classificacao?.camposExtraidos,
     });
-    const tipoRefinadoTexto = refinarTipoDocumentoPorTexto(form.tipo_documento, haySalvar);
+    let tipoRefinadoTexto = refinarTipoDocumentoPorTexto(form.tipo_documento, haySalvar);
+    if (
+      TIPOS_GENERICOS_RECLASSIFICAVEIS.has(tipoRefinadoTexto) &&
+      ehRequerimentoPeloConjuntoDeSinais({
+        textoPdf: textoLocalRef.current,
+        classificacao,
+        arquivoNome: file?.name ?? null,
+      })
+    ) {
+      tipoRefinadoTexto = "requerimento_de_posse_de_arma_de_fogo";
+    }
     if (tipoRefinadoTexto !== form.tipo_documento) {
       form.tipo_documento = tipoRefinadoTexto;
       setCategoriaHub(inferHubCategoriaFromTipo(tipoRefinadoTexto));
