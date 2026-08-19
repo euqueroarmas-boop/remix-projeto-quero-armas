@@ -13,6 +13,68 @@ conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
 
 ---
 
+## 🟠 CAC — o que ficou fora do fechamento do CR
+
+Aberto em 19/08/2026. Decisão do titular: **fecha o CR primeiro; nada disso
+entra agora.**
+
+### 1. Autorização de Compra não recebe modalidade CAC
+
+Os serviços 50 (atirador esportivo) e 51 (caçador) já são vendidos separados por
+atividade, mas estão com `qa_servicos_catalogo.modalidade_cac` em branco. O
+gatilho `qa_trg_processo_modalidade_do_catalogo` já existe e funcionaria neles
+sem nenhuma linha de código nova — basta marcar a atividade de cada um.
+
+**Por que não foi feito agora:** marcar a atividade muda o que os processos
+NOVOS desses dois serviços vão pedir, porque o checklist deles pode ter
+exigências presas à modalidade. Antes de marcar é preciso olhar o checklist dos
+dois, com o número na mão, e decidir. Não é conserto de uma linha às cegas.
+
+**Quando for a hora:**
+
+```sql
+SELECT servico_id, tipo_documento, nome_documento, obrigatorio, ativo,
+       condicao_modalidade, condicao_profissional
+  FROM public.qa_servicos_documentos
+ WHERE servico_id IN (50, 51)
+ ORDER BY servico_id, ordem;
+```
+
+### 2. Prazo de exigência da PF no CR é de 30 dias, não 10
+
+IN DG/PF 311/2025, art. 76: o interessado tem **trinta dias corridos** para se
+manifestar sobre as correções apontadas, sob pena de indeferimento. Na posse o
+prazo é de 10 dias, e é esse que o motor de prazos conhece hoje.
+
+**Risco enquanto isso não for ajustado:** o cliente de CR é cobrado com urgência
+de 10 dias quando na verdade tem 30 — alarme falso, não perda de prazo. Erra
+para o lado seguro, por isso não é urgente.
+
+**O que falta para ajustar:** ver como `qa_prazos_procedimentos` está preenchida
+hoje (colunas `tipo_peca`, `procedimento_servico`, `base_calculo`,
+`tipo_contagem`, `evento_base`) antes de inserir a linha do CR. Não dá para
+chutar configuração de produção.
+
+```sql
+SELECT id, tipo_peca, procedimento_servico, prazo_dias, base_calculo,
+       tipo_contagem, evento_base, janela_alerta_dias, prioridade, ativo
+  FROM public.qa_prazos_procedimentos
+ WHERE ativo
+ ORDER BY procedimento_servico NULLS FIRST, tipo_peca;
+```
+
+### 3. Insumos do CR que dependem da operação
+
+Nada disso é código — é material que só a equipe tem:
+
+| Insumo | Para que serve | Sem ele |
+|---|---|---|
+| 3 dossiês de CR deferidos (atirador), com a pasta inteira protocolada | referência de conferência e treino da IA | a equipe confere de memória |
+| Telas do Sinarm-CAC, passo a passo | virar o roteiro guiado do requerimento | o cliente vê o item "Requerimento de CR" sem o passo a passo |
+| 2 arquivos de cada documento novo (requerimento do CR, filiação, DSA, DEGA) | a IA aprender a reconhecer | todo upload desses tipos cai em revisão humana |
+
+---
+
 ## 🔴 Conferência dos templates de e-mail — CINCO, numa tela só
 
 **Como conferir:** abrir o painel de preview de e-mails e procurar os cinco.
