@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  aguardandoEquipe,
   ehExigenciaEtapaFinal,
   exigenciaCobravelAgora,
   protocoloLiberado,
+  separarPorResponsavel,
 } from "@/lib/quero-armas/etapaFinalProtocolo";
 
 // ============================================================================
@@ -77,5 +79,41 @@ describe("exigenciaCobravelAgora — o checklist do Anthony", () => {
       exigenciaCobravelAgora(d, "pronto_para_protocolar"),
     );
     expect(cobraveis).toHaveLength(5);
+  });
+});
+
+describe("separarPorResponsavel — de quem é a bola agora", () => {
+  // O checklist do Anthony depois de tudo entregue: quatro linhas em aberto,
+  // nenhuma delas dependendo de algo que ele possa fazer.
+  const ABERTOS = [
+    { tipo_documento: "gru", regra_validacao: { etapa_final: true } },
+    { tipo_documento: "gru_comprovante", regra_validacao: { etapa_final: true } },
+    { tipo_documento: "credencial_gov_br", regra_validacao: { etapa_final: true } },
+    { tipo_documento: "juntada_assinada", regra_validacao: { etapa_final: true } },
+  ];
+
+  it("com a equipe: nada é cobrado do cliente", () => {
+    const { doCliente, comAEquipe } = separarPorResponsavel(ABERTOS, "em_andamento");
+    expect(doCliente).toEqual([]);
+    expect(comAEquipe).toHaveLength(4);
+    expect(aguardandoEquipe(ABERTOS, "em_andamento")).toBe(true);
+  });
+
+  it("liberado o protocolo, os quatro voltam a ser do cliente", () => {
+    const { doCliente, comAEquipe } = separarPorResponsavel(ABERTOS, "pronto_para_protocolar");
+    expect(doCliente).toHaveLength(4);
+    expect(comAEquipe).toEqual([]);
+    expect(aguardandoEquipe(ABERTOS, "pronto_para_protocolar")).toBe(false);
+  });
+
+  it("com certidão em aberto, a bola ainda é do cliente — sem tela de espera", () => {
+    const comCertidao = [{ tipo_documento: "antecedentes_criminais" }, ...ABERTOS];
+    const { doCliente } = separarPorResponsavel(comCertidao, "em_andamento");
+    expect(doCliente.map((d) => d.tipo_documento)).toEqual(["antecedentes_criminais"]);
+    expect(aguardandoEquipe(comCertidao, "em_andamento")).toBe(false);
+  });
+
+  it("checklist vazio não vira tela de espera", () => {
+    expect(aguardandoEquipe([], "em_andamento")).toBe(false);
   });
 });

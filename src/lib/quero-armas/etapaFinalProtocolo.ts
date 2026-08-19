@@ -77,3 +77,41 @@ export function exigenciaCobravelAgora(
 ): boolean {
   return !ehExigenciaEtapaFinal(d) || protocoloLiberado(statusProcesso);
 }
+
+/**
+ * Separa o checklist entre "o que ainda é com o cliente" e "o que está com a
+ * equipe".
+ *
+ * Serve para responder, na tela, a pergunta que o cliente faz quando termina de
+ * entregar tudo e continua vendo itens em aberto: "e agora, é comigo ou com
+ * vocês?". Sem essa separação a tela mostrava quatro linhas amarelas escritas
+ * PENDENTE — que o cliente lê como dívida dele — quando na verdade nenhuma
+ * delas depende de nada que ele possa fazer.
+ */
+export function separarPorResponsavel<T extends ItemComEtapaFinal>(
+  docs: readonly T[],
+  statusProcesso: unknown,
+): { doCliente: T[]; comAEquipe: T[] } {
+  const doCliente: T[] = [];
+  const comAEquipe: T[] = [];
+  for (const d of docs ?? []) {
+    if (exigenciaCobravelAgora(d, statusProcesso)) doCliente.push(d);
+    else comAEquipe.push(d);
+  }
+  return { doCliente, comAEquipe };
+}
+
+/**
+ * A parte do cliente acabou e o que sobrou está com a equipe?
+ *
+ * É o estado em que o portal precisa parar de cobrar e passar a EXPLICAR: a
+ * equipe monta a defesa, o cliente lê e aprova, e só então os últimos passos
+ * abrem.
+ */
+export function aguardandoEquipe(
+  docs: readonly ItemComEtapaFinal[],
+  statusProcesso: unknown,
+): boolean {
+  const { doCliente, comAEquipe } = separarPorResponsavel(docs, statusProcesso);
+  return doCliente.length === 0 && comAEquipe.length > 0;
+}
