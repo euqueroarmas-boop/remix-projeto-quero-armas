@@ -9,6 +9,7 @@
 // de nome parecido, nada de IA. Se o número não bate, o sistema não decide —
 // avisa e deixa o slot como estava.
 // ============================================================================
+import { lerTextoDoArquivo } from "./assinaturaArquivo";
 import { arquivoDanfeDoXml } from "./danfePdfDoXml";
 import {
   camposCertidaoDaNotaXml,
@@ -208,7 +209,9 @@ export async function importarNotaFiscalXml(
 ): Promise<ResultadoImportacaoXml> {
   let bruto = "";
   try {
-    bruto = await arquivo.text();
+    // Leitura com reserva: `Blob.text()` não existe em WebView Android antigo,
+    // e é nele que o cliente mais apanha.
+    bruto = await lerTextoDoArquivo(arquivo);
   } catch {
     return { ok: false, motivo: "Não conseguimos abrir o arquivo XML. Anexe o arquivo de novo." };
   }

@@ -61,6 +61,7 @@ import {
   MSG_FOTO_SOMENTE_IMAGEM,
 } from "@/lib/quero-armas/somentePdfOriginal";
 import { ehCcmei, parseCcmei } from "@/lib/quero-armas/parserCcmei";
+import { assinaturaDoArquivo } from "@/lib/quero-armas/assinaturaArquivo";
 import {
   ehArquivoXml,
   importarNotaFiscalXml,
@@ -4143,6 +4144,30 @@ export function ClienteDocsHubModal({
     // Limpa avisos fixos (duration: Infinity) de tentativas anteriores — senão
     // o cliente vê a mensagem antiga sobreposta ao resultado do novo arquivo.
     toast.dismiss();
+
+    // ── QUEM MANDA É O CONTEÚDO, NÃO O NOME DO ARQUIVO ────────────────────
+    // Caso Gilson, 20/08/2026 00h00: ele anexou o XML da nota e o Hub recusou
+    // com "este arquivo não é um PDF". A linha de identificação entregou o
+    // motivo — "Documento de gilson — formato desconhecido, 11 KB": o celular
+    // passou o arquivo SEM extensão e SEM tipo MIME. O arquivo estava certo; a
+    // nossa identificação é que dependia do nome.
+    //
+    // Quem escolhe o nome é o aplicativo por onde o arquivo passou, não o
+    // emissor. Então, quando nome e tipo não dizem nada, a assinatura dos
+    // primeiros bytes decide — e o tipo é corrigido no próprio arquivo, para
+    // todo o resto do fluxo enxergar o que ele realmente é.
+    //
+    // O NOME É PRESERVADO de propósito: é ele que identifica a tentativa na
+    // tela e na trilha. Renomear aqui apagaria a prova que acabamos de criar.
+    if (f && !ehArquivoXml(f) && f.type !== "application/pdf" && !f.type.startsWith("image/")) {
+      const assinatura = await assinaturaDoArquivo(f);
+      if (assinatura === "xml") {
+        return handleFileChange(new File([f], f.name, { type: "text/xml" }), notaXml);
+      }
+      if (assinatura === "pdf") {
+        return handleFileChange(new File([f], f.name, { type: "application/pdf" }), notaXml);
+      }
+    }
 
     // ── XML DA NOTA FISCAL → DANFE EM PDF COM TEXTO ───────────────────────
     // O DANFE que o celular salva pelo botão "Compartilhar" chega sem camada
