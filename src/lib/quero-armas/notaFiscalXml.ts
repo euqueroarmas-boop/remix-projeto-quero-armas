@@ -45,6 +45,60 @@ export interface ItemNotaFiscalXml {
   quantidade?: number;
   valorUnitario?: number;
   valorTotal?: number;
+  /* ── Colunas fiscais que o DANFE imprime por item ── */
+  /** Origem + CST/CSOSN, concatenados como o DANFE imprime (ex.: "0102"). */
+  origemCst?: string;
+  baseIcms?: number;
+  valorIcms?: number;
+  valorIpi?: number;
+  aliquotaIcms?: number;
+  aliquotaIpi?: number;
+}
+
+/**
+ * Quadro CÁLCULO DO IMPOSTO do DANFE. Todos os valores vêm prontos de
+ * `ICMSTot` — nenhum é somado por nós.
+ */
+export interface TotaisNotaFiscalXml {
+  baseIcms?: number;
+  valorIcms?: number;
+  baseIcmsSt?: number;
+  valorIcmsSt?: number;
+  valorImportacao?: number;
+  valorIcmsUfRemetente?: number;
+  valorIcmsUfDestino?: number;
+  valorFcpUfDestino?: number;
+  valorPis?: number;
+  valorCofins?: number;
+  valorProdutos?: number;
+  valorFrete?: number;
+  valorSeguro?: number;
+  valorDesconto?: number;
+  outrasDespesas?: number;
+  valorIpi?: number;
+  /** Valor aproximado dos tributos (Lei da Transparência). */
+  valorTributos?: number;
+  valorTotal?: number;
+}
+
+export interface VolumesNotaFiscalXml {
+  quantidade?: string;
+  especie?: string;
+  marca?: string;
+  numeracao?: string;
+  pesoBruto?: string;
+  pesoLiquido?: string;
+}
+
+/** Quadro TRANSPORTADOR / VOLUMES TRANSPORTADOS. */
+export interface TransporteNotaFiscalXml {
+  /** Código do `modFrete`, cru. O rótulo é montado na impressão. */
+  modalidadeFrete?: string;
+  transportador?: ParteNotaFiscalXml;
+  placa?: string;
+  ufPlaca?: string;
+  rntc?: string;
+  volumes?: VolumesNotaFiscalXml;
 }
 
 export interface ParteNotaFiscalXml {
@@ -92,6 +146,18 @@ export interface NotaFiscalXml {
   situacao?: string;
   informacoesComplementares?: string;
   municipioEmissor?: string;
+
+  /* ── Só na NF-e / NFC-e, para imprimir o DANFE conforme o MOC ── */
+  /** `tpNF`: "0" = entrada, "1" = saída. */
+  tipoOperacao?: string;
+  /** Data e hora de saída/entrada, como veio no XML. */
+  dataHoraSaida?: string;
+  /** Inscrição estadual do substituto tributário do emitente. */
+  inscricaoEstadualSubstituto?: string;
+  totais?: TotaisNotaFiscalXml;
+  transporte?: TransporteNotaFiscalXml;
+  /** Informações de interesse do Fisco (`infAdFisco`). */
+  informacoesFisco?: string;
 }
 
 export type LeituraNotaFiscalXml =
@@ -303,6 +369,13 @@ function leNfe(doc: Document): LeituraNotaFiscalXml {
   const total = acha(infNFe, "ICMSTot");
   const itens: ItemNotaFiscalXml[] = filhos(infNFe, "det").map((det, i) => {
     const prod = acha(det, "prod");
+    // ICMS e IPI ficam cada um dentro do seu próprio bloco. O recorte importa:
+    // PIS e COFINS também têm uma tag `CST`, e buscar solto traria o CST do
+    // PIS para a coluna do ICMS.
+    const icms = acha(det, "ICMS");
+    const ipi = acha(det, "IPI");
+    const origem = txt(icms, "orig");
+    const cst = txtQualquer(icms, "CSOSN", "CST");
     return {
       numero: Number(det.getAttribute("nItem")) || i + 1,
       codigo: txt(prod, "cProd"),
@@ -313,8 +386,19 @@ function leNfe(doc: Document): LeituraNotaFiscalXml {
       quantidade: numero(txt(prod, "qCom")),
       valorUnitario: numero(txt(prod, "vUnCom")),
       valorTotal: numero(txt(prod, "vProd")),
+      origemCst: [origem, cst].filter(Boolean).join("") || undefined,
+      baseIcms: numero(txt(icms, "vBC")),
+      valorIcms: numero(txt(icms, "vICMS")),
+      aliquotaIcms: numero(txt(icms, "pICMS")),
+      valorIpi: numero(txt(ipi, "vIPI")),
+      aliquotaIpi: numero(txt(ipi, "pIPI")),
     };
   });
+
+  const transp = acha(infNFe, "transp");
+  const veiculo = acha(transp, "veicTransp");
+  const volume = acha(transp, "vol");
+  const transportadora = acha(transp, "transporta");
 
   const emitente = leParteNfe(acha(infNFe, "emit"));
   const destinatario = leParteNfe(acha(infNFe, "dest"));
@@ -342,6 +426,59 @@ function leNfe(doc: Document): LeituraNotaFiscalXml {
       situacao: xMotivo,
       informacoesComplementares: txt(acha(infNFe, "infAdic"), "infCpl"),
       municipioEmissor: emitente.municipio,
+
+      tipoOperacao: txt(ide, "tpNF"),
+      dataHoraSaida: txt(ide, "dhSaiEnt") ?? txt(ide, "dSaiEnt"),
+      inscricaoEstadualSubstituto: txt(acha(infNFe, "emit"), "IEST"),
+      informacoesFisco: txt(acha(infNFe, "infAdic"), "infAdFisco"),
+      totais: {
+        baseIcms: numero(txt(total, "vBC")),
+        valorIcms: numero(txt(total, "vICMS")),
+        baseIcmsSt: numero(txt(total, "vBCST")),
+        valorIcmsSt: numero(txt(total, "vST")),
+        valorImportacao: numero(txt(total, "vII")),
+        valorIcmsUfRemetente: numero(txt(total, "vICMSUFRemet")),
+        valorIcmsUfDestino: numero(txt(total, "vICMSUFDest")),
+        valorFcpUfDestino: numero(txt(total, "vFCPUFDest")),
+        valorPis: numero(txt(total, "vPIS")),
+        valorCofins: numero(txt(total, "vCOFINS")),
+        valorProdutos: numero(txt(total, "vProd")),
+        valorFrete: numero(txt(total, "vFrete")),
+        valorSeguro: numero(txt(total, "vSeg")),
+        valorDesconto: numero(txt(total, "vDesc")),
+        outrasDespesas: numero(txt(total, "vOutro")),
+        valorIpi: numero(txt(total, "vIPI")),
+        valorTributos: numero(txt(total, "vTotTrib")),
+        valorTotal: numero(txt(total, "vNF")),
+      },
+      transporte: {
+        modalidadeFrete: txt(transp, "modFrete"),
+        // A transportadora não usa bloco de endereço: o layout traz `xEnder`,
+        // `xMun` e `UF` soltos dentro de `transporta`.
+        transportador: transportadora
+          ? {
+              documento: documentoDaParte(transportadora),
+              nome: txt(transportadora, "xNome"),
+              inscricaoEstadual: txt(transportadora, "IE"),
+              logradouro: txt(transportadora, "xEnder"),
+              municipio: txt(transportadora, "xMun"),
+              uf: txt(transportadora, "UF"),
+            }
+          : undefined,
+        placa: txt(veiculo, "placa"),
+        ufPlaca: txt(veiculo, "UF"),
+        rntc: txt(veiculo, "RNTC"),
+        volumes: volume
+          ? {
+              quantidade: txt(volume, "qVol"),
+              especie: txt(volume, "esp"),
+              marca: txt(volume, "marca"),
+              numeracao: txt(volume, "nVol"),
+              pesoBruto: txt(volume, "pesoB"),
+              pesoLiquido: txt(volume, "pesoL"),
+            }
+          : undefined,
+      },
     },
   };
 }
