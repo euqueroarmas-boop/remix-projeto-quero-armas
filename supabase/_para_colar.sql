@@ -1,181 +1,137 @@
 -- ============================================================================
--- CR: o protocolo é da equipe — ajustes A, B e C confirmados pelo titular
--- ----------------------------------------------------------------------------
--- Relato do titular (19/08/2026) sobre a etapa final do CR, confirmado ponto a
--- ponto: o Sinarm-CAC é um site dentro da gestão da PF (o CR deferido sai em
--- nome do Exército); com a documentação conferida, a EQUIPE entra com a senha
--- GOV do cliente, cadastra o cliente, entrega os documentos em campos
--- individuais, o sistema libera o boleto (GRU), o cliente paga, e após a
--- compensação bancária o processo entra em "Pronto para análise" — primeiro
--- status no órgão, onde fica até pendência, deferimento ou indeferimento.
+-- DIAGNÓSTICO — adjudicar os 12 apontamentos de segurança do Lovable
+-- (2026-08-19). Só leitura: nenhum dado é alterado. Pode rodar quantas
+-- vezes quiser. Uma única consulta → um único grid de resultado.
 --
--- A) A senha GOV vira o PRIMEIRO item do grupo Requerimento — sem ela a
---    equipe nem cadastra o cliente. Estava depois do boleto.
---
--- B) NÃO existe juntada final assinada no CR: os documentos entram em campos
---    individuais, e cada DECLARAÇÃO é assinada no gov.br separadamente, com a
---    cadeia de certificados verificada na entrega (mesma verificação do
---    contrato e da procuração). Então: o item de juntada sai do CR, e as
---    declarações ganham `assinatura_requerida: govbr`, que aciona a
---    verificação de cadeia já existente.
---
--- C) O requerimento é marco da EQUIPE (`emissor: quero_armas`), não tarefa do
---    cliente. O boleto também: a equipe o obtém no sistema e envia. Do cliente
---    são só a senha GOV e o comprovante de pagamento.
---
--- Nada é apagado do catálogo (a juntada vira ativo=false). Nos processos EM
--- ABERTO, a linha pendente de juntada é removida — mesmo critério da troca de
--- modalidade: linha pendente que não corresponde a exigência real sai; linha
--- entregue jamais.
---
--- Reexecutável.
+-- Seções do resultado (coluna "secao"):
+--   1_policies_tabelas_suspeitas   → todas as policies vivas das tabelas que
+--                                    batem com os apontamentos (consentimentos,
+--                                    casos, exames, identidades funcionais,
+--                                    psicólogos não localizados, revisões de
+--                                    peças, assinaturas, customers)
+--   2_policies_true_no_banco_inteiro → qualquer policy USING(true)/CHECK(true)
+--                                    para anon/authenticated/public no banco todo
+--   3_rls_desligado                → tabelas do schema public sem RLS
+--   4_secdef_que_anon_executa      → funções SECURITY DEFINER executáveis por anon
+--   5_secdef_so_logado_executa     → SECURITY DEFINER executáveis só por logado
+--   6_secdef_sem_search_path_fixo  → SECURITY DEFINER sem search_path fixo
+--   7_grants_e_rls_tabelas_suspeitas → GRANTs de anon/authenticated + RLS +
+--                                    volume aproximado das tabelas suspeitas
+--                                    (linhas_aprox=0 pode ser tabela nunca analisada)
 -- ============================================================================
+WITH alvo(tabela) AS (
+  VALUES ('qa_cliente_ciencias'),
+         ('qa_contract_aceites_log'),
+         ('qa_arma_gt_declaracoes'),
+         ('qa_declaracoes_residencia'),
+         ('qa_casos'),
+         ('qa_efetiva_necessidade'),
+         ('qa_efetiva_necessidade_provas'),
+         ('qa_efetiva_necessidade_acrescimos'),
+         ('qa_efetiva_teses'),
+         ('qa_exames_cliente'),
+         ('qa_exames_alertas_enviados'),
+         ('qa_identidades_funcionais'),
+         ('qa_psico_nao_localizados'),
+         ('qa_revisoes_pecas'),
+         ('qa_geracoes_pecas'),
+         ('contract_signatures'),
+         ('qa_contract_signatures'),
+         ('signature_logs'),
+         ('customers'),
+         ('lp_contract_acceptances')
+)
+SELECT '1_policies_tabelas_suspeitas' AS secao,
+       p.tablename::text AS item,
+       p.policyname::text || ' | cmd=' || p.cmd || ' | roles=' || array_to_string(p.roles, ',') AS detalhe,
+       coalesce(p.qual, '(sem USING)') AS using_expr,
+       coalesce(p.with_check, '(sem WITH CHECK)') AS with_check_expr
+FROM pg_policies p
+JOIN alvo a ON a.tabela = p.tablename
+WHERE p.schemaname = 'public'
 
-BEGIN;
+UNION ALL
 
--- ── A) Senha GOV abre o grupo Requerimento ──────────────────────────────────
-UPDATE public.qa_servicos_documentos
-   SET ordem           = 499,
-       nome_documento  = 'Senha do gov.br para o protocolo',
-       instrucoes      = 'Nossa equipe usa o seu acesso gov.br para cadastrar você no Sinarm-CAC '
-                         || 'da Polícia Federal e entregar seus documentos. Sem ele o protocolo não começa.',
-       observacoes_cliente = 'Forneça a senha pelo canal seguro indicado pela equipe — nunca por e-mail.',
-       regra_validacao = COALESCE(regra_validacao, '{}'::jsonb)
-                         || jsonb_build_object('grupo_checklist', 'requerimento',
-                                               'ordem_grupo_checklist', 69),
-       updated_at      = now()
- WHERE servico_id = 44 AND tipo_documento = 'credencial_gov_br';
+SELECT '2_policies_true_no_banco_inteiro',
+       p.tablename::text,
+       p.policyname::text || ' | cmd=' || p.cmd || ' | roles=' || array_to_string(p.roles, ','),
+       coalesce(p.qual, '(sem USING)'),
+       coalesce(p.with_check, '(sem WITH CHECK)')
+FROM pg_policies p
+WHERE p.schemaname = 'public'
+  AND (p.qual = 'true' OR p.with_check = 'true')
+  AND p.roles && ARRAY['anon','authenticated','public']::name[]
 
--- ── B1) Juntada não existe no CR ────────────────────────────────────────────
-UPDATE public.qa_servicos_documentos
-   SET ativo = false, updated_at = now()
- WHERE servico_id = 44 AND tipo_documento = 'juntada_assinada';
+UNION ALL
 
--- Nos processos em aberto, a linha pendente de juntada sai. Linha já entregue
--- (não há nenhuma) ficaria.
-DELETE FROM public.qa_processo_documentos pd
- USING public.qa_processos p
- WHERE p.id = pd.processo_id
-   AND p.servico_id = 44
-   AND public.qa_processo_em_aberto(p.status)
-   AND pd.tipo_documento = 'juntada_assinada'
-   AND pd.status = 'pendente';
+SELECT '3_rls_desligado',
+       c.relname::text,
+       'RLS DESABILITADO',
+       '-',
+       '-'
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE n.nspname = 'public' AND c.relkind = 'r' AND NOT c.relrowsecurity
 
--- ── B2) Cada declaração é assinada no gov.br, com cadeia verificada ─────────
-UPDATE public.qa_servicos_documentos
-   SET regra_validacao = COALESCE(regra_validacao, '{}'::jsonb)
-                         || jsonb_build_object('assinatura_requerida', 'govbr'),
-       updated_at      = now()
- WHERE servico_id = 44
-   AND ativo
-   AND tipo_documento IN (
-     'declaracao_responsavel_imovel',
-     'declaracao_sem_inquerito_processo_criminal',
-     'declaracao_compromisso_habitualidade',
-     'dsa_declaracao_seguranca_acervo',
-     'declaracao_endereco_acervo',
-     'declaracao_guarda_acervo_2enderecos',
-     'declaracao_nao_possuir_segundo_endereco'
-   );
+UNION ALL
 
--- O mesmo carimbo nas linhas correspondentes dos processos em aberto.
-UPDATE public.qa_processo_documentos pd
-   SET regra_validacao = COALESCE(pd.regra_validacao, '{}'::jsonb)
-                         || jsonb_build_object('assinatura_requerida', 'govbr'),
-       updated_at      = now()
-  FROM public.qa_processos p
- WHERE p.id = pd.processo_id
-   AND p.servico_id = 44
-   AND public.qa_processo_em_aberto(p.status)
-   AND pd.tipo_documento IN (
-     'declaracao_responsavel_imovel',
-     'declaracao_sem_inquerito_processo_criminal',
-     'declaracao_compromisso_habitualidade',
-     'dsa_declaracao_seguranca_acervo',
-     'declaracao_endereco_acervo',
-     'declaracao_guarda_acervo_2enderecos',
-     'declaracao_nao_possuir_segundo_endereco'
-   );
+SELECT '4_secdef_que_anon_executa',
+       CASE WHEN p.provolatile = 'v' THEN 'mutantes' ELSE 'somente_leitura' END,
+       count(*)::text || ' funcoes',
+       string_agg(p.proname, ', ' ORDER BY p.proname),
+       '-'
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public' AND p.prosecdef AND p.prokind = 'f'
+  AND pg_get_function_result(p.oid) <> 'trigger'
+  AND has_function_privilege('anon', p.oid, 'EXECUTE')
+GROUP BY CASE WHEN p.provolatile = 'v' THEN 'mutantes' ELSE 'somente_leitura' END
 
--- ── C) O protocolo é da equipe; o cliente acompanha ─────────────────────────
-UPDATE public.qa_servicos_documentos
-   SET emissor         = 'quero_armas',
-       nome_documento  = 'Cadastro e entrega dos documentos no Sinarm-CAC',
-       instrucoes      = 'Nossa equipe cadastra você no Sinarm-CAC da Polícia Federal e entrega '
-                         || 'toda a sua documentação, campo a campo, usando o seu acesso gov.br. '
-                         || 'Você acompanha por aqui — não precisa fazer nada nesta etapa.',
-       observacoes_cliente = 'Com os documentos entregues, o sistema libera o boleto da taxa. '
-                         || 'Depois do seu pagamento e da compensação bancária, o processo entra '
-                         || 'em "Pronto para análise" na Polícia Federal.',
-       updated_at      = now()
- WHERE servico_id = 44 AND tipo_documento = 'requerimento_cr';
+UNION ALL
 
-UPDATE public.qa_servicos_documentos
-   SET emissor         = 'quero_armas',
-       nome_documento  = 'Boleto da GRU — taxa do CR',
-       instrucoes      = 'O boleto é liberado pelo Sinarm-CAC depois que a equipe entrega todos '
-                         || 'os seus documentos. Nós o enviamos para você pagar.',
-       observacoes_cliente = 'Pague assim que receber — o processo só entra na fila de análise '
-                         || 'depois da compensação bancária.',
-       updated_at      = now()
- WHERE servico_id = 44 AND tipo_documento = 'gru';
+SELECT '5_secdef_so_logado_executa',
+       CASE WHEN p.provolatile = 'v' THEN 'mutantes' ELSE 'somente_leitura' END,
+       count(*)::text || ' funcoes',
+       string_agg(p.proname, ', ' ORDER BY p.proname),
+       '-'
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public' AND p.prosecdef AND p.prokind = 'f'
+  AND pg_get_function_result(p.oid) <> 'trigger'
+  AND NOT has_function_privilege('anon', p.oid, 'EXECUTE')
+  AND has_function_privilege('authenticated', p.oid, 'EXECUTE')
+GROUP BY CASE WHEN p.provolatile = 'v' THEN 'mutantes' ELSE 'somente_leitura' END
 
-UPDATE public.qa_servicos_documentos
-   SET nome_documento  = 'Comprovante de pagamento da taxa (GRU)',
-       instrucoes      = 'Pague o boleto que enviamos e anexe aqui o comprovante.',
-       observacoes_cliente = 'Sem a taxa paga e compensada o processo não entra em análise.',
-       updated_at      = now()
- WHERE servico_id = 44 AND tipo_documento = 'gru_comprovante';
+UNION ALL
 
--- Espelha nome/ordem/emissor nas linhas dos processos em aberto.
-UPDATE public.qa_processo_documentos pd
-   SET nome_documento = sd.nome_documento,
-       instrucoes     = sd.instrucoes,
-       observacoes_cliente = sd.observacoes_cliente,
-       ordem          = sd.ordem,
-       regra_validacao = COALESCE(pd.regra_validacao, '{}'::jsonb)
-                         || jsonb_build_object('grupo_checklist', sd.regra_validacao ->> 'grupo_checklist',
-                                               'ordem_grupo_checklist',
-                                               (sd.regra_validacao ->> 'ordem_grupo_checklist')::int),
-       updated_at     = now()
-  FROM public.qa_processos p, public.qa_servicos_documentos sd
- WHERE p.id = pd.processo_id
-   AND p.servico_id = 44
-   AND public.qa_processo_em_aberto(p.status)
-   AND sd.servico_id = 44
-   AND sd.tipo_documento = pd.tipo_documento
-   AND sd.ativo
-   AND pd.tipo_documento IN ('credencial_gov_br', 'requerimento_cr', 'gru', 'gru_comprovante');
+SELECT '6_secdef_sem_search_path_fixo',
+       'search_path_mutavel',
+       count(*)::text || ' funcoes',
+       coalesce(string_agg(p.proname, ', ' ORDER BY p.proname), '(nenhuma)'),
+       '-'
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+WHERE n.nspname = 'public' AND p.prosecdef AND p.prokind = 'f'
+  AND (p.proconfig IS NULL
+       OR NOT EXISTS (SELECT 1 FROM unnest(p.proconfig) cfg WHERE cfg LIKE 'search_path=%'))
 
-COMMIT;
+UNION ALL
 
--- ── Conferência ─────────────────────────────────────────────────────────────
--- 1) O grupo Requerimento na ordem nova — senha GOV abrindo, sem juntada:
---
--- SELECT ordem, tipo_documento, emissor,
---        regra_validacao ->> 'ordem_grupo_checklist' AS ordem_no_grupo
---   FROM public.qa_servicos_documentos
---  WHERE servico_id = 44 AND ativo
---    AND (regra_validacao ->> 'grupo_checklist') = 'requerimento'
---  ORDER BY ordem;
---
--- Esperado: 4 linhas — credencial_gov_br (499, cliente), requerimento_cr
--- (500, quero_armas), gru (501, quero_armas), gru_comprovante (502, cliente).
---
--- 2) As 7 declarações do CR com a assinatura gov.br exigida:
---
--- SELECT tipo_documento, regra_validacao ->> 'assinatura_requerida' AS assinatura
---   FROM public.qa_servicos_documentos
---  WHERE servico_id = 44 AND ativo
---    AND regra_validacao ->> 'assinatura_requerida' IS NOT NULL
---  ORDER BY ordem;
---
--- 3) Nenhuma juntada sobrando nos processos abertos:
---
--- SELECT count(*) AS juntadas_restantes
---   FROM public.qa_processo_documentos pd
---   JOIN public.qa_processos p ON p.id = pd.processo_id
---  WHERE p.servico_id = 44 AND pd.tipo_documento = 'juntada_assinada'
---    AND public.qa_processo_em_aberto(p.status);
---
--- Esperado: 0.
+SELECT '7_grants_e_rls_tabelas_suspeitas',
+       c.relname::text,
+       'anon[sel=' || has_table_privilege('anon', c.oid, 'SELECT')::text
+         || ' ins=' || has_table_privilege('anon', c.oid, 'INSERT')::text
+         || ' upd=' || has_table_privilege('anon', c.oid, 'UPDATE')::text
+         || ' del=' || has_table_privilege('anon', c.oid, 'DELETE')::text
+         || '] auth[sel=' || has_table_privilege('authenticated', c.oid, 'SELECT')::text
+         || ' ins=' || has_table_privilege('authenticated', c.oid, 'INSERT')::text
+         || ' upd=' || has_table_privilege('authenticated', c.oid, 'UPDATE')::text
+         || ' del=' || has_table_privilege('authenticated', c.oid, 'DELETE')::text || ']',
+       CASE WHEN c.relrowsecurity THEN 'RLS ligado' ELSE 'RLS DESLIGADO' END,
+       'linhas_aprox=' || greatest(c.reltuples, 0)::bigint::text
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+JOIN alvo a ON a.tabela = c.relname
+WHERE n.nspname = 'public' AND c.relkind = 'r'
+
+ORDER BY 1, 2, 3;
