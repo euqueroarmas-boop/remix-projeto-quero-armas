@@ -7,14 +7,3 @@
 -- ============================================================================
 DROP POLICY IF EXISTS "Authenticated can insert contract_signatures" ON public.contract_signatures;
 
--- ── Conferência ──────────────────────────────────────────────────────────────
--- Esperado: só "Admins can read contract_signatures" e
--- "Service role full access signatures".
-SELECT policyname,
-       cmd,
-       array_to_string(roles, ',') AS roles,
-       coalesce(qual, '-')        AS using_expr,
-       coalesce(with_check, '-')  AS with_check_expr
-FROM pg_policies
-WHERE schemaname = 'public' AND tablename = 'contract_signatures'
-ORDER BY policyname;
