@@ -6,7 +6,6 @@ import { QABreadcrumb } from "./QABreadcrumb";
 import { QAFooter } from "./QAFooter";
 import { useGestoGaveta } from "./useGestoGaveta";
 import { lazy, Suspense, useEffect, useState } from "react";
-import { Menu } from "lucide-react";
 
 const PendenciasEssenciaisModal = lazy(() => import("./PendenciasEssenciaisModal"));
 const AdminNotificacoesOverlay = lazy(() => import("./notificacoes/AdminNotificacoesOverlay"));
@@ -41,7 +40,8 @@ function QALayoutInner() {
   // Navegou? A gaveta fecha sozinha — senão ela fica por cima da tela nova.
   useEffect(() => { setMenuMobile(false); }, [location.pathname]);
 
-  // Dedo da borda esquerda para a direita abre a gaveta; para a esquerda fecha.
+  // No celular a gaveta abre SÓ pelo gesto: dedo da borda esquerda para a
+  // direita abre, para a esquerda fecha. Não há botão na tela.
   useGestoGaveta(menuMobile, setMenuMobile);
 
   // Gaveta em tela cheia: o fundo não pode rolar por baixo dela.
@@ -88,31 +88,7 @@ function QALayoutInner() {
         onFecharMobile={() => setMenuMobile(false)}
       />
 
-      {/* Botão do menu no celular: fixo no alto, à direita. Não é uma barra —
-          é só o botão flutuando sobre a faixa vazia que o `main` reserva logo
-          abaixo, então nada de conteúdo passa por baixo dele. */}
-      {!menuMobile && (
-        <button
-          type="button"
-          data-qa-sidebar="true"
-          data-nao-inverter
-          onClick={() => setMenuMobile(true)}
-          aria-label="Abrir menu"
-          className="fixed right-3 z-40 inline-flex h-11 w-11 items-center justify-center rounded-xl shadow-lg ring-1 ring-black/10 transition-transform active:scale-95 md:hidden"
-          style={{
-            top: "calc(0.5rem + env(safe-area-inset-top))",
-            background: "var(--qa-sb-accent)",
-            color: "var(--qa-sb-accent-text)",
-          }}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
-
       <main className="flex min-h-screen min-w-0 flex-col" style={{ background: "var(--qa-app)" }}>
-        {/* Faixa vazia sob o botão do menu. Reserva o espaço sem desenhar barra
-            nenhuma — o conteúdo começa logo abaixo, sem nada encoberto. */}
-        <div aria-hidden className="shrink-0 md:hidden" style={{ height: "calc(3.25rem + env(safe-area-inset-top))" }} />
         <QABreadcrumb />
         <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />
