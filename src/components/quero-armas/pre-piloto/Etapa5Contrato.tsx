@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { ClienteSalvo } from "./PrePilotoWizard";
-import { corpoDoErroFn, ehRecompraBloqueada, resumoRecompra } from "@/lib/quero-armas/recompraServico";
+import { corpoDoErroFn, ehRecompraBloqueada, motivoRecusa, resumoRecompra } from "@/lib/quero-armas/recompraServico";
 
 type Servico = { id: string; slug: string; nome: string; preco: number | null };
 
@@ -161,11 +161,13 @@ export default function Etapa5Contrato({ clienteSalvo, onConcluido, onVoltar }: 
         const corpoErro = await corpoDoErroFn(errVenda);
         if (!ehRecompraBloqueada(corpoErro)) throw errVenda;
         const confirmou = window.confirm(
-          `Este cliente já tem em andamento: ${resumoRecompra(corpoErro)}.\n\n` +
-          "É mesmo uma nova solicitação? Confirmar cria uma SEGUNDA venda do mesmo serviço.",
+          `${resumoRecompra(corpoErro)}.\n\n` +
+          (motivoRecusa(corpoErro) === "limite_do_servico"
+            ? "Isso passa do limite cadastrado para a categoria do titular. Confirmar cria a venda mesmo assim."
+            : "Foi comprado agora há pouco — confira se não é a mesma compra repetida. Confirmar cria uma SEGUNDA venda."),
         );
         if (!confirmou) {
-          toast.message("Venda não criada — serviço já contratado por este cliente.");
+          toast.message("Venda não criada — compra repetida ou acima do limite do serviço.");
           return;
         }
         ({ data: vendaData, error: errVenda } = await supabase.functions.invoke(

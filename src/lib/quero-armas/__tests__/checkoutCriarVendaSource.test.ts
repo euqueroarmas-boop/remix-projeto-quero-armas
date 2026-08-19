@@ -20,14 +20,24 @@ describe("qa-checkout-criar-venda source guards", () => {
     expect(src).toContain("qaClienteId = (clienteDireto as any).id");
   });
 
-  it("recusa segunda venda do serviço que o cliente já tem, salvo recompra confirmada", () => {
-    expect(src).toContain("TRAVA DE COMPRA DUPLICADA");
+  it("recusa compra repetida em minutos e compra acima do limite, salvo confirmação", () => {
+    expect(src).toContain("TRAVA DE COMPRA REPETIDA");
     expect(src).toContain('error: "servico_ja_contratado"');
     expect(src).toContain("body.recompra_confirmada !== true");
+    expect(src).toContain("JANELA_COMPRA_REPETIDA_MIN = 30");
+    expect(src).toContain('motivo: "repeticao_em_minutos"');
+    expect(src).toContain('motivo: "limite_do_servico"');
     // a busca é por VENDA viva do cliente, não por processo: no caso que
     // originou a trava a segunda compra aconteceu antes de existir processo.
     expect(src).toContain('.from("qa_itens_venda")');
-    expect(src).toContain('.in("servico_id", servicosDoCarrinho)');
     expect(src).toContain('tipo_evento: "venda_recompra_confirmada"');
+  });
+
+  it("lê o limite do catálogo por categoria do titular, sem regra fixa no código", () => {
+    expect(src).toContain('.from("qa_servicos_limite_compra")');
+    expect(src).toContain('.select("id, id_legado, categoria_titular")');
+    // serviço sem linha de limite não pode travar
+    expect(src).toContain("return escolhido ? Number((escolhido as any).limite) : null;");
+    expect(src).toContain("limite != null && existente.unidades + doCarrinho.quantidade > limite");
   });
 });

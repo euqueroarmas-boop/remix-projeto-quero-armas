@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
 import InlineContractReader from "@/components/quero-armas/contratar/InlineContractReader";
-import { ERRO_SERVICO_JA_CONTRATADO, resumoRecompra } from "@/lib/quero-armas/recompraServico";
+import { ERRO_SERVICO_JA_CONTRATADO, motivoRecusa, resumoRecompra } from "@/lib/quero-armas/recompraServico";
 
 /* =============================================================================
  * Design tokens — Escala neutra canônica LIGHT (AAA Pass).
@@ -103,10 +103,15 @@ function explainCheckoutError(body: Record<string, any> | null, fallback: string
     case "checkout_token_expirado":
       return "Sua sessão de checkout expirou. Recarregue a página e tente novamente.";
     case ERRO_SERVICO_JA_CONTRATADO: {
-      const jaTem = resumoRecompra(body);
-      return jaTem
-        ? `Você já tem este serviço em andamento: ${jaTem}. Se precisar contratar de novo, fale com a nossa equipe antes de pagar.`
-        : "Você já tem este serviço em andamento. Fale com a nossa equipe antes de contratar de novo.";
+      const detalhe = resumoRecompra(body);
+      if (motivoRecusa(body) === "limite_do_servico") {
+        return detalhe
+          ? `Você já atingiu o limite deste serviço: ${detalhe}. Fale com a nossa equipe.`
+          : "Você já atingiu o limite deste serviço. Fale com a nossa equipe.";
+      }
+      return detalhe
+        ? `Você contratou isto agora há pouco: ${detalhe}. Se o pagamento ainda não apareceu, fale com a nossa equipe antes de pagar de novo.`
+        : "Você contratou este serviço agora há pouco. Se o pagamento ainda não apareceu, fale com a nossa equipe antes de pagar de novo.";
     }
     case "service_unavailable":
       return "Este serviço está temporariamente indisponível no catálogo.";

@@ -37,7 +37,7 @@ import {
   policyIsValid,
   type NotificacaoPolicyValue,
 } from "@/components/quero-armas/NotificacaoPolicyPicker";
-import { corpoDoErroFn, ehRecompraBloqueada, resumoRecompra } from "@/lib/quero-armas/recompraServico";
+import { corpoDoErroFn, ehRecompraBloqueada, motivoRecusa, resumoRecompra } from "@/lib/quero-armas/recompraServico";
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
@@ -809,11 +809,13 @@ export default function QAPilotoRealPage() {
         const corpoErro = await corpoDoErroFn(error);
         if (!ehRecompraBloqueada(corpoErro)) throw error;
         const confirmou = window.confirm(
-          `Este cliente já tem em andamento: ${resumoRecompra(corpoErro)}.\n\n` +
-          "É mesmo uma nova solicitação? Confirmar cria uma SEGUNDA venda do mesmo serviço.",
+          `${resumoRecompra(corpoErro)}.\n\n` +
+          (motivoRecusa(corpoErro) === "limite_do_servico"
+            ? "Isso passa do limite cadastrado para a categoria do titular. Confirmar cria a venda mesmo assim."
+            : "Foi comprado agora há pouco — confira se não é a mesma compra repetida. Confirmar cria uma SEGUNDA venda."),
         );
         if (!confirmou) {
-          toast.message("Venda não criada — serviço já contratado por este cliente.");
+          toast.message("Venda não criada — compra repetida ou acima do limite do serviço.");
           return;
         }
         ({ data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
