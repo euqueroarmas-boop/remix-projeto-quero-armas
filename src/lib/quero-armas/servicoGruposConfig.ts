@@ -67,17 +67,26 @@ const GRUPOS_PERMITIDOS: Record<string, ReadonlySet<PendenciaGrupoId>> = {
     "laudos", "arma", "requerimento", "outros",
   ]),
 
-  // ── CR (Certificado de Registro — Exército) ─────────────────────────────
+  // ── CR (Certificado de Registro — Polícia Federal / Sinarm-CAC) ────────
+  // IN DG/PF 311/2025, art. 18, § 2º: além do tronco comum (identidade,
+  // endereço, ocupação lícita, idoneidade e laudos), o CR exige a filiação à
+  // entidade de tiro ou de caça e o compromisso de habitualidade — grupo
+  // `habitualidade` — e a segurança do acervo, DSA e DEGA — grupo `arma`.
+  // Sem esses dois grupos aqui, as exigências existiam no checklist e eram
+  // filtradas do popup do cliente, que é onde ele age.
+  //
+  // `efetiva_necessidade` NÃO entra: é requisito de posse/porte de defesa
+  // pessoal, não do registro de CAC.
   "concessao-cr": new Set<PendenciaGrupoId>([
     "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
-    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "ocupacao", "antecedentes", "habitualidade", "arma", "declaracoes",
     "laudos", "requerimento", "outros",
   ]),
   "renovacao-cr": new Set<PendenciaGrupoId>([
     "exigencias_pf",
     "assinaturas", "perguntas", "identificacao", "endereco",
-    "ocupacao", "antecedentes", "efetiva_necessidade",
+    "ocupacao", "antecedentes", "habitualidade", "arma", "declaracoes",
     "laudos", "requerimento", "outros",
   ]),
 

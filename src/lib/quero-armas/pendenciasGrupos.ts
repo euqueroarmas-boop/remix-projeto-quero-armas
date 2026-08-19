@@ -78,6 +78,11 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   // Perguntas do checklist entram no MESMO grupo temático do assunto que elas
   // destravam — nunca num bloco solto de "perguntas".
   if (t.startsWith("pergunta_")) {
+    // A modalidade do CR (colecionador / atirador / caçador) é o portão do
+    // processo: é ela que decide quais exigências existem. Fica em "Cadastros",
+    // no começo da fila — e não em "Habitualidade", onde o sufixo `_cac` a
+    // jogaria, depois de tudo o que ela mesma determina.
+    if (t === "pergunta_modalidade_cac") return GRUPOS.perguntas;
     if (
       t.includes("reside") ||
       t.includes("endereco") ||
@@ -164,6 +169,11 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t.startsWith("declaracao_habitualidade") ||
     t.startsWith("declaracao_compromisso_treino") ||
     t.startsWith("declaracao_compromisso_habitualidade") ||
+    // Caçador excepcional: a habilitação do Ibama é o que prova a atividade,
+    // como a filiação prova a do atirador. Sem esta linha ela caía em
+    // "Fechamento" e o cliente do CR de caça nunca era cobrado dela.
+    t === "habilitacao_cacador_ibama" ||
+    t.startsWith("habilitacao_cacador") ||
     t === "gt_declaracao" ||
     t.startsWith("gt_")
   ) {
