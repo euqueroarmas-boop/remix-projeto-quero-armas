@@ -11272,6 +11272,7 @@ export type Database = {
           exige_pagamento: boolean
           gera_processo: boolean
           id: string
+          modalidade_cac: string | null
           nome: string
           objetivo_slug: string | null
           ordem_no_pacote: number | null
@@ -11308,6 +11309,7 @@ export type Database = {
           exige_pagamento?: boolean
           gera_processo?: boolean
           id?: string
+          modalidade_cac?: string | null
           nome: string
           objetivo_slug?: string | null
           ordem_no_pacote?: number | null
@@ -11344,6 +11346,7 @@ export type Database = {
           exige_pagamento?: boolean
           gera_processo?: boolean
           id?: string
+          modalidade_cac?: string | null
           nome?: string
           objetivo_slug?: string | null
           ordem_no_pacote?: number | null
@@ -11360,6 +11363,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "qa_servicos_catalogo_modalidade_cac_fkey"
+            columns: ["modalidade_cac"]
+            isOneToOne: false
+            referencedRelation: "qa_modalidades"
+            referencedColumns: ["codigo"]
+          },
           {
             foreignKeyName: "qa_servicos_catalogo_servico_id_fkey"
             columns: ["servico_id"]
@@ -13923,6 +13933,10 @@ export type Database = {
         }
         Returns: Json
       }
+      qa_etapa_alcancada_por_entregas: {
+        Args: { p_processo_id: string }
+        Returns: number
+      }
       qa_etapa_documento: { Args: { tipo: string }; Returns: number }
       qa_evento_ja_notificado: {
         Args: { _evento: string; _solicitacao_id: string; _status_novo: string }
@@ -14186,6 +14200,14 @@ export type Database = {
       }
       qa_reabrir_exigencias_documento_invalido: {
         Args: { p_storage_path?: string }
+        Returns: number
+      }
+      qa_realinhar_etapa_liberada: {
+        Args: { p_processo_id?: string }
+        Returns: number
+      }
+      qa_realinhar_ordem_checklist: {
+        Args: { p_servico_id?: number }
         Returns: number
       }
       qa_reaproveitar_documentos_hub_processo: {
