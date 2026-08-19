@@ -184,40 +184,55 @@ function camposComValor(campos: Record<string, unknown>): Record<string, unknown
  * Grava os dados revisados por cima do cadastro que já existe.
  *
  * Caminho preferencial: a edge function, que confere o operador e grava com
- * service role. Se ela não estiver publicada — o deploy da função é manual e
- * independe do push do front — o UPDATE direto assume: a policy
- * `qa_clientes_staff_update` já autoriza o operador logado, e o cadastro do
- * cliente não pode deixar de ser atualizado por causa de um deploy pendente.
- * Recusa explícita da função (permissão, campo obrigatório) não tenta de novo
- * por fora: o UPDATE direto falharia pelo mesmo motivo.
+ * service role. Mandamos o token da sessão na mão: quando o supabase-js não
+ * repassa o token para a função (sessão renovada, aba parada muito tempo), ela
+ * respondia "unauthenticated" e o operador ficava sem conseguir atualizar.
+ *
+ * Se mesmo assim a função recusar ou não estiver publicada, o UPDATE direto
+ * assume. Quem autoriza de verdade é a policy `qa_clientes_staff_update`: se o
+ * operador não for da equipe, o banco recusa e o erro aparece na tela. Só a
+ * recusa por dado inválido (400) não tenta de novo — aí o problema é o campo,
+ * não o caminho.
  */
 async function atualizarCadastroExistente(
   clienteId: number,
   campos: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
-  const { data: saveResult, error: saveError } = await supabase.functions.invoke(
-    "qa-central-adesao-salvar-cliente",
-    { body: { cliente_id: clienteId, campos } },
-  );
-  if (!saveError && saveResult?.ok && saveResult.cliente) {
-    return saveResult.cliente as Record<string, unknown>;
-  }
+  // getSession também renova o token vencido antes de qualquer chamada.
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao?.session?.access_token ?? null;
 
-  // A mensagem padrão do supabase-js ("non-2xx status code") esconde o motivo
-  // real; lemos o corpo da resposta para o operador saber o que corrigir.
-  let motivo = saveResult?.error as string | undefined;
+  let motivo: string | undefined;
   let status: number | undefined;
-  const ctx: any = (saveError as any)?.context;
-  if (ctx) {
-    if (typeof ctx.status === "number") status = ctx.status;
-    if (!motivo && typeof ctx.json === "function") {
-      try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+  if (token) {
+    const { data: saveResult, error: saveError } = await supabase.functions.invoke(
+      "qa-central-adesao-salvar-cliente",
+      {
+        body: { cliente_id: clienteId, campos },
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
+    if (!saveError && saveResult?.ok && saveResult.cliente) {
+      return saveResult.cliente as Record<string, unknown>;
     }
+
+    // A mensagem padrão do supabase-js ("non-2xx status code") esconde o motivo
+    // real; lemos o corpo da resposta para o operador saber o que corrigir.
+    motivo = saveResult?.error as string | undefined;
+    const ctx: any = (saveError as any)?.context;
+    if (ctx) {
+      if (typeof ctx.status === "number") status = ctx.status;
+      if (!motivo && typeof ctx.json === "function") {
+        try { motivo = (await ctx.json())?.error; } catch { /* corpo não-JSON */ }
+      }
+    }
+    if (status === 400) {
+      throw new Error(motivo || "Falha ao atualizar o cadastro único do cliente");
+    }
+    if (!motivo) motivo = saveError?.message;
   }
-  if (status !== undefined && status >= 400 && status < 500 && status !== 404) {
-    throw new Error(motivo || "Falha ao atualizar o cadastro único do cliente");
-  }
-  console.warn("[Etapa4Salvar] edge function indisponível, atualizando direto:", motivo || saveError?.message);
+  if (!token) motivo = "sessão do admin expirada — saia e entre de novo";
+  console.warn("[Etapa4Salvar] gravando direto no cadastro; a função recusou:", status ?? "sem sessão", motivo);
 
   // Marca os campos como preenchidos pela equipe, igual à edge function: sem
   // isso o auto-preenchimento por IA pode sobrescrever depois o que o operador
@@ -243,7 +258,7 @@ async function atualizarCadastroExistente(
     .select("id, nome_completo, cpf, email, celular, endereco, numero, complemento, bairro, cidade, estado, cep, pais")
     .maybeSingle();
   if (updateError || !salvo) {
-    throw new Error(motivo || updateError?.message || "Falha ao atualizar o cadastro único do cliente");
+    throw new Error(updateError?.message || motivo || "Falha ao atualizar o cadastro único do cliente");
   }
   return salvo as Record<string, unknown>;
 }
