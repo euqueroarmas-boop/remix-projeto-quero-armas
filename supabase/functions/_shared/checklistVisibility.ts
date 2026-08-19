@@ -12,12 +12,15 @@
 // resposta de pergunta-pivot (exige_quando) ou de uma dependência (depende_de).
 // ============================================================================
 
+import { ehReemissaoDeVencido } from "./reemissaoVencido.ts";
+
 export type Respostas = Record<string, any>;
 
 export interface ChecklistItemLike {
   obrigatorio?: boolean | null;
   tipo_documento?: string | null;
   regra_validacao?: any;
+  status?: string | null;
 }
 
 export function matchCondicaoGuia(
@@ -84,6 +87,18 @@ export function ehExigenciaEtapaFinal(d: ChecklistItemLike): boolean {
   ].includes(String(d?.tipo_documento ?? "").trim().toLowerCase());
 }
 
+/**
+ * Exigência VENCIDA também não conta para "o processo está pronto".
+ *
+ * Pelo mesmo impasse circular da etapa final: a reemissão do documento vencido
+ * só é pedida ao cliente depois que o processo vira `pronto_para_protocolar`
+ * (decisão de 19/08/2026 — ver reemissaoVencido.ts). Se ela contasse como
+ * pendência aqui, o processo nunca chegaria a esse status e a reemissão nunca
+ * seria pedida.
+ *
+ * A leitura correta é: o documento JÁ FOI entregue e conferido. Ele só perdeu a
+ * validade esperando a fila. Isso é dívida do calendário, não do cliente.
+ */
 export function itemContaParaConclusao(
   d: ChecklistItemLike,
   respostas: Respostas,
@@ -91,6 +106,7 @@ export function itemContaParaConclusao(
   if (!itemVisivelGuia(d, respostas)) return false;
   if (d?.obrigatorio !== true) return false;
   if (ehExigenciaEtapaFinal(d)) return false;
+  if (ehReemissaoDeVencido(d)) return false;
   return true;
 }
 

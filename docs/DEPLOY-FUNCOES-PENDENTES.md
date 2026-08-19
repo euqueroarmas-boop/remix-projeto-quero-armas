@@ -221,3 +221,15 @@ git diff --name-only <commit-da-ultima-leva>..HEAD -- supabase/functions/ \
 
 Marcos de referência: leva 7 = `36119e9`, leva 8 = `6872970`, leva 9 = `d7babbf`.
 Se a lista voltar vazia, não há deploy pendente.
+
+## Leva 10 — regra "vencido não vira cobrança imediata" (19/08/2026)
+
+Motivo: `supabase/functions/_shared/reemissaoVencido.ts` (novo) e
+`_shared/checklistVisibility.ts` (alterado) mudam o que conta como pendência.
+Sem o redeploy, o banco marca a exigência como `expirado` e as funções antigas
+continuam contando isso como pendência — o processo nunca chega a
+`pronto_para_protocolar` e a reemissão nunca é pedida.
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/qa-processo-checar-conclusao-checklist/index.ts
+- supabase/functions/qa-processo-etapa-auto-liberar/index.ts

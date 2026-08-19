@@ -27,6 +27,8 @@
  * — e o passo nunca apareceria. Uma esperando a outra, para sempre.
  * ============================================================================= */
 
+import { ehReemissaoDeVencido } from "./reemissaoVencido";
+
 /**
  * Rede de segurança para base em que a marca `etapa_final` ainda não foi
  * aplicada na linha do processo. O tipo do documento é suficiente: nenhum
@@ -53,6 +55,8 @@ export const STATUS_PROTOCOLO_LIBERADO: ReadonlySet<string> = new Set([
 export interface ItemComEtapaFinal {
   tipo_documento?: string | null;
   regra_validacao?: { etapa_final?: boolean | null } | null;
+  /** Usado pela trava de reemissão de vencido — ver `reemissaoVencido.ts`. */
+  status?: string | null;
 }
 
 export function ehExigenciaEtapaFinal(d: ItemComEtapaFinal | null | undefined): boolean {
@@ -68,14 +72,27 @@ export function protocoloLiberado(statusProcesso: unknown): boolean {
 /**
  * O item pode ser cobrado do cliente AGORA?
  *
- * Único ponto de decisão: quem for de etapa final espera a liberação da equipe;
- * o resto segue o fluxo normal do checklist.
+ * ÚNICO ponto de decisão do portal. Duas coisas esperam a liberação da equipe,
+ * pelo mesmo motivo de fundo — cobrar cedo custa dinheiro do cliente à toa:
+ *
+ *   1. ETAPA FINAL (GRU, gov.br, juntada): não são documentos a buscar, são o
+ *      ato de protocolar.
+ *   2. REEMISSÃO DE VENCIDO (19/08/2026): o documento já foi entregue e
+ *      conferido, só perdeu a validade esperando a fila. Certidão vale 30 dias
+ *      e o processo leva mais; reemitir cedo faz o cliente pagar de novo e
+ *      chegar vencido ao protocolo do mesmo jeito. Ver `reemissaoVencido.ts`.
+ *
+ * O resto segue o fluxo normal do checklist. Documento REPROVADO não entra
+ * aqui: aquilo é erro de agora e é cobrado de imediato.
  */
 export function exigenciaCobravelAgora(
   d: ItemComEtapaFinal | null | undefined,
   statusProcesso: unknown,
 ): boolean {
-  return !ehExigenciaEtapaFinal(d) || protocoloLiberado(statusProcesso);
+  if (ehExigenciaEtapaFinal(d) || ehReemissaoDeVencido(d)) {
+    return protocoloLiberado(statusProcesso);
+  }
+  return true;
 }
 
 /**
