@@ -37,6 +37,7 @@ import {
   policyIsValid,
   type NotificacaoPolicyValue,
 } from "@/components/quero-armas/NotificacaoPolicyPicker";
+import { corpoDoErroFn, ehCompraRepetida, perguntaCompraRepetida } from "@/lib/quero-armas/recompraServico";
 
 type Cliente = { id: number; id_legado: number | null; nome_completo: string; cpf: string | null; email: string | null; celular: string | null; user_id: string | null };
 type Servico = { id: string; slug: string; nome: string; preco: number | null; ativo: boolean };
@@ -721,79 +722,94 @@ export default function QANovaVendaPage() {
           return;
         }
       }
-      const { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
-        body: {
-          cart: [
-            {
-              servico_id: servico.id,
-              slug: servico.slug,
-              quantidade: 1,
-              preco_negociado: precoAplicadoPrincipal,
-            },
-            ...extrasAvaliados.map((e) => ({
-              servico_id: e.ie.servico.id,
-              slug: e.ie.servico.slug,
-              quantidade: 1,
-              preco_negociado: e.aplicado,
-            })),
-          ],
-          // Nova Venda: vincula a venda ao CLIENTE selecionado no Passo 1,
-          // não ao staff que está logado disparando o wizard.
-          target_qa_cliente_id: cliente.id,
-          identificacao: {
-            nome_completo: cliente.nome_completo,
-            cpf: cliente.cpf || "",
-            email: cliente.email || "",
-            celular: cliente.celular || "",
+      const corpoVenda: Record<string, unknown> = {
+        cart: [
+          {
+            servico_id: servico.id,
+            slug: servico.slug,
+            quantidade: 1,
+            preco_negociado: precoAplicadoPrincipal,
           },
-          negociacao: precoDiferente ? {
-            motivo: (modoPacote ? motivoPacote.trim() : motivoPreco.trim()),
-            tipo_ajuste: modoPacote ? "negociacao_individual" : tipoAjuste,
-            evidencia_path: evPath,
-            confirmado: true,
-            origem: modoPacote
-              ? "piloto_real_pacote_fechado"
-              : "piloto_real_preco_negociado",
-          } : null,
-          exibicao_contrato: temExtras ? {
-            modo: modoExibicao,
-            // Valor final oficial do pacote no contrato:
-            //  - custo_fin: preço dos serviços = total do catálogo
-            //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
-            valor_final_pacote: modoPacote && precoValido
-              ? (modoPacoteCustoFin ? valorContratadoPacote : precoAplicadoNum)
-              : null,
-            ocultar_precos_individuais_no_contrato: modoPacote,
-            motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
-            // Auditoria estendida do pacote fechado.
-            tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
-            total_catalogo_servicos: modoPacote ? precoCatalogo : null,
-            valor_total_pago_cliente:
-              modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
-            diferenca_valor: modoPacote ? diferencaPacoteValor : null,
-            custo_financeiro_adquirente: modoPacoteCustoFin ? custoFinanceiroAdquirente : null,
-            adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
-            parcelas: modoPacoteCustoFin ? parcelasPacote : null,
-            valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
-            custos_embutidos: modoPacoteCustoFin && custosEmbutidosValidos.length > 0
-              ? custosEmbutidosValidos.map((c) => ({
-                  descricao: c.descricao.toUpperCase(),
-                  valor: Number(c.valor.toFixed(2)),
-                }))
-              : null,
-            custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
-              ? Number(custosEmbutidosTotal.toFixed(2))
-              : null,
-            // Nova Venda, passada B: envia composição estruturada quando houver.
-            composicao_valor_final: composicaoValorFinalDerivada.length > 0
-              ? composicaoValorFinalDerivada
-              : null,
-            valor_total_pago_cliente_estruturado:
-              composicaoValorFinalDerivada.length > 0 ? totalComposicaoDerivada : null,
-          } : null,
+          ...extrasAvaliados.map((e) => ({
+            servico_id: e.ie.servico.id,
+            slug: e.ie.servico.slug,
+            quantidade: 1,
+            preco_negociado: e.aplicado,
+          })),
+        ],
+        // Nova Venda: vincula a venda ao CLIENTE selecionado no Passo 1,
+        // não ao staff que está logado disparando o wizard.
+        target_qa_cliente_id: cliente.id,
+        identificacao: {
+          nome_completo: cliente.nome_completo,
+          cpf: cliente.cpf || "",
+          email: cliente.email || "",
+          celular: cliente.celular || "",
         },
+        negociacao: precoDiferente ? {
+          motivo: (modoPacote ? motivoPacote.trim() : motivoPreco.trim()),
+          tipo_ajuste: modoPacote ? "negociacao_individual" : tipoAjuste,
+          evidencia_path: evPath,
+          confirmado: true,
+          origem: modoPacote
+            ? "piloto_real_pacote_fechado"
+            : "piloto_real_preco_negociado",
+        } : null,
+        exibicao_contrato: temExtras ? {
+          modo: modoExibicao,
+          // Valor final oficial do pacote no contrato:
+          //  - custo_fin: preço dos serviços = total do catálogo
+          //  - ajuste_comercial: valor negociado (precoAplicadoNum já reflete)
+          valor_final_pacote: modoPacote && precoValido
+            ? (modoPacoteCustoFin ? valorContratadoPacote : precoAplicadoNum)
+            : null,
+          ocultar_precos_individuais_no_contrato: modoPacote,
+          motivo: modoPacote && temDiferencaPacote ? motivoPacote.trim() : null,
+          // Auditoria estendida do pacote fechado.
+          tipo_diferenca: modoPacote && temDiferencaPacote ? tipoDiferencaPacote : null,
+          total_catalogo_servicos: modoPacote ? precoCatalogo : null,
+          valor_total_pago_cliente:
+            modoPacote && Number.isFinite(valorFinalPacoteNum) ? valorFinalPacoteNum : null,
+          diferenca_valor: modoPacote ? diferencaPacoteValor : null,
+          custo_financeiro_adquirente: modoPacoteCustoFin ? custoFinanceiroAdquirente : null,
+          adquirente: modoPacoteCustoFin ? adquirentePacote.trim().toUpperCase() || null : null,
+          parcelas: modoPacoteCustoFin ? parcelasPacote : null,
+          valor_parcela: modoPacoteCustoFin ? valorParcelaPacote : null,
+          custos_embutidos: modoPacoteCustoFin && custosEmbutidosValidos.length > 0
+            ? custosEmbutidosValidos.map((c) => ({
+                descricao: c.descricao.toUpperCase(),
+                valor: Number(c.valor.toFixed(2)),
+              }))
+            : null,
+          custos_embutidos_total: modoPacoteCustoFin && custosEmbutidosTotal > 0
+            ? Number(custosEmbutidosTotal.toFixed(2))
+            : null,
+          // Nova Venda, passada B: envia composição estruturada quando houver.
+          composicao_valor_final: composicaoValorFinalDerivada.length > 0
+            ? composicaoValorFinalDerivada
+            : null,
+          valor_total_pago_cliente_estruturado:
+            composicaoValorFinalDerivada.length > 0 ? totalComposicaoDerivada : null,
+        } : null,
+      };
+      let { data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
+        body: corpoVenda,
       });
-      if (error) throw error;
+      // Mesmo serviço comprado há poucos minutos: confirma se é nova compra
+      // ou o clique repetido. Não é limite — é proteção contra engano.
+      if (error) {
+        const corpoErro = await corpoDoErroFn(error);
+        if (!ehCompraRepetida(corpoErro)) throw error;
+        const confirmou = window.confirm(perguntaCompraRepetida(corpoErro));
+        if (!confirmou) {
+          toast.message("Venda não criada — era a mesma compra repetida.");
+          return;
+        }
+        ({ data, error } = await supabase.functions.invoke("qa-checkout-criar-venda", {
+          body: { ...corpoVenda, recompra_confirmada: true },
+        }));
+        if (error) throw error;
+      }
       if (!(data as any)?.ok) throw new Error((data as any)?.error || "falha_criar_venda");
       toast.success(`Venda #${(data as any).venda_id} criada`);
       const novaVendaId = Number((data as any).venda_id);

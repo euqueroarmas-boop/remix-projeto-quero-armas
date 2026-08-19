@@ -100,6 +100,13 @@ interface Body {
    * Sem essa checagem, o admin que dispara o wizard vira dono da venda.
    */
   target_qa_cliente_id?: number | null;
+  /**
+   * Confirma que a compra repetida é intencional. Sem isso, comprar o mesmo
+   * serviço duas vezes em poucos minutos é recusado — ver PROTEÇÃO CONTRA
+   * COMPRA REPETIDA POR ENGANO. A confirmação fica registrada no evento
+   * `venda_recompra_confirmada`.
+   */
+  recompra_confirmada?: boolean;
 }
 
 const TIPOS_AJUSTE = new Set([
@@ -443,51 +450,94 @@ Deno.serve(async (req) => {
   });
   const temNegociacao = cartAvaliado.some((c) => c.diferente);
 
-  if (temNegociacao) {
-    // Precisa de staff ativo (mesma regra de qa_usuarios_perfis).
-    if (!userId) {
-      return new Response(
-        JSON.stringify({ error: "staff_required_for_negotiated_price" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+  // ── PROTEÇÃO CONTRA COMPRA REPETIDA POR ENGANO ────────────────────────────
+  // Auditoria de 19/08/2026: um cliente fechou o MESMO carrinho duas vezes com
+  // quatro minutos de diferença — não viu a confirmação do PIX e refez. Saíram
+  // duas vendas, dois contratos assinados e seis processos no lugar de três.
+  // Todas as travas a jusante são por VENDA (`uq_qa_processos_venda_servico`),
+  // então nenhuma delas enxerga a segunda compra.
+  //
+  // Isto NÃO é limite de compra: quantas armas o cliente pode ter é assunto do
+  // órgão, não do checkout. Quem quer comprar, compra. A única coisa barrada é
+  // a repetição em minutos, que é engano e não escolha — e mesmo essa o próprio
+  // cliente desfaz confirmando na tela (`recompra_confirmada`), sem depender de
+  // ninguém da Equipe. A confirmação fica registrada no evento
+  // `venda_recompra_confirmada`.
+  const JANELA_COMPRA_REPETIDA_MIN = 30;
+  const STATUS_VENDA_ENCERRADA = new Set([
+    "CANCELADO", "DESISTIU", "RESTITUÍDO", "RESTITUIDO",
+    "CONCLUÍDO", "CONCLUIDO", "DEFERIDO", "INDEFERIDO",
+  ]);
+
+  interface CompraRecente {
+    servico_id: number;
+    servico_nome: string;
+    venda_id: number;
+    minutos_desde_a_ultima: number;
+  }
+
+  const servicosDoCarrinho = new Map<number, string>();
+  for (const c of cartAvaliado) {
+    const servicoId = Number(c.r?.servico_id);
+    if (!Number.isFinite(servicoId) || servicoId <= 0) continue;
+    servicosDoCarrinho.set(servicoId, String(c.r?.nome ?? `serviço ${servicoId}`));
+  }
+
+  const compradosAgoraHaPouco: CompraRecente[] = [];
+
+  if (servicosDoCarrinho.size > 0) {
+    const { data: vendasDoCliente } = await admin
+      .from("qa_vendas")
+      .select("id, id_legado, status, created_at")
+      .eq("cliente_id", cliLegado)
+      .gte("created_at", new Date(Date.now() - JANELA_COMPRA_REPETIDA_MIN * 60000).toISOString());
+    const recentes = (vendasDoCliente ?? []).filter(
+      (v: any) => !STATUS_VENDA_ENCERRADA.has(String(v.status ?? "").trim().toUpperCase()),
+    );
+    if (recentes.length > 0) {
+      // qa_itens_venda referencia a venda pelo id LEGADO.
+      const porLegado = new Map<number, any>();
+      for (const v of recentes) porLegado.set(Number((v as any).id_legado ?? (v as any).id), v);
+      const { data: itensRecentes } = await admin
+        .from("qa_itens_venda")
+        .select("venda_id, servico_id, status")
+        .in("venda_id", Array.from(porLegado.keys()))
+        .in("servico_id", Array.from(servicosDoCarrinho.keys()));
+      const agora = Date.now();
+      const jaListado = new Set<number>();
+      for (const item of itensRecentes ?? []) {
+        if (String((item as any).status ?? "").trim().toUpperCase() === "CANCELADO") continue;
+        const venda = porLegado.get(Number((item as any).venda_id));
+        if (!venda) continue;
+        const servicoId = Number((item as any).servico_id);
+        if (jaListado.has(servicoId)) continue;
+        jaListado.add(servicoId);
+        const criadaEm = venda.created_at ? Date.parse(venda.created_at) : NaN;
+        compradosAgoraHaPouco.push({
+          servico_id: servicoId,
+          servico_nome: servicosDoCarrinho.get(servicoId) ?? `serviço ${servicoId}`,
+          venda_id: Number(venda.id),
+          minutos_desde_a_ultima: Number.isFinite(criadaEm)
+            ? Math.floor((agora - criadaEm) / 60000)
+            : 0,
+        });
+      }
     }
-    const { data: perfilRow } = await admin
-      .from("qa_usuarios_perfis")
-      .select("perfil, ativo")
-      .eq("user_id", userId)
-      .eq("ativo", true)
-      .maybeSingle();
-    if (!perfilRow) {
-      return new Response(
-        JSON.stringify({ error: "staff_profile_required_for_negotiated_price" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (!negociacaoRecebida) {
-      return new Response(
-        JSON.stringify({ error: "negociacao_obrigatoria" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    const motivo = String(negociacaoRecebida.motivo || "").trim();
-    if (motivo.length < 20) {
-      return new Response(
-        JSON.stringify({ error: "motivo_minimo_20_chars" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (!TIPOS_AJUSTE.has(String(negociacaoRecebida.tipo_ajuste))) {
-      return new Response(
-        JSON.stringify({ error: "tipo_ajuste_invalido", allowed: [...TIPOS_AJUSTE] }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
-    if (negociacaoRecebida.confirmado !== true) {
-      return new Response(
-        JSON.stringify({ error: "confirmacao_obrigatoria" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+  }
+
+  if (compradosAgoraHaPouco.length > 0 && body.recompra_confirmada !== true) {
+    return new Response(
+      JSON.stringify({
+        error: "compra_repetida_agora",
+        code: "COMPRA_REPETIDA_AGORA",
+        detalhe:
+          `Este serviço já foi comprado nos últimos ${JANELA_COMPRA_REPETIDA_MIN} minutos. ` +
+          "Se for mesmo uma nova compra, reenvie com recompra_confirmada.",
+        janela_minutos: JANELA_COMPRA_REPETIDA_MIN,
+        servicos: compradosAgoraHaPouco,
+      }),
+      { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   }
 
   const itensSnapshot = body.cart.map((it) => {
@@ -681,6 +731,22 @@ Deno.serve(async (req) => {
       exibicao_contrato: body.exibicao_contrato ?? null,
     },
   });
+
+  // Auditoria — compra repetida liberada por confirmação de quem comprou.
+  // O registro é o que permite distinguir depois "comprou de novo mesmo" de
+  // "clicou duas vezes".
+  if (compradosAgoraHaPouco.length > 0) {
+    await admin.from("qa_venda_eventos").insert({
+      venda_id: vendaId,
+      qa_cliente_id: qaClienteId,
+      cliente_id: cliLegado,
+      tipo_evento: "venda_recompra_confirmada",
+      descricao: "Venda criada mesmo com serviço já contratado — recompra confirmada por quem fechou o carrinho.",
+      ator: userId ? "cliente_logado" : "cliente_publico",
+      user_id: userId,
+      dados_json: { comprados_agora_ha_pouco: compradosAgoraHaPouco },
+    });
+  }
 
   // Auditoria dedicada — modo de exibição do contrato (usada por qa-generate-contract).
   // Sempre grava o evento quando o modo foi explicitamente enviado (mesmo itens_separados,

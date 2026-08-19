@@ -265,3 +265,20 @@ ALTERADAS (redeploy obrigatório):
   documento recusado continuam sem avisar o cliente no portal.
 - supabase/functions/qa-inatividade-cobranca/index.ts — sem ela, o lembrete de
   processo parado continua sem aparecer no portal.
+
+## Leva 13 — proteção contra compra repetida por engano (19/08/2026)
+
+Motivo: auditoria do cliente 236 (RICARDO ADRIANO MIRANDA) mostrou o mesmo
+carrinho fechado duas vezes com quatro minutos de diferença — duas vendas, dois
+contratos assinados e seis processos no lugar de três. Todas as travas de
+idempotência são por VENDA, então nenhuma delas enxerga a segunda compra.
+
+A função passa a recusar UM caso só: o mesmo serviço comprado nos últimos 30
+minutos. Não é limite de quantidade — quantas armas o cliente pode ter é
+assunto do órgão, não do checkout. E não vira pedido de autorização: quem está
+comprando confirma na própria tela (`recompra_confirmada`) e a venda sai.
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/qa-checkout-criar-venda/index.ts — sem ela, o clique
+  repetido de quem não viu a confirmação do pagamento continua virando uma
+  segunda venda com processos duplicados.

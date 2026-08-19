@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { fetchChecklistEtapa02 } from "@/lib/quero-armas/etapa02Checklist";
 import { useCart } from "@/shared/cart/CartProvider";
 import InlineContractReader from "@/components/quero-armas/contratar/InlineContractReader";
+import { corpoDoErroFn, ehCompraRepetida, perguntaCompraRepetida } from "@/lib/quero-armas/recompraServico";
 
 /* =============================================================================
  * Design tokens — Escala neutra canônica LIGHT (AAA Pass).
@@ -66,16 +67,9 @@ const ESTADOS_CIVIS = ["SOLTEIRO(A)", "CASADO(A)", "DIVORCIADO(A)", "VIÚVO(A)",
 /* ── Tradução de erros do checkout ──────────────────────────────────────────
  * supabase.functions.invoke devolve FunctionsHttpError com mensagem genérica
  * ("Edge Function returned a non-2xx status code"); o corpo real fica em
- * error.context (Response). Sem isso, qualquer recusa do Asaas vira um toast
- * inútil e o cliente acha que o botão "não funciona". */
-async function extractFnError(err: unknown): Promise<Record<string, any> | null> {
-  try {
-    const ctx = (err as any)?.context;
-    if (ctx && typeof ctx.json === "function") return await ctx.json();
-  } catch { /* corpo não-JSON */ }
-  return null;
-}
-
+ * error.context (Response) e é lido por `corpoDoErroFn`. Sem isso, qualquer
+ * recusa do Asaas vira um toast inútil e o cliente acha que o botão "não
+ * funciona". */
 function explainCheckoutError(body: Record<string, any> | null, fallback: string): string {
   if (!body) return fallback;
   const asaasDesc = Array.isArray(body?.details?.errors)
@@ -384,17 +378,33 @@ export default function QAContratarConfirmarPage() {
       const successUrl =
         `${window.location.origin}/area-do-cliente/contratar/${catalogo.slug}/sucesso`;
 
-      const { data: vendaData, error: vendaErr } = await supabase.functions.invoke(
+      const corpoVenda = {
+        cart: [{ servico_id: catalogo.id, slug: catalogo.slug, quantidade: 1 }],
+      };
+      let { data: vendaData, error: vendaErr } = await supabase.functions.invoke(
         "qa-checkout-criar-venda",
-        {
-          body: {
-            cart: [{ servico_id: catalogo.id, slug: catalogo.slug, quantidade: 1 }],
-          },
-        },
+        { body: corpoVenda },
       );
+      // Comprou o mesmo serviço há poucos minutos: pergunta a ele mesmo se é
+      // nova compra ou o clique repetido de quem não viu a confirmação.
+      // A decisão é do cliente — não vira pedido de autorização à Equipe.
       if (vendaErr) {
-        const body = await extractFnError(vendaErr);
-        throw new Error(explainCheckoutError(body, "Falha ao registrar venda."));
+        const corpoErro = await corpoDoErroFn(vendaErr);
+        if (!ehCompraRepetida(corpoErro)) {
+          throw new Error(explainCheckoutError(corpoErro, "Falha ao registrar venda."));
+        }
+        if (!window.confirm(perguntaCompraRepetida(corpoErro))) {
+          toast.message("Tudo bem — nada foi cobrado de novo.");
+          return;
+        }
+        ({ data: vendaData, error: vendaErr } = await supabase.functions.invoke(
+          "qa-checkout-criar-venda",
+          { body: { ...corpoVenda, recompra_confirmada: true } },
+        ));
+        if (vendaErr) {
+          const corpoRetry = await corpoDoErroFn(vendaErr);
+          throw new Error(explainCheckoutError(corpoRetry, "Falha ao registrar venda."));
+        }
       }
       const venda = vendaData as any;
       if (!venda?.ok || !venda?.venda_id || !venda?.checkout_token) {
@@ -413,7 +423,7 @@ export default function QAContratarConfirmarPage() {
         },
       );
       if (payErr) {
-        const body = await extractFnError(payErr);
+        const body = await corpoDoErroFn(payErr);
         throw new Error(explainCheckoutError(body, "Falha ao gerar cobrança."));
       }
       const pay = payData as any;
