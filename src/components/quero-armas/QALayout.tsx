@@ -40,6 +40,14 @@ function QALayoutInner() {
   // Navegou? A gaveta fecha sozinha — senão ela fica por cima da tela nova.
   useEffect(() => { setMenuMobile(false); }, [location.pathname]);
 
+  // Gaveta em tela cheia: o fundo não pode rolar por baixo dela.
+  useEffect(() => {
+    if (!menuMobile) return;
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = anterior; };
+  }, [menuMobile]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "hsl(220 20% 97%)" }}>
@@ -76,35 +84,29 @@ function QALayoutInner() {
         onFecharMobile={() => setMenuMobile(false)}
       />
 
-      {/* Fundo escurecido da gaveta. Toque fora fecha. */}
-      {menuMobile && (
+      {/* Botão do menu no celular. Fica flutuando no canto inferior direito —
+          ao alcance do polegar e sem a barra fixa que antes roubava uma linha
+          inteira do topo de toda tela. Some enquanto a gaveta está aberta. */}
+      {!menuMobile && (
         <button
           type="button"
-          aria-label="Fechar menu"
-          onClick={() => setMenuMobile(false)}
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
-        />
+          data-qa-sidebar="true"
+          data-nao-inverter
+          onClick={() => setMenuMobile(true)}
+          aria-label="Abrir menu"
+          className="fixed right-4 z-40 inline-flex h-14 w-14 items-center justify-center rounded-2xl border shadow-lg transition-transform active:scale-95 md:hidden"
+          style={{
+            bottom: "max(1rem, env(safe-area-inset-bottom))",
+            background: "var(--qa-sb-shell, var(--qa-sb-bg))",
+            borderColor: "var(--qa-sb-border)",
+            color: "var(--qa-sb-name)",
+          }}
+        >
+          <Menu className="h-6 w-6" />
+        </button>
       )}
 
-      <main className="flex min-h-screen min-w-0 flex-col" style={{ background: "var(--qa-app)" }}>
-        {/* Barra superior do celular: o único lugar de onde a gaveta abre. */}
-        <div
-          className="sticky top-0 z-30 flex items-center gap-2 border-b px-3 py-2 md:hidden"
-          style={{ background: "var(--qa-app)", borderColor: "var(--qa-sb-border)" }}
-        >
-          <button
-            type="button"
-            onClick={() => setMenuMobile(true)}
-            aria-label="Abrir menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg border"
-            style={{ borderColor: "var(--qa-sb-border)", color: "var(--qa-sb-text)" }}
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <span className="truncate text-[13px] font-semibold tracking-wide" style={{ color: "var(--qa-sb-name)" }}>
-            {profile.nome}
-          </span>
-        </div>
+      <main className="flex min-h-screen min-w-0 flex-col pb-16 md:pb-0" style={{ background: "var(--qa-app)" }}>
         <QABreadcrumb />
         <div className="flex-1 p-3 md:py-6 md:px-4 lg:py-8 lg:px-5">
           <Outlet />
