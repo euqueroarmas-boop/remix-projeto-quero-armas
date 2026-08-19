@@ -583,8 +583,19 @@ function leParteNfse(el: Element | null): ParteNotaFiscalXml {
   };
 }
 
-/* Traduções dos códigos do layout nacional. Valor fora da tabela sai como o
- * próprio código — melhor mostrar o código cru do que rotular errado. */
+/* ── Tabelas de código do leiaute nacional ────────────────────────────────
+ *
+ * CONFERIDAS CONTRA A DOCUMENTAÇÃO (19/08/2026), e ainda bem: a primeira
+ * versão de `TRIBUTACAO_ISSQN` estava ERRADA nos códigos 2, 3 e 4 — imprimia
+ * "Exportação de serviço" onde o correto é "Imunidade". Rótulo trocado num
+ * documento fiscal é pior que campo vazio, porque parece certo.
+ *
+ * A ordem correta é 1-Operação tributável, 2-Imunidade, 3-Exportação de
+ * serviço, 4-Não Incidência.
+ *
+ * Valor fora da tabela sai como o PRÓPRIO CÓDIGO. Os municípios podem variar
+ * a descrição de alguns regimes, e o leiaute ganha códigos novos a cada nota
+ * técnica: mostrar o número é sempre honesto; adivinhar o rótulo, não. */
 const traduz = (mapa: Record<string, string>, codigo?: string): string | undefined => {
   const c = String(codigo ?? "").trim();
   if (!c) return undefined;
@@ -593,21 +604,31 @@ const traduz = (mapa: Record<string, string>, codigo?: string): string | undefin
 
 const TRIBUTACAO_ISSQN: Record<string, string> = {
   "1": "Operação tributável",
-  "2": "Exportação de serviço",
-  "3": "Não incidência",
-  "4": "Imunidade",
+  "2": "Imunidade",
+  "3": "Exportação de serviço",
+  "4": "Não Incidência",
 };
 
 const RETENCAO_ISSQN: Record<string, string> = {
-  "1": "Não retido",
-  "2": "Retido pelo tomador",
-  "3": "Retido pelo intermediário",
+  "1": "Não Retido",
+  "2": "Retido pelo Tomador",
+  "3": "Retido pelo Intermediário",
 };
 
 const SIMPLES_NACIONAL: Record<string, string> = {
-  "1": "Não optante",
+  "1": "Não Optante",
   "2": "Optante — MEI",
   "3": "Optante — ME/EPP",
+};
+
+const REGIME_ESPECIAL: Record<string, string> = {
+  "0": "Nenhum",
+  "1": "Ato Cooperado (Cooperativa)",
+  "2": "Estimativa",
+  "3": "Microempresa Municipal",
+  "4": "Notário ou Registrador",
+  "5": "Profissional Autônomo",
+  "6": "Sociedade de Profissionais",
 };
 
 function leNfse(doc: Document): LeituraNotaFiscalXml {
@@ -698,7 +719,7 @@ function leNfse(doc: Document): LeituraNotaFiscalXml {
         municipioIncidenciaIssqn: txt(infNFSe, "cLocIncid"),
         retencaoIssqn: traduz(RETENCAO_ISSQN, txt(acha(infDPS, "tribMun"), "tpRetISSQN")),
         simplesNacional: traduz(SIMPLES_NACIONAL, txt(acha(infDPS, "regTrib"), "opSimpNac")),
-        regimeApuracao: txt(acha(infDPS, "regTrib"), "regEspTrib"),
+        regimeApuracao: traduz(REGIME_ESPECIAL, txt(acha(infDPS, "regTrib"), "regEspTrib")),
         valorLiquido: numero(txt(acha(infNFSe, "valores"), "vLiq")),
       },
     },

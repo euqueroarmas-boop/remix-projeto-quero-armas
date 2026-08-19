@@ -167,8 +167,58 @@ describe("NFS-e nacional — serviço e tributação municipal", () => {
   it("traduz os códigos do leiaute para o que a DANFSe imprime", () => {
     const s = nota().servico!;
     expect(s.tributacaoIssqn).toBe("Operação tributável");
-    expect(s.retencaoIssqn).toBe("Não retido");
+    expect(s.retencaoIssqn).toBe("Não Retido");
     expect(s.simplesNacional).toBe("Optante — ME/EPP");
+    expect(s.regimeApuracao).toBe("Nenhum");
+  });
+
+  /**
+   * REGRESSÃO 19/08/2026. A primeira tabela de `tribISSQN` estava com os
+   * códigos 2, 3 e 4 TROCADOS: imprimia "Exportação de serviço" onde o correto
+   * é "Imunidade". Rótulo trocado num documento fiscal é pior que campo vazio,
+   * porque parece certo. Ordem correta conferida na documentação:
+   * 1-Operação tributável, 2-Imunidade, 3-Exportação de serviço,
+   * 4-Não Incidência.
+   */
+  it("tributação do ISSQN: cada código com o rótulo que é dele", () => {
+    const lidoCom = (codigo: string) => {
+      const r = lerNotaFiscalXml(
+        XML_NFSE.replace("<tribISSQN>1</tribISSQN>", `<tribISSQN>${codigo}</tribISSQN>`),
+      );
+      if (r.ok === false) throw new Error(r.motivo);
+      return r.nota.servico?.tributacaoIssqn;
+    };
+    expect(lidoCom("1")).toBe("Operação tributável");
+    expect(lidoCom("2")).toBe("Imunidade");
+    expect(lidoCom("3")).toBe("Exportação de serviço");
+    expect(lidoCom("4")).toBe("Não Incidência");
+  });
+
+  it("retenção do ISSQN e regime especial seguem as tabelas do leiaute", () => {
+    const comRetencao = (codigo: string) => {
+      const r = lerNotaFiscalXml(
+        XML_NFSE.replace("<tpRetISSQN>1</tpRetISSQN>", `<tpRetISSQN>${codigo}</tpRetISSQN>`),
+      );
+      if (r.ok === false) throw new Error(r.motivo);
+      return r.nota.servico?.retencaoIssqn;
+    };
+    expect(comRetencao("1")).toBe("Não Retido");
+    expect(comRetencao("2")).toBe("Retido pelo Tomador");
+    expect(comRetencao("3")).toBe("Retido pelo Intermediário");
+
+    const comRegime = (codigo: string) => {
+      const r = lerNotaFiscalXml(
+        XML_NFSE.replace("<regEspTrib>0</regEspTrib>", `<regEspTrib>${codigo}</regEspTrib>`),
+      );
+      if (r.ok === false) throw new Error(r.motivo);
+      return r.nota.servico?.regimeApuracao;
+    };
+    expect(comRegime("1")).toBe("Ato Cooperado (Cooperativa)");
+    expect(comRegime("5")).toBe("Profissional Autônomo");
+    expect(comRegime("6")).toBe("Sociedade de Profissionais");
+    // Código que o leiaute ainda não fixou (ou que o município redefine) sai
+    // cru — nunca com um rótulo chutado.
+    expect(comRegime("9")).toBe("9");
   });
 
   it("código fora da tabela conhecida sai cru, em vez de rotulado errado", () => {
@@ -209,8 +259,9 @@ describe("NFS-e nacional — ponte com o Golden Record", () => {
     expect(campos.codigo_tributacao_nacional).toBe("140601");
     expect(campos.codigo_tributacao_municipal).toBe("1406");
     expect(campos.tributacao_issqn).toBe("Operação tributável");
-    expect(campos.retencao_issqn).toBe("Não retido");
+    expect(campos.retencao_issqn).toBe("Não Retido");
     expect(campos.prestador_simples_nacional).toBe("Optante — ME/EPP");
+    expect(campos.prestador_regime_apuracao).toBe("Nenhum");
     expect(campos.local_prestacao).toBe("Ferraz de Vasconcelos");
   });
 

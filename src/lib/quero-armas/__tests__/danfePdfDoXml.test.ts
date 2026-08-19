@@ -216,8 +216,9 @@ describe("DANFSe — a nota de serviço tem folha própria", () => {
     expect(texto).toContain("Descrição do Serviço");
     expect(texto).toContain("Manutencao e reparacao de maquinas");
     expect(texto).toContain("Operação tributável");
-    expect(texto).toContain("Não retido");
+    expect(texto).toContain("Não Retido");
     expect(texto).toContain("Optante — ME/EPP");
+    expect(texto).toContain("Regime de Apuração Tributária");
     expect(texto).toContain("1.500,00");
   });
 
