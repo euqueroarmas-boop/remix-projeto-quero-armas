@@ -3,14 +3,18 @@ import { grupoDaPendencia, grupoDaPendenciaDoItem } from "../pendenciasGrupos";
 import { gruposPermitidosPorServico } from "../servicoGruposConfig";
 
 // Exigências do serviço 44 (CONCESSÃO DE CR), conforme a IN DG/PF nº 311/2025,
-// art. 18, § 2º. Espelha a migration 20260819030000_concessao_cr_checklist_in311.
+// art. 18, § 2º. Espelha as migrations 20260819030000 e 20260819040000.
+//
+// A modalidade (colecionador / atirador / caçador) NÃO está nesta lista de
+// propósito: ela vem do item que o cliente comprou no catálogo e é carimbada no
+// processo pelo gatilho `qa_trg_processo_modalidade_do_catalogo`. Não é
+// exigência, não é pergunta, e o cliente não escolhe.
 //
 // Este arquivo existe por um motivo específico: no CR, exigência classificada
 // no grupo errado não é só feiúra de UI — o popup guiado filtra por grupo, e
 // grupo fora do whitelist do serviço some da fila do cliente. Foi o que
 // acontecia com a filiação a entidade de tiro e com a DSA antes desta correção.
 const TIPOS_CONCESSAO_CR = [
-  "pergunta_modalidade_cac",
   "rg_com_cpf",
   "pergunta_comprovante_em_nome",
   "declaracao_responsavel_imovel",
@@ -93,12 +97,6 @@ describe("Concessão de CR — grupos das exigências da IN 311", () => {
   it("a pergunta do segundo endereço fica com os endereços", () => {
     expect(grupoDaPendencia("pergunta_segundo_endereco_acervo").id).toBe("endereco");
     expect(grupoDaPendencia("declaracao_nao_possuir_segundo_endereco").id).toBe("endereco");
-  });
-
-  it("a pergunta da modalidade abre a fila, não fica em Habitualidade", () => {
-    const grupo = grupoDaPendencia("pergunta_modalidade_cac");
-    expect(grupo.id).toBe("perguntas");
-    expect(grupo.ordem).toBeLessThan(grupoDaPendencia("comprovante_filiacao_entidade_tiro").ordem);
   });
 
   it("requerimento, taxa e juntada ficam no grupo do requerimento", () => {

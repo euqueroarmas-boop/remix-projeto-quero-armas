@@ -78,11 +78,6 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
   // Perguntas do checklist entram no MESMO grupo temático do assunto que elas
   // destravam — nunca num bloco solto de "perguntas".
   if (t.startsWith("pergunta_")) {
-    // A modalidade do CR (colecionador / atirador / caçador) é o portão do
-    // processo: é ela que decide quais exigências existem. Fica em "Cadastros",
-    // no começo da fila — e não em "Habitualidade", onde o sufixo `_cac` a
-    // jogaria, depois de tudo o que ela mesma determina.
-    if (t === "pergunta_modalidade_cac") return GRUPOS.perguntas;
     if (
       t.includes("reside") ||
       t.includes("endereco") ||

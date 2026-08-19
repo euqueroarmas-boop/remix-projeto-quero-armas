@@ -5,25 +5,29 @@
 
 ## 🟠 PENDENTE — Leva 10 · Concessão de CR (serviço 44)
 
-Aberta em 19/08/2026. A migration `20260819030000_concessao_cr_checklist_in311`
-**já foi aplicada e conferida** (47 exigências ativas no serviço 44, nenhuma sem
-grupo). Falta publicar a edge function:
+Aberta em 19/08/2026.
 
-| Função | Chamada por | Ator | Estado |
-|---|---|---|---|
-| `qa-processo-set-modalidade` | portal do cliente, ao responder "Qual atividade você vai registrar no seu CR?" | cliente ou equipe | **NOVA — precisa de Publish** |
-| `qa-processo-responder-pergunta` | portal do cliente | cliente ou equipe | **ALTERADA** — passa a recusar `modalidade_cac`, para a resposta não desviar da função acima |
+**Migrations — aplicar nesta ordem:**
 
-Sem essas duas publicadas, o cliente do CR escolhe a atividade e nada acontece:
-a modalidade não é gravada e as exigências de atirador/caçador (filiação,
-compromisso de habitualidade, documento do Ibama) não entram no checklist.
+| Arquivo | O que faz | Estado |
+|---|---|---|
+| `20260819030000_concessao_cr_checklist_in311` | Monta o checklist do CR pela IN 311/2025 | ✅ aplicada — 47 exigências ativas, nenhuma sem grupo |
+| `20260819040000_modalidade_cac_vem_da_compra` | Modalidade CAC passa a vir do item comprado; a pergunta ao cliente sai do checklist | ⬜ **a aplicar** — depois dela ficam 46 ativas |
 
-`verify_jwt` fica no padrão (`true`), igual às irmãs `qa-processo-set-condicao`
-e `qa-processo-responder-pergunta` — nenhuma entrada nova em `config.toml`.
+**Edge functions:**
 
-**Conferência depois do Publish:** abrir um processo de CR no portal, responder
-a atividade e verificar que o evento `pergunta_respondida` com
-`via: qa-processo-set-modalidade` aparece em `qa_processo_eventos`.
+| Função | Estado |
+|---|---|
+| `qa-processo-responder-pergunta` | **ALTERADA e depois revertida** — voltou ao conteúdo publicado. Nada a fazer. |
+
+Não há função nova para publicar nesta leva. A `qa-processo-set-modalidade`
+chegou a ser escrita e foi removida antes de qualquer deploy: a modalidade não
+é escolha do cliente, é carimbo do gatilho de banco.
+
+**Conferência depois da migration:** `qa_servicos_catalogo` precisa dizer qual
+atividade cada item de CR vende (coluna `modalidade_cac`). Enquanto ela estiver
+vazia, o processo de CR nasce sem modalidade e as três exigências por atividade
+não entram no checklist.
 
 ---
 

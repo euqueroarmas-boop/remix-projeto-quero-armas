@@ -65,17 +65,6 @@ Deno.serve(async (req) => {
     };
     if (chave === "condicao_profissional") return json(USE_SET_CONDICAO, 409);
 
-    // Mesma trava, mesmo motivo, para a modalidade CAC do CR: ela decide se o
-    // processo pede filiação a entidade de tiro, compromisso de habitualidade
-    // ou documento do Ibama. Responder por aqui marcaria a pergunta como
-    // cumprida e deixaria o checklist sem nenhuma dessas exigências.
-    const USE_SET_MODALIDADE = {
-      error: "use_set_modalidade",
-      detail:
-        "Modalidade CAC deve ser gravada via qa-processo-set-modalidade para ajustar as exigências da atividade.",
-    };
-    if (chave === "modalidade_cac") return json(USE_SET_MODALIDADE, 409);
-
     const admin = createClient(url, service);
 
     // Resolve cliente_id do usuário e flag staff (best-effort).
@@ -116,9 +105,6 @@ Deno.serve(async (req) => {
     // comprovante de renda.
     if (String(doc.tipo_documento || "").toLowerCase() === "renda_definir_condicao") {
       return json(USE_SET_CONDICAO, 409);
-    }
-    if (String(doc.tipo_documento || "").toLowerCase() === "pergunta_modalidade_cac") {
-      return json(USE_SET_MODALIDADE, 409);
     }
 
     // 1) Grava a resposta no questionário (trigger SQL exige chave antes do doc).

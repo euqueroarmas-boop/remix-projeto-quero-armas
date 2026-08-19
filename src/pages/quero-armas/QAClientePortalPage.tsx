@@ -2892,24 +2892,6 @@ export default function QAClientePortalPage() {
               setDocsReloadKey((k) => k + 1);
               return;
             }
-            // Modalidade CAC (CR): mesma lógica da condição profissional. A
-            // escolha define se o processo pede filiação a entidade de tiro
-            // (atirador e caçador), compromisso de habitualidade (atirador) ou
-            // documento do Ibama (caçador). Pelo caminho genérico a pergunta
-            // seria marcada como respondida e nenhuma dessas exigências entraria.
-            if (chave === "modalidade_cac" || rawTipo === "pergunta_modalidade_cac") {
-              const { data: dm, error: em } = await supabase.functions.invoke(
-                "qa-processo-set-modalidade",
-                { body: { processo_id: doc.processo_id, modalidade: valor } },
-              );
-              if (em || (dm as { error?: string } | null)?.error) {
-                toast.error("Não foi possível salvar a atividade escolhida. Tente novamente.");
-                return;
-              }
-              toast.success("Atividade registrada. Ajustamos os documentos do seu CR.");
-              setDocsReloadKey((k) => k + 1);
-              return;
-            }
             const { data, error } = await supabase.functions.invoke(
               "qa-processo-responder-pergunta",
               {
