@@ -459,19 +459,40 @@ export function conferirCertidao(
     }
   };
 
-  comparar(
-    "nome_titular",
-    chaveNome(doc.nome_titular),
-    chaveNome(cadastro.nome_completo),
-    `O nome na certidão está diferente do cadastro. Na certidão: "${doc.nome_titular}". No cadastro: "${cadastro.nome_completo}". Emita a certidão novamente digitando o nome exatamente como no seu documento de identidade.`,
-  );
+  // LEITURA ERRADA ≠ DIVERGÊNCIA — mesma régua da recuperação da seção 1:
+  // se o valor lido não bate MAS o valor do CADASTRO está impresso, inteiro e
+  // literal, no texto do próprio PDF, quem errou foi o parser (pescou frase
+  // institucional como titular — caso real TRF3, 20/08/2026: nome lido
+  // "INDICADO PARA A CONSULTA SERA DE RESPONSABILIDADE DO" com o nome e o
+  // CPF corretos do cliente impressos logo acima). A certidão é do cliente;
+  // acusar divergência aqui mandava reemitir um documento correto.
+  const nomeLidoErrado =
+    !!textoDocumento &&
+    !!chaveNome(doc.nome_titular) &&
+    chaveNome(doc.nome_titular) !== chaveNome(cadastro.nome_completo) &&
+    valorDoCadastroPresenteNoTexto(textoDocumento, cadastro.nome_completo);
+  if (!nomeLidoErrado) {
+    comparar(
+      "nome_titular",
+      chaveNome(doc.nome_titular),
+      chaveNome(cadastro.nome_completo),
+      `O nome na certidão está diferente do cadastro. Na certidão: "${doc.nome_titular}". No cadastro: "${cadastro.nome_completo}". Emita a certidão novamente digitando o nome exatamente como no seu documento de identidade.`,
+    );
+  }
 
-  comparar(
-    "cpf",
-    digitos(doc.cpf),
-    digitos(cadastro.cpf),
-    `O CPF na certidão não é o seu. Na certidão: ${doc.cpf}. No cadastro: ${cadastro.cpf}. Emita novamente com o CPF correto.`,
-  );
+  const cpfLidoErrado =
+    !!textoDocumento &&
+    !!digitos(doc.cpf) &&
+    digitos(doc.cpf) !== digitos(cadastro.cpf) &&
+    cpfDoCadastroPresenteNoTexto(textoDocumento, (cadastro as { cpf?: unknown }).cpf);
+  if (!cpfLidoErrado) {
+    comparar(
+      "cpf",
+      digitos(doc.cpf),
+      digitos(cadastro.cpf),
+      `O CPF na certidão não é o seu. Na certidão: ${doc.cpf}. No cadastro: ${cadastro.cpf}. Emita novamente com o CPF correto.`,
+    );
+  }
 
   // RG: o documento imprime o dígito verificador ("42357200-3") e o cadastro
   // quase sempre guarda o número sem ele ("42357200"). É o MESMO RG — o DV é
