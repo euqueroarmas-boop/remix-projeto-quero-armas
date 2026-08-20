@@ -136,7 +136,10 @@ describe("o protocolo trava enquanto a petição não for aprovada", () => {
 
   it("consulta as peças do processo", () => {
     expect(src).toMatch(/from\("qa_geracoes_pecas"\)/);
-    expect(src).toMatch(/\.in\("status_cliente", \["aguardando_cliente", "devolvida"\]\)/);
+    // Antes o filtro era `.in("status_cliente", ["aguardando_cliente","devolvida"])`.
+    // Ele escondia justamente os dois casos que mais importam: rascunho parado
+    // e processo SEM peça nenhuma. Ver `gruEsperaPecaAprovada.test.ts`.
+    expect(src).toMatch(/status_cliente, processo_id, cliente_id/);
   });
 
   it("distingue aguardando de devolvida no motivo", () => {
@@ -144,9 +147,20 @@ describe("o protocolo trava enquanto a petição não for aprovada", () => {
     expect(src).toContain("peticao_devolvida_pelo_cliente");
   });
 
-  it("rascunho da equipe (nao_enviada) NÃO trava nada", () => {
+  it("rascunho da equipe trava quando o serviço TEM defesa escrita", () => {
+    // Regra invertida em 20/08/2026. O rascunho não travar foi decidido quando
+    // o sistema não sabia quais serviços têm defesa; agora o catálogo diz
+    // (`exige_peca_defesa`), e minuta parada na mesa da equipe é trabalho em
+    // aberto — não é sinal verde para o cliente pagar a GRU.
     const bloco = src.slice(src.indexOf("qa_geracoes_pecas"), src.indexOf("const agora = new Date"));
-    expect(bloco).not.toContain("nao_enviada");
+    expect(bloco).toContain("peticao_em_rascunho_nao_enviada");
+    expect(bloco).toMatch(/exigePeca && !status\.includes\("aprovada"\)/);
+  });
+
+  it("serviço sem defesa escrita continua passando reto", () => {
+    // O gate só morde com `exige_peca_defesa = true` no catálogo.
+    expect(src).toMatch(/const exigePeca = /);
+    expect(src).toMatch(/exige_peca_defesa\?: boolean/);
   });
 
   it("o gate roda antes de promover o status", () => {
