@@ -55,6 +55,11 @@ UPDATE public.qa_servicos_catalogo
    AND (servico_id = 44 OR slug ILIKE '%concessao%cr%');
 
 -- 1b. Autorização de Compra quando o fundamento é CAC.
+--     ATENÇÃO — só existem os serviços de ATIRADOR (50) e CAÇADOR (51). O
+--     colecionador não tem serviço de Autorização de Compra no catálogo. Ao
+--     criá-lo, é preciso ligar admite_segundo_endereco nele à mão; ver
+--     docs/PENDENCIAS-ABERTAS.md, seção "Colecionador não tem Autorização de
+--     Compra no catálogo".
 UPDATE public.qa_servicos_catalogo
    SET admite_segundo_endereco = true,
        updated_at              = now()

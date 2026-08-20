@@ -36,6 +36,14 @@ export const MODALIDADE_SEM_SEGUNDO_ENDERECO = "defesa_pessoal";
  *   44 — Concessão de CR
  *   50 — Autorização de Compra (Atirador Esportivo)
  *   51 — Autorização de Compra (Caçador)
+ *
+ * FALTA O COLECIONADOR: não existe serviço de Autorização de Compra para
+ * colecionador no catálogo — nem item, nem sigla de protocolo, nem anexo de
+ * contrato, nem checklist. Quando ele for criado, é preciso ligar
+ * `admite_segundo_endereco` nele, senão o colecionador contrata e não consegue
+ * declarar o 2º endereço — sem erro nenhum, só não funciona. O passo a passo
+ * está em `docs/PENDENCIAS-ABERTAS.md`, seção "Colecionador não tem
+ * Autorização de Compra no catálogo".
  */
 export const SERVICOS_COM_SEGUNDO_ENDERECO: readonly number[] = [44, 50, 51];
 

@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 18/08/2026, 11:22 BRT.
+Índice único do que ficou em aberto. Atualizado em 20/08/2026, 20:35 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -10,6 +10,56 @@
 As 23 edge functions da auditoria estão publicadas (leva 1 às 00:08, leva 2 às
 01:20, `qa-export-docx` às 11:22 BRT) e as **7 migrations** estão aplicadas e
 conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
+
+---
+
+## 🟠 Colecionador não tem Autorização de Compra no catálogo (20/08/2026)
+
+Descoberto ao ligar o portão do 2º endereço. Ficou registrado aqui para ser
+lido quando o ciclo de compra do CAC for atacado.
+
+### O que existe hoje
+
+Autorização de Compra existe para **dois** dos três fundamentos CAC:
+
+| serviço | nome | slug |
+|---|---|---|
+| 50 | Autorização de Compra de Arma de Fogo — Atirador Esportivo (CAC) | `autorizacao-de-compra-de-arma-de-fogo-atirador-esportivo-cac` |
+| 51 | Autorização de Compra de Arma de Fogo para Caçador (CAC) | `autorizacao-de-compra-de-arma-de-fogo-para-cacador-cac` |
+
+**Colecionador não tem nada.** Não é só o item de catálogo que falta: não há
+sigla de protocolo, não há anexo de contrato e não há checklist de documentos.
+Criar o serviço é o trabalho dos três — não é uma linha.
+
+### O que fazer quando ele entrar
+
+1. Criar o item em `qa_servicos_catalogo` espelhando o 50/51 (preço, sigla de
+   protocolo, anexo de contrato, checklist de documentos).
+2. **Ligar o portão do 2º endereço nele** — esta é a linha:
+
+```sql
+UPDATE public.qa_servicos_catalogo
+   SET admite_segundo_endereco = true, updated_at = now()
+ WHERE slug = '<slug-do-servico-novo>';
+```
+
+Sem esse UPDATE, o colecionador contrata a autorização de compra e **não
+consegue declarar o 2º endereço de guarda do acervo** — o bloco não aparece no
+formulário público nem no cadastro interno, e o portal recusa os campos. Não dá
+erro nenhum; simplesmente não funciona, e ninguém percebe até o dossiê chegar
+incompleto ao protocolo.
+
+### Por que não deixei automático
+
+A regra atual abre o portão por `servico_id IN (50, 51)`. Existe uma segunda
+cláusula que pegaria qualquer Autorização de Compra CAC pela modalidade — mas
+os serviços 50 e 51 estão com `modalidade_cac` **em branco** no catálogo, então
+um serviço novo criado do mesmo jeito também não seria pego por ela. Afrouxar a
+regra para reconhecer pelo nome/slug é mudança de comportamento compartilhado e
+depende de aval do titular; enquanto isso, é o UPDATE acima, explícito.
+
+Migration de referência: `20260820200000_segundo_endereco_cr_e_autorizacao_cac.sql`.
+Regra no front: `src/lib/quero-armas/segundoEndereco.ts`.
 
 ---
 
