@@ -72,6 +72,35 @@ describe("Árvore de exigências do Hub", () => {
     expect(chaveExigencia("identidade_funcional")).not.toBe("identidade_civil");
   });
 
+  // CASO REAL (20/08/2026): CNH aprovada aparecia como "CIN — CARTEIRA DE
+  // IDENTIDADE NACIONAL" (nome fixo da exigência do slot de identidade) e
+  // parecia classificação errada. O título tem que dizer o que foi entregue.
+  it("slot de identidade com CNH entregue diz 'entregue: CNH' no rótulo", () => {
+    const docsId = [
+      { id: "d-cnh", tipo_documento: "cnh", status: "aprovado", origem: "cliente", created_at: "2026-08-19T23:50:33Z" },
+    ];
+    const exigenciasId = [
+      { tipo_documento: "cin", nome_documento: "CIN — Carteira de Identidade Nacional", status: "aprovado", ordem: 3, obrigatorio: true, processo_id: "p1" },
+    ];
+    const arv = montarArvoreExigencias(montarLinhaEntrega(docsId, exigenciasId), exigenciasId);
+    const no = arv.flatMap((g) => g.nos).find((n) => n.chave === "identidade_civil")!;
+    expect(no.principal?.doc.id).toBe("d-cnh");
+    expect(no.rotulo).toContain("CIN — Carteira de Identidade Nacional");
+    expect(no.rotulo).toContain("entregue: CNH");
+  });
+
+  it("slot de identidade com a PRÓPRIA CIN entregue não ganha sufixo", () => {
+    const docsId = [
+      { id: "d-cin", tipo_documento: "cin", status: "aprovado", origem: "cliente", created_at: "2026-08-19T23:50:33Z" },
+    ];
+    const exigenciasId = [
+      { tipo_documento: "cin", nome_documento: "CIN — Carteira de Identidade Nacional", status: "aprovado", ordem: 3, obrigatorio: true, processo_id: "p1" },
+    ];
+    const arv = montarArvoreExigencias(montarLinhaEntrega(docsId, exigenciasId), exigenciasId);
+    const no = arv.flatMap((g) => g.nos).find((n) => n.chave === "identidade_civil")!;
+    expect(no.rotulo).toBe("CIN — Carteira de Identidade Nacional");
+  });
+
   it("classifica o laudo de capacidade técnica em Laudos, não em Outros", () => {
     const no = acharNo("laudo_capacidade_tecnica")!;
     expect(no.grupo).toBe(7);

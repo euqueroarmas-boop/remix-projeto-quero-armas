@@ -175,13 +175,41 @@ function situacaoDoNo(
   return "pendente";
 }
 
+/** Nome curto do documento de identidade entregue, para o sufixo do rótulo. */
+const NOME_IDENTIDADE_ENTREGUE: Record<string, string> = {
+  cnh: "CNH — Carteira Nacional de Habilitação",
+  cin: "CIN — Carteira de Identidade Nacional",
+  rg: "RG",
+  rg_com_cpf: "RG com CPF",
+};
+
 const rotuloDe = (
   exigencias: ExigenciaLike[],
   doc: any,
   tipoRef: string,
 ): string => {
   const daExigencia = exigencias.find((e) => e.nome_documento)?.nome_documento;
-  if (daExigencia) return String(daExigencia).replace(/_/g, " ");
+  if (daExigencia) {
+    const base = String(daExigencia).replace(/_/g, " ");
+    // O slot de identidade aceita CIN, RG ou CNH, mas o nome fixo da
+    // exigência cita só um deles (ex.: "CIN — Carteira de Identidade
+    // Nacional"). Quando o documento ENTREGUE é de tipo diferente do
+    // exigido, o título precisa dizer o que veio de verdade: uma CNH
+    // aprovada aparecia como "CIN" e parecia classificação errada.
+    const tipoDoc = norm(doc?.tipo_documento);
+    const tiposExigidos = exigencias.map((e) => norm(e.tipo_documento)).filter(Boolean);
+    if (
+      tipoDoc &&
+      ehDocumentoIdentidade(doc?.tipo_documento, doc?.nome_documento) &&
+      tiposExigidos.length > 0 &&
+      !tiposExigidos.includes(tipoDoc)
+    ) {
+      const nomeEntregue =
+        NOME_IDENTIDADE_ENTREGUE[tipoDoc] ?? tipoDoc.replace(/_/g, " ").toUpperCase();
+      return `${base} · entregue: ${nomeEntregue}`;
+    }
+    return base;
+  }
   const doDoc = doc?.nome_documento || doc?.tipo_documento;
   if (doDoc) return String(doDoc).replace(/_/g, " ");
   return tipoRef.replace(/_/g, " ");
