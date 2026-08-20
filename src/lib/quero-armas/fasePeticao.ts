@@ -24,6 +24,108 @@ export type EstadoPeticaoId =
   | "devolvida"
   | "aprovada";
 
+/* =============================================================================
+ * PRAZO DA DEFESA — 7 DIAS ÚTEIS
+ * -----------------------------------------------------------------------------
+ * Compromisso assumido com o cliente (20/08/2026): fechada a efetiva
+ * necessidade, a equipe tem 7 DIAS ÚTEIS para redigir a defesa e enviá-la para
+ * aprovação. O relógio anda em dia útil de calendário (sábado e domingo não
+ * contam; feriado conta — não há tabela de feriados no sistema).
+ *
+ * Âncora do prazo: a data em que o ÚLTIMO item do grupo de efetiva necessidade
+ * fechou (data_envio ou updated_at, o que existir). Sem itens de efetiva, vale
+ * a última entrega do cliente fora da etapa final.
+ * ============================================================================= */
+
+export const PRAZO_DEFESA_DIAS_UTEIS = 7;
+
+/** Soma `n` dias úteis a uma data (sábado/domingo pulados). */
+export function somarDiasUteis(inicio: Date, n: number): Date {
+  const d = new Date(inicio.getTime());
+  let restam = n;
+  while (restam > 0) {
+    d.setDate(d.getDate() + 1);
+    const dia = d.getDay();
+    if (dia !== 0 && dia !== 6) restam -= 1;
+  }
+  return d;
+}
+
+/** Dias úteis inteiros entre duas datas (0 se `ate` <= `de`; só seg–sex contam). */
+export function diasUteisEntre(de: Date, ate: Date): number {
+  const a = new Date(de.getFullYear(), de.getMonth(), de.getDate());
+  const b = new Date(ate.getFullYear(), ate.getMonth(), ate.getDate());
+  let n = 0;
+  while (a < b) {
+    a.setDate(a.getDate() + 1);
+    const dia = a.getDay();
+    if (dia !== 0 && dia !== 6) n += 1;
+  }
+  return n;
+}
+
+export interface PrazoDefesa {
+  /** Quando o relógio começou a andar (fechamento da efetiva necessidade). */
+  inicio: Date;
+  /** Último dia útil para entregar a defesa ao cliente. */
+  limite: Date;
+  /** Dias úteis que ainda restam; negativo = prazo estourado. */
+  diasUteisRestantes: number;
+}
+
+function dataDoDoc(d: DocParaDefesa): number | null {
+  const bruto = d?.data_envio ?? d?.updated_at ?? null;
+  if (!bruto) return null;
+  const t = new Date(bruto).getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
+/**
+ * O prazo de 7 dias úteis da defesa deste processo, ou `null` se ele ainda não
+ * começou a correr (efetiva em aberto) ou se não há data para ancorar.
+ */
+export function prazoDefesa(
+  docs: readonly DocParaDefesa[],
+  agora: Date = new Date(),
+): PrazoDefesa | null {
+  const efetiva = grupoEfetivaFechado(docs);
+  if (efetiva === false) return null;
+
+  let candidatos: DocParaDefesa[];
+  if (efetiva === true) {
+    candidatos = (docs ?? []).filter(ehDocEfetivaNecessidade);
+  } else {
+    if (faltaDocDoCliente(docs ?? [])) return null;
+    candidatos = (docs ?? []).filter((d) => {
+      const tipo = String(d?.tipo_documento ?? d?.tipo ?? "").trim().toLowerCase();
+      return !TIPOS_ETAPA_FINAL.has(tipo);
+    });
+  }
+
+  let inicioMs: number | null = null;
+  for (const d of candidatos) {
+    const t = dataDoDoc(d);
+    if (t != null && (inicioMs == null || t > inicioMs)) inicioMs = t;
+  }
+  if (inicioMs == null) return null;
+
+  const inicio = new Date(inicioMs);
+  const limite = somarDiasUteis(inicio, PRAZO_DEFESA_DIAS_UTEIS);
+  const passados = diasUteisEntre(inicio, agora);
+  return { inicio, limite, diasUteisRestantes: PRAZO_DEFESA_DIAS_UTEIS - passados };
+}
+
+/**
+ * O estado da petição é RESPONSABILIDADE DA EQUIPE?
+ *
+ * É o filtro do card do painel: a fila de trabalho é quem espera a defesa ser
+ * escrita, enviada ou reescrita. Peça com o cliente ou já aprovada não é fila
+ * de ninguém aqui dentro — fica fora do contador e do chip.
+ */
+export function ehResponsabilidadeEquipe(estado: EstadoPeticao | null | undefined): boolean {
+  return estado?.id === "aguardando_equipe" || estado?.id === "redigida" || estado?.id === "devolvida";
+}
+
 /** Tom semântico do chip — o componente decide a cor real. */
 export type TomPeticao = "verde" | "ambar" | "vermelho" | "neutro";
 
@@ -48,6 +150,9 @@ export interface DocParaDefesa {
   tipo?: string | null;
   tipo_documento?: string | null;
   status?: string | null;
+  /** Datas usadas para ancorar o prazo de 7 dias úteis da defesa. */
+  data_envio?: string | null;
+  updated_at?: string | null;
 }
 
 /** Status em que um item do checklist ainda espera ação (espelho do portal). */

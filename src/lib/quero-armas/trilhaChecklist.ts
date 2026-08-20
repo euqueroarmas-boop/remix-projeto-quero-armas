@@ -14,6 +14,9 @@
 export interface DocTrilha {
   tipo: string;
   status?: string | null;
+  /** Datas carregadas junto pelo painel — o prazo da defesa se ancora nelas. */
+  data_envio?: string | null;
+  updated_at?: string | null;
 }
 
 /** Status que indicam que a exigência NÃO vale para este cliente. */

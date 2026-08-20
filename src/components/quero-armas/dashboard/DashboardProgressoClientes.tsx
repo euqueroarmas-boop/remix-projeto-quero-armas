@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
-import { estadoPeticao, vincularPecas, type EstadoPeticao, type PecaDoProcesso, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
+import { estadoPeticao, vincularPecas, ehResponsabilidadeEquipe, prazoDefesa, PRAZO_DEFESA_DIAS_UTEIS, type EstadoPeticao, type PecaDoProcesso, type PrazoDefesa, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
@@ -278,11 +278,37 @@ const CORES_TOM_PETICAO: Record<TomPeticao, { cor: string; fundo: string }> = {
   neutro: { cor: TINTA_2, fundo: "var(--qa-chip-bg)" },
 };
 
-/** Chip da fase da PET — só aparece para quem já chegou nela. */
-function ChipPeticao({ estado }: { estado: EstadoPeticao | null | undefined }) {
+/** "PRAZO: 5 DE 7 DIAS ÚTEIS" / "PRAZO ESTOUROU HÁ 2 DIAS ÚTEIS". */
+function rotuloPrazoDefesa(prazo: PrazoDefesa | null | undefined): { texto: string; estourado: boolean } | null {
+  if (!prazo) return null;
+  const r = prazo.diasUteisRestantes;
+  if (r < 0) {
+    const d = Math.abs(r);
+    return { texto: `PRAZO ESTOUROU HÁ ${d} DIA${d === 1 ? "" : "S"} ÚTE${d === 1 ? "IL" : "IS"}`, estourado: true };
+  }
+  return { texto: `PRAZO: ${r} DE ${PRAZO_DEFESA_DIAS_UTEIS} DIAS ÚTEIS`, estourado: r <= 1 };
+}
+
+/** Chip da fase da PET — só a fila da equipe, com o prazo de 7 dias úteis ao lado. */
+function ChipPeticao({ estado, prazo }: { estado: EstadoPeticao | null | undefined; prazo?: PrazoDefesa | null }) {
   if (!estado) return null;
   const { cor, fundo } = CORES_TOM_PETICAO[estado.tom];
-  return <Chip cor={cor} fundo={fundo} titulo={estado.descricao}><PenTool className="h-3 w-3" />{estado.label}</Chip>;
+  const p = rotuloPrazoDefesa(prazo);
+  return (
+    <>
+      <Chip cor={cor} fundo={fundo} titulo={estado.descricao}><PenTool className="h-3 w-3" />{estado.label}</Chip>
+      {p && (
+        <Chip
+          miudo
+          cor={p.estourado ? VERMELHO : AMBAR}
+          fundo={p.estourado ? VERMELHO_BG : AMBAR_BG}
+          titulo={`Compromisso com o cliente: defesa pronta em até ${PRAZO_DEFESA_DIAS_UTEIS} dias úteis após o fechamento da efetiva necessidade (início ${prazo!.inicio.toLocaleDateString("pt-BR")}, limite ${prazo!.limite.toLocaleDateString("pt-BR")})`}
+        >
+          {p.texto}
+        </Chip>
+      )}
+    </>
+  );
 }
 
 export default function DashboardProgressoClientes() {
@@ -502,7 +528,7 @@ export default function DashboardProgressoClientes() {
           const [{ data: docs }, { data: procs }, { data: pecasDoc }] = await Promise.all([
             supabase
               .from("qa_processo_documentos")
-              .select("processo_id, tipo_documento, status")
+              .select("processo_id, tipo_documento, status, data_envio, updated_at")
               .in("processo_id", ids),
             supabase
               .from("qa_processos")
@@ -522,7 +548,10 @@ export default function DashboardProgressoClientes() {
 
           const porProcesso: Record<string, DocTrilha[]> = {};
           for (const d of ((docs as any[]) ?? [])) {
-            (porProcesso[d.processo_id] ||= []).push({ tipo: d.tipo_documento, status: d.status });
+            (porProcesso[d.processo_id] ||= []).push({
+              tipo: d.tipo_documento, status: d.status,
+              data_envio: d.data_envio, updated_at: d.updated_at,
+            } as DocTrilha);
           }
           const mapa: Record<string, string[]> = {};
           for (const pid of ids) {
@@ -598,10 +627,14 @@ export default function DashboardProgressoClientes() {
   const peticoes = useMemo(() => {
     const porProcesso = vincularPecas(rows, pecas);
     const mapa: Record<string, EstadoPeticao | null> = {};
+    const prazos: Record<string, PrazoDefesa | null> = {};
     for (const r of rows) {
-      mapa[r.processo_id] = estadoPeticao(r, porProcesso[r.processo_id] ?? [], docsProcesso[r.processo_id]);
+      const estado = estadoPeticao(r, porProcesso[r.processo_id] ?? [], docsProcesso[r.processo_id]);
+      // O card é a FILA DA EQUIPE: peça com o cliente ou aprovada fica fora.
+      mapa[r.processo_id] = ehResponsabilidadeEquipe(estado) ? estado : null;
+      prazos[r.processo_id] = mapa[r.processo_id] ? prazoDefesa(docsProcesso[r.processo_id] ?? []) : null;
     }
-    return mapa;
+    return { estados: mapa, prazos };
   }, [rows, pecas, docsProcesso]);
 
   const contadores = useMemo(() => {
@@ -612,14 +645,10 @@ export default function DashboardProgressoClientes() {
     const parado = ativos.filter((r) => r.dias_parado >= 15).length;
     const bloqueado = rows.filter((r) => !!r.bloqueado_por_prerequisito).length;
     const online = ativos.filter((r) => !!r.online).length;
-    const naPeticao = ativos.filter((r) => !!peticoes[r.processo_id]);
+    const naPeticao = ativos.filter((r) => !!peticoes.estados[r.processo_id]);
     const peticao = naPeticao.length;
-    const petComCliente = naPeticao.filter((r) => peticoes[r.processo_id]?.id === "com_cliente").length;
-    const petComEquipe = naPeticao.filter((r) => {
-      const id = peticoes[r.processo_id]?.id;
-      return id === "aguardando_equipe" || id === "redigida" || id === "devolvida";
-    }).length;
-    return { todos: ativos.length, online, pronto, peticao, petComCliente, petComEquipe, analise, pendencia, parado, bloqueado };
+    const petEstourado = naPeticao.filter((r) => (peticoes.prazos[r.processo_id]?.diasUteisRestantes ?? 99) < 0).length;
+    return { todos: ativos.length, online, pronto, peticao, petEstourado, analise, pendencia, parado, bloqueado };
   }, [rows, peticoes]);
 
   const filtradas = useMemo(() => {
@@ -631,7 +660,7 @@ export default function DashboardProgressoClientes() {
     switch (contador) {
       case "online": base = base.filter((r) => !!r.online); break;
       case "pronto": base = base.filter((r) => r.total_docs > 0 && r.entregues >= r.total_docs); break;
-      case "peticao": base = base.filter((r) => !!peticoes[r.processo_id]); break;
+      case "peticao": base = base.filter((r) => !!peticoes.estados[r.processo_id]); break;
       case "analise": base = base.filter((r) => (r.em_analise ?? 0) > 0); break;
       case "pendencia": base = base.filter((r) => (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0) > 0); break;
       case "parado": base = base.filter((r) => r.dias_parado >= 15); break;
@@ -757,7 +786,7 @@ export default function DashboardProgressoClientes() {
           { k: "todos", label: "ATIVOS", v: contadores.todos, cor: TINTA, fundo: "var(--qa-chip-bg)" },
           { k: "online", label: "ONLINE AGORA", v: contadores.online, cor: VERDE, fundo: VERDE_BG },
           { k: "pronto", label: "PRONTOS", v: contadores.pronto, cor: VERDE, fundo: VERDE_BG },
-          { k: "peticao", label: "NA PETIÇÃO", v: contadores.peticao, cor: TINTA, fundo: "var(--qa-chip-bg)" },
+          { k: "peticao", label: "DEFESAS A ELABORAR", v: contadores.peticao, cor: contadores.petEstourado > 0 ? VERMELHO : TINTA, fundo: contadores.petEstourado > 0 ? VERMELHO_BG : "var(--qa-chip-bg)" },
           { k: "analise", label: "EM ANÁLISE", v: contadores.analise, cor: AMBAR, fundo: AMBAR_BG },
           { k: "pendencia", label: "COM PENDÊNCIA", v: contadores.pendencia, cor: AMBAR, fundo: AMBAR_BG },
           { k: "parado", label: "PARADOS 15+", v: contadores.parado, cor: VERMELHO, fundo: VERMELHO_BG },
@@ -783,8 +812,10 @@ export default function DashboardProgressoClientes() {
             </div>
             {c.k === "peticao" && (
               <div className="mt-1 text-[8.5px] font-semibold uppercase tracking-[0.1em] tabular-nums leading-[1.35]" style={{ color: TINTA_3 }}>
-                <div>{contadores.petComEquipe} COM A EQUIPE</div>
-                <div>{contadores.petComCliente} COM O CLIENTE</div>
+                <div>{PRAZO_DEFESA_DIAS_UTEIS} DIAS ÚTEIS CADA</div>
+                <div style={{ color: contadores.petEstourado > 0 ? VERMELHO : TINTA_3 }}>
+                  {contadores.petEstourado} COM PRAZO ESTOURADO
+                </div>
               </div>
             )}
             {c.k === "online" && (
@@ -1026,7 +1057,7 @@ export default function DashboardProgressoClientes() {
                       {passoAtual(r) ? ` ${passoAtual(r)!.atual}/${passoAtual(r)!.total}` : ""}
                     </Chip>
                   )}
-                  <ChipPeticao estado={peticoes[r.processo_id]} />
+                  <ChipPeticao estado={peticoes.estados[r.processo_id]} prazo={peticoes.prazos[r.processo_id]} />
                   <LinhaGrupos r={r} />
                   {retroativas[r.processo_id] && (
                     <Chip miudo cor={AMBAR} fundo={AMBAR_BG} titulo="Exigência criada depois da última entrega do cliente">
@@ -1198,8 +1229,10 @@ export default function DashboardProgressoClientes() {
                       ) : (
                         <div>
                           <LinhaTopo><Chip cor={TINTA} fundo="var(--qa-chip-bg)">{r.grupo_atual ?? r.fase}</Chip></LinhaTopo>
-                          {peticoes[r.processo_id] && (
-                            <div className="mt-1"><ChipPeticao estado={peticoes[r.processo_id]} /></div>
+                          {peticoes.estados[r.processo_id] && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              <ChipPeticao estado={peticoes.estados[r.processo_id]} prazo={peticoes.prazos[r.processo_id]} />
+                            </div>
                           )}
                           <div className="mt-1"><LinhaGrupos r={r} /></div>
                           {retroativas[r.processo_id] && (

@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente, grupoEfetivaFechado } from "../fasePeticao";
+import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente, grupoEfetivaFechado, ehResponsabilidadeEquipe, prazoDefesa, somarDiasUteis, diasUteisEntre } from "../fasePeticao";
 
 const emDocumentos = { status: "aguardando_documentos", total_docs: 30, entregues: 19 };
 const checklistFechado = { status: "aguardando_documentos", total_docs: 30, entregues: 30 };
@@ -215,5 +215,47 @@ describe("fila da petição — regra da efetiva necessidade (20/08/2026)", () =
     expect(grupoEfetivaFechado([entregue("comprovante_efetiva_necessidade")])).toBe(true);
     expect(grupoEfetivaFechado([pendente("peticao_efetiva_necessidade")])).toBe(false);
     expect(grupoEfetivaFechado([entregue("antecedentes_criminais")])).toBeNull();
+  });
+});
+
+describe("fila da equipe e prazo de 7 dias úteis", () => {
+  const proc = { status: "aguardando_documentos", total_docs: 32, entregues: 28 };
+
+  it("só responsabilidade da equipe entra na fila", () => {
+    const chk = (pecas) => ehResponsabilidadeEquipe(estadoPeticao(proc, pecas, [{ tipo: "comprovante_efetiva_necessidade", status: "aprovado" }]));
+    expect(chk([])).toBe(true);                                          // a redigir
+    expect(chk([{ status_cliente: "nao_enviada" }])).toBe(true);         // redigida, falta enviar
+    expect(chk([{ status_cliente: "devolvida" }])).toBe(true);           // voltou para a equipe
+    expect(chk([{ status_cliente: "aguardando_cliente" }])).toBe(false); // com o cliente: fora
+    expect(chk([{ status_cliente: "aprovada" }])).toBe(false);           // aprovada: fora
+  });
+
+  it("dias úteis: sexta + 7 úteis cai na segunda da semana seguinte à próxima", () => {
+    // 21/08/2026 é sexta. 7 dias úteis depois: 01/09/2026 (terça).
+    const limite = somarDiasUteis(new Date(2026, 7, 21), 7);
+    expect([limite.getDate(), limite.getMonth()]).toEqual([1, 8]);
+    expect(diasUteisEntre(new Date(2026, 7, 21), new Date(2026, 7, 24))).toBe(1); // sex→seg = 1 útil
+  });
+
+  it("prazo ancora no fechamento da efetiva e aponta estouro", () => {
+    const docs = [
+      { tipo: "comprovante_efetiva_necessidade", status: "aprovado", updated_at: "2026-08-10T12:00:00-03:00" },
+      { tipo: "antecedentes_criminais", status: "aprovado", updated_at: "2026-08-18T12:00:00-03:00" },
+    ];
+    // Âncora é a EFETIVA (10/08, segunda), não a certidão de 18/08.
+    const p = prazoDefesa(docs, new Date(2026, 7, 20));
+    expect(p).not.toBeNull();
+    expect(p!.inicio.getDate()).toBe(10);
+    // 10/08 (seg) + 7 úteis = 19/08 (qua); em 20/08 já estourou por 1.
+    expect(p!.limite.getDate()).toBe(19);
+    expect(p!.diasUteisRestantes).toBe(-1);
+  });
+
+  it("efetiva em aberto: prazo nem começa a correr", () => {
+    expect(prazoDefesa([{ tipo: "comprovante_efetiva_necessidade", status: "pendente", updated_at: "2026-08-10T12:00:00-03:00" }])).toBeNull();
+  });
+
+  it("sem data para ancorar, sem prazo — melhor nada que um relógio errado", () => {
+    expect(prazoDefesa([{ tipo: "comprovante_efetiva_necessidade", status: "aprovado" }])).toBeNull();
   });
 });
