@@ -81,6 +81,37 @@ export function faltaDocDoCliente(docs: readonly DocParaDefesa[]): boolean {
   return false;
 }
 
+/** O item pertence ao grupo de efetiva necessidade? (mesma leitura do painel) */
+export function ehDocEfetivaNecessidade(d: DocParaDefesa | null | undefined): boolean {
+  const tipo = String(d?.tipo_documento ?? d?.tipo ?? "").trim().toLowerCase();
+  if (!tipo) return false;
+  return (
+    tipo === "declaracao_necessidade_efetiva" ||
+    tipo === "comprovante_efetiva_necessidade" ||
+    tipo.includes("efetiva_necessidade")
+  );
+}
+
+/**
+ * Regra do titular (20/08/2026): a fila da petição só recebe quem FECHOU o
+ * grupo de efetiva necessidade. É a narrativa da efetiva necessidade que
+ * sustenta a defesa — sem ela fechada, a equipe não tem o que redigir, mesmo
+ * que o resto do checklist esteja em dia.
+ *
+ * Retorna `null` quando o processo não tem itens de efetiva necessidade — aí a
+ * regra não se aplica e vale a leitura geral do checklist.
+ */
+export function grupoEfetivaFechado(docs: readonly DocParaDefesa[]): boolean | null {
+  let tem = false;
+  for (const d of docs ?? []) {
+    if (!ehDocEfetivaNecessidade(d)) continue;
+    tem = true;
+    const status = String(d?.status ?? "").trim().toLowerCase();
+    if (STATUS_DOC_ABERTO.has(status)) return false;
+  }
+  return tem ? true : null;
+}
+
 /** O que este módulo precisa de uma linha do painel de progresso. */
 export interface ProcessoParaPeticao {
   status?: string | null;
@@ -95,7 +126,7 @@ const ESTADOS: Record<EstadoPeticaoId, EstadoPeticao> = {
     id: "aguardando_equipe",
     label: "PET A REDIGIR",
     tom: "neutro",
-    descricao: "Documentação fechada e nenhuma peça gerada: a petição está na fila da equipe.",
+    descricao: "Efetiva necessidade entregue e nenhuma peça gerada: a petição está na fila da equipe.",
   },
   redigida: {
     id: "redigida",
@@ -180,11 +211,16 @@ export function estadoPeticao(
   if (dominante === "devolvida") return ESTADOS.devolvida;
   if (dominante === "nao_enviada") return ESTADOS.redigida;
 
-  // Sem nenhuma peça: entra na fase quando a PARTE DO CLIENTE fecha. Com a
-  // lista de documentos em mãos, a leitura certa ignora a etapa final (GRU,
-  // gov.br, juntada) — esses passos vêm DEPOIS da defesa. Sem a lista, vale a
-  // contagem bruta do painel.
+  // Sem nenhuma peça: quem decide a entrada na fila é a EFETIVA NECESSIDADE
+  // (regra do titular, 20/08/2026) — é ela que sustenta a defesa. Fechou o
+  // grupo, entra; não fechou, não entra, mesmo com o resto do checklist ok.
+  // Processo sem itens de efetiva necessidade cai na leitura geral: parte do
+  // cliente fechada, ignorando a etapa final (GRU, gov.br, juntada), que só
+  // abre DEPOIS da defesa. Sem a lista de documentos, vale a contagem bruta.
   if (docsDoProcesso && docsDoProcesso.length > 0) {
+    const efetiva = grupoEfetivaFechado(docsDoProcesso);
+    if (efetiva === true) return ESTADOS.aguardando_equipe;
+    if (efetiva === false) return null;
     if (!faltaDocDoCliente(docsDoProcesso)) return ESTADOS.aguardando_equipe;
   } else {
     const total = Number(processo?.total_docs ?? 0);

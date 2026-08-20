@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente } from "../fasePeticao";
+import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente, grupoEfetivaFechado } from "../fasePeticao";
 
 const emDocumentos = { status: "aguardando_documentos", total_docs: 30, entregues: 19 };
 const checklistFechado = { status: "aguardando_documentos", total_docs: 30, entregues: 30 };
@@ -174,5 +174,46 @@ describe("etapa final não segura a fase da PET", () => {
   it("faltaDocDoCliente aceita tipo_documento ou tipo", () => {
     expect(faltaDocDoCliente([{ tipo_documento: "rg", status: "pendente" }])).toBe(true);
     expect(faltaDocDoCliente([{ tipo_documento: "gru", status: "pendente" }])).toBe(false);
+  });
+});
+
+describe("fila da petição — regra da efetiva necessidade (20/08/2026)", () => {
+  const proc = { status: "aguardando_documentos", total_docs: 32, entregues: 28 };
+  const entregue = (tipo) => ({ tipo, status: "entregue_pelo_hub" });
+  const pendente = (tipo) => ({ tipo, status: "pendente" });
+
+  it("cenário Anthony: tudo entregue, só etapa final aberta → entra na fila", () => {
+    const docs = [
+      entregue("comprovante_efetiva_necessidade"),
+      entregue("antecedentes_criminais"), entregue("laudo_psicologico"),
+      pendente("gru"), pendente("gru_comprovante"), pendente("credencial_gov_br"), pendente("juntada_assinada"),
+    ];
+    expect(estadoPeticao(proc, [], docs)?.id).toBe("aguardando_equipe");
+  });
+
+  it("efetiva necessidade aberta → fora da fila, mesmo com o resto ok", () => {
+    const docs = [pendente("comprovante_efetiva_necessidade"), entregue("antecedentes_criminais")];
+    expect(estadoPeticao(proc, [], docs)).toBeNull();
+  });
+
+  it("efetiva fechada com laudo ainda pendente → entra na fila (a EN decide)", () => {
+    const docs = [entregue("declaracao_necessidade_efetiva"), pendente("laudo_psicologico")];
+    expect(estadoPeticao(proc, [], docs)?.id).toBe("aguardando_equipe");
+  });
+
+  it("processo sem itens de efetiva: vale a leitura geral do checklist", () => {
+    expect(estadoPeticao(proc, [], [pendente("antecedentes_criminais")])).toBeNull();
+    expect(estadoPeticao(proc, [], [entregue("antecedentes_criminais"), pendente("gru")])?.id).toBe("aguardando_equipe");
+  });
+
+  it("peça já existente não depende da efetiva: o estado dela prevalece", () => {
+    const docs = [pendente("comprovante_efetiva_necessidade")];
+    expect(estadoPeticao(proc, [{ status_cliente: "aguardando_cliente" }], docs)?.id).toBe("com_cliente");
+  });
+
+  it("grupoEfetivaFechado distingue fechado, aberto e inexistente", () => {
+    expect(grupoEfetivaFechado([entregue("comprovante_efetiva_necessidade")])).toBe(true);
+    expect(grupoEfetivaFechado([pendente("peticao_efetiva_necessidade")])).toBe(false);
+    expect(grupoEfetivaFechado([entregue("antecedentes_criminais")])).toBeNull();
   });
 });
