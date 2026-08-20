@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente, grupoEfetivaFechado, ehResponsabilidadeEquipe, prazoDefesa, somarDiasUteis, diasUteisEntre } from "../fasePeticao";
+import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente, grupoEfetivaFechado, ehResponsabilidadeEquipe, prazoDefesa, somarDiasUteis, diasUteisEntre, estadoDaFilaServidor, prazoDesdeInicio } from "../fasePeticao";
 
 const emDocumentos = { status: "aguardando_documentos", total_docs: 30, entregues: 19 };
 const checklistFechado = { status: "aguardando_documentos", total_docs: 30, entregues: 30 };
@@ -257,5 +257,28 @@ describe("fila da equipe e prazo de 7 dias úteis", () => {
 
   it("sem data para ancorar, sem prazo — melhor nada que um relógio errado", () => {
     expect(prazoDefesa([{ tipo: "comprovante_efetiva_necessidade", status: "aprovado" }])).toBeNull();
+  });
+});
+
+describe("fila calculada no banco (qa_defesas_na_fila)", () => {
+  it("traduz os três estados do banco no chip — e recusa o resto", () => {
+    expect(estadoDaFilaServidor("a_redigir")?.id).toBe("aguardando_equipe");
+    expect(estadoDaFilaServidor("redigida")?.id).toBe("redigida");
+    expect(estadoDaFilaServidor("devolvida")?.id).toBe("devolvida");
+    expect(estadoDaFilaServidor("aprovada")).toBeNull();
+    expect(estadoDaFilaServidor(null)).toBeNull();
+  });
+
+  it("prazoDesdeInicio: 18/08 (terça) + 7 úteis = 27/08; em 20/08 restam 5", () => {
+    // Meio-dia UTC para o dia-calendário ser 18/08 em qualquer fuso do runner.
+    const p = prazoDesdeInicio("2026-08-18T12:00:00Z", new Date(2026, 7, 20));
+    expect(p).not.toBeNull();
+    expect([p!.limite.getDate(), p!.limite.getMonth()]).toEqual([27, 7]);
+    expect(p!.diasUteisRestantes).toBe(5);
+  });
+
+  it("prazoDesdeInicio sem data ou com lixo: sem relógio", () => {
+    expect(prazoDesdeInicio(null)).toBeNull();
+    expect(prazoDesdeInicio("nao-e-data")).toBeNull();
   });
 });

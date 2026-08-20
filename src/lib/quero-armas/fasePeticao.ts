@@ -126,6 +126,31 @@ export function ehResponsabilidadeEquipe(estado: EstadoPeticao | null | undefine
   return estado?.id === "aguardando_equipe" || estado?.id === "redigida" || estado?.id === "devolvida";
 }
 
+/** Traduz o estado calculado pelo banco (`qa_defesas_na_fila`) no chip do card. */
+export function estadoDaFilaServidor(estado: string | null | undefined): EstadoPeticao | null {
+  const e = String(estado ?? "").trim().toLowerCase();
+  if (e === "a_redigir") return ESTADOS.aguardando_equipe;
+  if (e === "redigida") return ESTADOS.redigida;
+  if (e === "devolvida") return ESTADOS.devolvida;
+  return null;
+}
+
+/** Linha devolvida pela função `qa_defesas_na_fila()` do banco. */
+export interface FilaDefesaServidor {
+  processo_id?: string | null;
+  estado?: string | null;        // 'a_redigir' | 'redigida' | 'devolvida'
+  prazo_inicio?: string | null;
+}
+
+/** Prazo de 7 dias úteis a partir de um início conhecido (vindo do banco). */
+export function prazoDesdeInicio(inicioBruto: string | Date | null | undefined, agora: Date = new Date()): PrazoDefesa | null {
+  if (!inicioBruto) return null;
+  const inicio = inicioBruto instanceof Date ? inicioBruto : new Date(inicioBruto);
+  if (!Number.isFinite(inicio.getTime())) return null;
+  const limite = somarDiasUteis(inicio, PRAZO_DEFESA_DIAS_UTEIS);
+  return { inicio, limite, diasUteisRestantes: PRAZO_DEFESA_DIAS_UTEIS - diasUteisEntre(inicio, agora) };
+}
+
 /** Tom semântico do chip — o componente decide a cor real. */
 export type TomPeticao = "verde" | "ambar" | "vermelho" | "neutro";
 

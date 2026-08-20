@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
-import { estadoPeticao, vincularPecas, ehResponsabilidadeEquipe, prazoDefesa, PRAZO_DEFESA_DIAS_UTEIS, type EstadoPeticao, type PecaDoProcesso, type PrazoDefesa, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
+import { estadoPeticao, vincularPecas, ehResponsabilidadeEquipe, prazoDefesa, prazoDesdeInicio, estadoDaFilaServidor, PRAZO_DEFESA_DIAS_UTEIS, type EstadoPeticao, type FilaDefesaServidor, type PecaDoProcesso, type PrazoDefesa, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
 import { useDragScroll } from "@/hooks/useDragScroll";
 
 /**
@@ -321,6 +321,8 @@ export default function DashboardProgressoClientes() {
   const [pecas, setPecas] = useState<PecaDoProcesso[]>([]);
   /** Checklist cru por processo — para a fase da PET ignorar a etapa final. */
   const [docsProcesso, setDocsProcesso] = useState<Record<string, DocTrilha[]>>({});
+  /** Fila de defesas calculada NO BANCO (`qa_defesas_na_fila`); null = função indisponível. */
+  const [filaServidor, setFilaServidor] = useState<FilaDefesaServidor[] | null>(null);
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
     try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
   });
@@ -470,6 +472,12 @@ export default function DashboardProgressoClientes() {
         const lista = ((data as any[]) ?? []) as Row[];
         if (cancelled) return;
         setRows(lista);
+
+        // Fila de defesas vem PRONTA do banco. Se a função ainda não foi
+        // aplicada no SQL Editor, `error` vem preenchido e o painel cai no
+        // cálculo local (reserva).
+        const { data: fila, error: filaErr } = await supabase.rpc("qa_defesas_na_fila" as any);
+        if (!cancelled) setFilaServidor(filaErr ? null : (((fila as any[]) ?? []) as FilaDefesaServidor[]));
 
         const ids = lista.map((r) => r.processo_id).filter(Boolean);
 
@@ -638,17 +646,28 @@ export default function DashboardProgressoClientes() {
 
   /** Fase da PET por processo: null = ainda não chegou lá. */
   const peticoes = useMemo(() => {
-    const porProcesso = vincularPecas(rows, pecas);
     const mapa: Record<string, EstadoPeticao | null> = {};
     const prazos: Record<string, PrazoDefesa | null> = {};
-    for (const r of rows) {
-      const estado = estadoPeticao(r, porProcesso[r.processo_id] ?? [], docsProcesso[r.processo_id]);
-      // O card é a FILA DA EQUIPE: peça com o cliente ou aprovada fica fora.
-      mapa[r.processo_id] = ehResponsabilidadeEquipe(estado) ? estado : null;
-      prazos[r.processo_id] = mapa[r.processo_id] ? prazoDefesa(docsProcesso[r.processo_id] ?? []) : null;
+    if (filaServidor) {
+      // Fonte primária: o banco já decidiu quem está na fila e desde quando.
+      for (const f of filaServidor) {
+        const pid = String(f.processo_id ?? "");
+        if (!pid) continue;
+        mapa[pid] = estadoDaFilaServidor(f.estado);
+        prazos[pid] = mapa[pid] ? prazoDesdeInicio(f.prazo_inicio) : null;
+      }
+    } else {
+      // Reserva: cálculo local, para o painel não ficar cego se a função
+      // `qa_defesas_na_fila` ainda não tiver sido aplicada no banco.
+      const porProcesso = vincularPecas(rows, pecas);
+      for (const r of rows) {
+        const estado = estadoPeticao(r, porProcesso[r.processo_id] ?? [], docsProcesso[r.processo_id]);
+        mapa[r.processo_id] = ehResponsabilidadeEquipe(estado) ? estado : null;
+        prazos[r.processo_id] = mapa[r.processo_id] ? prazoDefesa(docsProcesso[r.processo_id] ?? []) : null;
+      }
     }
     return { estados: mapa, prazos };
-  }, [rows, pecas, docsProcesso]);
+  }, [rows, pecas, docsProcesso, filaServidor]);
 
   const contadores = useMemo(() => {
     const ativos = rows.filter((r) => !r.bloqueado_por_prerequisito);
