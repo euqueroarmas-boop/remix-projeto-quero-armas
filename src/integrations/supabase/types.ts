@@ -4869,6 +4869,7 @@ export type Database = {
           sexo: string | null
           status: string | null
           subcategoria: string | null
+          tem_segundo_endereco: boolean | null
           tipo_cliente: string | null
           tipo_documento_identidade: string
           titulo_eleitor: string | null
@@ -5007,6 +5008,7 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tem_segundo_endereco?: boolean | null
           tipo_cliente?: string | null
           tipo_documento_identidade?: string
           titulo_eleitor?: string | null
@@ -5145,6 +5147,7 @@ export type Database = {
           sexo?: string | null
           status?: string | null
           subcategoria?: string | null
+          tem_segundo_endereco?: boolean | null
           tipo_cliente?: string | null
           tipo_documento_identidade?: string
           titulo_eleitor?: string | null
@@ -11252,6 +11255,7 @@ export type Database = {
       }
       qa_servicos_catalogo: {
         Row: {
+          admite_segundo_endereco: boolean
           anexo_atualizado_em: string | null
           anexo_corpo_html: string | null
           anexo_titulo: string | null
@@ -11263,6 +11267,7 @@ export type Database = {
           checklist_type: string | null
           contrato_type: string | null
           created_at: string
+          defesa_isencao_travada: boolean
           descricao_curta: string | null
           descricao_full: string | null
           display_order: number
@@ -11270,6 +11275,7 @@ export type Database = {
           exige_cadastro: boolean
           exige_cr: boolean | null
           exige_pagamento: boolean
+          exige_peca_defesa: boolean
           gera_processo: boolean
           id: string
           modalidade_cac: string | null
@@ -11289,6 +11295,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admite_segundo_endereco?: boolean
           anexo_atualizado_em?: string | null
           anexo_corpo_html?: string | null
           anexo_titulo?: string | null
@@ -11300,6 +11307,7 @@ export type Database = {
           checklist_type?: string | null
           contrato_type?: string | null
           created_at?: string
+          defesa_isencao_travada?: boolean
           descricao_curta?: string | null
           descricao_full?: string | null
           display_order?: number
@@ -11307,6 +11315,7 @@ export type Database = {
           exige_cadastro?: boolean
           exige_cr?: boolean | null
           exige_pagamento?: boolean
+          exige_peca_defesa?: boolean
           gera_processo?: boolean
           id?: string
           modalidade_cac?: string | null
@@ -11326,6 +11335,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admite_segundo_endereco?: boolean
           anexo_atualizado_em?: string | null
           anexo_corpo_html?: string | null
           anexo_titulo?: string | null
@@ -11337,6 +11347,7 @@ export type Database = {
           checklist_type?: string | null
           contrato_type?: string | null
           created_at?: string
+          defesa_isencao_travada?: boolean
           descricao_curta?: string | null
           descricao_full?: string | null
           display_order?: number
@@ -11344,6 +11355,7 @@ export type Database = {
           exige_cadastro?: boolean
           exige_cr?: boolean | null
           exige_pagamento?: boolean
+          exige_peca_defesa?: boolean
           gera_processo?: boolean
           id?: string
           modalidade_cac?: string | null
@@ -13714,6 +13726,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      qa_cliente_admite_segundo_endereco: {
+        Args: { p_cliente_id: number }
+        Returns: boolean
+      }
       qa_cliente_arquivar: {
         Args: { p_cliente_id: number; p_motivo?: string }
         Returns: Json
@@ -13824,6 +13840,17 @@ export type Database = {
       }
       qa_current_cliente_id: { Args: { _uid: string }; Returns: number }
       qa_current_cliente_id_legado: { Args: { _uid: string }; Returns: number }
+      qa_defesas_na_fila: {
+        Args: never
+        Returns: {
+          cliente_id: number
+          cliente_nome: string
+          estado: string
+          prazo_inicio: string
+          processo_id: string
+          servico_nome: string
+        }[]
+      }
       qa_derive_status_financeiro: {
         Args: { p_status_venda: string; p_valor_aberto: number }
         Returns: string
@@ -14142,6 +14169,34 @@ export type Database = {
           total_docs: number
           ultima_atividade: string
           ultimo_acesso: string
+        }[]
+      }
+      qa_painel_progresso_itens: {
+        Args: { _processo_id: string }
+        Returns: {
+          aplicavel: boolean
+          atualizado_em: string
+          conta_analise: boolean
+          conta_cadastro: boolean
+          conta_entregue: boolean
+          conta_nao_se_aplica: boolean
+          conta_pendente: boolean
+          conta_reaproveitado: boolean
+          data_envio: string
+          documento_id: string
+          eh_pergunta: boolean
+          familia: string
+          grupo_id: string
+          grupo_nome: string
+          grupo_ordem: number
+          item_ordem: number
+          motivo_rejeicao: string
+          nome_documento: string
+          observacoes: string
+          pergunta_chave: string
+          pergunta_resposta: string
+          status: string
+          tipo_documento: string
         }[]
       }
       qa_parse_date_safe: { Args: { v: string }; Returns: string }
