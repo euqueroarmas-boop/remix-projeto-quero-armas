@@ -722,8 +722,8 @@ export default function DashboardProgressoClientes() {
               setFiltroTrilha(null);
               setContador((v) => (v === c.k ? "todos" : c.k));
             }}
-            className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-              contador === c.k ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
+            className={`flex flex-col items-start justify-start rounded-sm border px-3 py-2 text-left transition-colors ${
+              contador === c.k ? "border-[var(--qa-tinta-4)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
             }`}
             style={{ background: contador === c.k ? c.fundo : "var(--qa-paper)" }}
           >
@@ -752,8 +752,8 @@ export default function DashboardProgressoClientes() {
             type="button"
             title="Profissionais citados em laudos que não foram localizados na base de credenciados da Polícia Federal"
             onClick={() => setModoCred((v) => (v === c.t ? null : c.t))}
-            className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-              modoCred === c.t ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
+            className={`flex flex-col items-start justify-start rounded-sm border px-3 py-2 text-left transition-colors ${
+              modoCred === c.t ? "border-[var(--qa-tinta-4)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
             }`}
             style={{ background: modoCred === c.t ? VERMELHO_BG : "var(--qa-paper)" }}
           >
@@ -770,8 +770,8 @@ export default function DashboardProgressoClientes() {
           type="button"
           title="Clique para ver os e-mails por cliente e as falhas"
           onClick={() => setEmailsAberto((v) => !v)}
-          className={`rounded-sm border px-3 py-2 text-left transition-colors ${
-            emailsAberto ? "border-[var(--qa-tinta)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
+          className={`flex flex-col items-start justify-start rounded-sm border px-3 py-2 text-left transition-colors ${
+            emailsAberto ? "border-[var(--qa-tinta-4)]" : "border-[var(--qa-linha)] hover:border-[var(--qa-tinta-5)]"
           }`}
           style={{ background: emailsAberto ? "var(--qa-chip-bg)" : "var(--qa-paper)" }}
         >
@@ -891,7 +891,7 @@ export default function DashboardProgressoClientes() {
 
       {trilhasDisponiveis.length > 0 && (
         <div ref={trilhasScroll.ref} className="px-4 py-2 border-b border-[var(--qa-linha)] flex items-center gap-1.5 overflow-x-auto no-scrollbar select-none">
-          <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] mr-1" style={{ color: TINTA_3 }}>TRILHA</span>
+          <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.14em] mr-1" style={{ color: TINTA_3 }}>FILTRO</span>
           {trilhasDisponiveis.map((t) => (
             <button
               key={t}
@@ -978,9 +978,9 @@ export default function DashboardProgressoClientes() {
                       NOVA EXIGÊNCIA
                     </Chip>
                   )}
-                  {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                  {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
-                  {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
+                  {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe"><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
+                  {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar"><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                  {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues"><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="var(--qa-chip-bg)">{r.cobrancas} COB.</Chip>}
                 </div>
                 <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
@@ -1163,19 +1163,19 @@ export default function DashboardProgressoClientes() {
                   progresso: (
                     <>
                       <LinhaTopo className="flex w-full min-w-0 items-center gap-2">
-                        <span className="shrink-0 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA }}>
+                        <span className="shrink-0 text-[10.5px] font-medium tabular-nums" style={{ color: TINTA }} title="Documentos entregues / total exigido neste processo">
                           {r.entregues}/{r.total_docs}
                         </span>
-                        <div className="min-w-0 flex-1 h-[6px] bg-[var(--qa-trilho)] rounded-full overflow-hidden">
+                        <div className="min-w-0 flex-1 h-[6px] bg-[var(--qa-trilho)] rounded-full overflow-hidden" title="Percentual de documentos entregues">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, background: corProgresso(pct, r.dias_parado) }} />
                         </div>
-                        <span className="shrink-0 w-10 text-[10.5px] font-medium uppercase tabular-nums text-right" style={{ color: TINTA_2 }}>{pct}%</span>
+                        <span className="shrink-0 w-10 text-[10.5px] font-medium uppercase tabular-nums text-right" style={{ color: TINTA_2 }} title="Percentual de documentos entregues">{pct}%</span>
                       </LinhaTopo>
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
-                        {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                        {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
-                        {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG}><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
+                        {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues"><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
+                        {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe"><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
+                        {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar"><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                        {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Perguntas do cadastro que o cliente ainda não respondeu"><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
                         {(r.reaproveitados ?? 0) > 0 && (
                           <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Documentos aproveitados do histórico do cliente">
                             {r.reaproveitados} REAPROVEITADOS
