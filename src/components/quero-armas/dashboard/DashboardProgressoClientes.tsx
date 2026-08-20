@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
@@ -466,6 +466,7 @@ export default function DashboardProgressoClientes() {
   const [emailDetalhe, setEmailDetalhe] = useState<Record<string, any[]>>({});
   const [somenteFalhas, setSomenteFalhas] = useState(false);
   const carregarRef = useRef<() => void>(() => {});
+  const navegar = useNavigate();
   /** Chip clicado na coluna PROGRESSO — abre o pop-up com a lista por trás do número. */
   const [chipAlvo, setChipAlvo] = useState<ChipDetalheAlvo | null>(null);
   const abrirChip = (r: Row, balde: BaldeChip) => setChipAlvo({
@@ -1087,10 +1088,21 @@ export default function DashboardProgressoClientes() {
             const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
             const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
             return (
-              <Link
+              // Card navegável SEM <a> em volta: os chips são <button>, e
+              // <button> dentro de <a> é HTML inválido — no iOS o toque não
+              // chegava ao chip. O clique no card continua abrindo a ficha.
+              <div
                 key={r.processo_id}
-                to={rotaCadastroCliente(r.cliente_id)}
-                className="block px-4 py-3 border-b border-[var(--qa-linha-4)] active:bg-[var(--qa-paper-2)]"
+                role="link"
+                tabIndex={0}
+                onClick={() => navegar(rotaCadastroCliente(r.cliente_id))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    navegar(rotaCadastroCliente(r.cliente_id));
+                  }
+                }}
+                className="block cursor-pointer px-4 py-3 border-b border-[var(--qa-linha-4)] active:bg-[var(--qa-paper-2)]"
               >
                 <div className="flex items-start gap-2">
                   <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: TINTA }}>
@@ -1152,7 +1164,7 @@ export default function DashboardProgressoClientes() {
                     {trilhaCompacta(trilhasEfetivas[r.processo_id]).join(" · ")}
                   </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </div>
