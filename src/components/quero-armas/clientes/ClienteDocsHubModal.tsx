@@ -363,7 +363,7 @@ const TIPOS_CERTIDAO = new Set([
   "antecedentes_eleitoral",
 ]);
 
-function normalizeStr(s: string): string {
+export function normalizeStr(s: string): string {
   return s.trim().toUpperCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/ª/g, "A")
@@ -438,7 +438,7 @@ function detectaCertidaoMilitar(hay: string): "antecedentes_militar" | "antecede
   return null;
 }
 
-function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_regional" | "antecedentes_federal_sjsp_jef" | "antecedentes_federal" | null {
+export function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_regional" | "antecedentes_federal_sjsp_jef" | "antecedentes_federal" | null {
   // Certidão militar nunca é certidão da Justiça Federal comum.
   if (detectaCertidaoMilitar(hay)) return null;
   const isCertidaoFederal =
@@ -456,7 +456,27 @@ function detectaSubtipoCertidaoFederal(hay: string): "antecedentes_federal_trf3_
       return "antecedentes_federal_sjsp_jef";
     }
   }
-  if (/JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SECAO JUDICIARIA DE SAO PAULO/.test(hay)) {
+  // MARCADOR EXCLUSIVO DA ABRANGÊNCIA REGIONAL.
+  //
+  // A certidão REGIONAL descreve, no próprio corpo, a cobertura que a define:
+  // "...na Justiça Federal de 1º Grau, Seção Judiciária de São Paulo, ... na
+  // Seção Judiciária de MATO GROSSO DO SUL e ... no Tribunal Regional Federal
+  // da 3ª Região (2º Grau)". Como essa frase cita "Seção Judiciária", o atalho
+  // abaixo a classificava como SJSP/JEF — e o cliente que enviava a Regional
+  // recebia "já consta no Hub, mas não atende a este item" (caso real
+  // 20/08/2026). É exatamente o falso "duplicidade" que o comentário acima já
+  // proibia, mas que o código fazia.
+  //
+  // Mato Grosso do Sul é o discriminador seguro: a 3ª Região é SP + MS, e só a
+  // certidão de abrangência REGIONAL cobre a seção de MS — a local cobre
+  // apenas São Paulo. O campo "Abrangência" impresso continua tendo
+  // precedência (bloco acima), então uma certidão que se declara local nunca
+  // é reclassificada por esta guarda.
+  const cobreSecaoDeOutroEstado = /SECAO JUDICIARIA DE MATO GROSSO DO SUL/.test(hay);
+  if (
+    !cobreSecaoDeOutroEstado &&
+    /JUDICIARIA SP|SJSP|JEF|871659|SECAO JUDICIARIA|SECAO JUDICIARIA DE SAO PAULO/.test(hay)
+  ) {
     return "antecedentes_federal_sjsp_jef";
   }
   if (
