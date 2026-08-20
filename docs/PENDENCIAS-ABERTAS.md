@@ -50,8 +50,11 @@ A regra "SINARM tem defesa" tem duas exceções, decididas pelo titular em
   ela entra pelo serviço de autorização de compra/posse do recebedor. Quem
   transfere não defende nada.
 
-Ambas isentas por slug, não por categoria: um re-run do UPDATE que liga tudo
-que não é CAC religa as duas sem querer.
+Ambas isentas por slug, não por categoria. **TRAVADO no banco em 20/08/2026**:
+a migration `20260820160000_trava_isencao_defesa.sql` criou a coluna
+`defesa_isencao_travada` + gatilho que mantém `exige_peca_defesa = false`
+nessas linhas (e nos dois cursos de pistola) mesmo se um UPDATE em massa
+tentar religar. Para ligar de propósito: destravar primeiro, ligar depois.
 
 ### Guia de Trânsito ≠ Guia de Tráfego Especial
 
