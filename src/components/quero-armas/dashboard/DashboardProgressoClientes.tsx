@@ -6,6 +6,7 @@ import { useQATema } from "@/components/quero-armas/QATemaContext";
 import { trilhaDoProcesso, trilhaCompacta, type DocTrilha } from "@/lib/quero-armas/trilhaChecklist";
 import { estadoPeticao, vincularPecas, ehResponsabilidadeEquipe, prazoDefesa, prazoDesdeInicio, estadoDaFilaServidor, PRAZO_DEFESA_DIAS_UTEIS, type EstadoPeticao, type FilaDefesaServidor, type PecaDoProcesso, type PrazoDefesa, type TomPeticao } from "@/lib/quero-armas/fasePeticao";
 import { useDragScroll } from "@/hooks/useDragScroll";
+import { DashboardChipDetalhe, type ChipDetalheAlvo, type BaldeChip } from "./DashboardChipDetalhe";
 
 /**
  * Painel editorial de progresso por cliente.
@@ -170,16 +171,39 @@ function corProgresso(pct: number, dias: number) {
 }
 
 function Chip({
-  children, cor, fundo, titulo, quebra, miudo,
-}: { children: React.ReactNode; cor: string; fundo: string; titulo?: string; quebra?: boolean; miudo?: boolean }) {
+  children, cor, fundo, titulo, quebra, miudo, aoAbrir,
+}: {
+  children: React.ReactNode; cor: string; fundo: string; titulo?: string;
+  quebra?: boolean; miudo?: boolean;
+  /** Presente = chip vira botão e abre o pop-up com a lista por trás do número. */
+  aoAbrir?: () => void;
+}) {
+  const classe = `qa-chip-fit inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
+    miudo ? "font-medium" : "font-bold"
+  }`;
+  const estilo = { background: fundo, color: cor, borderColor: bordaDe(fundo, cor) };
+  if (aoAbrir) {
+    return (
+      <button
+        type="button"
+        title={titulo ? `${titulo} — clique para ver a lista` : "Clique para ver a lista"}
+        // O card do celular é um <Link>: sem parar o evento, o clique no chip
+        // navegaria para a ficha do cliente em vez de abrir o pop-up.
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); aoAbrir(); }}
+        className={`${classe} cursor-pointer transition-shadow hover:shadow-[0_0_0_2px_var(--qa-linha-2)]`}
+        data-quebra={quebra ? "1" : undefined}
+        style={estilo}
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <span
       title={titulo}
-      className={`qa-chip-fit inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
-        miudo ? "font-medium" : "font-bold"
-      }`}
+      className={classe}
       data-quebra={quebra ? "1" : undefined}
-      style={{ background: fundo, color: cor, borderColor: bordaDe(fundo, cor) }}
+      style={estilo}
     >
       {children}
     </span>
@@ -442,6 +466,14 @@ export default function DashboardProgressoClientes() {
   const [emailDetalhe, setEmailDetalhe] = useState<Record<string, any[]>>({});
   const [somenteFalhas, setSomenteFalhas] = useState(false);
   const carregarRef = useRef<() => void>(() => {});
+  /** Chip clicado na coluna PROGRESSO — abre o pop-up com a lista por trás do número. */
+  const [chipAlvo, setChipAlvo] = useState<ChipDetalheAlvo | null>(null);
+  const abrirChip = (r: Row, balde: BaldeChip) => setChipAlvo({
+    processoId: r.processo_id,
+    clienteNome: r.cliente_nome,
+    servicoNome: r.servico_nome,
+    balde,
+  });
 
   useEffect(() => {
     if (!emailsAberto || emailsPorCliente.length > 0) return;
@@ -1096,9 +1128,19 @@ export default function DashboardProgressoClientes() {
                       NOVA EXIGÊNCIA
                     </Chip>
                   )}
-                  {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe"><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                  {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar"><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
-                  {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues"><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
+                  {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe" aoAbrir={() => abrirChip(r, "analise")}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
+                  {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar" aoAbrir={() => abrirChip(r, "pendente")}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                  {(r.reaproveitados ?? 0) > 0 && (
+                    <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Documentos aproveitados do histórico do cliente" aoAbrir={() => abrirChip(r, "reaproveitado")}>
+                      {r.reaproveitados} REAPROVEITADOS
+                    </Chip>
+                  )}
+                  {(r.dispensados ?? 0) > 0 && (
+                    <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo" aoAbrir={() => abrirChip(r, "nao_se_aplica")}>
+                      {r.dispensados} NÃO SE APLICA
+                    </Chip>
+                  )}
+                  {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues" aoAbrir={() => abrirChip(r, "entregue")}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
                   {r.cobrancas > 0 && <Chip cor={TINTA_2} fundo="var(--qa-chip-bg)">{r.cobrancas} COB.</Chip>}
                 </div>
                 <div className="mt-1 flex min-w-0 items-start gap-1.5 text-[10.5px] font-medium uppercase" style={{ color: TINTA_2 }}>
@@ -1295,17 +1337,17 @@ export default function DashboardProgressoClientes() {
                         <span className="shrink-0 w-10 text-[10.5px] font-medium uppercase tabular-nums text-right" style={{ color: TINTA_2 }} title="Percentual de documentos entregues">{pct}%</span>
                       </LinhaTopo>
                       <div className="mt-1 flex flex-wrap gap-1">
-                        {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues"><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
-                        {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe"><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
-                        {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar"><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
-                        {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Perguntas do cadastro que o cliente ainda não respondeu"><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
+                        {pct >= 100 && <Chip cor={VERDE} fundo={VERDE_BG} titulo="Todos os documentos exigidos já foram entregues" aoAbrir={() => abrirChip(r, "entregue")}><CheckCircle2 className="h-3 w-3" />PRONTO</Chip>}
+                        {(r.em_analise ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Documentos entregues pelo cliente aguardando conferência da equipe" aoAbrir={() => abrirChip(r, "analise")}><Clock3 className="h-3 w-3" />{r.em_analise} EM ANÁLISE</Chip>}
+                        {pendencias > 0 && <Chip miudo cor={VERMELHO} fundo={VERMELHO_BG} titulo="Documentos ou respostas que o cliente ainda precisa enviar" aoAbrir={() => abrirChip(r, "pendente")}><AlertTriangle className="h-3 w-3" />{pendencias} PENDENTE(S)</Chip>}
+                        {(r.perguntas_pendentes ?? 0) > 0 && <Chip cor={AMBAR} fundo={AMBAR_BG} titulo="Perguntas do cadastro que o cliente ainda não respondeu" aoAbrir={() => abrirChip(r, "cadastro")}><HelpCircle className="h-3 w-3" />{r.perguntas_pendentes} CADASTRO</Chip>}
                         {(r.reaproveitados ?? 0) > 0 && (
-                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Documentos aproveitados do histórico do cliente">
+                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Documentos aproveitados do histórico do cliente" aoAbrir={() => abrirChip(r, "reaproveitado")}>
                             {r.reaproveitados} REAPROVEITADOS
                           </Chip>
                         )}
                         {(r.dispensados ?? 0) > 0 && (
-                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo">
+                          <Chip miudo cor={TINTA_3} fundo="var(--qa-chip-bg)" titulo="Exigências do caminho que o cliente não seguiu — não se aplicam a este processo" aoAbrir={() => abrirChip(r, "nao_se_aplica")}>
                             {r.dispensados} NÃO SE APLICA
                           </Chip>
                         )}
@@ -1370,6 +1412,9 @@ export default function DashboardProgressoClientes() {
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: AMBAR }} />7 A 14 DIAS</span>
         <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: VERMELHO }} />15+ (COBRANÇA SEMANAL AUTOMÁTICA)</span>
       </div>
+
+      {/* Pop-up que abre o chip clicado: lista item a item o que o número conta. */}
+      {chipAlvo && <DashboardChipDetalhe alvo={chipAlvo} onClose={() => setChipAlvo(null)} />}
     </div>
   );
 }
