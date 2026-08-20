@@ -1,5 +1,17 @@
 # Instruções permanentes para o assistente
 
+## Correções: cirúrgicas, nunca globais por conta própria — CANÔNICO
+
+- Cada correção ataca SOMENTE o problema reportado. Regra compartilhada
+  (validador, parser, conferência ou trava usada por vários tipos de
+  documento) NÃO muda por iniciativa própria — só quando o pedido for
+  explicitamente esse.
+- Quando a correção do caso exigir mexer em comportamento compartilhado,
+  AVISAR ANTES de aplicar: dizer o que muda para os demais documentos e
+  por quê, e esperar o aval.
+- "Aproveitar" a correção para endurecer/afrouxar regras vizinhas é
+  proibido. Melhoria adicional é proposta, não entrega.
+
 ## Fluxo de commit e push
 
 - Após qualquer correção de código, fazer **imediatamente** `git commit` + `git push origin main`.
