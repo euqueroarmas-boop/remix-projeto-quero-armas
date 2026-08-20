@@ -852,6 +852,7 @@ interface Cliente {
   bairro: string; cep: string; cidade: string; estado: string; observacao: string; complemento: string;
   status: string; created_at: string; escolaridade?: string; titulo_eleitor?: string;
   endereco2?: string; numero2?: string; bairro2?: string; cep2?: string; cidade2?: string; estado2?: string;
+  tem_segundo_endereco?: boolean | null;
   complemento2?: string; pais?: string; pais2?: string; expedicao_rg?: string;
 }
 
@@ -878,8 +879,8 @@ interface CadastroPublico {
   end1_bairro?: string | null;
   end1_cidade?: string | null;
   end1_estado?: string | null;
-  tem_segundo_endereco?: boolean | null;
   end2_tipo?: string | null;
+  tem_segundo_endereco?: boolean | null;
   end2_cep?: string | null;
   end2_logradouro?: string | null;
   end2_numero?: string | null;
@@ -1020,6 +1021,13 @@ const buildClientePayload = (cadastro: CadastroPublico, cur?: Partial<Cliente> |
     cep2: pickNew(normalizeDigits(cadastro.end2_cep) || emptyToNull(cadastro.end2_cep), cur?.cep2),
     cidade2: pickNew(cadastro.end2_cidade, cur?.cidade2),
     estado2: pickNew(estado2, cur?.estado2),
+    // Resposta explícita do 2º endereço. Só chega preenchida quando o serviço
+    // escolhido admite (Concessão de CR / Aquisição para acervo CAC) — para os
+    // demais o formulário público nem mostra a pergunta, e o valor vem nulo.
+    tem_segundo_endereco:
+      typeof cadastro.tem_segundo_endereco === "boolean"
+        ? cadastro.tem_segundo_endereco
+        : cur?.tem_segundo_endereco ?? null,
     observacao,
     status: cur?.status ?? "ATIVO",
   };
@@ -1034,6 +1042,7 @@ const FIELD_LABELS: Record<string, string> = {
   cidade: "Cidade", estado: "Estado",
   endereco2: "Endereço (2º)", numero2: "Número (2º)", complemento2: "Complemento (2º)", bairro2: "Bairro (2º)",
   cep2: "CEP (2º)", cidade2: "Cidade (2º)", estado2: "Estado (2º)", observacao: "Observações",
+  tem_segundo_endereco: "Possui 2º endereço",
 };
 const computeDiff = (
   oldData: Record<string, any>,

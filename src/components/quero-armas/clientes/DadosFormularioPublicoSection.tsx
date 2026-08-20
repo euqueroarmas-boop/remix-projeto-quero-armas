@@ -84,6 +84,7 @@ const MAPA: Array<{ campoForm: string; colunaCli: string; label: string }> = [
   { campoForm: "responsavel_endereco_reside_desde", colunaCli: "responsavel_endereco_reside_desde", label: "Reside desde (responsável)" },
   { campoForm: "responsavel_endereco_residiu_ate", colunaCli: "responsavel_endereco_residiu_ate", label: "Residiu até (responsável)" },
   // Segundo endereço
+  { campoForm: "tem_segundo_endereco", colunaCli: "tem_segundo_endereco", label: "Possui 2º endereço" },
   { campoForm: "end2_cep", colunaCli: "cep2", label: "CEP (2º endereço)" },
   { campoForm: "end2_logradouro", colunaCli: "endereco2", label: "Logradouro (2º)" },
   { campoForm: "end2_numero", colunaCli: "numero2", label: "Número (2º)" },

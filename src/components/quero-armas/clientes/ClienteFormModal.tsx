@@ -32,6 +32,10 @@ interface ClienteFormModalProps {
 }
 
 import { profissaoOptionsCom } from "@/lib/quero-armas/profissoesCatalogo";
+import {
+  clienteAdmiteSegundoEndereco,
+  CAMPOS_SEGUNDO_ENDERECO,
+} from "@/lib/quero-armas/segundoEndereco";
 
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RS","SC","SE","SP","TO"];
@@ -147,7 +151,7 @@ const EMPTY_FORM = {
   email: "", celular: "", titulo_eleitor: "",
   endereco: "", numero: "", complemento: "", bairro: "", cep: "", cidade: "", estado: "", pais: "Brasil",
   endereco2: "", numero2: "", complemento2: "", bairro2: "", cep2: "", cidade2: "", estado2: "", pais2: "",
-  end2_tipo: "", end2_observacao: "",
+  end2_tipo: "", end2_observacao: "", tem_segundo_endereco: "",
   geolocalizacao: "", geolocalizacao2: "",
   observacao: "", status: "ATIVO",
   categoria_titular: "" as CategoriaTitular | "",
@@ -261,6 +265,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
 
   // Senha Gov.br (cifrada via edge function `qa-senha-gov`)
   const [cadastroCrId, setCadastroCrId] = useState<number | null>(null);
+  // Portão do 2º endereço: só Concessão de CR e Autorização de Compra CAC.
+  // `null` enquanto os processos do cliente não chegaram — o bloco fica
+  // escondido até a resposta, para não piscar campo que o cliente não pode ter.
+  const [admiteSegundoEnd, setAdmiteSegundoEnd] = useState<boolean | null>(null);
   // Chave que força a remontagem do bloco "Preencher com IA" sempre que o
   // modal é fechado/reaberto — garante que nenhum arquivo, texto ou
   // resultado de extração anterior fique em memória.
@@ -400,6 +408,32 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
     return () => clearTimeout(t);
   }, [open, f.endereco2, f.numero2, f.bairro2, f.cidade2, f.estado2, f.cep2, f.geolocalizacao2, autoResolveGeoloc]);
 
+  // Portão do 2º endereço — lê os processos do cliente e aplica a MESMA regra
+  // que o servidor aplica em `qa_cliente_admite_segundo_endereco`. Cliente novo
+  // (sem processo) não tem 2º endereço até contratar CR ou Autorização CAC.
+  useEffect(() => {
+    if (!open || !cliente?.id) { setAdmiteSegundoEnd(open ? false : null); return; }
+    let vivo = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("qa_processos")
+          .select("servico_id, modalidade")
+          .eq("cliente_id", cliente.id);
+        if (!vivo) return;
+        setAdmiteSegundoEnd(
+          clienteAdmiteSegundoEndereco(
+            (data || []).map((p) => ({ servicoId: p.servico_id, modalidade: p.modalidade })),
+          ),
+        );
+      } catch {
+        // Na dúvida, portão fechado.
+        if (vivo) setAdmiteSegundoEnd(false);
+      }
+    })();
+    return () => { vivo = false; };
+  }, [open, cliente?.id]);
+
   useEffect(() => {
     if (!open) {
       // Reset COMPLETO ao fechar: nenhum dado temporário pode persistir
@@ -409,6 +443,7 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       setPhotoPreview(null);
       setRequiredErrors({});
       setCadastroCrId(null);
+      setAdmiteSegundoEnd(null);
       setAiSenhaGovFromAI(false);
       setAiSenhaGovNeedsReview(false);
       setAiEmissorRgNeedsReview(false);
@@ -439,6 +474,10 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         pais2: cliente.pais2 || "",
         end2_tipo: cliente.end2_tipo || "",
         end2_observacao: cliente.end2_observacao || "",
+        tem_segundo_endereco:
+          cliente.tem_segundo_endereco === true ? "sim"
+          : cliente.tem_segundo_endereco === false ? "nao"
+          : "",
         geolocalizacao: cliente.geolocalizacao || "",
         geolocalizacao2: cliente.geolocalizacao2 || "",
         observacao: cliente.observacao || "", status: cliente.status || "ATIVO",
@@ -800,6 +839,27 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
         expedicao_rg: formatDateForDatabase(f.expedicao_rg),
         data_nascimento: formatDateForDatabase(f.data_nascimento),
       };
+
+      // ── 2º endereço: a mesma trava do servidor, aplicada aqui ────────────
+      // Cliente que não tem processo de CR nem de Autorização de Compra CAC
+      // não grava NENHUM campo do 2º endereço — nem por engano da equipe, nem
+      // por resquício de um cadastro anterior carregado no formulário.
+      if (admiteSegundoEnd === true) {
+        payload.tem_segundo_endereco =
+          f.tem_segundo_endereco === "sim" ? true
+          : f.tem_segundo_endereco === "nao" ? false
+          : null;
+        // Declarou que não tem: o endereço antigo sai junto, senão o cadastro
+        // contradiz a declaração negativa que vai para o dossiê.
+        if (payload.tem_segundo_endereco === false) {
+          for (const col of CAMPOS_SEGUNDO_ENDERECO) {
+            if (col !== "tem_segundo_endereco") payload[col] = null;
+          }
+        }
+      } else {
+        for (const col of CAMPOS_SEGUNDO_ENDERECO) delete payload[col];
+      }
+
       // Limpa pendências condicionais do responsável terceiro quando o titular
       // declara que o comprovante está em seu próprio nome.
       if (payload.comprovante_endereco_em_nome_proprio === "sim") {
@@ -1433,9 +1493,36 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
               )}
             </section>
 
-            {/* ── Bloco: Endereço Secundário ── */}
+            {/* ── Bloco: 2º Endereço — só CR e Autorização de Compra CAC ──
+                 A IN DG/PF 311 prevê o segundo endereço de guarda do acervo
+                 para o CAC. Defesa pessoal (IN DG/PF 201) não tem essa
+                 previsão, e por isso o bloco inteiro nem aparece: a regra é a
+                 mesma que o servidor aplica ao gravar. */}
+            {admiteSegundoEnd === true && (
             <section className="relative rounded-xl border border-zinc-200 bg-white p-5 space-y-4 shadow-sm">
-              <SectionTitle icon={Home} label="Endereço Secundário (opcional)" />
+              <SectionTitle icon={Home} label="2º Endereço de Guarda do Acervo" />
+                <p className="text-[10px] leading-snug text-zinc-500 uppercase">
+                  Previsto para CR e Autorização de Compra CAC (IN DG/PF 311).
+                  A resposta abaixo define qual declaração entra no dossiê.
+                </p>
+                <FSelect
+                  label="O titular guarda parte do acervo em um 2º endereço?"
+                  value={f.tem_segundo_endereco}
+                  onChange={v => set("tem_segundo_endereco", v)}
+                  options={[
+                    { value: "sim", label: "Sim — declara o 2º endereço" },
+                    { value: "nao", label: "Não — declara não possuir 2º endereço" },
+                  ]}
+                  placeholder="Ainda não respondido"
+                />
+                {f.tem_segundo_endereco === "nao" && (
+                  <p className="text-[11px] leading-snug text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    Ao salvar com <b>Não</b>, o 2º endereço guardado no cadastro é
+                    apagado — o dossiê passa a levar a declaração de NÃO possuir
+                    segundo endereço, e cadastro e declaração não podem divergir.
+                  </p>
+                )}
+                {f.tem_segundo_endereco !== "nao" && (<>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <FInput label={cepLoading ? "CEP ⏳" : "CEP"} value={f.cep2} onChange={v => set("cep2", formatCepMask(v))} onBlur={() => handleCepBlur(f.cep2, "2")} placeholder="00.000-000" maxLength={10} inputMode="numeric" />
                   <div className="col-span-2 sm:col-span-3">
@@ -1496,7 +1583,9 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
                     Reprocessar geolocalização
                   </button>
                 </div>
+                </>)}
             </section>
+            )}
 
             </>)}
 
