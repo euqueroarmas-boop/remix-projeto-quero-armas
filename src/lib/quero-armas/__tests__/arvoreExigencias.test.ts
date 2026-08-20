@@ -101,6 +101,12 @@ describe("Árvore de exigências do Hub", () => {
     expect(no.rotulo).toBe("CIN — Carteira de Identidade Nacional");
   });
 
+  it("o sufixo 'entregue:' é EXCLUSIVO do slot de identidade — foto 3x4 fica intacta", () => {
+    const no = acharNo("foto_3x4")!;
+    expect(no.rotulo).toBe("Foto 3x4");
+    expect(no.rotulo).not.toContain("entregue:");
+  });
+
   it("classifica o laudo de capacidade técnica em Laudos, não em Outros", () => {
     const no = acharNo("laudo_capacidade_tecnica")!;
     expect(no.grupo).toBe(7);
