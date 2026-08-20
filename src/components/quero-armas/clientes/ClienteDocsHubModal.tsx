@@ -4773,7 +4773,7 @@ export function ClienteDocsHubModal({
           tipoDoc.startsWith("antecedentes") ||
           tipoDoc.startsWith("nada_consta");
         const mesAnoNovo = (form.data_emissao || "").slice(0, 7); // YYYY-MM
-        const dup = (existsNum as any[] | null)?.find((d) => {
+        const dupMatches = ((existsNum as any[] | null) ?? []).filter((d) => {
           const mesmoNumero =
             (d.numero_documento || "").replace(/\s+/g, "").toUpperCase() === numeroNorm;
           if (!mesmoNumero) return false;
@@ -4789,20 +4789,28 @@ export function ClienteDocsHubModal({
           if (!mesAnoNovo || !mesAnoExistente) return true;
           return mesAnoNovo === mesAnoExistente;
         });
-        if (dup) {
-          // O documento JÁ está no Hub. Antes isso era erro duro e travava o
-          // cliente: o checklist pedia o documento, a trava impedia o reenvio,
-          // e não havia saída. Agora aproveitamos o que já existe — garantimos
-          // que ele esteja aprovado e mandamos revalidar as exigências, que é
-          // exatamente o que o cliente queria conseguir ao reenviar.
+        // Prioriza a linha APROVADA: com um aprovado e um reprovado de mesmo
+        // número no acervo, quem decide o rumo é o válido.
+        const dup =
+          dupMatches.find((d) =>
+            ["aprovado", "validado"].includes(String(d.status || "").toLowerCase()),
+          ) ??
+          dupMatches.find((d) => String(d.status || "").toLowerCase() !== "substituido") ??
+          null;
+        // Reaproveitamento SÓ para documento APROVADO. O código anterior pegava
+        // qualquer linha com o mesmo número — inclusive REPROVADA — forçava o
+        // status de volta para "aprovado" sem validação nenhuma e descartava o
+        // arquivo novo. Caso real (20/08/2026): cliente enviou a CNH-e legítima
+        // do gov.br; o sistema ressuscitou a CNH digitalizada REPROVADA (mesmo
+        // número), jogou fora a CNH-e e carimbou "exigência atendida" em cima
+        // do documento inválido. Reprovação de equipe nunca pode ser desfeita
+        // por reenvio do cliente.
+        const dupAprovado =
+          dup && ["aprovado", "validado"].includes(String(dup.status || "").toLowerCase());
+        if (dup && dupAprovado) {
+          // O documento válido JÁ está no Hub — aproveitamos e revalidamos as
+          // exigências, que é exatamente o que o cliente queria ao reenviar.
           try {
-            if (dup.status !== "aprovado") {
-              await supabase
-                .from("qa_documentos_cliente" as any)
-                .update({ status: "aprovado", validado_admin: true, aprovado_em: new Date().toISOString() })
-                .eq("id", dup.id);
-              await notificarDocumentoHubAprovado(dup.id);
-            }
             if (qaClienteId) {
               await supabase.rpc("qa_processo_rever_exigencias" as any, { p_cliente_id: qaClienteId });
             }
@@ -4827,6 +4835,20 @@ export function ClienteDocsHubModal({
           }
           setSaving(false);
           return;
+        }
+        if (dup && !dupAprovado) {
+          // Mesmo número, mas o que está no Hub foi REPROVADO (ou nunca
+          // aprovou): o envio novo é a SUBSTITUIÇÃO que o processo precisa.
+          // O antigo sai de cena como "substituido" (preserva a trilha) e o
+          // fluxo SEGUE para salvar o arquivo novo com validação completa.
+          try {
+            await supabase
+              .from("qa_documentos_cliente" as any)
+              .update({ status: "substituido" })
+              .eq("id", dup.id);
+          } catch (e) {
+            console.warn("[hub-dup] não marcou o reprovado como substituído:", e);
+          }
         }
       }
 
