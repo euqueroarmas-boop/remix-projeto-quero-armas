@@ -13,7 +13,8 @@
  */
 import { describe, expect, it } from "vitest";
 import { pareceNomePessoa } from "../leituraCamposPdf";
-import { conferirCertidao } from "../conferenciaCertidao";
+import { conferirCertidao, type CadastroConferencia } from "../conferenciaCertidao";
+import type { CamposCertidao } from "../parsersCertidoes";
 
 const BOILERPLATE_TRF3 = "INDICADO PARA A CONSULTA SERA DE RESPONSABILIDADE DO";
 
@@ -61,8 +62,8 @@ describe("conferirCertidao — leitura errada não é divergência", () => {
         nome_titular: BOILERPLATE_TRF3,
         resultado: "NADA_CONSTA",
         data_emissao: "2026-08-20",
-      } as any,
-      cadastro as any,
+      } as CamposCertidao,
+      cadastro as CadastroConferencia,
       TEXTO_TRF3,
     );
     expect(r.veredicto).not.toBe("rejeitado");
@@ -77,8 +78,8 @@ describe("conferirCertidao — leitura errada não é divergência", () => {
         nome_titular: "JOSE FREIRE DE ALMEIDA NETO",
         resultado: "NADA_CONSTA",
         data_emissao: "2026-08-20",
-      } as any,
-      cadastro as any,
+      } as CamposCertidao,
+      cadastro as CadastroConferencia,
       TEXTO_TRF3.replace(/MARCIO GERALDO FREIRE DE ALMEIDA/g, "JOSE FREIRE DE ALMEIDA NETO"),
     );
     expect(r.veredicto).toBe("rejeitado");
