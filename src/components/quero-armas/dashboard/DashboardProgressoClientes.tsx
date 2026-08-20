@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowDown, ArrowUp, Inbox, Lock, CheckCircle2, Clock3, AlertTriangle, HelpCircle, Settings2, RefreshCw, Moon, Sun, PenTool } from "lucide-react";
 import { useQATema } from "@/components/quero-armas/QATemaContext";
@@ -187,8 +187,8 @@ function Chip({
       <button
         type="button"
         title={titulo ? `${titulo} — clique para ver a lista` : "Clique para ver a lista"}
-        // O card do celular é um <Link>: sem parar o evento, o clique no chip
-        // navegaria para a ficha do cliente em vez de abrir o pop-up.
+        // Trava o evento no chip: nenhum clique escapa para o que estiver em
+        // volta (linha da tabela, cartão, futuros contêineres clicáveis).
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); aoAbrir(); }}
         className={`${classe} cursor-pointer transition-shadow hover:shadow-[0_0_0_2px_var(--qa-linha-2)]`}
         data-quebra={quebra ? "1" : undefined}
@@ -466,7 +466,6 @@ export default function DashboardProgressoClientes() {
   const [emailDetalhe, setEmailDetalhe] = useState<Record<string, any[]>>({});
   const [somenteFalhas, setSomenteFalhas] = useState(false);
   const carregarRef = useRef<() => void>(() => {});
-  const navegar = useNavigate();
   /** Chip clicado na coluna PROGRESSO — abre o pop-up com a lista por trás do número. */
   const [chipAlvo, setChipAlvo] = useState<ChipDetalheAlvo | null>(null);
   const abrirChip = (r: Row, balde: BaldeChip) => setChipAlvo({
@@ -1088,26 +1087,23 @@ export default function DashboardProgressoClientes() {
             const pct = r.total_docs > 0 ? Math.round((r.entregues / r.total_docs) * 100) : 0;
             const pendencias = (r.documentos_pendentes ?? 0) + (r.perguntas_pendentes ?? 0);
             return (
-              // Card navegável SEM <a> em volta: os chips são <button>, e
-              // <button> dentro de <a> é HTML inválido — no iOS o toque não
-              // chegava ao chip. O clique no card continua abrindo a ficha.
+              // O card NÃO é área de clique. Antes o cartão inteiro navegava,
+              // então qualquer toque — inclusive no chip — abria a ficha do
+              // cliente. Quem leva para a ficha é o nome, como já acontece na
+              // tabela do desktop; o resto do cartão é leitura, e os chips
+              // ficam livres para abrir o pop-up.
               <div
                 key={r.processo_id}
-                role="link"
-                tabIndex={0}
-                onClick={() => navegar(rotaCadastroCliente(r.cliente_id))}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    navegar(rotaCadastroCliente(r.cliente_id));
-                  }
-                }}
-                className="block cursor-pointer px-4 py-3 border-b border-[var(--qa-linha-4)] active:bg-[var(--qa-paper-2)]"
+                className="px-4 py-3 border-b border-[var(--qa-linha-4)]"
               >
                 <div className="flex items-start gap-2">
-                  <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: TINTA }}>
+                  <Link
+                    to={rotaCadastroCliente(r.cliente_id)}
+                    className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere] underline-offset-2 active:underline"
+                    style={{ color: TINTA }}
+                  >
                     {r.cliente_nome ?? "—"}
-                  </span>
+                  </Link>
                   <Chip cor={corSensor(r.dias_parado)} fundo={fundoSensor(r.dias_parado)} titulo="Dias sem movimento">
                     {r.dias_parado}d
                   </Chip>
