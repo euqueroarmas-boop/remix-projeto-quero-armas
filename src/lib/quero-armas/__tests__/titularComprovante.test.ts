@@ -105,6 +105,20 @@ describe("avaliarTitularidadeComprovante", () => {
     expect(confrontarCpfParcial(r.cpf, CPF_CLIENTE).ok).toBe(true);
   });
 
+  // CASO REAL (20/08/2026, segunda ocorrência): "Titular da conta: OUTRA
+  // PESSOA" — o nome nem tinha sido lido e o CPF divergente sozinho acusou.
+  it("nome NÃO LIDO + CPF divergente → indeterminada (pergunta), nunca terceiro", () => {
+    const r = avaliarTitularidadeComprovante({
+      nomeDoc: null,
+      cpfDoc: "390.533.447-05",
+      nomeRef: "MARCIO GERALDO FREIRE DE ALMEIDA",
+      cpfRef: CPF_CLIENTE,
+    });
+    expect(r.resultado).toBe("indeterminada");
+    expect(r.pedirConfrontoCpf).toBe(true);
+    expect(confrontarCpfParcial(r.cpf, CPF_CLIENTE).ok).toBe(true);
+  });
+
   it("nome de OUTRA pessoa + CPF divergente → terceiro continua terceiro", () => {
     const r = avaliarTitularidadeComprovante({
       nomeDoc: "JOSE FREIRE DE ALMEIDA NETO",

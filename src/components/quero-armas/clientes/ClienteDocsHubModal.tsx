@@ -4587,6 +4587,55 @@ export function ClienteDocsHubModal({
       return;
     }
 
+    // ── Trava do QR no SALVAR: identidade civil só entra como PDF original ──
+    // A trava do anexo roda apenas quando o TIPO já é identidade na hora de
+    // escolher o arquivo. Quando o cliente anexa num slot genérico e a IA
+    // classifica como CNH/CIN/RG depois, o arquivo entrava sem passar pelo
+    // QR Code — foi assim que uma CNH digitalizada (foto em PDF, sem QR)
+    // acabou aprovada. Aqui a trava roda de novo, sobre o tipo FINAL, para
+    // qualquer caminho: anexo em slot genérico, reclassificação pela IA ou
+    // troca manual do tipo.
+    if (isTipoIdentidadeComQr(form.tipo_documento) && file) {
+      if (file.type !== "application/pdf") {
+        toast.error(MSG_IDENTIDADE_SOMENTE_PDF);
+        return;
+      }
+      const textoIdentidade = String(textoLocalRef.current || "");
+      // pdf.js nem conseguiu rodar (worker/memória): problema técnico, não do
+      // documento — mesma exceção da trava do anexo, segue para análise.
+      const falhaTecnicaLeitura = !extracaoPdfOkRef.current && !textoIdentidade;
+      if (!falhaTecnicaLeitura) {
+        const veredicto = avaliarPdfIdentidade(textoIdentidade);
+        let aprovadoPorQrVisual = false;
+        if (!veredicto.ok) {
+          try {
+            const qr = await lerQrCodeDoPdf(file);
+            aprovadoPorQrVisual = avaliarQrVisualIdentidade(qr, textoIdentidade);
+          } catch {
+            aprovadoPorQrVisual = false;
+          }
+        }
+        if (!veredicto.ok && !aprovadoPorQrVisual) {
+          toast.error(veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF);
+          void registrarTentativaBloqueada({
+            qaClienteId: qaClienteId ?? null,
+            customerId: customerId ?? null,
+            codigo: "formato_recusado",
+            motivo: veredicto.motivo || MSG_IDENTIDADE_SOMENTE_PDF,
+            tipoPretendido: form.tipo_documento || null,
+            tipoLido: classificacao?.tipoDetectado ?? null,
+            exigenciaAlvo: expectedTipoMeta?.value ?? null,
+            arquivoNome: file?.name ?? null,
+            arquivoMime: file?.type ?? null,
+            arquivoTamanho: file?.size ?? null,
+            atorTipo: atorEhStaff ? "admin" : "cliente",
+            arquivoApagado: false,
+          });
+          return;
+        }
+      }
+    }
+
     // Trava dura: documento de outro titular nunca é salvo nem enviado à análise.
     if (titularDivergente && !(casoResidenciaTerceiro && terceiroDados)) {
       if (casoResidenciaTerceiro) {
