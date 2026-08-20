@@ -3,7 +3,14 @@
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 
-## 🟠 PENDENTE — Leva 10 · Concessão de CR (serviço 44)
+## ✅ Leva 10 · Concessão de CR (serviço 44) — FECHADA em 20/08/2026, 12:47 BRT
+
+Todas as migrations aplicadas e conferidas, todos os 8 modelos de declaração no
+Storage (sem cabeçalho), link da filiação LNTD no ar, nenhuma edge function
+pendente. Fluxo canônico: `mem://features/quero-armas/concessao-cr-fluxo`.
+Sobras sem urgência: arquivos de maio no bucket viraram órfãos (podem ser
+apagados); modelos-exemplo da Biblioteca (parser) a subir pela tela quando a
+equipe quiser — material está nos zips dos dossiês.
 
 Aberta em 19/08/2026.
 
@@ -20,7 +27,7 @@ Aberta em 19/08/2026.
 | `20260819090000_biblioteca_decore` | Registra o DECORE na Biblioteca (sem virar exigência); o treino do parser é o upload do PDF pela tela | ✅ aplicada — modelo treinado (det+ia) |
 | `20260819100000_cr_protocolo_pela_equipe` | Senha GOV abre o grupo Requerimento; juntada sai do CR; declarações exigem assinatura gov.br; requerimento e boleto viram marcos da equipe | ✅ aplicada |
 | `20260819110000_cr_filiacao_lntd_e_modelos` | Filiação LNTD em 2 passos (boleto pago pela equipe + declaração do clube assinada), grupo depois dos exames, template_key nas 4 declarações sem botão | ✅ aplicada — sequência 440→502 conferida |
-| `20260820120000_cr_templates_v2_e_link_lntd` | Aponta os 5 modelos que colidiam no Storage para nomes `_v2` (upload sem conflito) + link da filiação LNTD nos 2 passos | ⬜ **a aplicar** — SUBIR os 5 `_v2.docx` ANTES (Storage → qa-templates → declaracoes/) |
+| `20260820120000_cr_templates_v2_e_link_lntd` | Aponta os 5 modelos que colidiam no Storage para nomes `_v2` + link da filiação LNTD nos 2 passos | ✅ aplicada — 5 `_v2` no bucket em 20/08 12:47, todas as 8 chaves com arquivo |
 
 **Edge functions:**
 
