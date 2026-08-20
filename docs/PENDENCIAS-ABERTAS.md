@@ -39,6 +39,18 @@ próprio, versão curta do modelo atual, ou dispensa de aprovação do cliente.
 Enquanto não for decidido, o serviço segue exigindo peça como os outros; nada
 trava por causa disso, só dá mais trabalho à equipe do que precisaria.
 
+### Guia de Trânsito ≠ Guia de Tráfego Especial
+
+Confusão que já custou uma classificação errada no catálogo (corrigida em
+20/08/2026), e que erra de novo em qualquer leitura apressada dos dois nomes:
+
+- **Guia de Tráfego Especial** — é do **CAC**, vive no SIGMA (Exército).
+  Sem defesa.
+- **Guia de Trânsito (GT)** — é do **SINARM / Polícia Federal**. A primeira
+  serve para retirar a arma da loja e levá-la para casa; depois dela ainda há
+  GT no SINARM para situações específicas: levar a arma ao estande num treino
+  agendado, levar ao armeiro, e outras. Tem defesa, como todo serviço SINARM.
+
 ### Registro do que a defesa precisa sustentar (cidadão comum)
 
 Duas portas de entrada, ambas com as provas do padrão atual da casa:
