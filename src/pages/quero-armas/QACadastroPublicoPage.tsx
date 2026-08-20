@@ -10,7 +10,7 @@ import {
   Upload, Camera, CheckCircle2, Loader2, FileText, IdCard, UserCircle2,
   Sparkles, ChevronRight, RotateCcw, AlertCircle, ArrowLeft, Shield, Info, Search,
   Target, Layers, ChevronDown, MapPin, Phone, Briefcase, Building2, AlertTriangle, User, Users, Crosshair, Check,
-  Lock, Eye, EyeOff, Crown, Smartphone, Download,
+  Lock, Eye, EyeOff, Crown, Smartphone, Download, Home,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -30,6 +30,7 @@ import {
   findServico,
   getCategoriasPorObjetivo,
 } from "./qaServiceCatalog";
+import { admiteSegundoEnderecoNaEntradaPublica } from "@/lib/quero-armas/segundoEndereco";
 import {
   type ClienteData,
   emptyClienteData,
@@ -186,6 +187,20 @@ export default function QACadastroPublicoPage() {
     subtipo_servico: "",
     descricao_servico_livre: "",
   });
+
+  // Portão do 2º endereço — a IN DG/PF 311 prevê o segundo endereço de guarda
+  // do acervo para o CAC; defesa pessoal (IN 201) não tem essa previsão. A
+  // regra é a mesma que o servidor aplica; aqui ela decide se o bloco aparece
+  // e se os campos chegam a viajar no envio.
+  const admiteSegundoEndereco = useMemo(
+    () =>
+      admiteSegundoEnderecoNaEntradaPublica({
+        objetivoPrincipal: qualif.objetivo_principal,
+        categoriaServico: qualif.categoria_servico,
+        servicoPrincipal: qualif.servico_principal,
+      }),
+    [qualif.objetivo_principal, qualif.categoria_servico, qualif.servico_principal],
+  );
 
   /* ─── Pré-seleção de serviço via querystring (?servico=slug) ───
    * Permite que cards do portal "/area-do-cliente/contratar" e links
@@ -617,6 +632,24 @@ export default function QACadastroPublicoPage() {
         end1_cidade: extracted.end1_cidade || null,
         end1_estado: (extracted.end1_estado || "").slice(0, 2).toUpperCase() || null,
         end1_pais: extracted.end1_pais || null,
+        // ── 2º endereço ──
+        // Só viaja para o backend quando o serviço escolhido admite (Concessão
+        // de CR / Aquisição para acervo CAC). Para qualquer outro serviço os
+        // campos vão nulos, como iam antes de existir o bloco.
+        ...(admiteSegundoEndereco
+          ? {
+              tem_segundo_endereco: extracted.tem_segundo_endereco ?? undefined,
+              end2_tipo: extracted.end2_tipo || null,
+              end2_cep: extracted.end2_cep.replace(/\D/g, "") || null,
+              end2_logradouro: extracted.end2_logradouro || null,
+              end2_numero: extracted.end2_numero || null,
+              end2_complemento: extracted.end2_complemento || null,
+              end2_bairro: extracted.end2_bairro || null,
+              end2_cidade: extracted.end2_cidade || null,
+              end2_estado: (extracted.end2_estado || "").slice(0, 2).toUpperCase() || null,
+              end2_observacao: extracted.end2_observacao || null,
+            }
+          : {}),
         consentimento_dados_verdadeiros: true as const,
         consentimento_tratamento_dados: true as const,
         comprovante_endereco_em_nome_proprio: ((extracted as any).comprovante_endereco_em_nome_proprio as "sim" | "nao" | undefined) || null,
@@ -961,6 +994,7 @@ export default function QACadastroPublicoPage() {
                 cpfRgConfirmed={cpfRgConfirmed}
                 onConfirmCpfRg={() => setCpfRgConfirmed(true)}
                 tipoDocumentoIdentidade={tipoDocumentoIdentidade}
+                admiteSegundoEndereco={admiteSegundoEndereco}
                 divergenciasConfirmadas={divergenciasConfirmadas}
                 onConfirmDivergencias={() => {
                   setDivergenciasConfirmadas(true);
@@ -1602,6 +1636,7 @@ function Step3Review({
   divergenciasConfirmadas, onConfirmDivergencias,
   unidadePF, unidadeLoading, onResolveUnidade,
   existingCheck,
+  admiteSegundoEndereco,
 }: {
   data: ClienteData;
   onChange: (v: ClienteData) => void;
@@ -1620,6 +1655,8 @@ function Step3Review({
   unidadeLoading: boolean;
   onResolveUnidade: () => void | Promise<void>;
   existingCheck?: { cpf_existe: boolean; email_existe: boolean; loading: boolean };
+  /** Portão do 2º endereço — ver `admiteSegundoEnderecoNaEntradaPublica`. */
+  admiteSegundoEndereco: boolean;
 }) {
   const set = <K extends keyof ClienteData>(k: K, v: ClienteData[K]) => onChange({ ...data, [k]: v });
 
@@ -1815,6 +1852,77 @@ function Step3Review({
           <ReviewField label="País" value={data.end1_pais} onChange={(v) => set("end1_pais", v)} status={statusOf("end1_pais")} />
         </div>
       </ReviewBlock>
+
+      {/* ─── Bloco 5a — 2º endereço de guarda do acervo ───
+           Só aparece para Concessão de CR e Aquisição de arma para acervo CAC
+           (IN DG/PF 311). Defesa pessoal não tem essa previsão e não vê o
+           bloco — a mesma regra que o servidor aplica ao gravar. */}
+      {admiteSegundoEndereco && (
+      <ReviewBlock title="2º endereço de guarda do acervo" icon={Home}>
+        <p className="text-[11px] leading-snug mb-2" style={{ color: "hsl(220 10% 45%)" }}>
+          Você vai guardar parte do acervo em um segundo endereço? A resposta
+          define qual declaração entra no seu dossiê — e as duas são aceitas
+          pela Polícia Federal.
+        </p>
+        <div className="flex gap-2">
+          {([
+            { v: true, label: "Sim, tenho 2º endereço" },
+            { v: false, label: "Não, guardo tudo em um só" },
+          ] as const).map(({ v, label }) => (
+            <button
+              key={String(v)}
+              type="button"
+              onClick={() => set("tem_segundo_endereco", v)}
+              className="flex-1 rounded-xl border-2 px-3 py-2 text-[12px] font-bold uppercase tracking-wide transition"
+              style={
+                data.tem_segundo_endereco === v
+                  ? { borderColor: "hsl(220 20% 22%)", background: "hsl(220 20% 22%)", color: "#fff" }
+                  : { borderColor: "hsl(220 12% 85%)", background: "#fff", color: "hsl(220 20% 30%)" }
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        {data.tem_segundo_endereco === true && (
+          <div className="mt-3 space-y-2">
+            <ReviewField label="CEP" value={data.end2_cep} onChange={(v) => set("end2_cep", maskCep(v))}
+              placeholder="00000-000" status={statusOf("end2_cep")} />
+            <div className="grid grid-cols-[1fr_80px] gap-2">
+              <ReviewField label="Logradouro" value={data.end2_logradouro}
+                onChange={(v) => set("end2_logradouro", v)} status={statusOf("end2_logradouro")} />
+              <ReviewField label="Número" value={data.end2_numero}
+                onChange={(v) => set("end2_numero", v)} status={statusOf("end2_numero")} />
+            </div>
+            <ReviewField label="Complemento" value={data.end2_complemento}
+              onChange={(v) => set("end2_complemento", v)} status={statusOf("end2_complemento")} />
+            <div className="grid grid-cols-2 gap-2">
+              <ReviewField label="Bairro" value={data.end2_bairro}
+                onChange={(v) => set("end2_bairro", v)} status={statusOf("end2_bairro")} />
+              <ReviewField label="Cidade" value={data.end2_cidade}
+                onChange={(v) => set("end2_cidade", v)} status={statusOf("end2_cidade")} />
+            </div>
+            <div className="grid grid-cols-[80px_1fr] gap-2">
+              <ReviewField label="UF" value={data.end2_estado}
+                onChange={(v) => set("end2_estado", v.toUpperCase().slice(0, 2))} placeholder="SP"
+                status={statusOf("end2_estado")} />
+              <ReviewField label="Tipo do imóvel" value={data.end2_tipo}
+                onChange={(v) => set("end2_tipo", v)} placeholder="Rural, comercial, lazer…"
+                status={statusOf("end2_tipo")} />
+            </div>
+            <ReviewField label="Observação (opcional)" value={data.end2_observacao}
+              onChange={(v) => set("end2_observacao", v)} status={statusOf("end2_observacao")} />
+          </div>
+        )}
+        {data.tem_segundo_endereco === false && (
+          <p className="mt-3 text-[11px] leading-snug rounded-lg px-3 py-2"
+             style={{ background: "hsl(45 90% 96%)", border: "1px solid hsl(45 60% 80%)", color: "hsl(30 50% 30%)" }}>
+            Você vai assinar a declaração de não possuir segundo endereço. Ela
+            entra no dossiê no lugar do comprovante do 2º endereço.
+          </p>
+        )}
+      </ReviewBlock>
+      )}
 
       {/* ─── Bloco 5b — Comprovante de endereço (titular ou terceiro) ─── */}
       <ReviewBlock title="Comprovante de endereço" icon={MapPin}>

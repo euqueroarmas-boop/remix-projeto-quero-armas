@@ -21,6 +21,7 @@ import {
   segundoEnderecoPreenchido,
   CAMPOS_SEGUNDO_ENDERECO,
   SERVICOS_COM_SEGUNDO_ENDERECO,
+  admiteSegundoEnderecoNaEntradaPublica,
 } from "../segundoEndereco";
 
 const ler = (p: string) => readFileSync(resolve(process.cwd(), p), "utf-8");
@@ -79,6 +80,43 @@ describe("portão do 2º endereço — quem NÃO passa", () => {
     expect(admiteSegundoEndereco({})).toBe(false);
     expect(clienteAdmiteSegundoEndereco([])).toBe(false);
     expect(clienteAdmiteSegundoEndereco(null)).toBe(false);
+  });
+});
+
+describe("portão na entrada pública (formulário público, por slug)", () => {
+  const cr = { categoriaServico: "sinarm_cac_cr", servicoPrincipal: "concessao_cr" };
+  const compra = { categoriaServico: "sinarm_cac_cr", servicoPrincipal: "aquisicao_acervo" };
+
+  it("Concessão de CR e Aquisição para acervo CAC passam", () => {
+    expect(admiteSegundoEnderecoNaEntradaPublica(cr)).toBe(true);
+    expect(admiteSegundoEnderecoNaEntradaPublica(compra)).toBe(true);
+  });
+
+  it("objetivo defesa pessoal é recusado antes de qualquer outra regra", () => {
+    expect(
+      admiteSegundoEnderecoNaEntradaPublica({ ...cr, objetivoPrincipal: "defesa_pessoal" }),
+    ).toBe(false);
+  });
+
+  it("serviço de defesa pessoal / posse não passa", () => {
+    expect(
+      admiteSegundoEnderecoNaEntradaPublica({
+        categoriaServico: "sinarm_pf",
+        servicoPrincipal: "aquisicao_posse",
+      }),
+    ).toBe(false);
+  });
+
+  it("outros serviços da própria categoria CAC não passam", () => {
+    for (const servicoPrincipal of ["renovacao_cr", "guia_trafego", "emissao_craf"]) {
+      expect(
+        admiteSegundoEnderecoNaEntradaPublica({ categoriaServico: "sinarm_cac_cr", servicoPrincipal }),
+      ).toBe(false);
+    }
+  });
+
+  it("escolha vazia deixa o portão fechado", () => {
+    expect(admiteSegundoEnderecoNaEntradaPublica({})).toBe(false);
   });
 });
 

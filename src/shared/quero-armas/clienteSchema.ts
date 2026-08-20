@@ -130,6 +130,21 @@ export interface ClienteData {
   end1_estado: string;
   end1_pais: string;
 
+  // 2º endereço de guarda do acervo — só coletado em Concessão de CR e
+  // Autorização de Compra CAC (IN DG/PF 311). Opcional em toda validação:
+  // quem não passa no portão nunca preenche, e o cadastro não pode travar
+  // por causa disso. Ver `src/lib/quero-armas/segundoEndereco.ts`.
+  tem_segundo_endereco: boolean | null;
+  end2_tipo: string;
+  end2_cep: string;
+  end2_logradouro: string;
+  end2_numero: string;
+  end2_complemento: string;
+  end2_bairro: string;
+  end2_cidade: string;
+  end2_estado: string;
+  end2_observacao: string;
+
   // Profissional
   profissao: string;
   vinculo_tipo: string;
@@ -151,6 +166,10 @@ export const emptyClienteData: ClienteData = {
   email: "", telefone_principal: "", telefone_secundario: "",
   end1_cep: "", end1_logradouro: "", end1_numero: "", end1_complemento: "",
   end1_bairro: "", end1_cidade: "", end1_estado: "", end1_pais: "Brasil",
+  tem_segundo_endereco: null,
+  end2_tipo: "", end2_cep: "", end2_logradouro: "", end2_numero: "",
+  end2_complemento: "", end2_bairro: "", end2_cidade: "", end2_estado: "",
+  end2_observacao: "",
   profissao: "", vinculo_tipo: "",
   categoria_titular: "",
   consentimento_dados_verdadeiros: false,
@@ -298,6 +317,13 @@ const FIELD_LABELS: Partial<Record<keyof ClienteData, string>> = {
   end1_bairro: "Bairro",
   end1_cidade: "Cidade",
   end1_estado: "UF",
+  end2_cep: "CEP (2º endereço)",
+  end2_logradouro: "Logradouro (2º endereço)",
+  end2_numero: "Número (2º endereço)",
+  end2_bairro: "Bairro (2º endereço)",
+  end2_cidade: "Cidade (2º endereço)",
+  end2_estado: "UF (2º endereço)",
+  end2_tipo: "Tipo do 2º endereço",
 };
 
 export function getBlockingErrors(

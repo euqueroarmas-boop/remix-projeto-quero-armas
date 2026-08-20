@@ -110,3 +110,45 @@ export function segundoEnderecoPreenchido(cliente: Record<string, unknown> | nul
     return typeof v === "string" ? v.trim().length > 0 : v != null;
   });
 }
+
+// ============================================================================
+// FORMULÁRIO PÚBLICO — o mesmo portão, falado em slugs
+// ----------------------------------------------------------------------------
+// Na entrada pública ainda não existe processo nem `servico_id`: o visitante
+// escolhe objetivo → categoria → serviço, tudo por slug (ver
+// `src/pages/quero-armas/qaServiceCatalog.ts`). O portão é o mesmo, só que
+// expresso no vocabulário daquela tela.
+// ============================================================================
+
+/** Categoria do catálogo público onde vivem os serviços CAC/CR. */
+export const CATEGORIA_PUBLICA_CAC = "sinarm_cac_cr";
+
+/**
+ * Serviços do formulário público que admitem 2º endereço.
+ *
+ *   concessao_cr    — Concessão de CR
+ *   aquisicao_acervo — Aquisição de arma para acervo CAC, que é a autorização
+ *                      de compra do CAC
+ */
+export const SERVICOS_PUBLICOS_COM_SEGUNDO_ENDERECO: readonly string[] = [
+  "concessao_cr",
+  "aquisicao_acervo",
+];
+
+export type EscolhaPublica = {
+  objetivoPrincipal?: string | null;
+  categoriaServico?: string | null;
+  servicoPrincipal?: string | null;
+};
+
+/**
+ * O portão na entrada pública. Exige as duas coisas: a categoria CAC/CR E um
+ * dos serviços da lista. Objetivo "defesa pessoal" é recusado antes de tudo,
+ * pela mesma razão de sempre — a IN 201 não prevê segundo endereço.
+ */
+export function admiteSegundoEnderecoNaEntradaPublica(escolha: EscolhaPublica): boolean {
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  if (norm(escolha.objetivoPrincipal) === MODALIDADE_SEM_SEGUNDO_ENDERECO) return false;
+  if (norm(escolha.categoriaServico) !== CATEGORIA_PUBLICA_CAC) return false;
+  return SERVICOS_PUBLICOS_COM_SEGUNDO_ENDERECO.includes(norm(escolha.servicoPrincipal));
+}
