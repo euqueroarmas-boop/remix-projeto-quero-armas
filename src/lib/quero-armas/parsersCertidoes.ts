@@ -283,10 +283,14 @@ export function identificarOrgao(texto: string): OrgaoCertidao | null {
   // Polícia Civil: IIRGD é o instituto de SP. Os demais estados emitem a
   // mesma "certidão de antecedentes criminais" pela SSP / Polícia Civil, com
   // os mesmos rótulos (Nome, Filiação, Data de Nascimento, RG).
+  // O IIRGD é o INSTITUTO DE IDENTIFICAÇÃO: além do atestado de antecedentes,
+  // é ele quem emite o RG e o RG Digital de SP — o timbre sozinho não diz qual
+  // dos dois documentos é. Sem exigir o título de atestado/certidão, o RG
+  // Digital era classificado como "antecedentes criminais" e recusado no slot
+  // de identidade ("não aceita o RG digital", 20/08/2026).
   if (
-    /IIRGD|RICARDO GUMBLETON DAUNT/.test(t) ||
-    ((/POLICIA CIVIL|SECRETARIA (DE ESTADO )?D[AE] SEGURANCA PUBLICA|INSTITUTO DE IDENTIFICACAO/.test(t)) &&
-      /ATESTADO DE ANTECEDENTES|CERTIDAO DE ANTECEDENTES(\s+CRIMINAIS)?/.test(t))
+    (/IIRGD|RICARDO GUMBLETON DAUNT|POLICIA CIVIL|SECRETARIA (DE ESTADO )?D[AE] SEGURANCA PUBLICA|INSTITUTO DE IDENTIFICACAO/.test(t)) &&
+    /ATESTADO DE ANTECEDENTES|CERTIDAO DE ANTECEDENTES(\s+CRIMINAIS)?/.test(t)
   )
     return "iirgd";
   if (/TRIBUNAL REGIONAL FEDERAL/.test(t)) return "trf_regional";
