@@ -91,6 +91,11 @@ Deno.serve(async (req) => {
     const processoId = String((body as any)?.processo_id || "").trim();
     const origem = String((body as any)?.origem || "auto");
     if (!processoId) return json({ error: "processo_id_obrigatorio" }, 400);
+    // O gate da peça monta um filtro `.or(...)` com este id — string livre
+    // dentro de filtro é porta de injeção. UUID ou nada.
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(processoId)) {
+      return json({ error: "processo_id_invalido" }, 400);
+    }
 
     // Autorização leve: internal-token OU staff OU dono.
     const internalToken = req.headers.get("x-internal-token") || "";
@@ -131,7 +136,7 @@ Deno.serve(async (req) => {
 
     const { data: processo } = await admin
       .from("qa_processos")
-      .select("id, cliente_id, servico_nome, status, pagamento_status, respostas_questionario_json")
+      .select("id, cliente_id, servico_id, servico_nome, status, pagamento_status, respostas_questionario_json")
       .eq("id", processoId)
       .maybeSingle();
     if (!processo) return json({ error: "processo_not_found" }, 404);
@@ -248,30 +253,66 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── GATE: A PETIÇÃO PRECISA TER SIDO APROVADA PELO CLIENTE ───────────
+    // ── GATE: A DEFESA PRECISA ESTAR APROVADA PELO CLIENTE ───────────────
     //
     // A peça é o documento que sustenta o pedido — o que a Polícia Federal lê e
     // que decide o processo. Protocolada com fato errado não se conserta: vira
     // parte do processo e a autoridade seguinte lê aquilo.
     //
-    // Só morde depois que a equipe DEVOLVE a peça ao cliente
-    // (`qa-peca-enviar-cliente`). Peça em rascunho na área da equipe
-    // (`nao_enviada`) não trava nada, e serviço sem peça também não.
+    // E promover aqui não é detalhe de status: `pronto_para_protocolar` é
+    // exatamente o que ABRE a etapa final para o cliente — GRU, gov.br,
+    // juntada (ver `_shared/checklistVisibility` e `etapaFinalProtocolo`). Ou
+    // seja, promover sem defesa aprovada é convidar o cliente a pagar a taxa da
+    // PF antes de existir defesa.
+    //
+    // Até 20/08/2026 o freio só mordia a peça JÁ enviada e pendurada
+    // (`aguardando_cliente`/`devolvida`). Processo sem peça nenhuma — o caso
+    // real do Anthony — passava reto. Agora o serviço declara se tem defesa
+    // escrita (`qa_servicos_catalogo.exige_peca_defesa`) e, quando tem, só o
+    // `aprovada` libera.
     {
+      const servicoId = (processo as any).servico_id ?? null;
+      const clienteId = (processo as any).cliente_id ?? null;
+
+      const { data: servicos } = servicoId == null
+        ? { data: null }
+        : await admin
+            .from("qa_servicos_catalogo")
+            .select("exige_peca_defesa")
+            .eq("servico_id", servicoId)
+            .limit(1);
+      const exigePeca = ((servicos ?? [])[0] as { exige_peca_defesa?: boolean } | undefined)?.exige_peca_defesa === true;
+
+      // A minuta nasce SEM `processo_id` — quem grava esse vínculo é
+      // `qa-peca-enviar-cliente`, no envio. Procurar só por processo deixaria
+      // de fora justamente o rascunho que ainda está com a equipe.
+      const filtro = clienteId == null
+        ? `processo_id.eq.${processoId}`
+        : `processo_id.eq.${processoId},and(processo_id.is.null,cliente_id.eq.${clienteId})`;
       const { data: pecas } = await admin
         .from("qa_geracoes_pecas")
-        .select("id, status_cliente")
-        .eq("processo_id", processoId)
-        .in("status_cliente", ["aguardando_cliente", "devolvida"])
-        .limit(1);
-      const pendente = (pecas ?? [])[0] as { status_cliente?: string } | undefined;
+        .select("id, status_cliente, processo_id, cliente_id")
+        .or(filtro);
+
+      const status = (pecas ?? []).map((p: any) => String(p?.status_cliente ?? "").toLowerCase());
+      const pendente = status.find((s) => s === "aguardando_cliente" || s === "devolvida");
       if (pendente) {
         return json({
           pronto: false,
-          motivo: pendente.status_cliente === "devolvida"
+          motivo: pendente === "devolvida"
             ? "peticao_devolvida_pelo_cliente"
             : "peticao_aguardando_aprovacao_do_cliente",
-          status_peca: pendente.status_cliente ?? null,
+          status_peca: pendente,
+        });
+      }
+
+      if (exigePeca && !status.includes("aprovada")) {
+        return json({
+          pronto: false,
+          motivo: status.includes("nao_enviada")
+            ? "peticao_em_rascunho_nao_enviada"
+            : "peticao_nao_escrita",
+          pecas_encontradas: status.length,
         });
       }
     }

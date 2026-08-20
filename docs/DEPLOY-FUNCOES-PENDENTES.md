@@ -1,5 +1,29 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
+## 🔴 PENDENTE — Leva 11 · A GRU só abre depois da defesa aprovada
+
+Aberta em 20/08/2026, a partir do processo real do Anthony: documentação
+inteira entregue, boleto da GRU aberto no checklist do cliente, e nenhuma peça
+gerada na base. A promoção automática a `pronto_para_protocolar` é o que abre a
+etapa final (GRU, gov.br, juntada) — e ela não checava se a defesa existia.
+
+**Migration — aplicar antes do deploy da função:**
+
+| Arquivo | O que faz | Estado |
+|---|---|---|
+| `20260820120000_gru_espera_peca_aprovada` | `qa_servicos_catalogo.exige_peca_defesa` + marcação fail-safe de todo serviço que gera processo | ⬜ **a aplicar** |
+
+**Edge function:**
+
+| Arquivo | O que muda | Estado |
+|---|---|---|
+| `qa-processo-checar-conclusao-checklist` | Gate da defesa: recusa promover enquanto não houver peça `aprovada` nos serviços marcados; procura a peça também pelo cliente (a minuta nasce sem `processo_id`) | ⬜ **redeploy obrigatório** |
+
+Se a função subir sem a migration, `exige_peca_defesa` não existe e a leitura do
+catálogo volta vazia — o gate não morde e o furo continua aberto. Se a migration
+subir sem a função, nada muda: a coluna fica lá, sem leitor.
+
+
 **Fechado em 18/08/2026, 11:22 BRT.** Cobre os commits `d55dd5d` → `61b6f4f` na
 `main` (escopo de ataque F1–F11 + reauditoria).
 

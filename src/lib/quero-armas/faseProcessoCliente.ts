@@ -125,21 +125,21 @@ export function faseDoProcesso(
     );
   }
 
+  // Compromisso público da casa (20/08/2026): fechada a sua parte, a defesa
+  // fica pronta em até 7 dias úteis e vem para a sua aprovação. O cliente
+  // precisa LER esse prazo — é o que evita o "e agora?" no WhatsApp.
+  const DESCRICAO_DEFESA =
+    "Você entregou tudo. A nossa equipe está escrevendo a sua defesa — em até 7 dias úteis ela fica pronta e vem para você aprovar.";
+
   const comAEquipe = abertos.filter((d) => ehExigenciaEtapaFinal(d));
   if (comAEquipe.length > 0) {
-    return montar(
-      "defesa",
-      "Você entregou tudo. A nossa equipe está conferindo as peças e escrevendo a sua defesa — depois ela vem para você aprovar.",
-    );
+    return montar("defesa", DESCRICAO_DEFESA);
   }
 
   // Sem exigência aberta e sem protocolo: a documentação fechou e o processo
   // está na mesa da equipe. Dizer "documentos" aqui seria cobrar o cliente por
   // algo que não existe.
-  return montar(
-    "defesa",
-    "Você entregou tudo. A nossa equipe está conferindo as peças e escrevendo a sua defesa — depois ela vem para você aprovar.",
-  );
+  return montar("defesa", DESCRICAO_DEFESA);
 }
 
 /** Agrupa os documentos por processo, para alimentar `faseDoProcesso`. */

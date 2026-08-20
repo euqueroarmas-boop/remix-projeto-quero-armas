@@ -13,6 +13,68 @@ conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
 
 ---
 
+## 🟠 Defesa por tipo de serviço — regra do titular (20/08/2026)
+
+Definição dada pelo titular ao fechar o furo da GRU (ver
+`docs/DEPLOY-FUNCOES-PENDENTES.md`, leva 11):
+
+- **CAC / SIGMA (Exército): NÃO tem defesa.** Concessão e renovação de CR,
+  apostilamento, acervo, guia de tráfego especial, autorização de compra de
+  atirador e de caçador. Ficam com `exige_peca_defesa = false`.
+- **SINARM (Polícia Federal): TEM defesa, sempre.** Algumas são simples, mas
+  existem. Ficam com `exige_peca_defesa = true`.
+
+Os dois serviços que puxam o volume de defesa: **autorização de compra / posse**
+e **porte de arma de fogo para cidadão comum**.
+
+### PENDENTE — defesa simplificada para cargos com prerrogativa
+
+O porte funcional (magistrado, Ministério Público e demais cargos com
+prerrogativa legal) tem defesa **bem mais simples** que a do cidadão comum: a
+prerrogativa já está na lei, não há o que provar sobre necessidade. Hoje esses
+processos passam pelo mesmo caminho de peça dos demais.
+
+**A decidir com o titular:** que forma essa peça simplificada toma — modelo
+próprio, versão curta do modelo atual, ou dispensa de aprovação do cliente.
+Enquanto não for decidido, o serviço segue exigindo peça como os outros; nada
+trava por causa disso, só dá mais trabalho à equipe do que precisaria.
+
+### Dois serviços SINARM que NÃO têm defesa
+
+A regra "SINARM tem defesa" tem duas exceções, decididas pelo titular em
+20/08/2026:
+
+- **Segunda via de CRAF digital** — é download ou requerimento pedindo cópia.
+  Não há mérito a sustentar.
+- **Transferência de propriedade** — a defesa é de quem **recebe** a arma, e
+  ela entra pelo serviço de autorização de compra/posse do recebedor. Quem
+  transfere não defende nada.
+
+Ambas isentas por slug, não por categoria. **TRAVADO no banco em 20/08/2026**:
+a migration `20260820160000_trava_isencao_defesa.sql` criou a coluna
+`defesa_isencao_travada` + gatilho que mantém `exige_peca_defesa = false`
+nessas linhas (e nos dois cursos de pistola) mesmo se um UPDATE em massa
+tentar religar. Para ligar de propósito: destravar primeiro, ligar depois.
+
+### Guia de Trânsito ≠ Guia de Tráfego Especial
+
+Confusão que já custou uma classificação errada no catálogo (corrigida em
+20/08/2026), e que erra de novo em qualquer leitura apressada dos dois nomes:
+
+- **Guia de Tráfego Especial** — é do **CAC**, vive no SIGMA (Exército).
+  Sem defesa.
+- **Guia de Trânsito (GT)** — é do **SINARM / Polícia Federal**. A primeira
+  serve para retirar a arma da loja e levá-la para casa; depois dela ainda há
+  GT no SINARM para situações específicas: levar a arma ao estande num treino
+  agendado, levar ao armeiro, e outras. Tem defesa, como todo serviço SINARM.
+
+### Registro do que a defesa precisa sustentar (cidadão comum)
+
+Duas portas de entrada, ambas com as provas do padrão atual da casa:
+
+1. **Ameaça ou grave ameaça** — o fato concreto e a prova dele.
+2. **Exercício profissional de risco** — o enquadramento da atividade.
+
 ## 🟠 CAC — o que ficou fora do fechamento do CR
 
 Aberto em 19/08/2026. Decisão do titular: **fecha o CR primeiro; nada disso
