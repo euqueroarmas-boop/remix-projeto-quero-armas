@@ -178,19 +178,28 @@ function Chip({
   /** Presente = chip vira botão e abre o pop-up com a lista por trás do número. */
   aoAbrir?: () => void;
 }) {
-  const classe = `qa-chip-fit inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-[2px] align-top text-left uppercase leading-snug tracking-[0.06em] ${
+  const classe = `qa-chip-fit inline-flex max-w-full items-center gap-1 rounded-full border align-top text-left uppercase leading-snug tracking-[0.06em] ${
     miudo ? "font-medium" : "font-bold"
   }`;
+  /* Régua original do painel: `px-2 py-[2px]`. Fica FORA da classe base porque
+     o chip clicável a substitui no celular — e sobrepor `px-2` com `px-3` na
+     mesma string não define quem vence (quem decide é a ordem do CSS gerado).
+     Os nomes abaixo são literais de propósito: o Tailwind só gera a classe que
+     encontra escrita por extenso no código, nunca uma montada em execução. */
   const estilo = { background: fundo, color: cor, borderColor: bordaDe(fundo, cor) };
   if (aoAbrir) {
     return (
       <button
         type="button"
         title={titulo ? `${titulo} — clique para ver a lista` : "Clique para ver a lista"}
-        // O card do celular é um <Link>: sem parar o evento, o clique no chip
-        // navegaria para a ficha do cliente em vez de abrir o pop-up.
+        // O card do celular navega ao ser tocado. Sem parar o evento aqui, o
+        // toque no chip abriria a ficha do cliente em vez do pop-up.
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); aoAbrir(); }}
-        className={`${classe} cursor-pointer transition-shadow hover:shadow-[0_0_0_2px_var(--qa-linha-2)]`}
+        // Alvo de toque: no celular o chip tem ~18px de altura, bem abaixo dos
+        // 44px recomendados — errar por poucos pixels acertava o card e abria o
+        // cliente. Abaixo de `md` o botão ganha altura mínima e mais respiro;
+        // no desktop (`md:`) a régua original do painel é preservada.
+        className={`${classe} min-h-[36px] px-3 py-1.5 md:min-h-0 md:px-2 md:py-[2px] cursor-pointer touch-manipulation transition-shadow hover:shadow-[0_0_0_2px_var(--qa-linha-2)]`}
         data-quebra={quebra ? "1" : undefined}
         style={estilo}
       >
@@ -201,7 +210,7 @@ function Chip({
   return (
     <span
       title={titulo}
-      className={classe}
+      className={`${classe} px-2 py-[2px]`}
       data-quebra={quebra ? "1" : undefined}
       style={estilo}
     >
