@@ -39,6 +39,20 @@ próprio, versão curta do modelo atual, ou dispensa de aprovação do cliente.
 Enquanto não for decidido, o serviço segue exigindo peça como os outros; nada
 trava por causa disso, só dá mais trabalho à equipe do que precisaria.
 
+### Dois serviços SINARM que NÃO têm defesa
+
+A regra "SINARM tem defesa" tem duas exceções, decididas pelo titular em
+20/08/2026:
+
+- **Segunda via de CRAF digital** — é download ou requerimento pedindo cópia.
+  Não há mérito a sustentar.
+- **Transferência de propriedade** — a defesa é de quem **recebe** a arma, e
+  ela entra pelo serviço de autorização de compra/posse do recebedor. Quem
+  transfere não defende nada.
+
+Ambas isentas por slug, não por categoria: um re-run do UPDATE que liga tudo
+que não é CAC religa as duas sem querer.
+
 ### Guia de Trânsito ≠ Guia de Tráfego Especial
 
 Confusão que já custou uma classificação errada no catálogo (corrigida em
