@@ -525,11 +525,24 @@ export default function DashboardProgressoClientes() {
         }
 
         if (ids.length > 0) {
-          const [{ data: docs }, { data: procs }, { data: pecasDoc }] = await Promise.all([
-            supabase
+          // O Supabase corta a resposta em 1.000 linhas. Com ~30 documentos por
+          // processo, 28+ processos estouram o corte e os últimos ficam SEM
+          // documentos em silêncio — a fase da PET e a trilha somem deles.
+          // Paginar é obrigatório aqui.
+          type DocRowPainel = { processo_id: string; tipo_documento: string; status: string; data_envio: string | null; updated_at: string | null };
+          const docs: DocRowPainel[] = [];
+          for (let de = 0; ; de += 1000) {
+            const { data: pagina } = await supabase
               .from("qa_processo_documentos")
               .select("processo_id, tipo_documento, status, data_envio, updated_at")
-              .in("processo_id", ids),
+              .in("processo_id", ids)
+              .order("id")
+              .range(de, de + 999);
+            const lote = (pagina ?? []) as DocRowPainel[];
+            docs.push(...lote);
+            if (lote.length < 1000) break;
+          }
+          const [{ data: procs }, { data: pecasDoc }] = await Promise.all([
             supabase
               .from("qa_processos")
               .select("id, condicao_profissional")
@@ -547,7 +560,7 @@ export default function DashboardProgressoClientes() {
           for (const p of ((procs as any[]) ?? [])) condicaoPorProcesso[p.id] = p.condicao_profissional ?? null;
 
           const porProcesso: Record<string, DocTrilha[]> = {};
-          for (const d of ((docs as any[]) ?? [])) {
+          for (const d of docs) {
             (porProcesso[d.processo_id] ||= []).push({
               tipo: d.tipo_documento, status: d.status,
               data_envio: d.data_envio, updated_at: d.updated_at,
