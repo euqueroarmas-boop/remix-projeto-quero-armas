@@ -223,10 +223,16 @@ export function DashboardChipDetalhe({ alvo, onClose }: { alvo: ChipDetalheAlvo;
       aria-label={`${defAtual.titulo} — ${alvo.clienteNome ?? "cliente"}`}
       data-qa-overlay
     >
-      {/* Fundo ofuscado. Fica FORA do `.qa-scope` de propósito: no modo noturno
-          o `.qa-scope` é invertido, e um preto invertido viraria mancha branca.
-          É o mesmo arranjo do DialogOverlay do projeto. */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={fechar} />
+      {/* Fundo. Fica FORA do `.qa-scope` de propósito: no modo noturno o
+          `.qa-scope` é invertido, e um preto invertido viraria mancha branca.
+          É o mesmo arranjo do DialogOverlay do projeto.
+
+          SEM DESFOQUE (decisão do titular, 20/08/2026): o `backdrop-blur` que
+          havia aqui deixava o painel atrás com aspecto fosco e sujo. Fica só o
+          escurecimento, que é o que separa o pop-up do fundo e o que recebe o
+          clique para fechar. Mudança restrita a ESTE pop-up — o overlay padrão
+          de diálogo do projeto não foi tocado. */}
+      <div className="absolute inset-0 bg-black/60" onClick={fechar} />
 
       {/* `qa-scope` é obrigatório: o pop-up é portado para o <body>, fora da
           árvore do painel, e é essa classe que carrega os tokens --qa-* (e a
