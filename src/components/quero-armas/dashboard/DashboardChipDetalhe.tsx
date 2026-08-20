@@ -221,12 +221,18 @@ export function DashboardChipDetalhe({ alvo, onClose }: { alvo: ChipDetalheAlvo;
       role="dialog"
       aria-modal="true"
       aria-label={`${defAtual.titulo} — ${alvo.clienteNome ?? "cliente"}`}
+      data-qa-overlay
     >
-      {/* Fundo ofuscado: a tela atrás continua visível, mas sai de foco. */}
+      {/* Fundo ofuscado. Fica FORA do `.qa-scope` de propósito: no modo noturno
+          o `.qa-scope` é invertido, e um preto invertido viraria mancha branca.
+          É o mesmo arranjo do DialogOverlay do projeto. */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" onClick={fechar} />
 
+      {/* `qa-scope` é obrigatório: o pop-up é portado para o <body>, fora da
+          árvore do painel, e é essa classe que carrega os tokens --qa-* (e a
+          inversão do modo noturno). Sem ela o painel sai transparente. */}
       <div
-        className="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border shadow-2xl sm:rounded-2xl"
+        className="qa-scope relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border sm:rounded-2xl"
         style={{ background: "var(--qa-paper)", borderColor: "var(--qa-linha-2)" }}
         onClick={(e) => e.stopPropagation()}
       >
