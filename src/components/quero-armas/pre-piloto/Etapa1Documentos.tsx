@@ -9,6 +9,7 @@ import { getTipoDocumentoMeta } from "@/lib/quero-armas/documentosHubCatalogo";
 import type { ArquivoUpload } from "./PrePilotoWizard";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import { sanearEmissaoConsultaReceita } from "@/lib/quero-armas/emissaoConsultaReceita";
 
 const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/heic", "application/pdf", "application/zip"];
 
@@ -331,14 +332,24 @@ export default function Etapa1Documentos({ arquivos, setArquivos, textoPastaCola
         // A data de emissão vem junto da classificação. Guardamos aqui para a
         // Etapa 4 gravar e calcular a validade — sem isso o documento chega ao
         // Hub "SEM DATA" e nenhum alerta de vencimento funciona.
-        const emissao = normalizarDataIso(r.campos_extraidos?.data_emissao);
+        // Consulta da Receita (cartão CNPJ/QSA): a IA às vezes devolve a DATA
+        // DE ABERTURA da empresa como emissão; com "+30 dias" o documento
+        // nascia vencido há anos e era gravado assim, envenenando o QSA por
+        // herança. Emissão implausível é descartada — a Etapa 4 presume o dia
+        // do envio e registra a presunção para a equipe conferir.
+        const emissaoBruta = normalizarDataIso(r.campos_extraidos?.data_emissao);
+        const emissao = sanearEmissaoConsultaReceita(r.tipo_detectado, emissaoBruta, r.campos_extraidos);
+        const camposExtraidos =
+          r.campos_extraidos && emissaoBruta && !emissao
+            ? { ...r.campos_extraidos, data_emissao: undefined }
+            : r.campos_extraidos;
         return {
           ...a,
           tipo: r.tipo_detectado,
           tipo_ia_confianca: r.confianca,
           tipo_ia_motivo: r.motivo,
           ...(emissao ? { data_emissao: emissao } : {}),
-          ...(r.campos_extraidos ? { campos_extraidos: r.campos_extraidos } : {}),
+          ...(camposExtraidos ? { campos_extraidos: camposExtraidos } : {}),
         };
       }));
 

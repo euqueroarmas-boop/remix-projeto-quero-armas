@@ -286,3 +286,20 @@ ALTERADAS (redeploy obrigatório):
 - supabase/functions/qa-checkout-criar-venda/index.ts — sem ela, o clique
   repetido de quem não viu a confirmação do pagamento continua virando uma
   segunda venda com processos duplicados.
+
+## Leva 14 — cartão CNPJ/QSA reprovado como "vencido em 2008" (20/08/2026)
+
+Motivo: a IA de leitura devolvia a DATA DE ABERTURA da empresa como data de
+emissão do cartão CNPJ (ex.: 07/02/2008). Com "validade = emissão + 30 dias",
+o cartão nascia vencido em 08/03/2008, era gravado assim no Hub e o QSA — que
+herda a emissão do cartão aprovado — passava a ser recusado no envio
+("DOCUMENTO VENCIDO — SERÁ REJEITADO"). Foi o que travou o QSA do Marcio e o
+de todo cliente novo com empresa antiga. O schema da função agora diz à IA que
+a emissão é a do rodapé "Emitido no dia" e ganhou o campo próprio
+`data_abertura`; o front (guarda determinística) e a migration de backfill
+saem no push normal.
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/qa-extract-documents/index.ts — sem ela, todo cartão
+  CNPJ/QSA lido pela IA (sem parser local) continua nascendo vencido no ano
+  de abertura da empresa e travando o envio do QSA.

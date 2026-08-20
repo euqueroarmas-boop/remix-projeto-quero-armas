@@ -78,6 +78,10 @@ import {
   textoIndicaValidadeIndeterminada,
 } from "@/lib/quero-armas/validadeDocumento";
 import {
+  isConsultaReceita,
+  sanearEmissaoConsultaReceita,
+} from "@/lib/quero-armas/emissaoConsultaReceita";
+import {
   anoDoSlotEndereco,
   avaliarDuplicidadeHub,
   mensagemRenovacao,
@@ -2442,12 +2446,19 @@ export function ClienteDocsHubModal({
         emissao = row?.data_emissao ? String(row.data_emissao).slice(0, 10) : null;
       }
       if (cancelled || !emissao) return;
+      // Herança envenenada NÃO entra: se a validade herdada (emissão + 30) já
+      // nasce vencida, o cartão aprovado está com a emissão errada no banco
+      // (caso clássico: IA gravou a DATA DE ABERTURA da empresa, ex.: 2008)
+      // ou está simplesmente velho. Autopreencher aqui só fabricaria um QSA
+      // reprovado na hora — melhor deixar o campo para o parser/humano.
+      const validadeHerdada = addDaysIso(emissao, 30);
+      if (!validadeHerdada || validadeHerdada < hojeISOBRT()) return;
       setForm((prev) => {
         if (prev.data_emissao) return prev;
         return {
           ...prev,
           data_emissao: emissao as string,
-          data_validade: prev.data_validade || addDaysIso(emissao as string, 30) || prev.data_validade,
+          data_validade: prev.data_validade || validadeHerdada || prev.data_validade,
           orgao_emissor: prev.orgao_emissor || "Receita Federal do Brasil",
         };
       });
@@ -3195,6 +3206,18 @@ export function ClienteDocsHubModal({
         }
       } catch (e) {
         console.warn("[parse-first] override determinístico falhou:", e);
+      }
+
+      // Consulta da Receita (cartão CNPJ/QSA): quando o parser local não rodou,
+      // a IA já devolveu a DATA DE ABERTURA da empresa como emissão — e com
+      // "+30 dias" o documento nascia vencido há anos ("SERÁ REJEITADO" com
+      // validade de 2008). Emissão implausível é descartada AQUI, antes de
+      // contaminar formulário, validade calculada e snapshot de auditoria.
+      if (
+        isConsultaReceita(tipoIA) &&
+        !sanearEmissaoConsultaReceita(tipoIA, campos.data_emissao, campos as Record<string, unknown>)
+      ) {
+        delete (campos as Record<string, unknown>).data_emissao;
       }
 
       setForm((prev) => ({

@@ -212,9 +212,10 @@ const CLASSIFY_TOOL = {
             nome_titular: { type: "string" },
             cpf: { type: "string" },
             numero_documento: { type: "string" },
-            data_emissao: { type: "string" },
+            data_emissao: { type: "string", description: "Data em que o DOCUMENTO foi emitido/gerado. Documentos da Receita Federal (cartão CNPJ, QSA, CCMEI) trazem essa data no RODAPÉ: 'Emitido no dia DD/MM/AAAA às HH:MM' — use ELA. NUNCA use DATA DE ABERTURA, DATA DA SITUAÇÃO CADASTRAL nem Data de Início de Atividades como emissão: são datas da EMPRESA (podem ser de décadas atrás), não do documento. Se o rodapé não estiver legível, deixe VAZIO." },
+            data_abertura: { type: "string", description: "Só para cartão CNPJ/CCMEI/QSA: DATA DE ABERTURA da empresa, impressa no topo do cartão. NÃO é emissão nem validade do documento." },
             data_proxima_leitura: { type: "string", description: "Só para conta de consumo: data da PRÓXIMA LEITURA impressa na fatura. É ela que define a validade do comprovante de residência." },
-            data_validade: { type: "string" },
+            data_validade: { type: "string", description: "Só quando o documento IMPRIME uma data de validade/vencimento própria. Nunca calcule nem deduza a validade a partir de outras datas." },
             orgao_emissor: { type: "string" },
             resultado: { type: "string" },
             endereco: { type: "string" },
@@ -294,6 +295,7 @@ OCUPAÇÃO LÍCITA E RENDA (escolha SEMPRE o tipo específico, nunca um genéric
 - renda_cnpj_autonomo: (legado) cartão CNPJ de MEI/autônomo que NÃO seja o CCMEI
 - renda_contrato_social: contrato social, requerimento de empresário ou alteração contratual (NÃO é o QSA)
 - renda_qsa: QSA — Quadro de Sócios e Administradores, emitido pela Receita Federal. Lista os sócios e sua participação. É documento PRÓPRIO, distinto do contrato social e do cartão CNPJ: no grupo "empresário" os quatro (contrato social, cartão CNPJ, QSA e nota fiscal) são exigidos separadamente
+  ATENÇÃO — data_emissao do cartão CNPJ e do QSA é SEMPRE a do rodapé "Emitido no dia DD/MM/AAAA". A DATA DE ABERTURA e a DATA DA SITUAÇÃO CADASTRAL são da empresa (ex.: 2008) e vão em data_abertura, NUNCA em data_emissao — esse erro faz o sistema reprovar o documento como vencido há anos
 - renda_nf_empresa: nota fiscal de serviço ou produto emitida pelo cliente (NÃO é nota fiscal de arma nem conta de consumo do imóvel). Exige evidência de que o cliente é o EMITENTE/PRESTADOR; DANF3E/NF3e e contas de concessionárias são comprovante_residencia
 - renda_comprovante_beneficio: comprovante de benefício (INSS, BPC, aposentadoria, pensão)
 - renda_extrato_inss: extrato CNIS ou extrato de contribuições do INSS
