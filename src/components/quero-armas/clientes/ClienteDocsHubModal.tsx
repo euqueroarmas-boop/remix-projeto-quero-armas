@@ -5662,8 +5662,15 @@ export function ClienteDocsHubModal({
               ) : null}
             </div>
             <div className="font-heading text-[13px] font-bold uppercase leading-tight tracking-[0.06em] text-[#0A0A0A]">
+              {/* Slot de identidade: as TRÊS vias são equivalentes (CIN, CNH e
+                  RG com CPF — uma cumpre pelas outras). Mostrar só o nome de
+                  um slot ("RG COM CPF") fazia o cliente achar que precisava
+                  daquele documento específico. O título apresenta as opções;
+                  depois da classificação, mostra o que de fato foi anexado. */}
               {(classificacao ? tipoAtual?.label : null) ||
-                expectedTipoMeta?.label ||
+                (expectedTipoMeta && ehDocumentoIdentidade(expectedTipoMeta.value, expectedTipoMeta.label)
+                  ? "Documento de identidade — CIN, CNH ou RG com CPF"
+                  : expectedTipoMeta?.label) ||
                 tipoAtual?.label ||
                 "Aguardando classificação"}
             </div>
@@ -5671,7 +5678,7 @@ export function ClienteDocsHubModal({
               <div className="font-heading text-[10px] font-bold uppercase tracking-[0.22em] text-[#2F3337]">
                 Exigência:{" "}
                 {ehDocumentoIdentidade(expectedTipoMeta.value, expectedTipoMeta.label)
-                  ? "Documento oficial de identidade (CIN, CNH ou RG com CPF)"
+                  ? "Qualquer UM dos três: CIN, CNH digital ou RG com CPF — em PDF do gov.br, com QR Code"
                   : expectedTipoMeta.label}
               </div>
             ) : null}
