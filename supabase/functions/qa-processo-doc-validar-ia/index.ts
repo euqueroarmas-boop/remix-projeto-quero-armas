@@ -154,7 +154,7 @@ const TIPO_DOC_PROMPTS: Record<string, string> = {
   certidao_criminal_federal: "Criminal Federal. Extraia: nome_titular, cpf, resultado, data_emissao.",
   certidao_criminal_estadual: "Criminal Estadual. Extraia: nome_titular, cpf, uf, resultado, data_emissao.",
   certidao_militar: "Justiça Militar. Extraia: nome_titular, cpf, resultado, data_emissao.",
-  certidao_eleitoral: "Certidão de Crimes Eleitorais. Extraia: nome_titular, titulo_eleitor, resultado, data_emissao.",
+  certidao_eleitoral: "Certidão de Crimes Eleitorais. Extraia: nome_titular, titulo_eleitor, resultado, data_emissao. ATENÇÃO: o município/UF e a zona/seção impressos são o DOMICÍLIO ELEITORAL (onde a pessoa VOTA) — NÃO são endereço residencial nem naturalidade do cliente. NUNCA gere divergência de endereço, cidade, UF ou naturalidade para esta certidão.",
   laudo_psicologico: "Laudo Psicológico. Extraia: nome_titular, cpf, psicologo_nome, psicologo_crp, resultado (APTO/INAPTO), data_emissao.",
   laudo_capacidade_tecnica: "Capacidade Técnica de tiro. Extraia: nome_titular, cpf, instrutor_nome, instrutor_credencial, resultado (APTO/INAPTO), data_emissao.",
   cr_cac: "Certificado de Registro CAC. Extraia: nome_titular, cpf, numero_cr, categoria, validade (YYYY-MM-DD).",
@@ -207,6 +207,7 @@ REGRAS CRÍTICAS:
 2. Se ilegível, marque legivel=false.
 3. Se faltar QUALQUER campo crítico, deixe em branco no campos_extraidos e cite em motivo_rejeicao.
 4. Compare CADA campo com o cadastro abaixo. QUALQUER diferença textual relevante (nome, CPF, RG, data nascimento, endereço, CEP) é divergência.
+REGRA CERTIDÕES DE ANTECEDENTES (eleitoral, criminal estadual/federal, cível federal, militar): a geografia impressa na certidão NÃO é dado do cliente. Domicílio eleitoral, zona/seção de votação, comarca, foro, seção judiciária e município de emissão são do ÓRGÃO ou do local de votação — NUNCA gere divergência de endereço, CEP, cidade, UF, município ou naturalidade para certidões. A conferência de certidão é: nome do titular, CPF/RG (quando impressos), data de nascimento e resultado (nada consta / consta).
 REGRA PJ (cartão CNPJ, contrato social, QSA, NF de empresa, CNPJ de autônomo): NUNCA gere divergência de endereço, CEP, cidade, UF, bairro, logradouro ou nome entre a EMPRESA e o cliente. O endereço da SEDE da empresa é INDEPENDENTE do endereço residencial do cliente — o governo (PF/Exército) NÃO exige que coincidam; o que se prova com o documento PJ é a ORIGEM DA RENDA do cliente, não onde ele mora. NÃO gere "orientacoes_cliente" pedindo para "atualizar cadastro" ou "enviar comprovante de residência" por causa de diferença entre endereço da empresa e endereço residencial — isso está EXPRESSAMENTE PROIBIDO. O vínculo do cliente com a empresa se prova pela presença do CPF/nome dele no QSA / lista de sócios / administradores. O que importa para PJ é: situação_cadastral=ATIVA e cliente_e_socio=true. Endereço da empresa deve ser extraído nos campos endereco_sede / cidade_sede / uf_sede / cep_sede, nunca nos campos de endereço do cliente.
 5. NUNCA assuma campos não vistos. Se incerto, baixe a confiança.
 6. Datas YYYY-MM-DD.
@@ -1204,6 +1205,22 @@ Deno.serve(async (req) => {
           ? `${parsed.observacoes} | ${aviso}`
           : aviso;
       }
+    }
+
+    // ===== CERTIDÕES DE ANTECEDENTES: geografia não é dado do cliente =====
+    // A certidão eleitoral imprime o DOMICÍLIO ELEITORAL (município/zona/seção
+    // onde a pessoa VOTA); as judiciais imprimem comarca, foro ou seção
+    // judiciária. Nada disso é endereço residencial nem naturalidade do
+    // cliente — comparar reprovava certidão correta (ex.: cliente que vota em
+    // município diferente do que mora). O prompt já proíbe; este filtro é a
+    // garantia determinística caso a IA gere a divergência mesmo assim.
+    // A conferência de certidão é: nome + CPF/RG + nascimento + resultado.
+    if (/^(antecedentes_|certidao_(eleitoral|civel|criminal|militar))/.test(String(doc.tipo_documento || ""))) {
+      parsed.divergencias = (parsed.divergencias || []).filter((d: any) => {
+        const c = String(d?.campo || "").toLowerCase();
+        if (c === "uf" || c === "estado") return false;
+        return !/(endereco|endereço|cep|cidade|municipio|município|bairro|logradouro|naturalidade|domicilio|domicílio|zona|secao|seção|comarca|foro)/.test(c);
+      });
     }
 
     // ========== LÓGICA DE DECISÃO ENDURECIDA ==========

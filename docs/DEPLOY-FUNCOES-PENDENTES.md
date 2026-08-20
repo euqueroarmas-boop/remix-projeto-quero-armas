@@ -303,3 +303,19 @@ ALTERADAS (redeploy obrigatório):
 - supabase/functions/qa-extract-documents/index.ts — sem ela, todo cartão
   CNPJ/QSA lido pela IA (sem parser local) continua nascendo vencido no ano
   de abertura da empresa e travando o envio do QSA.
+
+## Leva 15 — certidão reprovada por geografia que não é do cliente (20/08/2026)
+
+Motivo: o validador automático comparava TODO campo da certidão com o cadastro,
+inclusive endereço/cidade/UF. Certidão eleitoral imprime o DOMICÍLIO ELEITORAL
+(onde a pessoa vota), e as judiciais imprimem comarca/foro/seção judiciária —
+nada disso é endereço nem naturalidade do cliente, e a divergência reprovava
+certidão correta. Agora o prompt proíbe a comparação geográfica em certidões de
+antecedentes (eleitoral, criminal estadual/federal, cível federal, militar) e um
+filtro determinístico descarta essas divergências mesmo se a IA as gerar.
+Conferência de certidão ficou: nome + CPF/RG + nascimento + resultado.
+
+ALTERADAS (redeploy obrigatório):
+- supabase/functions/qa-processo-doc-validar-ia/index.ts — sem ela, certidões
+  corretas continuam sendo travadas como "divergentes" por município de votação
+  ou comarca diferente da cidade onde o cliente mora.
