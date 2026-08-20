@@ -351,3 +351,15 @@ ALTERADAS (redeploy obrigatório):
 - supabase/functions/qa-processo-doc-validar-ia/index.ts — sem ela, certidões
   corretas continuam sendo travadas como "divergentes" por município de votação
   ou comarca diferente da cidade onde o cliente mora.
+
+## 2026-08-20 — 2º endereço (CR e Autorização de Compra CAC)
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cliente-atualizar-cadastro/index.ts` — passa a aceitar
+  os campos do 2º endereço, mas só depois de consultar
+  `qa_cliente_admite_segundo_endereco`. Sem o redeploy, o portal continua
+  recusando o 2º endereço mesmo para quem tem CR, e a coluna nova fica órfã.
+
+Migrations que precisam ir ANTES do deploy:
+- `20260820200000_segundo_endereco_cr_e_autorizacao_cac.sql`
+- `20260820210000_resposta_2o_endereco_volta_para_o_cadastro.sql`

@@ -201,4 +201,50 @@ describe("a migration mantém a trava", () => {
     expect(bloco).toContain("SET tem_segundo_endereco = true");
     expect(bloco).toContain("tem_segundo_endereco IS NULL");
   });
+
+  it("o backfill só marca quem passa no portão", () => {
+    const i = sql.indexOf("UPDATE public.qa_clientes");
+    const bloco = sql.slice(i, sql.indexOf(";", i));
+    expect(bloco).toContain("JOIN public.qa_servicos_catalogo c ON c.servico_id = p.servico_id");
+    expect(bloco).toContain("AND c.admite_segundo_endereco");
+  });
+
+  it("o portão é criado ANTES do backfill que o consulta", () => {
+    expect(sql.indexOf("ADD COLUMN IF NOT EXISTS admite_segundo_endereco"))
+      .toBeLessThan(sql.indexOf("UPDATE public.qa_clientes"));
+  });
+});
+
+describe("o gatilho que devolve a resposta ao cadastro mantém a trava", () => {
+  const sql = ler(
+    "supabase/migrations/20260820210000_resposta_2o_endereco_volta_para_o_cadastro.sql",
+  );
+
+  it("só age em serviço com o portão aberto", () => {
+    expect(sql).toContain("AND c.admite_segundo_endereco");
+    expect(sql).toContain("IF NOT COALESCE(v_admite, false) THEN");
+  });
+
+  it("a checagem do portão vem antes de qualquer UPDATE no cadastro", () => {
+    expect(sql.indexOf("IF NOT COALESCE(v_admite, false) THEN"))
+      .toBeLessThan(sql.indexOf("UPDATE public.qa_clientes"));
+  });
+
+  it("resposta fora do vocabulário não grava nada", () => {
+    expect(sql).toContain("IF v_resposta_nova NOT IN ('sim', 'nao') THEN");
+  });
+
+  it("o \"não\" apaga o endereço guardado, para cadastro e declaração não divergirem", () => {
+    const i = sql.indexOf("ELSE");
+    const ramo = sql.slice(i, sql.indexOf("END IF;", i));
+    expect(ramo).toContain("tem_segundo_endereco = false");
+    expect(ramo).toContain("endereco2       = NULL");
+  });
+
+  it("o backfill das respostas antigas também passa pelo portão", () => {
+    const i = sql.indexOf("UPDATE public.qa_clientes cl");
+    const bloco = sql.slice(i);
+    expect(bloco).toContain("JOIN public.qa_servicos_catalogo c ON c.servico_id = p.servico_id");
+    expect(bloco).toContain("WHERE c.admite_segundo_endereco");
+  });
 });
