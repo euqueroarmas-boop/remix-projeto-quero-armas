@@ -7002,6 +7002,20 @@ export function ClienteDocsHubModal({
             setCpfConfrontado(cpf);
             setCpfConfrontoErro(null);
             setCpfConfrontoAberto(false);
+            // Sem CPF do cadastro carregado não há comparação possível — e
+            // declarar "terceiro" nesse vácuo mandava o próprio titular para
+            // a declaração de responsável. O CPF digitado fica registrado
+            // como declaração; a equipe confere na aprovação.
+            if (refCpf.length !== 11) {
+              setAvaliacaoTitular({
+                ...avaliacaoTitular,
+                resultado: "propria",
+                pedirConfrontoCpf: false,
+                motivo: "CPF declarado pelo cliente — cadastro sem CPF disponível para comparar no momento do envio.",
+              });
+              toast.success("CPF registrado. A titularidade será conferida pela equipe.");
+              return;
+            }
             if (refCpf && refCpf === cpf) {
               setAvaliacaoTitular({
                 ...avaliacaoTitular,

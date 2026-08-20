@@ -146,6 +146,23 @@ export function avaliarTitularidadeComprovante(params: {
     if (cpf.digitos === cpfRef) {
       return { resultado: "propria", pedirConfrontoCpf: false, cpf, motivo: "CPF do comprovante confere com o cadastro." };
     }
+    // CPF diverge MAS o nome do titular é o MESMO do cadastro: contradição.
+    // Leitura automática de CPF erra (dígito trocado pelo OCR, número da
+    // fatura/instalação pescado como CPF) — e declarar "terceiro" aqui
+    // produzia o absurdo "a conta está em nome de X e não de X" na tela.
+    // Com contradição, ninguém é acusado: pergunta-se o CPF ao cliente. O
+    // CPF lido vai zerado (só o bruto, para exibição) para o confronto
+    // valer como DECLARAÇÃO contra o cadastro, e não contra a leitura
+    // suspeita — senão o cliente digitava o CPF certo e errava para sempre.
+    if (nomeVeredicto === "match") {
+      return {
+        resultado: "indeterminada",
+        pedirConfrontoCpf: true,
+        cpf: { estado: "ausente", digitos: null, padrao: null, bruto: cpf.bruto },
+        motivo:
+          "O nome do titular confere com o cadastro, mas o CPF lido no comprovante não bate — confirme o CPF impresso.",
+      };
+    }
     return {
       resultado: "terceiro",
       pedirConfrontoCpf: false,
