@@ -70,7 +70,70 @@ const ROTULO_CAMPO: Record<string, string> = {
   expedicao_rg: "Data de expedição do RG",
   tipo_documento_identidade: "Tipo do documento de identidade",
   titulo_eleitor: "Título de eleitor",
+  // 2º endereço — só chegam a ser gravados por quem passa no portão abaixo.
+  tem_segundo_endereco: "Possui segundo endereço",
+  cep2: "CEP (2º endereço)",
+  endereco2: "Logradouro (2º endereço)",
+  numero2: "Número (2º endereço)",
+  complemento2: "Complemento (2º endereço)",
+  bairro2: "Bairro (2º endereço)",
+  cidade2: "Cidade (2º endereço)",
+  estado2: "Estado — UF (2º endereço)",
+  pais2: "País (2º endereço)",
+  end2_tipo: "Tipo do 2º endereço",
+  end2_observacao: "Observação do 2º endereço",
 };
+
+// ============================================================================
+// SEGUNDO ENDEREÇO — campos condicionados ao tipo de processo
+// ----------------------------------------------------------------------------
+// O titular de CR pode declarar dois endereços (IN DG/PF 311). Defesa pessoal
+// (IN DG/PF 201) não tem essa previsão. Estes campos NÃO entram na lista
+// branca comum: eles passam por um portão à parte, consultado no banco depois
+// que o cliente é resolvido — `qa_cliente_admite_segundo_endereco`, que só
+// responde TRUE para quem tem processo de Concessão de CR ou de Autorização
+// de Compra CAC.
+//
+// Para quem não passa no portão, estes campos são DESCARTADOS exatamente como
+// eram antes desta função conhecê-los: entram em `ignorados` e nada é gravado.
+// ============================================================================
+const CAMPOS_SEGUNDO_ENDERECO = new Set<string>([
+  "tem_segundo_endereco",
+  "cep2",
+  "endereco2",
+  "numero2",
+  "complemento2",
+  "bairro2",
+  "cidade2",
+  "estado2",
+  "pais2",
+  "end2_tipo",
+  "end2_observacao",
+]);
+
+/** Colunas de endereço zeradas quando o titular declara que NÃO tem o 2º. */
+const COLUNAS_SEGUNDO_ENDERECO_LIMPAVEIS = [
+  "endereco2",
+  "numero2",
+  "complemento2",
+  "bairro2",
+  "cep2",
+  "cidade2",
+  "estado2",
+  "pais2",
+  "geolocalizacao2",
+  "end2_tipo",
+  "end2_observacao",
+];
+
+/** Aceita só booleano de verdade — string vazia ou lixo vira `null`. */
+function parseBooleano(v: unknown): boolean | null {
+  if (typeof v === "boolean") return v;
+  const t = String(v ?? "").trim().toLowerCase();
+  if (t === "true" || t === "sim" || t === "1") return true;
+  if (t === "false" || t === "nao" || t === "não" || t === "0") return false;
+  return null;
+}
 
 const CAMPOS_PERMITIDOS = new Set<string>([
   // Pessoais
@@ -169,11 +232,32 @@ Deno.serve(async (req) => {
     }
 
     // Sanitiza + filtra para apenas campos permitidos.
-    const updates: Record<string, string | null> = {};
+    const updates: Record<string, string | boolean | null> = {};
+    // Balde à parte: só é mesclado em `updates` se o cliente passar no portão
+    // do 2º endereço. Caso contrário vira `ignorados`, como sempre foi.
+    const updatesSegundoEndereco: Record<string, string | boolean | null> = {};
     const ignorados: string[] = [];
     for (const [k, v] of Object.entries(rawFields as Record<string, unknown>)) {
       if (CAMPOS_PROIBIDOS.has(k)) {
         ignorados.push(k);
+        continue;
+      }
+      if (CAMPOS_SEGUNDO_ENDERECO.has(k)) {
+        if (k === "tem_segundo_endereco") {
+          const b = parseBooleano(v);
+          if (b === null) continue;
+          updatesSegundoEndereco[k] = b;
+          continue;
+        }
+        let c2 = sanitize(v);
+        if (c2 == null) continue;
+        if (k === "estado2") {
+          c2 = c2.toUpperCase().slice(0, 2);
+        } else if (k === "cep2") {
+          c2 = c2.replace(/\D/g, "").slice(0, 8);
+          if (c2.length !== 8) continue;
+        }
+        updatesSegundoEndereco[k] = c2;
         continue;
       }
       if (!CAMPOS_PERMITIDOS.has(k)) {
@@ -206,7 +290,7 @@ Deno.serve(async (req) => {
       updates[targetCol] = cleaned;
     }
 
-    if (Object.keys(updates).length === 0) {
+    if (Object.keys(updates).length === 0 && Object.keys(updatesSegundoEndereco).length === 0) {
       return json({ success: true, atualizados: [], ignorados, mensagem: "Nada para atualizar" });
     }
 
@@ -270,6 +354,34 @@ Deno.serve(async (req) => {
 
     if (!cliente) return json({ error: "cliente_nao_vinculado" }, 404);
     if (cliente.excluido) return json({ error: "cliente_excluido" }, 403);
+
+    // ── PORTÃO DO 2º ENDEREÇO ───────────────────────────────────────────────
+    // Só agora sabemos QUEM é o cliente, então só agora dá para decidir. Quem
+    // não tem processo de Concessão de CR nem de Autorização de Compra CAC
+    // tem os campos do 2º endereço descartados — o mesmo resultado que esta
+    // função dava antes de conhecê-los. Erro na consulta = portão FECHADO:
+    // na dúvida não se grava.
+    if (Object.keys(updatesSegundoEndereco).length > 0) {
+      const { data: admite, error: portaoErr } = await admin.rpc(
+        "qa_cliente_admite_segundo_endereco",
+        { p_cliente_id: cliente.id },
+      );
+      if (portaoErr || admite !== true) {
+        for (const k of Object.keys(updatesSegundoEndereco)) ignorados.push(k);
+      } else {
+        Object.assign(updates, updatesSegundoEndereco);
+        // Declarou que NÃO tem 2º endereço: o endereço antigo sai junto. Sem
+        // isso o cadastro ficaria dizendo "não tem" com um endereço guardado
+        // ao lado — e a declaração negativa sairia contradizendo o cadastro.
+        if (updates.tem_segundo_endereco === false) {
+          for (const col of COLUNAS_SEGUNDO_ENDERECO_LIMPAVEIS) updates[col] = null;
+        }
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return json({ success: true, atualizados: [], ignorados, mensagem: "Nada para atualizar" });
+    }
 
     // Carrega o registro atual: campo_origens (para mesclar) e os valores
     // ANTIGOS dos campos alterados — sem isso a notificação só diz qual campo
