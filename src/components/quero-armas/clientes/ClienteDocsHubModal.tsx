@@ -3372,6 +3372,45 @@ export function ClienteDocsHubModal({
       );
       setConformidade(items);
 
+      // ── CPF-01 · titularidade no caminho da IA ─────────────────────────────
+      // O comprovante de endereço lido pela IA passa pela MESMA avaliação
+      // determinística de titularidade do caminho do parser (DANF3E). Sem isto,
+      // o mesmo arquivo ora era barrado (parser leu), ora entrava sem conferir
+      // titular nenhum (parser falhou → IA) — e insistir no reenvio premiava
+      // quem caísse no caminho sem conferência.
+      if (tipoIA === "comprovante_residencia") {
+        const camposTitular = campos as Record<string, string | undefined>;
+        const avaliacao = avaliarTitularidadeComprovante({
+          nomeDoc: camposTitular.nome_titular || camposTitular.nome_completo || null,
+          cpfDoc: camposTitular.cpf || null,
+          nomeRef: refClienteNome,
+          cpfRef: refClienteCpf,
+        });
+        setAvaliacaoTitular(avaliacao);
+        setCpfConfrontado(null);
+        setCpfConfrontoErro(null);
+        const nomeTitularIA = String(camposTitular.nome_titular || camposTitular.nome_completo || "").trim();
+        if (nomeTitularIA && !items.some((i) => i.campo === "nome_completo")) {
+          items.push({
+            campo: "nome_completo",
+            label: "Titular da conta",
+            valorCertidao: nomeTitularIA,
+            valorReferencia: refClienteNome ?? null,
+            fonteReferencia: refClienteNome ? "Cadastro (Central de Adesão)" : null,
+            status:
+              avaliacao.resultado === "propria"
+                ? "conforme"
+                : avaliacao.resultado === "terceiro"
+                  ? "divergente"
+                  : "sem_referencia",
+          });
+          setConformidade([...items]);
+        }
+        if (avaliacao.resultado === "indeterminada") {
+          setCpfConfrontoAberto(true);
+        }
+      }
+
       // Para itens em zona cinzenta, aciona verificação semântica via IA em paralelo
       const grayItems = items.filter(i => i.status === "verificando");
       if (grayItems.length > 0) {
@@ -3381,17 +3420,24 @@ export function ClienteDocsHubModal({
             const { data, error } = await supabase.functions.invoke("qa-conformidade-semantica", {
               body: { campo: item.label, valorA: item.valorCertidao, valorB: item.valorReferencia },
             });
-            const equivalente = !error && data?.equivalente === true;
+            // Divergente só quando a IA RESPONDEU que não é equivalente. Falha
+            // de infraestrutura (edge fora, timeout, rede móvel) não é veredito:
+            // marcava "divergente por conservadorismo" e o documento CERTO era
+            // rejeitado como "de terceiro" — e o mesmo arquivo passava no
+            // reenvio seguinte, quando a chamada dava certo. Sem resposta, o
+            // campo fica "sem referência": a equipe confere na aprovação.
+            if (error) throw error;
+            const equivalente = data?.equivalente === true;
             setConformidade(prev =>
               prev.map(i => i.campo === item.campo
                 ? { ...i, status: equivalente ? "conforme" : "divergente" }
                 : i
               )
             );
-          } catch {
-            // Em caso de erro, marca como divergente por conservadorismo
+          } catch (e) {
+            console.warn("[conformidade-semantica] sem veredito (erro de infra):", e);
             setConformidade(prev =>
-              prev.map(i => i.campo === item.campo ? { ...i, status: "divergente" } : i)
+              prev.map(i => i.campo === item.campo ? { ...i, status: "sem_referencia" } : i)
             );
           }
         });

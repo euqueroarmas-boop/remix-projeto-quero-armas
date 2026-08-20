@@ -82,7 +82,14 @@ export function digitosVisiveis(cpf: CpfLido): number {
 
 /**
  * Confronta o CPF informado pelo cliente com os dígitos visíveis da fatura.
- * Só confirma quando TODAS as posições legíveis batem.
+ * Só reprova quando alguma posição LEGÍVEL contradiz o informado.
+ *
+ * CPF AUSENTE (a conta não imprime CPF nenhum): não há dígito para
+ * contradizer — o confronto aceita o CPF declarado e a decisão
+ * própria/terceiro sai da comparação com o cadastro, feita pelo chamador.
+ * Antes este caso devolvia erro sempre, e o cliente ficava preso num loop:
+ * digitava o próprio CPF, recebia "não foi possível ler o CPF do
+ * comprovante" e tentava de novo, sem saída possível.
  */
 export function confrontarCpfParcial(
   cpf: CpfLido,
@@ -97,7 +104,10 @@ export function confrontarCpfParcial(
       : { ok: false, motivo: "O CPF informado não é o que consta no comprovante." };
   }
   const padrao = cpf.padrao || "";
-  if (padrao.length !== 11) return { ok: false, motivo: "Não foi possível ler o CPF do comprovante." };
+  if (padrao.length !== 11) {
+    // Nada legível no documento: o CPF vale como DECLARAÇÃO do cliente.
+    return { ok: true, motivo: "CPF não impresso no comprovante — confirmado por declaração do cliente." };
+  }
   for (let i = 0; i < 11; i++) {
     if (padrao[i] === "*") continue;
     if (padrao[i] !== informado[i]) {
