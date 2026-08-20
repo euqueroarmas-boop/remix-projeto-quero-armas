@@ -293,6 +293,8 @@ export default function DashboardProgressoClientes() {
   const [trilhas, setTrilhas] = useState<Record<string, string[]>>({});
   /** Peças dos processos listados — de onde sai a fase da PET no card. */
   const [pecas, setPecas] = useState<PecaDoProcesso[]>([]);
+  /** Checklist cru por processo — para a fase da PET ignorar a etapa final. */
+  const [docsProcesso, setDocsProcesso] = useState<Record<string, DocTrilha[]>>({});
   const [filtroTrilha, setFiltroTrilha] = useState<string | null>(() => {
     try { return localStorage.getItem(LS_TRILHA) || null; } catch { return null; }
   });
@@ -526,7 +528,7 @@ export default function DashboardProgressoClientes() {
           for (const pid of ids) {
             mapa[pid] = trilhaDoProcesso(porProcesso[pid] ?? [], condicaoPorProcesso[pid]);
           }
-          if (!cancelled) setTrilhas(mapa);
+          if (!cancelled) { setTrilhas(mapa); setDocsProcesso(porProcesso); }
         }
         if (!cancelled) setAtualizadoEm(new Date());
       } catch (e) {
@@ -596,9 +598,11 @@ export default function DashboardProgressoClientes() {
   const peticoes = useMemo(() => {
     const porProcesso = vincularPecas(rows, pecas);
     const mapa: Record<string, EstadoPeticao | null> = {};
-    for (const r of rows) mapa[r.processo_id] = estadoPeticao(r, porProcesso[r.processo_id] ?? []);
+    for (const r of rows) {
+      mapa[r.processo_id] = estadoPeticao(r, porProcesso[r.processo_id] ?? [], docsProcesso[r.processo_id]);
+    }
     return mapa;
-  }, [rows, pecas]);
+  }, [rows, pecas, docsProcesso]);
 
   const contadores = useMemo(() => {
     const ativos = rows.filter((r) => !r.bloqueado_por_prerequisito);

@@ -13,7 +13,7 @@
 // ============================================================================
 
 import { describe, it, expect } from "vitest";
-import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas } from "../fasePeticao";
+import { estadoPeticao, statusPecaDominante, pecasPorProcesso, vincularPecas, faltaDocDoCliente } from "../fasePeticao";
 
 const emDocumentos = { status: "aguardando_documentos", total_docs: 30, entregues: 19 };
 const checklistFechado = { status: "aguardando_documentos", total_docs: 30, entregues: 30 };
@@ -132,5 +132,47 @@ describe("vincularPecas", () => {
 
   it("peça sem processo e sem cliente é descartada", () => {
     expect(vincularPecas(processos, [{ processo_id: null, cliente_id: null, status_cliente: "nao_enviada" }])).toEqual({});
+  });
+});
+
+describe("etapa final não segura a fase da PET", () => {
+  // O caso real dos 9 clientes de 20/08: toda a papelada entregue, e os únicos
+  // itens em aberto são GRU, comprovante, gov.br e juntada — passos que só
+  // existem DEPOIS da defesa. O chip precisa acender mesmo assim.
+  const docsAnthony = [
+    { tipo: "antecedentes_criminais", status: "entregue_pelo_hub" },
+    { tipo: "laudo_psicologico", status: "entregue_pelo_hub" },
+    { tipo: "requerimento_de_posse_de_arma_de_fogo", status: "entregue_pelo_hub" },
+    { tipo: "credencial_gov_br", status: "pendente" },
+    { tipo: "juntada_assinada", status: "pendente" },
+    { tipo: "gru", status: "pendente" },
+    { tipo: "gru_comprovante", status: "pendente" },
+  ];
+
+  it("só etapa final em aberto: petição na fila da equipe", () => {
+    const e = estadoPeticao(
+      { status: "aguardando_documentos", total_docs: 32, entregues: 28 },
+      [],
+      docsAnthony,
+    );
+    expect(e?.id).toBe("aguardando_equipe");
+  });
+
+  it("documento comum em aberto ainda segura a fase", () => {
+    const e = estadoPeticao(
+      { status: "aguardando_documentos", total_docs: 32, entregues: 27 },
+      [],
+      [...docsAnthony, { tipo: "laudo_capacidade_tecnica", status: "pendente" }],
+    );
+    expect(e).toBeNull();
+  });
+
+  it("sem a lista de documentos, vale a contagem bruta do painel", () => {
+    expect(estadoPeticao({ status: "aguardando_documentos", total_docs: 32, entregues: 28 }, [])).toBeNull();
+  });
+
+  it("faltaDocDoCliente aceita tipo_documento ou tipo", () => {
+    expect(faltaDocDoCliente([{ tipo_documento: "rg", status: "pendente" }])).toBe(true);
+    expect(faltaDocDoCliente([{ tipo_documento: "gru", status: "pendente" }])).toBe(false);
   });
 });

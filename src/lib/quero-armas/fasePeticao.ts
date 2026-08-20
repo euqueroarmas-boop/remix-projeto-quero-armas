@@ -15,6 +15,8 @@
  * cada estado.
  */
 
+import { TIPOS_ETAPA_FINAL } from "./etapaFinalProtocolo";
+
 export type EstadoPeticaoId =
   | "aguardando_equipe"
   | "redigida"
@@ -39,6 +41,44 @@ export interface PecaDoProcesso {
   processo_id?: string | null;
   cliente_id?: number | null;
   status_cliente?: string | null;
+}
+
+/** Um item do checklist, para decidir se a parte do CLIENTE já acabou. */
+export interface DocParaDefesa {
+  tipo?: string | null;
+  tipo_documento?: string | null;
+  status?: string | null;
+}
+
+/** Status em que um item do checklist ainda espera ação (espelho do portal). */
+const STATUS_DOC_ABERTO = new Set([
+  "pendente",
+  "pendente_reenvio",
+  "invalido",
+  "reprovado",
+  "divergente",
+  "rejeitado",
+  "aguardando_envio",
+  "em_correcao",
+]);
+
+/**
+ * Ainda falta documento DO CLIENTE antes de a defesa entrar em cena?
+ *
+ * Os passos de etapa final (GRU, gov.br, juntada assinada) NÃO contam: eles só
+ * abrem DEPOIS da defesa aprovada, então contá-los deixaria o chip da PET
+ * apagado exatamente nos processos que já chegaram na fase — os únicos itens em
+ * aberto deles são esses.
+ */
+export function faltaDocDoCliente(docs: readonly DocParaDefesa[]): boolean {
+  for (const d of docs ?? []) {
+    const status = String(d?.status ?? "").trim().toLowerCase();
+    if (!STATUS_DOC_ABERTO.has(status)) continue;
+    const tipo = String(d?.tipo_documento ?? d?.tipo ?? "").trim().toLowerCase();
+    if (TIPOS_ETAPA_FINAL.has(tipo)) continue;
+    return true;
+  }
+  return false;
 }
 
 /** O que este módulo precisa de uma linha do painel de progresso. */
@@ -123,6 +163,7 @@ export function statusPecaDominante(pecas: readonly PecaDoProcesso[]): string | 
 export function estadoPeticao(
   processo: ProcessoParaPeticao | null | undefined,
   pecas: readonly PecaDoProcesso[] = [],
+  docsDoProcesso?: readonly DocParaDefesa[],
 ): EstadoPeticao | null {
   if (processo?.bloqueado_por_prerequisito) return null;
 
@@ -139,10 +180,17 @@ export function estadoPeticao(
   if (dominante === "devolvida") return ESTADOS.devolvida;
   if (dominante === "nao_enviada") return ESTADOS.redigida;
 
-  // Sem nenhuma peça: só entra na fase quando o checklist fecha.
-  const total = Number(processo?.total_docs ?? 0);
-  const entregues = Number(processo?.entregues ?? 0);
-  if (total > 0 && entregues >= total) return ESTADOS.aguardando_equipe;
+  // Sem nenhuma peça: entra na fase quando a PARTE DO CLIENTE fecha. Com a
+  // lista de documentos em mãos, a leitura certa ignora a etapa final (GRU,
+  // gov.br, juntada) — esses passos vêm DEPOIS da defesa. Sem a lista, vale a
+  // contagem bruta do painel.
+  if (docsDoProcesso && docsDoProcesso.length > 0) {
+    if (!faltaDocDoCliente(docsDoProcesso)) return ESTADOS.aguardando_equipe;
+  } else {
+    const total = Number(processo?.total_docs ?? 0);
+    const entregues = Number(processo?.entregues ?? 0);
+    if (total > 0 && entregues >= total) return ESTADOS.aguardando_equipe;
+  }
   if (status === "pronto_para_protocolar" || status === "validado") return ESTADOS.aguardando_equipe;
 
   return null;
