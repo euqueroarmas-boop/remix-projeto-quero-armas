@@ -541,3 +541,23 @@ Migrations que precisam ir ANTES do deploy, nesta ordem:
 - `20260821080000_certidoes_dos_estados_dos_ultimos_5_anos.sql`
 - `20260821090000_residencia_5_anos_vem_do_cadastro_publico.sql`
   (é ela que cria as duas colunas que a edge function grava)
+
+## 2026-08-21 — Leva 19: a residência dos 5 anos sai do formulário público
+
+Decisão do titular, logo depois da leva 18: *"Sobre o formulário público, não é
+pra ter nada lá disso. E tudo no formulário interno. Não tem sentido isso estar
+no formulário público quando o cliente está no checkout, porque é o único
+formulário que temos."*
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cadastro-publico/index.ts` — SAEM do schema Zod as duas
+  chaves que a leva 18 acabou de acrescentar: `residiu_mesmo_endereco_5_anos` e
+  `enderecos_anteriores_json`. Sem o redeploy a função continua aceitando e
+  tentando gravar em colunas que a migration abaixo remove — e todo cadastro
+  público passa a falhar com erro de coluna inexistente.
+
+Migration que precisa ir **junto** (antes ou depois, mas na mesma janela):
+- `20260821110000_residencia_5_anos_sai_do_formulario_publico.sql`
+
+Ordem segura: publicar a função PRIMEIRO (ela para de mandar as chaves), depois
+rodar a migration.

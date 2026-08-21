@@ -145,15 +145,6 @@ export interface ClienteData {
   end2_estado: string;
   end2_observacao: string;
 
-  // ── Residência dos últimos 5 anos (SINARM CAC / SIGMA) ──
-  // A pergunta vem DEPOIS do comprovante de endereço: primeiro o cliente
-  // informa onde mora, aí responde se morou sempre ali. Quando responde que
-  // não, declara os estados e cidades — e cada ESTADO vira um bloco de
-  // certidões no checklist. Opcional em toda validação: serviço que não pede
-  // certidão estadual nunca pergunta, e o cadastro não pode travar por isso.
-  residiu_mesmo_endereco_5_anos: boolean | null;
-  enderecos_anteriores: Array<{ uf: string; cidade: string }>;
-
   // Profissional
   profissao: string;
   vinculo_tipo: string;
@@ -179,8 +170,6 @@ export const emptyClienteData: ClienteData = {
   end2_tipo: "", end2_cep: "", end2_logradouro: "", end2_numero: "",
   end2_complemento: "", end2_bairro: "", end2_cidade: "", end2_estado: "",
   end2_observacao: "",
-  residiu_mesmo_endereco_5_anos: null,
-  enderecos_anteriores: [],
   profissao: "", vinculo_tipo: "",
   categoria_titular: "",
   consentimento_dados_verdadeiros: false,

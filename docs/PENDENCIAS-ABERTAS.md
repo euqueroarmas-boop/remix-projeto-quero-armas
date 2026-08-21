@@ -854,6 +854,27 @@ continua garantida pela ordem dentro do grupo endereço (40 → 45), pelo popup
 guiado que apresenta um item por vez, e pela ordem física das etapas do
 formulário público.
 
+### Correção de rumo — 21/08/2026, 20:30 BRT
+
+O titular reviu onde a pergunta mora: **não é no formulário público**. Aquele é
+o formulário do CHECKOUT e é o único que existe, então já carrega tudo; pedir
+ali o histórico de endereços dos últimos cinco anos, antes de a pessoa ser
+cliente e antes de qualquer comprovante, é fora de hora. A regra é: a pergunta
+vem **depois que o cliente manda o comprovante de endereço**, e vale para
+**clientes CAC**.
+
+Removido (`20260821110000` + front + edge function):
+- o bloco da pergunta e da lista de estados no formulário público;
+- as duas chaves no Zod de `qa-cadastro-publico`;
+- as duas colunas de `qa_cadastro_publico` e os dois gatilhos que as copiavam.
+
+A migration confere antes de remover e ABORTA se alguma ficha já tiver resposta
+gravada — as colunas viveram menos de uma hora e estão vazias.
+
+Continua de pé, intacto: a tabela `qa_cliente_enderecos_anteriores`, a resposta
+em `qa_clientes.residiu_mesmo_endereco_5_anos`, o semeador dos blocos por
+estado, a pergunta no checklist e os cinco gatilhos da regra.
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público

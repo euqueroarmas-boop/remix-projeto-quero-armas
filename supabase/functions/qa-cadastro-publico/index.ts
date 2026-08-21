@@ -74,23 +74,6 @@ const CadastroSchema = z.object({
   end2_longitude: z.string().max(30).optional().nullable(),
   end2_observacao: z.string().max(500).optional().nullable(),
 
-  // ── Residência dos últimos 5 anos (SINARM CAC / SIGMA) ──
-  // A pergunta vem depois do comprovante de endereço. Quando o titular informa
-  // que mudou de estado no período, cada ESTADO declarado vira um bloco de
-  // certidões no checklist do processo — ver migration 20260821080000.
-  // A cidade é guardada só como registro; a régua das certidões é o estado.
-  residiu_mesmo_endereco_5_anos: z.boolean().optional().nullable(),
-  enderecos_anteriores_json: z
-    .array(
-      z.object({
-        uf: z.string().trim().length(2),
-        cidade: z.string().max(120).optional().nullable(),
-      }),
-    )
-    .max(40)
-    .optional()
-    .nullable(),
-
   // ── Comprovante de endereço — em nome do titular OU de terceiro ──
   comprovante_endereco_em_nome_proprio: z.enum(["sim", "nao"]).optional().nullable(),
   responsavel_endereco_nome: z.string().max(200).optional().nullable(),
