@@ -10528,7 +10528,9 @@ export type Database = {
           pagamento_status: string
           prazo_critico_data: string | null
           prazo_critico_doc_id: string | null
+          prazo_critico_doc_nome: string | null
           primeiro_doc_aprovado_em: string | null
+          primeiro_endereco_validado_em: string | null
           protocolo_data: string | null
           protocolo_numero: string | null
           protocolo_observacao: string | null
@@ -10568,7 +10570,9 @@ export type Database = {
           pagamento_status?: string
           prazo_critico_data?: string | null
           prazo_critico_doc_id?: string | null
+          prazo_critico_doc_nome?: string | null
           primeiro_doc_aprovado_em?: string | null
+          primeiro_endereco_validado_em?: string | null
           protocolo_data?: string | null
           protocolo_numero?: string | null
           protocolo_observacao?: string | null
@@ -10608,7 +10612,9 @@ export type Database = {
           pagamento_status?: string
           prazo_critico_data?: string | null
           prazo_critico_doc_id?: string | null
+          prazo_critico_doc_nome?: string | null
           primeiro_doc_aprovado_em?: string | null
+          primeiro_endereco_validado_em?: string | null
           protocolo_data?: string | null
           protocolo_numero?: string | null
           protocolo_observacao?: string | null
