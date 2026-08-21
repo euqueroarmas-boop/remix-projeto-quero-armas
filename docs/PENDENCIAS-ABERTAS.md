@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 21/08/2026, 12:40 BRT.
+Índice único do que ficou em aberto. Atualizado em 21/08/2026, 18:40 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -37,10 +37,11 @@ respeitar condição profissional com vírgula, modalidade e UF — os três já
 estavam errados antes desta leva, e o botão desfazia a correção territorial a
 cada clique.
 
-⚠️ **Sobra do front:** as correções em `linksAntecedentesPorUf.ts` estão na
-branch `claude/servicos-autorizacao-armas-xbxd09`, não na `main`. Nada quebra
-sem elas (o link vem do banco, já corrigido), mas o popup guiado só melhora
-depois do merge.
+As sobras que a revisão apontou depois disso — aviso de vencimento e texto de
+e-mail ainda dizendo São Paulo, nome do arquivo do dossiê com "TRF3", apelido
+legado do TJM devolvendo o link do tribunal comum, e nenhuma trava impedindo
+que linha nova de TJM nascesse sem marcação — foram fechadas na leva 17, em
+21/08 18:36.
 
 ---
 
@@ -70,14 +71,13 @@ que faz o TJM nascer marcado).
 `qa-documento-cliente-notificar` e `qa-montar-juntada` publicadas — eram as que
 carregavam o texto de "onde emitir" e o nome do arquivo do dossiê.
 
-**Front:** publicado — a branch foi para a `main` em 21/08.  A anotação abaixo
-fica como histórico do que as correções trazem.  As correções em
-`src/lib/quero-armas/linksAntecedentesPorUf.ts` Nada quebra sem elas — o link que o cliente vê vem do banco, que já
-está certo —, mas quatro melhorias do popup guiado só valem depois do merge:
-resolução de link por igualdade (hoje, por prefixo, uma certidão de outro estado
-guardada no cofre recebe o link do estado atual), UF escrita por extenso sendo
-reconhecida (senão o texto sai "TJPARANÁ"), Distrito Federal como TJDFT, e parar
-de inventar "TJ Militar/PR" onde esse tribunal não existe.
+**Front (21/08):** publicado — a branch foi para a `main`. Traz quatro
+melhorias no popup guiado: link resolvido por igualdade (antes, por prefixo, uma
+certidão de outro estado guardada no cofre recebia o link do estado atual), UF
+escrita por extenso reconhecida (senão o texto saía "TJPARANÁ"), Distrito
+Federal como TJDFT, e fim do "TJ Militar/PR", tribunal que não existe. Junto
+foram os textos neutros do aviso de vencimento e os rótulos do cofre sem
+"TJSP".
 
 **Correção de registro (21/08):** o quadro da leva 11 (a GRU só abre depois da
 defesa aprovada) ficou marcado como 🔴 PENDENTE por engano. Conferido hoje: a
