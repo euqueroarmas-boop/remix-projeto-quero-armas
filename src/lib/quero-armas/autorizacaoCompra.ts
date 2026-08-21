@@ -233,3 +233,59 @@ export function janelaAutorizacao(
   const dias = Math.floor((validade.getTime() - hoje.getTime()) / 86_400_000);
   return { dias_restantes: dias, vencida: dias < 0 };
 }
+
+// ── O portão do upload: GRU de outro processo não sobe ──────────────────────
+
+/** Exigências do checklist que carregam a GRU ou seu comprovante. */
+export const TIPOS_GRU: ReadonlySet<string> = new Set([
+  "gru",
+  "gru_boleto",
+  "gru_comprovante",
+  "gru_paga",
+]);
+
+/**
+ * Serviços cuja GRU referencia o número da autorização do SisGCorp.
+ * DELIBERADAMENTE restrito: no CR (44) e nos demais serviços a relação entre
+ * a guia e o número do protocolo não foi verificada em dossiê real — ligar o
+ * bloqueio lá sem essa prova rejeitaria guia válida.
+ */
+export const SERVICOS_GRU_REFERENCIA_AUTORIZACAO: readonly number[] = [50, 51];
+
+export interface EntradaBloqueioGru {
+  tipoDocumento: string;
+  servicoId?: number | null;
+  /** Número do pedido/autorização registrado no processo (protocolo). */
+  numeroAutorizacao?: string | null;
+  /** Texto extraído do PDF enviado. Vazio/curto = ilegível, não se opina. */
+  textoPdf: string;
+}
+
+export interface ResultadoBloqueioGru {
+  bloquear: boolean;
+  motivo?: string;
+}
+
+/**
+ * Decide se o upload de uma GRU/comprovante deve ser BARRADO por referenciar
+ * outra autorização. Só opina quando tem tudo: é exigência de GRU, o serviço
+ * é de autorização de compra, o processo tem o número registrado e o PDF tem
+ * texto legível. Faltou qualquer um, deixa passar — quem decide é o fluxo
+ * normal (IA/equipe). Bloquear no escuro seria pior que não bloquear.
+ */
+export function deveBloquearGruDeOutroProcesso(e: EntradaBloqueioGru): ResultadoBloqueioGru {
+  if (!TIPOS_GRU.has(String(e.tipoDocumento ?? ""))) return { bloquear: false };
+  const servico = Number(e.servicoId ?? NaN);
+  if (!SERVICOS_GRU_REFERENCIA_AUTORIZACAO.includes(servico)) return { bloquear: false };
+  const numero = soDigitos(e.numeroAutorizacao);
+  if (numero.length < 10) return { bloquear: false };
+  if (String(e.textoPdf ?? "").trim().length < 40) return { bloquear: false };
+  if (gruPertenceAAutorizacao(e.textoPdf, numero)) return { bloquear: false };
+  return {
+    bloquear: true,
+    motivo:
+      "Esta guia não é deste processo: o número de referência dela não bate com o " +
+      `número da sua autorização (${numero}). Confira se você anexou a GRU certa — ` +
+      "a guia deste pedido sai com esse número impresso no campo de referência.",
+  };
+}

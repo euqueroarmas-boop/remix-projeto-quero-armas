@@ -18,6 +18,7 @@ import {
   janelaAutorizacao,
   orgaoPeloNumero,
   ehAutorizacaoCompra,
+  deveBloquearGruDeOutroProcesso,
 } from "../autorizacaoCompra";
 
 const fx = (n: string) =>
@@ -179,5 +180,48 @@ describe("o órgão pelo prefixo do número", () => {
     expect(orgaoPeloNumero("99181025026558")).toBe("policia_federal");
     expect(orgaoPeloNumero("99234025002588")).toBe("exercito");
     expect(orgaoPeloNumero("12345")).toBeNull();
+  });
+});
+
+describe("o portão do upload — GRU de outro processo não sobe", () => {
+  const base = {
+    tipoDocumento: "gru_comprovante",
+    servicoId: 50,
+    numeroAutorizacao: "99181025026558",
+  };
+
+  it("barra o comprovante que referencia OUTRA autorização", () => {
+    const r = deveBloquearGruDeOutroProcesso({ ...base, textoPdf: GRU_RIVELINO });
+    expect(r.bloquear).toBe(true);
+    expect(r.motivo).toContain("não é deste processo");
+  });
+
+  it("deixa subir o comprovante certo", () => {
+    const r = deveBloquearGruDeOutroProcesso({ ...base, textoPdf: COMPROVANTE_EDSON });
+    expect(r.bloquear).toBe(false);
+  });
+
+  it("só opina em exigência de GRU — certidão nunca é barrada por aqui", () => {
+    const r = deveBloquearGruDeOutroProcesso({
+      ...base,
+      tipoDocumento: "antecedentes_eleitoral",
+      textoPdf: GRU_RIVELINO,
+    });
+    expect(r.bloquear).toBe(false);
+  });
+
+  it("só opina nos serviços de autorização de compra — o CR (44) fica de fora", () => {
+    const r = deveBloquearGruDeOutroProcesso({ ...base, servicoId: 44, textoPdf: GRU_RIVELINO });
+    expect(r.bloquear).toBe(false);
+  });
+
+  it("sem número registrado no processo, não se opina", () => {
+    const r = deveBloquearGruDeOutroProcesso({ ...base, numeroAutorizacao: null, textoPdf: GRU_RIVELINO });
+    expect(r.bloquear).toBe(false);
+  });
+
+  it("PDF ilegível (sem texto) segue para a IA em vez de ser barrado no escuro", () => {
+    const r = deveBloquearGruDeOutroProcesso({ ...base, textoPdf: "   " });
+    expect(r.bloquear).toBe(false);
   });
 });

@@ -19,6 +19,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
 import { parseCertidao } from "@/lib/quero-armas/parsersCertidoes";
+import { deveBloquearGruDeOutroProcesso, TIPOS_GRU } from "@/lib/quero-armas/autorizacaoCompra";
 import { conferirCertidao, type CadastroConferencia } from "@/lib/quero-armas/conferenciaCertidao";
 import {
   STATUS_CHECKLIST_CUMPRIDO,
@@ -48,6 +49,8 @@ export interface GuiaProcesso {
   modalidade?: string | null;
   suporte_ativo?: boolean | null;
   venda_id?: number | null;
+  /** Nº do pedido no órgão — na autorização de compra, é o que a GRU referencia. */
+  protocolo_numero?: string | null;
 }
 
 export interface ContratoPendente {
@@ -511,7 +514,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
   const { data: p, error: pErr } = await supabase
     .from("qa_processos")
     .select(
-      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, modalidade, suporte_ativo, venda_id",
+      "id, cliente_id, servico_id, servico_nome, status, pagamento_status, data_criacao, etapa_liberada_ate, respostas_questionario_json, condicao_profissional, modalidade, suporte_ativo, venda_id, protocolo_numero",
     )
     .eq("id", processoId)
     .maybeSingle();
@@ -923,6 +926,27 @@ export async function enviarDocumentoGuia(
     leitura = await lerDocumentoLocalmente(file, cadastro);
     if (leitura.reconhecido && !leitura.aprovado) {
       return { ok: false, error: leitura.motivo ?? "Documento recusado na conferência." };
+    }
+  }
+
+  // ── GRU pertence a ESTE processo? ───────────────────────────────────────
+  // Na autorização de compra, o número de referência da guia É o número da
+  // autorização (regra confirmada nos três dossiês deferidos). Guia de outro
+  // número é de outro processo e não sobe. A decisão só dispara quando há
+  // tudo — tipo de GRU, serviço de autorização, número registrado e PDF
+  // legível; qualquer coisa faltando, o fluxo normal (IA/equipe) decide.
+  if (file.type === "application/pdf" && TIPOS_GRU.has(doc.tipo_documento)) {
+    try {
+      const textoGru = await extrairTextoPdf(file);
+      const bloqueio = deveBloquearGruDeOutroProcesso({
+        tipoDocumento: doc.tipo_documento,
+        servicoId: processo.servico_id,
+        numeroAutorizacao: processo.protocolo_numero,
+        textoPdf: textoGru,
+      });
+      if (bloqueio.bloquear) return { ok: false, error: bloqueio.motivo };
+    } catch {
+      // PDF de imagem: sem texto não se opina — segue para a IA.
     }
   }
 
