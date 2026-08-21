@@ -212,6 +212,12 @@ export default function ClienteEnderecosAnteriores({
               comprovante de endereço — aqui a equipe lança ou corrige quando
               precisa cumprir a exigência por ele.
             </p>
+            <p className="text-[11px] leading-snug text-slate-500">
+              Vale para Posse, Concessão de CR e Autorização de Compra CAC. A
+              Autorização de compra / Posse da Polícia Federal usa só o endereço
+              atual — nela nada é criado, mesmo que a lista abaixo seja
+              preenchida.
+            </p>
 
             <div>
               <div className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">

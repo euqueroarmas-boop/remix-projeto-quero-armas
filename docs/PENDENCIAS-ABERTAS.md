@@ -893,6 +893,31 @@ Duas regras que a tela respeita, e que têm teste:
   que o sistema registrou numa mudança de endereço real — mudança é fato,
   declaração é o que a pessoa disse. É a mesma regra do gatilho do checklist.
 
+### O alcance da regra, fechado — 21/08/2026
+
+*"Autorização de compra / posse de arma de fogo não usa comprovante de 5 anos de
+endereço. Só o atual."*
+
+Serviço **60** é exatamente esse, e ele nunca esteve na regra: o semeador
+`qa_seed_endereco_5_anos` cobre apenas 31, 44, 50 e 51 desde junho. Na leva 18 eu
+coloquei a pergunta em todo serviço que pedisse certidão estadual, e isso
+alcançou o 60 por engano — nove processos abertos receberam pergunta que não
+deviam.
+
+`20260821120000` fecha o alcance e o torna explícito:
+- `qa_servico_usa_residencia_5_anos(servico_id)` diz a lista por extenso, e o
+  semeador das certidões e o catálogo passam a ler a MESMA função;
+- a pergunta sai do catálogo e dos processos do 60;
+- linha intocada é apagada (nasceu de engano); linha com qualquer rastro vira
+  `nao_aplicavel` com a razão escrita — nunca se apaga o que alguém tocou;
+- bloco de certidão que já carrega documento entregue **permanece**: apagar
+  seria jogar fora certidão do cliente. A conferência (D) lista os que
+  sobrarem, para a equipe decidir caso a caso.
+
+**Ponto de manutenção:** a lista existe em dois lugares — aqui e dentro de
+`qa_seed_endereco_5_anos`. A conferência (E) da migration compara as duas e
+acusa se divergirem.
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
