@@ -389,3 +389,18 @@ Migrations que precisam ir ANTES do deploy:
 - `20260821010000_certidao_nao_vence_apos_protocolo.sql`
 - `20260821020000_pergunta_loja_arma_autorizacao_compra.sql` (independente,
   pode ir junto)
+
+## 2026-08-21 — Profissão do titular é a do TERCEIRO
+
+**ALTERADAS (redeploy obrigatório):**
+- `supabase/functions/qa-processo-etapa-auto-liberar/index.ts`
+- `supabase/functions/qa-processo-checar-conclusao-checklist/index.ts`
+
+As duas usam o espelho `_shared/respostasCadastro.ts`, corrigido: a resposta
+automática de `titular_profissao` passa a vir do bloco do RESPONSÁVEL pelo
+imóvel (`responsavel_endereco_profissao`), nunca mais da profissão do próprio
+cliente. Sem o redeploy, o backend continua fechando a pergunta com a
+profissão da pessoa errada — e a declaração do responsável sai com o dado do
+requerente.
+
+Nenhuma migration nesta leva.

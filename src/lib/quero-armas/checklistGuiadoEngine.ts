@@ -536,7 +536,7 @@ export async function carregarProcessoGuia(processoId: string): Promise<CargaPro
     : Math.max(1, Math.min(5, processo.etapa_liberada_ate ?? 1));
   const { data: cli } = await supabase
     .from("qa_clientes")
-    .select("nome_completo, profissao, categoria_titular")
+    .select("nome_completo, profissao, categoria_titular, responsavel_endereco_profissao")
     .eq("id", processo.cliente_id)
     .maybeSingle();
 

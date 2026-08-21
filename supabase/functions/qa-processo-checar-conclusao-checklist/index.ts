@@ -145,7 +145,7 @@ Deno.serve(async (req) => {
     const respostasProcesso = (processo as any).respostas_questionario_json || {};
     const { data: clienteCad } = await admin
       .from("qa_clientes")
-      .select("categoria_titular, profissao")
+      .select("categoria_titular, profissao, responsavel_endereco_profissao")
       .eq("id", (processo as any).cliente_id)
       .maybeSingle();
     // Cadastro como fonte derivada de resposta (espelha o front).
