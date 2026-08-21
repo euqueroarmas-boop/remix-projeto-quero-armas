@@ -15,13 +15,12 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const SQL = readFileSync(
-  resolve(
-    process.cwd(),
-    "supabase/migrations/20260820220000_autorizacao_compra_atirador_checklist_dossie_real.sql",
-  ),
-  "utf-8",
-);
+const SQL = [
+  "supabase/migrations/20260820220000_autorizacao_compra_atirador_checklist_dossie_real.sql",
+  // A 8ª certidão (TJM) entrou em migration própria — o titular apontou que
+  // são oito certidões e a primeira leva semeou sete.
+  "supabase/migrations/20260820230000_autorizacao_compra_certidao_tjm.sql",
+].map((f) => readFileSync(resolve(process.cwd(), f), "utf-8")).join("\n");
 
 /** Os 12 itens numerados pela equipe nos dossiês, na ordem do dossiê. */
 const ITENS_DO_DOSSIE: Array<[string, string[]]> = [
@@ -45,7 +44,7 @@ const ITENS_DO_DOSSIE: Array<[string, string[]]> = [
     "antecedentes_estadual_execucoes",
     "antecedentes_criminais",
   ]],
-  ["11 antecedentes Justiça Militar", ["antecedentes_militar"]],
+  ["11 antecedentes Justiça Militar", ["antecedentes_militar", "antecedentes_militar_estadual"]],
   ["12 antecedentes Justiça Eleitoral", ["antecedentes_eleitoral"]],
 ];
 
@@ -55,7 +54,7 @@ const FORA_DA_NUMERACAO = ["foto_3x4", "gru", "gru_comprovante", "autorizacao_co
 describe("o checklist do serviço 50 cobre os dossiês deferidos", () => {
   for (const [item, tipos] of ITENS_DO_DOSSIE) {
     it(`item ${item}`, () => {
-      for (const tipo of tipos) expect(SQL).toContain(`('${tipo}'`);
+      for (const tipo of tipos) expect(SQL).toContain(`'${tipo}'`);
     });
   }
 
@@ -69,6 +68,21 @@ describe("o checklist do serviço 50 cobre os dossiês deferidos", () => {
 });
 
 describe("as regras que os dossiês ensinaram", () => {
+  it("são OITO certidões de idoneidade — nem sete, nem quatro", () => {
+    const oito = [
+      "antecedentes_eleitoral",
+      "antecedentes_militar",
+      "antecedentes_militar_estadual",
+      "antecedentes_federal_trf3_regional",
+      "antecedentes_federal_sjsp_jef",
+      "antecedentes_estadual_distribuicao",
+      "antecedentes_estadual_execucoes",
+      "antecedentes_criminais",
+    ];
+    for (const tipo of oito) expect(SQL).toContain(`'${tipo}'`);
+  });
+
+
   it("o ANEXO C fala em ESPÉCIE de arma, não em calibre (IN DG/PF 311)", () => {
     const i = SQL.indexOf("('declaracao_compromisso_habitualidade'");
     const bloco = SQL.slice(i, SQL.indexOf("-- ── item 03", i));

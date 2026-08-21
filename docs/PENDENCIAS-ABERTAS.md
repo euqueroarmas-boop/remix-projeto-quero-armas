@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 20/08/2026, 22:05 BRT.
+Índice único do que ficou em aberto. Atualizado em 20/08/2026, 22:20 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -135,6 +135,24 @@ Fica registrado o que muda no papel entre os dois, para quem for ler um dossiê
 antigo e estranhar: o Exército identifica a loja pelo **nº de registro SIGMA**,
 a PF pelo **CNPJ**. E o prefixo do número da autorização muda junto (9923 =
 Exército, 9918 = PF).
+
+---
+
+## 📌 Processos antigos de autorização de compra: excluir e só gerenciar (20/08/2026)
+
+Decisão do titular sobre os clientes que contrataram ANTES do contrato novo e
+do checklist novo:
+
+- **não mexer** nos processos deles — nem reexplodir, nem completar;
+- esses processos serão **excluídos** depois;
+- para esses clientes, o sistema vai guardar apenas o **certificado da arma
+  (CRAF)** e as **GTEs** — só gestão de acervo, sem ciclo de documentos;
+- o ciclo completo (checklist novo de 28 itens + 8 certidões) vale **somente
+  para processos criados daqui pra frente**.
+
+Quando a exclusão for feita, usar o caminho normal de exclusão de processo
+(que preserva os documentos do cliente na Central) — os CRAFs e GTEs entram
+pelo Arsenal / hub documental.
 
 ---
 
