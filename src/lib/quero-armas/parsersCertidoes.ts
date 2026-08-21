@@ -519,21 +519,40 @@ function parseTrfRegional(texto: string): CamposCertidao {
   const t = norm(texto);
   const corrido = flat(t);
 
-  // Discriminador entre as duas certidões do TRF:
+  // ── REGRA CANÔNICA · QUEM DECIDE É O CABEÇALHO — NÃO ALTERAR ──────────
+  // O campo "Abrangência" impresso na própria certidão é o sinal de MAIOR
+  // PESO — a MESMA regra do detector do Hub (detectaSubtipoCertidaoFederal,
+  // ClienteDocsHubModal) e da edge qa-classificar-documento-arma:
   //   "Abrangência - Regional"                              → antecedentes_federal_trf3_regional
   //   "Abrangência - Seção Judiciária e Juizado Especial…"  → antecedentes_federal_sjsp_jef
   //
-  // Critério primário: "JUIZADO ESPECIAL FEDERAL" — sem nenhum acento, imune a
-  // qualquer falha de encoding do pdf.js. Aparece APENAS na certidão de Seção
-  // Judiciária ("Abrangência - Seção Judiciária e Juizado Especial Federal de
-  // São Paulo"). A certidão Regional diz apenas "Abrangência - Regional".
-  // Critérios secundários: "SECAO JUDICIARIA" (após norm) e regex tolerante a
-  // variações tipográficas no texto original — usados como fallback.
+  // Menção solta a "Seção Judiciária" FORA do cabeçalho não reclassifica
+  // nada: a certidão Regional cita "Seção Judiciária de São Paulo" na
+  // cláusula de cobertura E no rodapé de contatos — foi assim que uma
+  // Regional legítima virou SJSP/JEF de novo (caso Igor, 21/08/2026), a
+  // MESMA regressão já corrigida em outra cópia em 20/08/2026.
+  //
+  // Esta decisão está TRAVADA pelos testes de
+  // src/lib/quero-armas/__tests__/certidaoFederalRegionalVsLocal.test.ts,
+  // que prendem as três cópias (parser, detector do Hub e edge) à mesma
+  // regra. Qualquer mudança aqui sem passar por lá reabre o defeito.
   const corrUp = corrido.toUpperCase();
-  const ehSecaoJudiciaria =
-    corrUp.includes("JUIZADO ESPECIAL FEDERAL") ||
-    corrUp.includes("SECAO JUDICIARIA") ||
-    /SE[CÇ][ÃA]O\s*JUDICI[ÁA]RIA/i.test(texto);
+  const abrangencia = corrUp.match(/ABRANGENCIA\s*[-:]?\s*(.{0,80})/)?.[1] ?? "";
+  let ehSecaoJudiciaria: boolean;
+  if (/REGIONAL/.test(abrangencia)) {
+    ehSecaoJudiciaria = false;
+  } else if (/SECAO JUDICIARIA|JUIZADO ESPECIAL|\bJEF\b|LOCAL/.test(abrangencia)) {
+    ehSecaoJudiciaria = true;
+  } else {
+    // Sem o campo Abrangência legível, vale o marcador exclusivo: a 3ª
+    // Região é SP + MS, e só a certidão REGIONAL cobre a Seção Judiciária
+    // de Mato Grosso do Sul — a local cobre apenas São Paulo.
+    ehSecaoJudiciaria =
+      !corrUp.includes("SECAO JUDICIARIA DE MATO GROSSO DO SUL") &&
+      (corrUp.includes("JUIZADO ESPECIAL FEDERAL") ||
+        corrUp.includes("SECAO JUDICIARIA") ||
+        /SE[CÇ][ÃA]O\s*JUDICI[ÁA]RIA/i.test(texto));
+  }
   const tipoDocumento = ehSecaoJudiciaria
     ? "antecedentes_federal_sjsp_jef"
     : "antecedentes_federal_trf3_regional";
