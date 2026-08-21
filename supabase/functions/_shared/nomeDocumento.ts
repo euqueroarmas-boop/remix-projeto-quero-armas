@@ -36,15 +36,15 @@ export const TIPO_DOCUMENTO_LABELS: Record<string, string> = {
   renda_comprovante_beneficio: "Comprovante de benefício",
   renda_extrato_inss: "Extrato INSS",
   // Certidões — padrão canônico "Certidão <espécie> — <órgão>".
-  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)",
+  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil",
   antecedentes_federal: "Certidão de Distribuição Criminal — Justiça Federal",
-  antecedentes_estadual: "Certidão Estadual Criminal — TJSP",
+  antecedentes_estadual: "Certidão Estadual Criminal — Tribunal de Justiça",
   antecedentes_federal_trf3_regional:
-    "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região",
+    "Certidão de Distribuição Criminal — Justiça Federal (abrangência regional)",
   antecedentes_federal_sjsp_jef:
-    "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP",
-  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — TJSP",
-  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — TJSP",
+    "Certidão de Distribuição Criminal — Seção Judiciária e JEF",
+  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — Tribunal de Justiça",
+  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — Tribunal de Justiça",
   antecedentes_militar: "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)",
   antecedentes_militar_estadual: "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)",
   antecedentes_eleitoral: "Certidão de Crimes Eleitorais — TSE",
@@ -140,14 +140,20 @@ export function comoResolverDocumento(doc: any): string {
   }
 
   if (tipo.startsWith("antecedentes_")) {
+    // Órgão emissor. Os TERRITORIAIS ficam em forma neutra de propósito: o
+    // e-mail não sabe a UF do cliente, e desde a migration 20260821040000 o
+    // checklist nomeia a certidão pelo tribunal do estado dele. Dizer "TJSP"
+    // aqui mandava o cliente do Paraná para o tribunal errado — duas
+    // instruções diferentes para o mesmo papel. Os de alcance NACIONAL (STM,
+    // TSE) continuam com nome próprio, porque valem para o país inteiro.
     const ORGAO: Record<string, string> = {
       antecedentes_criminais: "Polícia Civil",
-      antecedentes_estadual: "TJSP",
-      antecedentes_estadual_distribuicao: "TJSP (e-SAJ)",
-      antecedentes_estadual_execucoes: "TJSP (e-SAJ)",
+      antecedentes_estadual: "Tribunal de Justiça do seu estado",
+      antecedentes_estadual_distribuicao: "Tribunal de Justiça do seu estado",
+      antecedentes_estadual_execucoes: "Tribunal de Justiça do seu estado",
       antecedentes_federal: "Justiça Federal",
-      antecedentes_federal_trf3_regional: "TRF3",
-      antecedentes_federal_sjsp_jef: "TRF3",
+      antecedentes_federal_trf3_regional: "TRF da sua região",
+      antecedentes_federal_sjsp_jef: "TRF da sua região",
       antecedentes_militar: "STM",
       antecedentes_militar_estadual: "TJM",
       antecedentes_eleitoral: "TSE",

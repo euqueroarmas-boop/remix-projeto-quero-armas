@@ -91,16 +91,28 @@ export const AVISO_POR_TIPO: Record<string, string> = {
   // ── Certidões (nomenclatura canônica) ────────────────────────────────────
   antecedentes_criminais:
     "Certidão de antecedentes criminais fora da validade. Emita a nova no site da Polícia Civil.",
+  // ── Certidões TERRITORIAIS: o tribunal muda com o estado do cliente ──────
+  //
+  // Estes textos nasceram com São Paulo cravado, quando SP era o único estado
+  // atendido. Depois que o checklist passou a nomear a certidão pelo tribunal
+  // do cliente (migration 20260821040000), o cliente do Paraná lia "TJPR" no
+  // item e "emita no portal do TJSP" no aviso de vencimento — duas instruções
+  // diferentes para o mesmo papel.
+  //
+  // A frase base é NEUTRA, portanto certa em qualquer estado, inclusive nos
+  // caminhos que não sabem a UF (e-mail, painel sem cadastro carregado). Onde
+  // a UF é conhecida, `aplicarUfEmTexto` troca a forma neutra pelo tribunal
+  // com nome e sobrenome ("no portal do TJPR").
   antecedentes_estadual_distribuicao:
-    "Certidão de distribuição de ações criminais fora da validade. Emita a nova no portal do TJSP.",
+    "Certidão de distribuição de ações criminais fora da validade. Emita a nova no portal do Tribunal de Justiça do seu estado.",
   antecedentes_estadual_execucoes:
-    "Certidão de execuções criminais fora da validade. Emita a nova no portal do TJSP.",
+    "Certidão de execuções criminais fora da validade. Emita a nova no portal do Tribunal de Justiça do seu estado.",
   antecedentes_militar_estadual:
     "Certidão da Justiça Militar Estadual fora da validade. Emita a nova no portal do TJM.",
   antecedentes_federal_trf3_regional:
-    "Certidão do Tribunal Regional Federal da 3ª Região fora da validade. Emita a nova no portal do TRF3.",
+    "Certidão da Justiça Federal, abrangência regional, fora da validade. Emita a nova no portal do TRF da sua região.",
   antecedentes_federal_sjsp_jef:
-    "Certidão da Seção Judiciária/JEF do Estado de São Paulo fora da validade. Emita a nova no portal do TRF3.",
+    "Certidão da Seção Judiciária/JEF do seu estado fora da validade. Emita a nova no portal do TRF da sua região.",
   antecedentes_militar:
     "Certidão da Justiça Militar da União fora da validade. Emita a nova no portal do STM.",
   antecedentes_eleitoral:

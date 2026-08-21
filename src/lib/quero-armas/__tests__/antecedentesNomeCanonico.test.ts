@@ -45,7 +45,10 @@ describe("padrão canônico das certidões de antecedentes", () => {
       tipo_documento: "antecedentes_estadual_execucoes",
       nome_documento: "CERTIDÃO ESTADUAL TJSP — EXECUÇÕES CRIMINAIS Nº 1448406",
     });
-    expect(nome).toBe("Certidão Estadual de Execuções Criminais — TJSP");
+    // O rótulo perdeu o "— TJSP" em 21/08: o cofre é do cliente, e o cliente
+    // pode ser de qualquer estado. O que este teste verifica continua igual —
+    // o nome canônico vence o título que a IA leu do PDF.
+    expect(nome).toBe("Certidão Estadual de Execuções Criminais — Tribunal de Justiça");
   });
 
   it("mantém STM e TJM como certidões distintas", () => {

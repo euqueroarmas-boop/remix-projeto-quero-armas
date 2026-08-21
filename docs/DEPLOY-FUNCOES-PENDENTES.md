@@ -1,5 +1,48 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
+## 🟠 Leva 17 · Sobras da leva 16 — SQL aplicado; TRÊS funções a republicar
+
+Fechamento das sobras que a revisão apontou e o titular mandou corrigir em
+21/08. O problema comum: a leva 16 fez o checklist chamar a certidão pelo
+tribunal do estado do cliente, mas OUTROS textos continuaram dizendo São Paulo.
+O cliente do Paraná lia "TJPR" no item e "emita no portal do TJSP" no aviso de
+vencimento — duas instruções para o mesmo papel.
+
+**Regra adotada:** o texto base fica NEUTRO ("portal do Tribunal de Justiça do
+seu estado", "TRF da sua região"), porque é certo em qualquer estado e funciona
+nos caminhos que não sabem a UF — principalmente o e-mail. Onde a UF é
+conhecida, `aplicarUfEmTexto` especializa para o tribunal com nome e sobrenome.
+
+| Migration | O que faz | Estado |
+|---|---|---|
+| `20260821060000_tjm_nasce_com_marcacao_de_estado` | Gatilho: linha nova de `antecedentes_militar_estadual` nasce com `condicao_uf = {SP,MG,RS}`. Sem ele, um serviço criado amanhã voltaria a exigir o TJM de todo mundo | ⬜ **a aplicar** |
+
+**Edge functions — todas ALTERADAS, redeploy obrigatório:**
+
+| Função | O que muda | O que quebra sem ela |
+|---|---|---|
+| `qa-vencimentos-alertas` | Usa `_shared/nomeDocumento.ts`, cujo texto de "onde emitir" saiu de "TJSP"/"TRF3" para forma neutra | O e-mail de vencimento continua mandando o cliente de fora de SP ao tribunal errado |
+| `qa-documento-cliente-notificar` | Mesmo `_shared/nomeDocumento.ts` | Idem, na notificação de documento |
+| `qa-montar-juntada` | Usa `_shared/ordemProtocolo.ts`, cujo rótulo de arquivo saiu de "Certidao Justica Federal TRF3/SJSP" para forma neutra | O ZIP entregue continua nomeando o arquivo do cliente do Paraná como "TRF3" |
+
+**Front (vai com o push da `main`):** aviso de vencimento neutro, rótulos do
+cofre sem "TJSP", apelido legado do TJM devolvendo o link do tribunal militar
+(antes caía no Tribunal de Justiça comum), e `aplicarUfEmTexto` entendendo as
+formas neutras.
+
+**Conferido:** gatilho testado em PostgreSQL 16 — TJM de serviço novo nasce
+marcado, outros tipos não são tocados, e marcação explícita diferente (`{SP}`)
+é respeitada. 1515 testes passando, incluindo 5 novos que travam o texto neutro
+e o nome do arquivo do dossiê.
+
+**O que ficou de fora, e por quê:** os documentos já guardados no cofre do
+cliente NÃO são renomeados por estado. O cofre guarda certidão de residência
+anterior — renomear pelo estado atual marcaria como "TJPR" uma certidão que é
+de Minas. O rótulo do TIPO ficou neutro, que resolve a incoerência sem mentir
+sobre o papel.
+
+---
+
 ## ✅ Leva 16 · Certidão segue o estado do cliente — APLICADA em 21/08/2026, 12:36 BRT
 
 Decisão do titular (21/08): *"o cliente deve receber os links das certidões do

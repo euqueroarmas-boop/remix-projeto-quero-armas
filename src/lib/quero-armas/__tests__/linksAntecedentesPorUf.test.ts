@@ -6,6 +6,8 @@ import {
   normalizarUf,
   resolveLinkAntecedentePorUf,
 } from "@/lib/quero-armas/linksAntecedentesPorUf";
+import { avisoParaTipo } from "@/lib/quero-armas/avisosVencimento";
+import { nomeArquivoDossie } from "@/lib/quero-armas/ordemProtocolo";
 
 // ============================================================================
 // Regra do titular (21/08/2026): o cliente recebe os links das certidões do
@@ -118,5 +120,53 @@ describe("aplicarUfEmTexto", () => {
     const original = "Emita no TJSP a certidão do TRF3, Polícia Civil/SP";
     expect(aplicarUfEmTexto(original, "SP")).toBe(original);
     expect(aplicarUfEmTexto(original, "São Paulo")).toBe(original);
+  });
+});
+
+describe("aviso de vencimento não manda o cliente para o estado errado", () => {
+  it("o texto base é neutro — vale em qualquer estado e também no e-mail", () => {
+    for (const tipo of [
+      "antecedentes_estadual_distribuicao",
+      "antecedentes_estadual_execucoes",
+      "antecedentes_federal_trf3_regional",
+      "antecedentes_federal_sjsp_jef",
+    ]) {
+      const texto = avisoParaTipo(tipo);
+      expect(texto).not.toMatch(/TJSP|TRF3|Estado de São Paulo/);
+    }
+  });
+
+  it("com a UF conhecida, o texto neutro vira o tribunal do cliente", () => {
+    const base = avisoParaTipo("antecedentes_estadual_distribuicao");
+    expect(aplicarUfEmTexto(base, "Paraná")).toContain("portal do TJPR");
+    expect(aplicarUfEmTexto(base, "DF")).toContain("portal do TJDFT");
+
+    const federal = avisoParaTipo("antecedentes_federal_trf3_regional");
+    expect(aplicarUfEmTexto(federal, "Paraná")).toContain("portal do TRF4");
+    expect(aplicarUfEmTexto(federal, "Bahia")).toContain("portal do TRF1");
+  });
+
+  it("certidão da União não vira certidão de estado nenhum", () => {
+    for (const tipo of ["antecedentes_militar", "antecedentes_eleitoral"]) {
+      const texto = aplicarUfEmTexto(avisoParaTipo(tipo), "Paraná");
+      expect(texto).toMatch(/STM|TSE/);
+      expect(texto).not.toMatch(/TJPR|TRF4/);
+    }
+  });
+});
+
+describe("nome do arquivo no dossiê", () => {
+  it("não carimba TRF3 nem SJSP no entregável de cliente de outro estado", () => {
+    expect(nomeArquivoDossie({ tipo_documento: "antecedentes_federal_trf3_regional" }))
+      .not.toMatch(/TRF3/);
+    expect(nomeArquivoDossie({ tipo_documento: "antecedentes_federal_sjsp_jef" }))
+      .not.toMatch(/SJSP/);
+  });
+
+  it("a numeração do dossiê continua a mesma", () => {
+    expect(nomeArquivoDossie({ tipo_documento: "antecedentes_federal_trf3_regional" }))
+      .toMatch(/^07\./);
+    expect(nomeArquivoDossie({ tipo_documento: "antecedentes_federal_sjsp_jef" }))
+      .toMatch(/^08\./);
   });
 });

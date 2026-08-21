@@ -167,8 +167,13 @@ export function resolveLinkAntecedentePorUf(
     return links.policiaCivil ?? null;
   }
   // TJM estadual (só SP/MG/RS).
+  //
+  // `certidao_estadual_justica_militar` é apelido legado do TJM e PRECISA vir
+  // antes do bloco do TJ estadual: lá embaixo o prefixo `certidao_estadual_`
+  // o capturaria e devolveria o link do Tribunal de Justiça comum.
   if (
     t === "antecedentes_militar_estadual" || // código canônico do catálogo
+    t === "certidao_estadual_justica_militar" || // apelido legado
     t.includes("tjm") ||
     t === "certidao_antecedentes_criminais_militar_estadual"
   ) {
@@ -249,9 +254,19 @@ export function aplicarUfEmTexto(texto: string, uf: string | null | undefined): 
         .replace(/\bem SP\b/g, `em ${U}`)
     : texto;
 
+  const tj = U === "DF" ? "TJDFT" : `TJ${U}`;
+
   return comTrf
+    // Formas NEUTRAS ganham nome e sobrenome quando a UF é conhecida. Elas
+    // existem porque os avisos de vencimento também saem por e-mail, onde não
+    // há UF para resolver — lá a frase neutra é a que vale.
+    .replace(/portal do Tribunal de Justiça do seu estado/g, `portal do ${tj}`)
+    .replace(/Tribunal de Justiça do seu estado/g, tj)
+    .replace(/portal do TRF da sua região/g, regiao ? `portal do TRF${regiao}` : "portal do TRF da sua região")
+    .replace(/TRF da sua região/g, regiao ? `TRF${regiao}` : "TRF da sua região")
+    .replace(/Seção Judiciária\/JEF do seu estado/g, `Seção Judiciária/JEF de ${U}`)
     // No Distrito Federal o tribunal é o TJDFT, não "TJDF".
-    .replace(/TJSP/g, U === "DF" ? "TJDFT" : `TJ${U}`)
+    .replace(/TJSP/g, tj)
     // Tribunal de Justiça Militar estadual só existe em SP, MG e RS. Fora
     // desses três não se inventa "TJ Militar/PR": o texto fica como está,
     // porque a exigência nem chega a ser pedida a esse cliente.

@@ -128,18 +128,18 @@ export const HUB_CATEGORIAS: readonly HubCategoriaMeta[] = [
  * Nunca mais duplicar: mexeu no nome, mexe aqui.
  */
 export const NOME_CANONICO_ANTECEDENTES: Readonly<Record<string, string>> = {
-  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil/SP (IIRGD)",
-  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — TJSP",
-  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — TJSP",
+  antecedentes_criminais: "Certidão de Antecedentes Criminais — Polícia Civil",
+  antecedentes_estadual_distribuicao: "Certidão Estadual de Distribuições Criminais — Tribunal de Justiça",
+  antecedentes_estadual_execucoes: "Certidão Estadual de Execuções Criminais — Tribunal de Justiça",
   antecedentes_federal_trf3_regional:
-    "Certidão de Distribuição Criminal — Tribunal Regional Federal da 3ª Região",
+    "Certidão de Distribuição Criminal — Justiça Federal (abrangência regional)",
   antecedentes_federal_sjsp_jef:
-    "Certidão de Distribuição Criminal — Seção Judiciária de São Paulo e JEF/SP",
+    "Certidão de Distribuição Criminal — Seção Judiciária e JEF",
   antecedentes_militar: "Certidão Negativa de Crimes Militares — Justiça Militar da União (STM)",
   antecedentes_militar_estadual: "Certidão de Antecedentes Criminais — Justiça Militar Estadual (TJM)",
   antecedentes_eleitoral: "Certidão de Crimes Eleitorais — TSE",
   // Legados: ficam só para registros antigos (não aparecem no seletor).
-  antecedentes_estadual: "Certidão Estadual Criminal — TJSP",
+  antecedentes_estadual: "Certidão Estadual Criminal — Tribunal de Justiça",
   antecedentes_federal: "Certidão de Distribuição Criminal — Justiça Federal",
 } as const;
 
@@ -176,13 +176,13 @@ export const HUB_TIPOS_DOCUMENTO: readonly HubTipoDocumentoMeta[] = [
   { value: "renda_extrato_inss", label: "Extrato INSS", short: "INSS", categoria: "renda_ocupacao", escopo: "permanente", aceitaIA: true, exigeValidade: true },
   // Certidões de antecedentes: `label` SEMPRE vem de NOME_CANONICO_ANTECEDENTES
   // (padrão "Certidão <espécie> — <órgão>"). Nunca escrever o nome à mão aqui.
-  { value: "antecedentes_criminais", label: NOME_CANONICO_ANTECEDENTES.antecedentes_criminais, short: "ANTECEDENTES PC/SP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_criminais", label: NOME_CANONICO_ANTECEDENTES.antecedentes_criminais, short: "ANTECEDENTES PC", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_federal", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal, short: "DISTRIBUIÇÃO FEDERAL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual, short: "ESTADUAL TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_trf3_regional", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_trf3_regional, short: "DISTRIBUIÇÃO TRF3", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_federal_sjsp_jef", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_sjsp_jef, short: "DISTRIBUIÇÃO SJSP/JEF", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_distribuicao", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_distribuicao, short: "DISTRIBUIÇÕES TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
-  { value: "antecedentes_estadual_execucoes", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_execucoes, short: "EXECUÇÕES TJSP", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual, short: "ESTADUAL TJ", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_trf3_regional", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_trf3_regional, short: "FEDERAL REGIONAL", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_federal_sjsp_jef", label: NOME_CANONICO_ANTECEDENTES.antecedentes_federal_sjsp_jef, short: "FEDERAL SEÇÃO/JEF", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_distribuicao", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_distribuicao, short: "DISTRIBUIÇÕES TJ", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
+  { value: "antecedentes_estadual_execucoes", label: NOME_CANONICO_ANTECEDENTES.antecedentes_estadual_execucoes, short: "EXECUÇÕES TJ", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_militar", label: NOME_CANONICO_ANTECEDENTES.antecedentes_militar, short: "CRIMES MILITARES STM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_militar_estadual", label: NOME_CANONICO_ANTECEDENTES.antecedentes_militar_estadual, short: "ANTECEDENTES TJM", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },
   { value: "antecedentes_eleitoral", label: NOME_CANONICO_ANTECEDENTES.antecedentes_eleitoral, short: "CRIMES ELEITORAIS TSE", categoria: "antecedentes_regularidade", escopo: "permanente", exigeValidade: true },

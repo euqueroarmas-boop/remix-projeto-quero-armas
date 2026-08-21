@@ -135,8 +135,11 @@ describe("aviso não afirma que venceu quando ainda há prazo", () => {
 
     expect(avisoParaTipo(tipo, undefined, 30)).toContain("vence em 30 dias");
     expect(avisoParaTipo(tipo, undefined, 30)).not.toContain("fora da validade");
-    // A instrução de onde emitir continua na frase.
-    expect(avisoParaTipo(tipo, undefined, 30)).toContain("portal do TRF3");
+    // A instrução de onde emitir continua na frase. Desde 21/08 ela é neutra
+    // ("TRF da sua região") em vez de "TRF3": o aviso também sai por e-mail,
+    // onde não há UF para resolver, e mandar todo mundo ao TRF3 levava o
+    // cliente de fora de SP/MS ao tribunal errado.
+    expect(avisoParaTipo(tipo, undefined, 30)).toContain("portal do TRF");
 
     expect(avisoParaTipo(tipo, undefined, 1)).toContain("vence em 1 dia");
     expect(avisoParaTipo(tipo, undefined, 0)).toContain("vence hoje");

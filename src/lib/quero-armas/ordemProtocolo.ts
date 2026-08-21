@@ -121,8 +121,8 @@ const MAPA: Record<string, Regra> = {
   ctps: { grupo: 5, ordem: 0, numero: "05", rotulo: "Ocupacao licita - CTPS" },
 
   antecedentes_criminais: { grupo: 6, ordem: 0, numero: "06", rotulo: "AAC Policia Civil" },
-  antecedentes_federal_trf3_regional: { grupo: 6, ordem: 1, numero: "07", rotulo: "Certidao Justica Federal TRF3" },
-  antecedentes_federal_sjsp_jef: { grupo: 6, ordem: 2, numero: "08", rotulo: "Certidao Justica Federal SJSP e JEF" },
+  antecedentes_federal_trf3_regional: { grupo: 6, ordem: 1, numero: "07", rotulo: "Certidao Justica Federal - regional" },
+  antecedentes_federal_sjsp_jef: { grupo: 6, ordem: 2, numero: "08", rotulo: "Certidao Justica Federal - secao judiciaria e JEF" },
   antecedentes_estadual_distribuicao: { grupo: 6, ordem: 3, numero: "09", rotulo: "Certidao Justica Estadual distribuicao" },
   antecedentes_estadual_execucoes: { grupo: 6, ordem: 4, numero: "10", rotulo: "Certidao Justica Estadual execucoes criminais" },
   antecedentes_eleitoral: { grupo: 6, ordem: 5, numero: "11", rotulo: "Certidao Justica Eleitoral" },
