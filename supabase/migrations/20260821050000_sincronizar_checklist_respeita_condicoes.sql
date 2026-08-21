@@ -53,10 +53,13 @@
 -- Ninguém perde documento já enviado: os passos que dispensam continuam
 -- ignorando qualquer linha com arquivo ou já resolvida.
 --
--- MUDANÇA A MAIS, declarada: o laço passa a pular também processo
--- `excluido_lgpd`, que hoje ele alcança. Escrever em processo cujo titular
--- pediu exclusão é o oposto do que a LGPD manda, e a montagem individual já
--- não os toca.
+-- MUDANÇA A MAIS, declarada: o laço só percorre processo que ainda está
+-- MONTANDO dossiê. A lista antiga (`NOT IN ('concluido','cancelado',
+-- 'excluido_lgpd')`) deixava passar protocolado, deferido, indeferido,
+-- notificado e em recurso — dossiê já entregue à PF era reescrito —, e
+-- 'excluido_lgpd' nem sequer é status de processo (é de cliente), de modo que
+-- não excluía ninguém. Agora a proteção de LGPD é feita onde o dado existe, em
+-- qa_clientes.status.
 --
 -- Idempotente.
 -- =============================================================================
@@ -282,6 +285,8 @@ BEGIN
     )
     SELECT COUNT(*) INTO v_arq_proc FROM arq;
 
+    -- Contador do que foi PRESERVADO: tem de ser o espelho exato do filtro de
+    -- dispensa acima, senão o número não bate com o que aconteceu.
     SELECT COUNT(*) INTO v_pres_proc
       FROM public.qa_processo_documentos pd
      WHERE pd.processo_id = v_proc.id
@@ -289,8 +294,8 @@ BEGIN
          SELECT 1 FROM public.qa_catalogo_do_processo(v_proc.id) d
           WHERE d.tipo_documento = pd.tipo_documento
        )
-       AND (pd.arquivo_storage_key IS NOT NULL
-            OR pd.status IN ('aprovado','validado','dispensado','dispensado_grupo','dispensado_por_reaproveitamento','concluido','concluído'));
+       AND (coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NOT NULL
+            OR pd.status IN ('aprovado','validado','conforme','dispensado','dispensado_grupo','dispensado_por_reaproveitamento','concluido','concluído','entregue','entregue_pelo_hub'));
 
     v_ins_total  := v_ins_total  + COALESCE(v_ins_proc,0);
     v_upd_total  := v_upd_total  + COALESCE(v_upd_proc,0);
@@ -454,8 +459,12 @@ COMMIT;
 --        ) AS sobrando_no_processo
 --   FROM public.qa_processos p
 --   JOIN public.qa_clientes cl ON cl.id = p.cliente_id
---  WHERE p.status NOT IN ('concluido','cancelado','excluido_lgpd')
---    AND p.servico_id IN (44, 50, 60)
+--  WHERE p.servico_id IN (44, 50, 60)
+--    AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+--                     'aguardando_documentos','em_validacao','pendente_cliente',
+--                     'revisao_humana','validado','pagamento_confirmado',
+--                     'em_analise_interna')
+--    AND COALESCE(cl.status,'') <> 'excluido_lgpd'
 --  ORDER BY cl.estado, p.servico_id;
 --
 -- C) Teste seco do filtro, sem tocar em processo nenhum: o que o catálogo do
