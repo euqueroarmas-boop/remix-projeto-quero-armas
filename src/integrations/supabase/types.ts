@@ -3194,6 +3194,7 @@ export type Database = {
           end2_numero: string | null
           end2_observacao: string | null
           end2_tipo: string | null
+          enderecos_anteriores_json: Json | null
           estado_civil: string | null
           id: string
           motivo_arquivamento: string | null
@@ -3216,6 +3217,7 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
+          residiu_mesmo_endereco_5_anos: boolean | null
           responsavel_endereco_bairro: string | null
           responsavel_endereco_cep: string | null
           responsavel_endereco_cidade: string | null
@@ -3331,6 +3333,7 @@ export type Database = {
           end2_numero?: string | null
           end2_observacao?: string | null
           end2_tipo?: string | null
+          enderecos_anteriores_json?: Json | null
           estado_civil?: string | null
           id?: string
           motivo_arquivamento?: string | null
@@ -3353,6 +3356,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -3468,6 +3472,7 @@ export type Database = {
           end2_numero?: string | null
           end2_observacao?: string | null
           end2_tipo?: string | null
+          enderecos_anteriores_json?: Json | null
           estado_civil?: string | null
           id?: string
           motivo_arquivamento?: string | null
@@ -3490,6 +3495,7 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
+          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -4556,6 +4562,47 @@ export type Database = {
           },
         ]
       }
+      qa_cliente_enderecos_anteriores: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          id: string
+          observacao: string | null
+          origem: string
+          qa_cliente_id: number
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          origem?: string
+          qa_cliente_id: number
+          uf: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          id?: string
+          observacao?: string | null
+          origem?: string
+          qa_cliente_id?: number
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qa_cliente_enderecos_anteriores_qa_cliente_id_fkey"
+            columns: ["qa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "qa_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qa_cliente_historico_atualizacoes: {
         Row: {
           autor: string | null
@@ -4840,6 +4887,7 @@ export type Database = {
           recadastramento_iniciado_em: string | null
           recadastramento_obrigatorio: boolean
           recadastramento_status: string | null
+          residiu_mesmo_endereco_5_anos: boolean | null
           responsavel_endereco_bairro: string | null
           responsavel_endereco_cep: string | null
           responsavel_endereco_cidade: string | null
@@ -4979,6 +5027,7 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -5118,6 +5167,7 @@ export type Database = {
           recadastramento_iniciado_em?: string | null
           recadastramento_obrigatorio?: boolean
           recadastramento_status?: string | null
+          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -6447,6 +6497,7 @@ export type Database = {
           tipo_documento: string
           titular_comprovante_documento: string | null
           titular_comprovante_nome: string | null
+          uf_referencia: string | null
           updated_at: string
           validade_filiacao: string | null
           validado_admin: boolean
@@ -6506,6 +6557,7 @@ export type Database = {
           tipo_documento: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
+          uf_referencia?: string | null
           updated_at?: string
           validade_filiacao?: string | null
           validado_admin?: boolean
@@ -6565,6 +6617,7 @@ export type Database = {
           tipo_documento?: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
+          uf_referencia?: string | null
           updated_at?: string
           validade_filiacao?: string | null
           validado_admin?: boolean
@@ -10090,6 +10143,7 @@ export type Database = {
           tipo_documento: string
           titular_comprovante_documento: string | null
           titular_comprovante_nome: string | null
+          uf_referencia: string | null
           updated_at: string
           usado_como_modelo: boolean
           validacao_ia_confianca: number | null
@@ -10154,6 +10208,7 @@ export type Database = {
           tipo_documento: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
+          uf_referencia?: string | null
           updated_at?: string
           usado_como_modelo?: boolean
           validacao_ia_confianca?: number | null
@@ -10218,6 +10273,7 @@ export type Database = {
           tipo_documento?: string
           titular_comprovante_documento?: string | null
           titular_comprovante_nome?: string | null
+          uf_referencia?: string | null
           updated_at?: string
           usado_como_modelo?: boolean
           validacao_ia_confianca?: number | null
@@ -13783,14 +13839,28 @@ export type Database = {
         }[]
       }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
+      qa_certidao_e_territorial: { Args: { p_tipo: string }; Returns: boolean }
+      qa_certidao_link_do_estado_anterior: {
+        Args: { p_generico: string; p_uf: string }
+        Returns: string
+      }
       qa_certidao_link_por_uf: {
         Args: { p_tipo: string; p_uf: string }
+        Returns: string
+      }
+      qa_certidao_nome_do_estado_anterior: {
+        Args: { p_generico: string; p_uf: string }
         Returns: string
       }
       qa_certidao_texto_por_uf: {
         Args: { p_texto: string; p_tipo: string; p_uf: string }
         Returns: string
       }
+      qa_certidao_tipo_do_estado_anterior: {
+        Args: { p_generico: string; p_uf: string }
+        Returns: string
+      }
+      qa_certidao_uf_do_tipo: { Args: { p_tipo: string }; Returns: string }
       qa_chat_sessao_por_assunto: {
         Args: { _cliente_id: number; _emb: string }
         Returns: {
@@ -13890,6 +13960,10 @@ export type Database = {
           sistema_registro: string
         }[]
       }
+      qa_copia_residencia_5_anos_do_cadastro: {
+        Args: { p_cadastro_id: string; p_cliente_id: number }
+        Returns: number
+      }
       qa_create_processo_from_venda: {
         Args: { p_servico_id: number; p_venda_id: number }
         Returns: Json
@@ -13953,6 +14027,10 @@ export type Database = {
           status: string
           tipo_documento: string
         }[]
+      }
+      qa_documento_semeado: {
+        Args: { p_campos: Json; p_tipo: string }
+        Returns: boolean
       }
       qa_email_disparos_resumo: {
         Args: never
@@ -14391,6 +14469,14 @@ export type Database = {
           uf: string
           unidade_pf: string
         }[]
+      }
+      qa_resseia_estados_anteriores_do_cliente: {
+        Args: { p_cliente_id: number }
+        Returns: number
+      }
+      qa_seed_certidoes_estados_anteriores: {
+        Args: { p_processo_id: string }
+        Returns: number
       }
       qa_seed_endereco_5_anos: {
         Args: { p_processo_id: string }
