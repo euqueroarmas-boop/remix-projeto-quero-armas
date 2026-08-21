@@ -29,6 +29,10 @@
 -- fonte canônica. Se a tabela mudar um dia, esta linha acompanha.
 --
 -- Idempotente.
+--
+-- APLICADA E CONFERIDA em 21/08/2026 09:55 BRT:
+--   A) servico_id 44 → 90 · 50 → 90 · 60 → 90
+--   B) varredura geral de certidões fora da tabela única → 0 linhas
 -- =============================================================================
 
 BEGIN;
