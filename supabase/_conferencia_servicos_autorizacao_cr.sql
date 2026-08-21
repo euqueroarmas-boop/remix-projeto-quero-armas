@@ -12,9 +12,14 @@
 --         livre, sem opcoes, o que é esperado)
 --   4  ✅ respondida — STM: 44=90, 60=90, 50=30 (o 50 diverge)
 --   5  ✅ respondida — as duas funções de prazo existem
---   6  ✅ respondida — to_regclass devolveu VAZIO
---   7a ⬜ pendente
---   7b ⬜ pendente
+--   6  ⚠️ CONSULTA ERRADA — qa_prazo_certidao é FUNÇÃO, não tabela; to_regclass
+--         só enxerga tabela. A função EXISTE (prova: 44 e 60 estão com 90, que
+--         é o valor que ela aplicou em 19/08).
+--   7a ✅ respondida — NÃO existe condicao_uf na tabela (a migration
+--         20260730160000, das certidões por estado, nunca foi aplicada);
+--         existe condicao_modalidade
+--   7b ✅ respondida — 33 itens ativos no serviço 50; STM é a única certidão
+--         fora da tabela única
 --   7  ❌ falhou: ERROR 42703 column "condicao_uf" does not exist
 --         → refeita como 7a (colunas da tabela) + 7b (catálogo sem condicao_uf)
 --   8  ✅ respondida — 2 processos: LEO (34, 01/07, aguardando_documentos) e
