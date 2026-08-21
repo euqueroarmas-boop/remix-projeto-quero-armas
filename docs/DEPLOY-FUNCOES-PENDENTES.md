@@ -1,6 +1,56 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
-## 🔴 PENDENTE — Leva 11 · A GRU só abre depois da defesa aprovada
+## ✅ Leva 16 · Certidão segue o estado do cliente — APLICADA em 21/08/2026, 12:36 BRT
+
+Decisão do titular (21/08): *"o cliente deve receber os links das certidões do
+seu estado apenas e os da União. As certidões devem ser disponibilizadas para o
+que é possível baixar e quem tem coerência. Não é possível um cliente do Paraná
+baixar uma certidão do TJM."*
+
+Antes disso, todo cliente recebia a lista com nome e link de São Paulo, e nos
+serviços 44/50/60 recebia a certidão do Tribunal de Justiça Militar como
+obrigatória — tribunal que só existe em SP, MG e RS. O cliente do Paraná ficava
+com item obrigatório sem onde emitir, e o checklist dele nunca fechava.
+
+| Migration | O que faz | Estado |
+|---|---|---|
+| `20260821040000_certidoes_por_uf_do_cliente` | Mapa das 27 UFs (`qa_uf_certidao`), normalizador de UF, correção de nome/órgão/link por substituição, coluna `condicao_uf`, montador de checklist com filtro territorial, backfill dos processos em montagem | ✅ **aplicada 21/08 12:36** |
+| `20260821050000_sincronizar_checklist_respeita_condicoes` | `qa_catalogo_do_processo` (regra única), botão "sincronizar" e painel de divergência passam a respeitar condição com vírgula, modalidade e UF | ✅ **aplicada 21/08 12:36** |
+
+**Nenhuma edge function foi tocada** — nada a publicar no Lovable nesta leva.
+
+⚠️ **O front ainda NÃO está publicado.** As correções em
+`src/lib/quero-armas/linksAntecedentesPorUf.ts` (resolução de link por
+igualdade em vez de prefixo, normalização da UF por extenso, TJDFT, e parar de
+inventar "TJ Militar/PR") estão na branch `claude/servicos-autorizacao-armas-xbxd09`,
+não na `main`. Nada quebra sem elas — o link vem do banco, que já está certo —
+mas o popup guiado só melhora depois do merge.
+
+**Conferido em produção em 21/08, 12:37 BRT:**
+
+- mapa: 27 UFs, 3 com TJM, Distrito Federal como `TJDFT`;
+- `condicao_uf = {SP,MG,RS}` nas três linhas de `antecedentes_militar_estadual`
+  (serviços 44, 50 e 60), todas ativas;
+- painel de divergência do serviço 50: 1 processo ativo, 0 divergentes,
+  0 faltando, 0 removidas. (Passou a contar 1 e não 2 porque o processo do
+  Rivelino está `deferido` — dossiê encerrado saiu do alcance de propósito.)
+
+Antes de subir, a leva passou por revisão adversarial em quatro frentes, que
+achou 14 defeitos na primeira versão — entre eles: renomear em massa também as
+linhas do cliente de São Paulo, alcançar dossiê já protocolado/deferido,
+detectar "documento entregue" por só um dos dois campos de arquivo, e disparar
+um aviso falso no sino do Admin por cliente dispensado. Todos corrigidos e
+provados em PostgreSQL 16 local com as migrations reais.
+
+---
+
+## ✅ Leva 11 · A GRU só abre depois da defesa aprovada — JÁ APLICADA
+
+**Correção de registro (21/08/2026):** este quadro ficou meses marcado como
+🔴 PENDENTE, mas as duas peças JÁ ESTÃO no banco. Conferido em 21/08:
+`qa_servicos_catalogo.exige_peca_defesa` existe (SINARM `true`, SIGMA `false`) e
+o gatilho `qa_trg_trava_protocolo_sem_defesa` existe. O quadro abaixo fica como
+histórico do que a leva continha.
 
 Aberta em 20/08/2026, a partir do processo real do Anthony: documentação
 inteira entregue, boleto da GRU aberto no checklist do cliente, e nenhuma peça
@@ -11,13 +61,13 @@ etapa final (GRU, gov.br, juntada) — e ela não checava se a defesa existia.
 
 | Arquivo | O que faz | Estado |
 |---|---|---|
-| `20260820120000_gru_espera_peca_aprovada` | `qa_servicos_catalogo.exige_peca_defesa` + marcação fail-safe de todo serviço que gera processo | ⬜ **a aplicar** |
+| `20260820120000_gru_espera_peca_aprovada` | `qa_servicos_catalogo.exige_peca_defesa` + marcação fail-safe de todo serviço que gera processo | ✅ **aplicada** (coluna conferida em 21/08) |
 
 **Edge function:**
 
 | Arquivo | O que muda | Estado |
 |---|---|---|
-| `qa-processo-checar-conclusao-checklist` | Gate da defesa: recusa promover enquanto não houver peça `aprovada` nos serviços marcados; procura a peça também pelo cliente (a minuta nasce sem `processo_id`) | ⬜ **redeploy obrigatório** |
+| `qa-processo-checar-conclusao-checklist` | Gate da defesa: recusa promover enquanto não houver peça `aprovada` nos serviços marcados; procura a peça também pelo cliente (a minuta nasce sem `processo_id`) | ✅ **publicada** (o gatilho de banco que depende da coluna existe) |
 
 Se a função subir sem a migration, `exige_peca_defesa` não existe e a leitura do
 catálogo volta vazia — o gate não morde e o furo continua aberto. Se a migration
