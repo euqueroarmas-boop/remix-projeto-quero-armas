@@ -101,6 +101,11 @@ const STATUS_PROCESSO_EXIGENCIA: ReadonlySet<string> = new Set([
   "exigencia_emitida",
   "cumprindo_exigencia",
   "notificado",
+  // Regra do titular (20/08/2026, Lei 9.784/99): depois do protocolo a
+  // certidão não vence mais — o relógio SÓ volta se a delegacia obrigar, por
+  // notificação OU recurso administrativo. Vale para SIGMA e SINARM.
+  "recurso_administrativo",
+  "em_recurso",
 ]);
 
 export interface ProcessoParaGestao {

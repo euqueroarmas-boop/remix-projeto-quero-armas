@@ -321,15 +321,16 @@ serve(async (req) => {
       const { data: procs } = await sb
         .from("qa_processos")
         .select("id, cliente_id, status");
-      // Só processo ANTES do protocolo: depois disso o dossiê já foi entregue e
-      // cobrar validade de documento protocolado é cobrar o que não se usa mais.
-      const POS_PROTOCOLO = new Set([
-        "protocolado", "em_analise_orgao", "notificado", "recurso_administrativo",
-        "deferido", "indeferido", "concluido", "cancelado",
-      ]);
+      // Lei 9.784/99 (regra do titular, 20/08/2026): protocolou, a certidão
+      // não vence mais — o relógio SÓ volta se a delegacia obrigar, por
+      // notificação ou recurso administrativo. A decisão vem do MESMO espelho
+      // usado pelo bloco do Hub (`instrucaoAindaExigida`); a lista local que
+      // vivia aqui silenciava até quem estava em exigência, o contrário da
+      // regra — cliente notificado ficava sem aviso do documento que a
+      // delegacia estava cobrando.
       const processoDoCliente = new Map<string, number>();
       for (const p of (procs || []) as Array<{ id: string; cliente_id: number; status: string | null }>) {
-        if (POS_PROTOCOLO.has(String(p.status ?? "").toLowerCase())) continue;
+        if (!instrucaoAindaExigida([{ status: p.status }])) continue;
         processoDoCliente.set(p.id, p.cliente_id);
       }
 

@@ -45,13 +45,13 @@ describe("a rotina de vencimentos passa a olhar o checklist do processo", () => 
 });
 
 describe("o que NÃO deve gerar alerta", () => {
-  it("processo já protocolado sai da conta", () => {
-    // Depois do protocolo o dossiê foi entregue; cobrar validade de documento
-    // protocolado é cobrar o que não se usa mais.
-    expect(ALERTAS).toMatch(/const POS_PROTOCOLO = new Set\(\[/);
-    for (const st of ["protocolado", "deferido", "concluido", "cancelado"]) {
-      expect(ALERTAS, `falta ${st}`).toMatch(new RegExp(`"${st}"`));
-    }
+  it("processo já protocolado sai da conta — pelo espelho, não por lista local", () => {
+    // Lei 9.784/99 (regra do titular, 20/08/2026): protocolou, a certidão não
+    // vence mais; notificação ou recurso administrativo religam. A decisão
+    // vem do MESMO espelho do Hub (`instrucaoAindaExigida`) — a lista local
+    // que vivia aqui silenciava até quem estava em exigência.
+    expect(ALERTAS).toMatch(/instrucaoAindaExigida\(\[\{ status: p\.status \}\]\)/);
+    expect(ALERTAS).not.toMatch(/const POS_PROTOCOLO = new Set\(\[/);
   });
 
   it("só conta documento que de fato entra no dossiê", () => {

@@ -20,6 +20,8 @@ const SQL = [
   // A 8ª certidão (TJM) entrou em migration própria — o titular apontou que
   // são oito certidões e a primeira leva semeou sete.
   "supabase/migrations/20260820230000_autorizacao_compra_certidao_tjm.sql",
+  // A arma e a loja entram pelo checklist (regra do titular, 20/08/2026).
+  "supabase/migrations/20260821020000_pergunta_loja_arma_autorizacao_compra.sql",
 ].map((f) => readFileSync(resolve(process.cwd(), f), "utf-8")).join("\n");
 
 /** Os 12 itens numerados pela equipe nos dossiês, na ordem do dossiê. */
@@ -112,6 +114,25 @@ describe("as regras que os dossiês ensinaram", () => {
   it("as perguntas ganham chave e opções, senão o portal desenha upload", () => {
     expect(SQL).toContain("'chave', 'responde_inquerito_criminal'");
     expect(SQL).toContain("'opcoes'");
+  });
+});
+
+describe("a arma e a loja entram pelo checklist", () => {
+  it("a pergunta existe, com chave e opções sim/não", () => {
+    expect(SQL).toContain("'pergunta_arma_loja_definida'");
+    expect(SQL).toContain("'chave', 'arma_loja_definida'");
+  });
+
+  it("o contrato da loja só é cobrado de quem respondeu SIM", () => {
+    const i = SQL.indexOf("'Contrato ou pedido da loja");
+    const bloco = SQL.slice(i, i + 900);
+    expect(bloco).toContain("'exige_quando', jsonb_build_object('arma_loja_definida', 'sim')");
+  });
+
+  it("nenhum tipo novo entrou no vocabulário — o upload usa documento_complementar_caso", () => {
+    const i = SQL.indexOf("pergunta_arma_loja_definida");
+    const trecho = SQL.slice(i);
+    expect(trecho).toContain("'documento_complementar_caso'");
   });
 });
 

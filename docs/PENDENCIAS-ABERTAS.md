@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 20/08/2026, 22:20 BRT.
+Índice único do que ficou em aberto. Atualizado em 21/08/2026, 02:10 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -13,12 +13,20 @@ conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
 
 ---
 
-## 🔴 Certidão não pode vencer depois do protocolo — Lei 9.784/99 (20/08/2026)
+## ✅ RESOLVIDA (20/08/2026) — Certidão não vence depois do protocolo — Lei 9.784/99
 
 Regra dada pelo titular: **depois que o processo é protocolado, a certidão não
 vence mais.** A Lei 9.784/99, que regula o processo administrativo federal, põe
 a demora na conta da Administração, não do requerente. Documento juntado no
 protocolo está juntado.
+
+**Resolvida com o aval do titular, com a regra completa: o relógio para no
+protocolo (SIGMA e SINARM) e SÓ volta se a delegacia obrigar — notificação ou
+recurso administrativo.** Três camadas alinhadas: o cálculo SQL do prazo
+crítico (migration `20260821010000`, com gatilho e acerto dos protocolados), o
+robô de e-mails (`qa-vencimentos-alertas` passou a decidir pelo espelho
+`instrucaoAindaExigida` — a lista local silenciava até quem estava em
+exigência) e o front (recurso administrativo agora religa o relógio).
 
 ### O furo
 
@@ -176,7 +184,13 @@ protocolo faltando quase tudo.
 
 ---
 
-## 🟠 Escolha da loja não existe no checklist da autorização de compra (20/08/2026)
+## ✅ RESOLVIDA (20/08/2026) — Escolha da loja e da arma entram pelo checklist
+
+**Resolvida — decisão do titular: perguntas no checklist.** A migration
+`20260821020000` põe no serviço 50 a pergunta "você já fechou com a loja a
+arma que vai comprar?" e, para quem responde SIM, o upload do contrato/pedido
+da loja (dados da arma + CNPJ) — que é de onde a equipe tira o que precisa
+para abrir o pedido no SINARM CAC. Quem responde NÃO define com a equipe.
 
 Nos três dossiês deferidos, o **fornecedor sai impresso na autorização** — razão
 social e endereço, identificado por CNPJ (PF) ou por nº de registro SIGMA

@@ -375,3 +375,17 @@ Migrations que precisam ir ANTES do deploy:
   dono — uma autorização anexada na pasta do cliente errado passa sem alerta.
 
 Nenhuma migration necessária para esta leva (tudo vai no JSONB que já existe).
+
+## 2026-08-21 — Lei 9.784/99: avisos param no protocolo
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-vencimentos-alertas/index.ts` — o ramo do dossiê
+  passa a decidir pelo espelho `instrucaoAindaExigida` (junto com o arquivo
+  compartilhado `_shared/faixaAlertaDocumento.ts`, que agora religa o relógio
+  também em recurso administrativo). Sem o redeploy, cliente NOTIFICADO pela
+  delegacia continua sem aviso do documento que ela está cobrando.
+
+Migrations que precisam ir ANTES do deploy:
+- `20260821010000_certidao_nao_vence_apos_protocolo.sql`
+- `20260821020000_pergunta_loja_arma_autorizacao_compra.sql` (independente,
+  pode ir junto)

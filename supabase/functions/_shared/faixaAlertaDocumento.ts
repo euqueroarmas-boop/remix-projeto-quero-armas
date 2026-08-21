@@ -121,6 +121,9 @@ const STATUS_PROCESSO_POS_PROTOCOLO = new Set([
 
 const STATUS_PROCESSO_EXIGENCIA = new Set([
   "em_exigencia", "exigencia", "exigencia_emitida", "cumprindo_exigencia", "notificado",
+  // Lei 9.784/99 (regra do titular, 20/08/2026): pós-protocolo o relógio só
+  // volta em notificação ou recurso administrativo. SIGMA e SINARM.
+  "recurso_administrativo", "em_recurso",
 ]);
 
 /** Ainda existe processo que precisa da documentação de instrução válida? */
