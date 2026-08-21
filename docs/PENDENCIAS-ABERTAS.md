@@ -830,6 +830,30 @@ mais o front.
 | `qa_guard_pergunta_sem_resposta` conhece a pergunta nova | acréscimo puro, um tipo a mais na lista |
 | CHECK `qa_doc_cliente_tipo_check` ganha 117 códigos | acréscimo puro: nenhum tipo existente sai |
 
+### Conferido em produção — 21/08/2026, 19:25–19:52 BRT
+
+As três migrations aplicadas, e as sete conferências:
+
+| Conferência | Resultado |
+|---|---|
+| trava de estado dentro do motor de reaproveitamento | 1 ✅ |
+| certidões espelhadas no cofre pelo backfill | **0 — correto**: existem só 2 certidões aprovadas no checklist e as 2 já estavam no cofre, com o mesmo arquivo e o mesmo tipo. Vieram do cofre para o processo, não o contrário — não havia o que espelhar. O espelho passa a valer para o que o cliente subir a partir de agora |
+| pergunta no catálogo | serviços 31, 44, 50 e 60. O 51 ficou de fora porque não tem certidão estadual no catálogo — a trava "só onde a exigência já existia" funcionou |
+| patches textuais (exploder, botão, painel) | as 3 funções ✅ |
+| pergunta nos processos abertos | 50 → 1, 60 → 9. Bate exatamente com os processos existentes (50: 2, sendo 1 com relógio andando; 60: 10, sendo 9). Não existe processo de 31, 44 ou 51 |
+| carimbo de estado nas certidões já entregues | 36 de 36 ✅ |
+| tipos aceitos no cofre | 223 ✅ |
+| gatilhos | os 7 novos existem e o destrutivo (`qa_trg_mudanca_de_estado_reabre_certidoes`) sumiu ✅ |
+| edge function `qa-cadastro-publico` | publicada 19:52 BRT ✅ |
+
+**Defeito próprio encontrado na conferência e corrigido** (`20260821100000`): a
+pergunta nasceu com `depende_de: {documento: 'comprovante_residencia'}`, mas o
+motor do checklist só entende `depende_de: {chave, valor}` — a chave era inerte
+e nunca escondeu nada. Retirada. A ordem "comprovante primeiro, pergunta depois"
+continua garantida pela ordem dentro do grupo endereço (40 → 45), pelo popup
+guiado que apresenta um item por vez, e pela ordem física das etapas do
+formulário público.
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
