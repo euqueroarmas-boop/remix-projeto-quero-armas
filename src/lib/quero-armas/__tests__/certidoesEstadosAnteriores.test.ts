@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { EnderecosAnterioresLista } from "@/components/quero-armas/EnderecosAnterioresLista";
-import { estadosDistintos } from "@/lib/quero-armas/enderecosAnteriores";
+import {
+  chaveEnderecoAnterior,
+  diffEnderecosAnteriores,
+  estadosDistintos,
+} from "@/lib/quero-armas/enderecosAnteriores";
 import {
   GRUPOS_NAO_FILTRAVEIS,
   PENDENCIA_GRUPOS,
@@ -190,5 +194,73 @@ describe("o que conta no fim é o ESTADO", () => {
 
   it("o componente existe e é o mesmo usado nas duas portas de entrada", () => {
     expect(typeof EnderecosAnterioresLista).toBe("function");
+  });
+});
+
+// ============================================================================
+// A porta da EQUIPE no cadastro do cliente (21/08/2026): "pode pendurar isso no
+// admin também, para nós podermos cumprir essas exigências para o cliente caso
+// seja necessário". O que se grava ali dispara o semeador — errar o diff
+// significa apagar a linha errada ou tentar inserir duplicata.
+// ============================================================================
+
+describe("o que a equipe grava no cadastro do cliente", () => {
+  const gravados = [
+    { id: "a", uf: "MG", cidade: "CONTAGEM", origem: "cliente" },
+    { id: "b", uf: "PR", cidade: "CURITIBA", origem: "sistema" },
+    { id: "c", uf: "RS", cidade: "PELOTAS", origem: "equipe" },
+  ];
+
+  it("a identidade da linha é a mesma do índice único do banco", () => {
+    // (cliente, uf, lower(btrim(coalesce(cidade,''))))
+    expect(chaveEnderecoAnterior("mg", " Contagem ")).toBe(
+      chaveEnderecoAnterior("MG", "contagem"),
+    );
+    expect(chaveEnderecoAnterior("MG", null)).toBe(chaveEnderecoAnterior("MG", "  "));
+    expect(chaveEnderecoAnterior("MG", "CONTAGEM")).not.toBe(
+      chaveEnderecoAnterior("MG", "UBERLÂNDIA"),
+    );
+  });
+
+  it("não mexe em nada quando a lista não mudou", () => {
+    const d = diffEnderecosAnteriores(
+      gravados,
+      gravados.map((g) => ({ uf: g.uf, cidade: g.cidade })),
+      false,
+    );
+    expect(d.remover).toEqual([]);
+    expect(d.inserir).toEqual([]);
+  });
+
+  it("insere o que entrou e remove o que saiu", () => {
+    const d = diffEnderecosAnteriores(
+      gravados,
+      [
+        { uf: "MG", cidade: "CONTAGEM" },
+        { uf: "SC", cidade: "BLUMENAU" },
+      ],
+      false,
+    );
+    expect(d.inserir).toEqual([{ uf: "SC", cidade: "BLUMENAU" }]);
+    expect(d.remover.sort()).toEqual(["b", "c"]);
+  });
+
+  it("linha em branco na tela não vira nada no banco", () => {
+    const d = diffEnderecosAnteriores([], [{ uf: "", cidade: "" }], false);
+    expect(d.inserir).toEqual([]);
+    expect(d.remover).toEqual([]);
+  });
+
+  it('"morou sempre no mesmo endereço" tira o DECLARADO e preserva a mudança real', () => {
+    // A mudança de endereço no cadastro é fato — não é declaração, e não pode
+    // ser apagada por uma resposta. O que a pessoa declarou, sim.
+    const d = diffEnderecosAnteriores(gravados, [], true);
+    expect(d.remover).toEqual(["a"]);
+    expect(d.inserir).toEqual([]);
+  });
+
+  it("a UF gravada sai sempre em duas letras maiúsculas", () => {
+    const d = diffEnderecosAnteriores([], [{ uf: " sc ", cidade: " Joinville " }], false);
+    expect(d.inserir).toEqual([{ uf: "SC", cidade: "Joinville" }]);
   });
 });

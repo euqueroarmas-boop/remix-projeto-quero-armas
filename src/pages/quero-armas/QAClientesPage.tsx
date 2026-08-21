@@ -53,6 +53,7 @@ import ClienteExames from "@/components/quero-armas/clientes/ClienteExames";
 import ClienteEfetivaNecessidade from "@/components/quero-armas/clientes/ClienteEfetivaNecessidade";
 import ClienteCienciasAuditoria from "@/components/quero-armas/clientes/ClienteCienciasAuditoria";
 import ClienteCarimbosConexao from "@/components/quero-armas/clientes/ClienteCarimbosConexao";
+import ClienteEnderecosAnteriores from "@/components/quero-armas/clientes/ClienteEnderecosAnteriores";
 import ClienteAuditoriaLeitura from "@/components/quero-armas/clientes/ClienteAuditoriaLeitura";
 import { useQAAuth } from "@/components/quero-armas/hooks/useQAAuth";
 import ClienteDocsEnviados from "@/components/quero-armas/clientes/ClienteDocsEnviados";
@@ -3456,6 +3457,16 @@ export default function QAClientesPage() {
                     </QAFieldGrid>
                   </QAInfoCard>
                 </QAOperationalSection>
+
+                {/* RESIDÊNCIA DOS ÚLTIMOS 5 ANOS — SINARM CAC / SIGMA.
+                    Fica logo depois do endereço principal porque a régua é
+                    exatamente essa: onde mora hoje x onde morou antes. A equipe
+                    lança aqui quando precisa cumprir a exigência pelo cliente;
+                    gravar já semeia as certidões nos processos abertos. */}
+                <ClienteEnderecosAnteriores
+                  cliente={c}
+                  onChanged={async () => { await loadSubData(c); }}
+                />
 
                 {/* RESPONSÁVEL PELO COMPROVANTE — condicional */}
                 {(exigeResponsavelTerceiro || temResponsavelTerceiroDado) && (

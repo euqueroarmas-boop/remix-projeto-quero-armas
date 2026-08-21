@@ -875,6 +875,24 @@ Continua de pé, intacto: a tabela `qa_cliente_enderecos_anteriores`, a resposta
 em `qa_clientes.residiu_mesmo_endereco_5_anos`, o semeador dos blocos por
 estado, a pergunta no checklist e os cinco gatilhos da regra.
 
+### A porta da equipe — 21/08/2026
+
+*"Pode pendurar isso no admin também para nós podermos cumprir essas exigências
+para o cliente caso seja necessário."*
+
+`ClienteEnderecosAnteriores` entra no cadastro do cliente, logo abaixo de
+"Endereço Principal": a equipe marca se o cliente morou sempre no mesmo
+endereço e, quando não, lança os estados e cidades. Gravar dispara o gatilho que
+semeia as certidões nos processos abertos — a tela não monta nada por conta
+própria.
+
+Duas regras que a tela respeita, e que têm teste:
+- a identidade da linha é a mesma do índice único do banco (cliente, UF, cidade
+  normalizada), senão salvar apagaria a linha errada;
+- marcar "sempre o mesmo endereço" retira o que foi **declarado** e preserva o
+  que o sistema registrou numa mudança de endereço real — mudança é fato,
+  declaração é o que a pessoa disse. É a mesma regra do gatilho do checklist.
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
