@@ -1,15 +1,84 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 21/08/2026, 02:10 BRT.
+Índice único do que ficou em aberto. Atualizado em 21/08/2026, 12:40 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
 
-## ✅ Deploy — nada pendente
+## ✅ RESOLVIDA (21/08/2026) — Certidão segue o estado do cliente
+
+Regra dada pelo titular: **o cliente recebe os links das certidões do estado
+dele e as da União. Só se pede o que ele consegue emitir.** Cliente do Paraná
+não tem como baixar certidão do Tribunal de Justiça Militar — esse tribunal só
+existe em SP, MG e RS.
+
+Antes disso, todo cliente de qualquer estado recebia a lista com nome e link de
+São Paulo, e nos serviços 44 (CR), 50 (atirador) e 60 (posse) recebia o TJM como
+exigência OBRIGATÓRIA. Quem morava fora dos três estados ficava com um item que
+não tinha onde cumprir, e o checklist nunca fechava.
+
+A regra territorial tinha sido escrita em 30/07 (`20260730160000`) e **nunca foi
+aplicada** — a coluna `condicao_uf` não existia no banco. Pior: a
+`20260812203000` reescreveu o montador de checklist DEPOIS, sem o filtro. Os
+dois lados foram arrumados agora.
+
+**Aplicada e conferida em 21/08 12:36 BRT** (migrations `20260821040000` e
+`20260821050000`). Detalhes e conferências em `docs/DEPLOY-FUNCOES-PENDENTES.md`,
+leva 16.
+
+Duas decisões do titular ficaram registradas na migration: cliente de São Paulo
+tira AS DUAS certidões federais (regional + Seção Judiciária), encerrando a
+divergência com a decisão de 30/07; e a correção vale também para os processos
+já abertos que ainda montam dossiê.
+
+Junto vieram dois consertos de comportamento compartilhado, com aval explícito:
+o botão "sincronizar checklist" e o painel de divergência do admin passaram a
+respeitar condição profissional com vírgula, modalidade e UF — os três já
+estavam errados antes desta leva, e o botão desfazia a correção territorial a
+cada clique.
+
+⚠️ **Sobra do front:** as correções em `linksAntecedentesPorUf.ts` estão na
+branch `claude/servicos-autorizacao-armas-xbxd09`, não na `main`. Nada quebra
+sem elas (o link vem do banco, já corrigido), mas o popup guiado só melhora
+depois do merge.
+
+---
+
+## ✅ RESOLVIDA (21/08/2026) — Certidão do STM com 30 dias no serviço 50
+
+O serviço 50 nasceu em 20/08 copiando a lista do CR, que ainda tinha 30 dias
+naquele momento; o alinhamento geral das certidões havia rodado em 19/08, um dia
+antes, então o serviço novo nunca passou por ele. Corrigido pela migration
+`20260821030000`; conferido em 21/08 09:55: serviços 44, 50 e 60 com 90 dias, e
+a varredura geral de certidões fora da tabela única voltou sem nenhuma linha.
+
+---
+
+
+## 🟡 Deploy — banco em dia; front da leva 16 aguarda merge
 
 As 23 edge functions da auditoria estão publicadas (leva 1 às 00:08, leva 2 às
 01:20, `qa-export-docx` às 11:22 BRT) e as **7 migrations** estão aplicadas e
 conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
+
+**Banco (21/08 12:36):** as três migrations do dia estão aplicadas e conferidas
+— `20260821030000` (STM 90 dias), `20260821040000` (certidão segue o estado) e
+`20260821050000` (botão e painel pela mesma régua). Nenhuma edge function foi
+tocada nessas três, então não há nada a publicar no Lovable.
+
+**Front (falta):** as correções em `src/lib/quero-armas/linksAntecedentesPorUf.ts`
+estão na branch `claude/servicos-autorizacao-armas-xbxd09` e ainda não foram para
+a `main`. Nada quebra sem elas — o link que o cliente vê vem do banco, que já
+está certo —, mas quatro melhorias do popup guiado só valem depois do merge:
+resolução de link por igualdade (hoje, por prefixo, uma certidão de outro estado
+guardada no cofre recebe o link do estado atual), UF escrita por extenso sendo
+reconhecida (senão o texto sai "TJPARANÁ"), Distrito Federal como TJDFT, e parar
+de inventar "TJ Militar/PR" onde esse tribunal não existe.
+
+**Correção de registro (21/08):** o quadro da leva 11 (a GRU só abre depois da
+defesa aprovada) ficou marcado como 🔴 PENDENTE por engano. Conferido hoje: a
+coluna `exige_peca_defesa` e o gatilho `qa_trg_trava_protocolo_sem_defesa`
+existem no banco. Já estava aplicada.
 
 ---
 

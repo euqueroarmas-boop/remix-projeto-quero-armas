@@ -14,6 +14,8 @@
 //   e o popup mantém o texto/link genérico existente.
 // ============================================================================
 
+import { UFS_BR } from "@/lib/quero-armas/localidadesBr";
+
 export interface LinksAntecedentesUf {
   uf: string;
   /** Portal de Certidão de Distribuição Criminal do TJ estadual. */
@@ -102,9 +104,29 @@ const CATALOGO: Record<string, LinksAntecedentesUf> = {
  * Retorna `null` se a UF não for válida — nesse caso o popup mantém o
  * texto/link genérico estático.
  */
-export function getLinksAntecedentesPorUf(uf: string | null | undefined): LinksAntecedentesUf | null {
+/**
+ * Sigla da UF a partir de sigla OU nome por extenso, com ou sem acento.
+ * O cadastro grava o estado dos dois jeitos ("PR" e "Paraná"), e sem esta
+ * normalização o resto do módulo tratava "Paraná" como UF desconhecida (links
+ * de SP continuavam valendo) e escrevia rótulos como "TJPARANÁ".
+ * Espelha `qa_uf_normalizar` no banco.
+ */
+export function normalizarUf(uf: string | null | undefined): string | null {
   if (!uf) return null;
-  const key = String(uf).trim().toUpperCase();
+  const bruto = String(uf).trim();
+  if (!bruto) return null;
+  const semAcento = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const alvo = semAcento(bruto);
+  const achado = UFS_BR.find(
+    (u) => u.sigla.toLowerCase() === alvo || semAcento(u.nome) === alvo,
+  );
+  return achado?.sigla ?? null;
+}
+
+export function getLinksAntecedentesPorUf(uf: string | null | undefined): LinksAntecedentesUf | null {
+  const key = normalizarUf(uf);
+  if (!key) return null;
   const base = CATALOGO[key];
   if (!base) return null;
   const trf = TRF_POR_UF[key];
@@ -130,20 +152,48 @@ export function resolveLinkAntecedentePorUf(
   const links = getLinksAntecedentesPorUf(uf);
   if (!links) return null;
 
+  // Certidões da UNIÃO: valem para o país inteiro e não têm link por estado.
+  // Este guarda vem PRIMEIRO porque `antecedentes_militar` (STM) casaria com a
+  // regra do TJM logo abaixo se dependesse só de "militar".
+  if (t === "antecedentes_militar" || t === "antecedentes_eleitoral") {
+    return null;
+  }
   // Polícia Civil estadual.
-  if (t.startsWith("certidao_antecedentes_policia_civil") || t === "atestado_antecedentes_pc") {
+  if (
+    t === "antecedentes_criminais" || // código canônico do catálogo
+    t.startsWith("certidao_antecedentes_policia_civil") ||
+    t === "atestado_antecedentes_pc"
+  ) {
     return links.policiaCivil ?? null;
   }
   // TJM estadual (só SP/MG/RS).
-  if (t.includes("tjm") || t === "certidao_antecedentes_criminais_militar_estadual") {
+  if (
+    t === "antecedentes_militar_estadual" || // código canônico do catálogo
+    t.includes("tjm") ||
+    t === "certidao_antecedentes_criminais_militar_estadual"
+  ) {
     return links.tjm ?? null;
   }
-  // TRF regional (federal por região).
-  if (t.includes("trf") || t === "certidao_antecedentes_criminais_federal") {
+  // TRF: regional e Seção Judiciária/JEF saem do MESMO portal do TRF da região,
+  // mudando a opção de abrangência.
+  if (
+    t === "antecedentes_federal_trf3_regional" || // códigos canônicos do catálogo
+    t === "antecedentes_federal_sjsp_jef" ||
+    t.includes("trf") ||
+    t === "certidao_antecedentes_criminais_federal"
+  ) {
     return links.trfRegional ?? null;
   }
   // TJ estadual (distribuição, execuções, ações criminais).
+  //
+  // IGUALDADE EXATA, nunca prefixo: `antecedentes_estadual_<uf>` são os 27
+  // códigos do cofre, que existem para guardar certidão de OUTRO estado
+  // (residência anterior). Casá-los aqui devolveria o link do estado atual do
+  // cliente para uma certidão de Minas. Espelha o lado SQL, que também casa
+  // só os dois códigos do catálogo.
   if (
+    t === "antecedentes_estadual_distribuicao" || // códigos canônicos do catálogo
+    t === "antecedentes_estadual_execucoes" ||
     t.startsWith("certidao_tjsp") || // legado — inclui variantes
     t.startsWith("certidao_estadual_") ||
     t === "certidao_antecedentes_criminais_estadual" ||
@@ -161,8 +211,10 @@ export function resolveLinkAntecedentePorUf(
  * Conservador: só troca strings que sabidamente citam SP hardcoded.
  */
 export function aplicarUfEmTexto(texto: string, uf: string | null | undefined): string {
-  if (!texto || !uf) return texto;
-  const U = String(uf).trim().toUpperCase();
+  if (!texto) return texto;
+  // Normaliza ANTES de usar: o cadastro guarda o estado ora como sigla ("PR"),
+  // ora por extenso ("Paraná"). Sem isto o texto saía "TJPARANÁ".
+  const U = normalizarUf(uf);
   if (!U || U === "SP") return texto;
 
   // ── TRF: trocar o NÚMERO da região, não a sigla ────────────────────────
@@ -198,8 +250,12 @@ export function aplicarUfEmTexto(texto: string, uf: string | null | undefined): 
     : texto;
 
   return comTrf
-    .replace(/TJSP/g, `TJ${U}`)
-    .replace(/TJM-SP/g, U === "MG" ? "TJM-MG" : U === "RS" ? "TJM-RS" : `TJ Militar/${U}`)
+    // No Distrito Federal o tribunal é o TJDFT, não "TJDF".
+    .replace(/TJSP/g, U === "DF" ? "TJDFT" : `TJ${U}`)
+    // Tribunal de Justiça Militar estadual só existe em SP, MG e RS. Fora
+    // desses três não se inventa "TJ Militar/PR": o texto fica como está,
+    // porque a exigência nem chega a ser pedida a esse cliente.
+    .replace(/TJM-SP/g, U === "MG" ? "TJM-MG" : U === "RS" ? "TJM-RS" : "TJM-SP")
     .replace(/Polícia Civil\/SP/g, `Polícia Civil/${U}`)
     .replace(/Polícia Civil de SP/g, `Polícia Civil/${U}`)
     .replace(/\be-SAJ do TJSP\b/g, `portal do TJ${U}`)
