@@ -317,6 +317,113 @@ BEGIN
   RETURN NEXT;
 END $function$;
 
+-- ─── 3) O painel de divergência conta pela mesma régua ───────────────────────
+-- Esta função alimenta o quadro "divergência com o catálogo" na MESMA tela do
+-- botão. Ela tinha os TRÊS defeitos do botão, e um a mais:
+--
+--   • condição profissional por igualdade exata — o Cartão CNPJ marcado
+--     "autonomo,empresario" não entrava no conjunto do catálogo, então o
+--     documento que o processo TEM aparecia como "removido do catálogo";
+--   • modalidade ignorada — item de caçador contado como "faltando" em
+--     processo de atirador;
+--   • estado ignorado — depois da correção territorial, TODO processo de
+--     cliente de fora de SP/MG/RS passaria a ser contado como "faltando o
+--     TJM". Alarme falso permanente, e bem em cima do botão que reinjetaria a
+--     exigência impossível;
+--   • "tem arquivo" olhava só um dos dois campos, igual ao botão.
+--
+-- Além de passar a usar a mesma fonte da regra, a população conferida passa a
+-- ser a MESMA que o botão altera: processo que ainda monta dossiê, de cliente
+-- não apagado por LGPD. Assim "3 divergentes" quer dizer "3 que o botão
+-- resolve" — antes podia contar dossiê protocolado, que o botão não toca.
+CREATE OR REPLACE FUNCTION public.qa_servico_divergencia_catalogo(p_servico_id integer)
+RETURNS TABLE(
+  processos_ativos integer,
+  processos_divergentes integer,
+  exigencias_faltando integer,
+  exigencias_removidas_pendentes integer
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_total int := 0;
+  v_div   int := 0;
+  v_falt  int := 0;
+  v_rem   int := 0;
+BEGIN
+  WITH procs AS (
+    SELECT p.id
+      FROM public.qa_processos p
+      JOIN public.qa_clientes cl ON cl.id = p.cliente_id
+     WHERE p.servico_id = p_servico_id
+       AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+                        'aguardando_documentos','em_validacao','pendente_cliente',
+                        'revisao_humana','validado','pagamento_confirmado',
+                        'em_analise_interna')
+       AND COALESCE(cl.status, '') <> 'excluido_lgpd'
+  ),
+  -- Mesma fonte da regra que o botão usa: condição profissional com vírgula,
+  -- modalidade e UF de residência, tudo em um lugar só.
+  cat_por_proc AS (
+    SELECT p.id AS processo_id, d.tipo_documento
+      FROM procs p
+      CROSS JOIN LATERAL public.qa_catalogo_do_processo(p.id) d
+  ),
+  doc_por_proc AS (
+    SELECT pd.processo_id, pd.tipo_documento, pd.status,
+           coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) AS arquivo
+      FROM public.qa_processo_documentos pd
+      JOIN procs p ON p.id = pd.processo_id
+  ),
+  faltando AS (
+    SELECT cp.processo_id, cp.tipo_documento
+      FROM cat_por_proc cp
+     WHERE NOT EXISTS (
+       SELECT 1 FROM doc_por_proc dp
+        WHERE dp.processo_id = cp.processo_id
+          AND dp.tipo_documento = cp.tipo_documento
+     )
+  ),
+  removidos_pendentes AS (
+    SELECT dp.processo_id, dp.tipo_documento
+      FROM doc_por_proc dp
+     WHERE NOT EXISTS (
+       SELECT 1 FROM cat_por_proc cp
+        WHERE cp.processo_id = dp.processo_id
+          AND cp.tipo_documento = dp.tipo_documento
+     )
+       AND dp.status NOT IN ('aprovado','validado','conforme','dispensado',
+                             'dispensado_grupo','dispensado_por_reaproveitamento',
+                             'nao_aplicavel','concluido','concluído',
+                             'entregue','entregue_pelo_hub')
+       AND dp.arquivo IS NULL
+  ),
+  divergentes AS (
+    SELECT DISTINCT processo_id FROM faltando
+    UNION
+    SELECT DISTINCT processo_id FROM removidos_pendentes
+  )
+  SELECT
+    (SELECT COUNT(*) FROM procs),
+    (SELECT COUNT(*) FROM divergentes),
+    (SELECT COUNT(*) FROM faltando),
+    (SELECT COUNT(*) FROM removidos_pendentes)
+  INTO v_total, v_div, v_falt, v_rem;
+
+  processos_ativos := v_total;
+  processos_divergentes := v_div;
+  exigencias_faltando := v_falt;
+  exigencias_removidas_pendentes := v_rem;
+  RETURN NEXT;
+END $$;
+
+COMMENT ON FUNCTION public.qa_servico_divergencia_catalogo(integer) IS
+  'Quadro de divergência com o catálogo, contado pela mesma régua do botão de '
+  'sincronizar (qa_catalogo_do_processo): condição profissional com vírgula, '
+  'modalidade e UF de residência. Conta só processo que ainda monta dossiê.';
+
 COMMIT;
 
 -- =============================================================================
@@ -358,4 +465,43 @@ COMMIT;
 -- SELECT tipo_documento, nome_documento, link_emissao
 --   FROM public.qa_catalogo_do_processo('COLE-AQUI-O-UUID-DO-PROCESSO'::uuid)
 --  ORDER BY ordem;
+--
+-- D) O painel de divergência parou de acusar alarme falso. Rode para os três
+--    serviços que pedem o TJM. Esperado: exigencias_faltando NÃO deve contar o
+--    TJM de cliente de fora de SP/MG/RS.
+--
+-- SELECT 44 AS servico, * FROM public.qa_servico_divergencia_catalogo(44);
+-- SELECT 50 AS servico, * FROM public.qa_servico_divergencia_catalogo(50);
+-- SELECT 60 AS servico, * FROM public.qa_servico_divergencia_catalogo(60);
+--
+-- E) Se algum número acima não for zero, esta mostra QUEM está divergente e
+--    por quê — sem alterar nada.
+--
+-- SELECT cl.nome_completo, cl.estado, p.servico_id,
+--        (SELECT string_agg(d.tipo_documento, ', ')
+--           FROM public.qa_catalogo_do_processo(p.id) d
+--          WHERE NOT EXISTS (SELECT 1 FROM public.qa_processo_documentos pd
+--                             WHERE pd.processo_id = p.id
+--                               AND pd.tipo_documento = d.tipo_documento)
+--        ) AS falta_no_processo,
+--        (SELECT string_agg(pd.tipo_documento, ', ')
+--           FROM public.qa_processo_documentos pd
+--          WHERE pd.processo_id = p.id
+--            AND pd.status NOT IN ('aprovado','validado','conforme','dispensado',
+--                                  'dispensado_grupo','dispensado_por_reaproveitamento',
+--                                  'nao_aplicavel','concluido','concluído',
+--                                  'entregue','entregue_pelo_hub')
+--            AND coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NULL
+--            AND NOT EXISTS (SELECT 1 FROM public.qa_catalogo_do_processo(p.id) d
+--                             WHERE d.tipo_documento = pd.tipo_documento)
+--        ) AS sobrando_no_processo
+--   FROM public.qa_processos p
+--   JOIN public.qa_clientes cl ON cl.id = p.cliente_id
+--  WHERE p.servico_id IN (44, 50, 60)
+--    AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+--                     'aguardando_documentos','em_validacao','pendente_cliente',
+--                     'revisao_humana','validado','pagamento_confirmado',
+--                     'em_analise_interna')
+--    AND COALESCE(cl.status,'') <> 'excluido_lgpd'
+--  ORDER BY cl.estado;
 -- =============================================================================
