@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 20/08/2026, 21:45 BRT.
+Índice único do que ficou em aberto. Atualizado em 20/08/2026, 22:05 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -135,6 +135,49 @@ Fica registrado o que muda no papel entre os dois, para quem for ler um dossiê
 antigo e estranhar: o Exército identifica a loja pelo **nº de registro SIGMA**,
 a PF pelo **CNPJ**. E o prefixo do número da autorização muda junto (9923 =
 Exército, 9918 = PF).
+
+---
+
+## 🟠 Autorização de Compra CAÇADOR (serviço 51) continua pela metade (20/08/2026)
+
+O serviço 50 (atirador) foi montado a partir de três dossiês deferidos
+(migration `20260820220000`). O **51 (caçador) não foi tocado** e continua com
+**4 linhas**: `rg_com_cpf`, `comprovante_residencia`, `habilitacao_cacador_ibama`
+e `laudo_capacidade_tecnica`.
+
+Não foi montado junto de propósito: os três dossiês entregues são todos de
+**atirador desportivo**. Copiar o checklist do 50 para o 51 seria chute — o
+caçador tem o documento do Ibama e provavelmente não tem a mesma exigência de
+treinamentos/competições.
+
+**Para destravar:** um dossiê de autorização de compra de CAÇADOR já deferido.
+Com ele em mãos, o trabalho é a mesma migration do 50 apontada para o 51.
+
+Enquanto isso, quem contratar o 51 anda com checklist de 4 itens e chega ao
+protocolo faltando quase tudo.
+
+---
+
+## 🟠 Escolha da loja não existe no checklist da autorização de compra (20/08/2026)
+
+Nos três dossiês deferidos, o **fornecedor sai impresso na autorização** — razão
+social e endereço, identificado por CNPJ (PF) ou por nº de registro SIGMA
+(Exército, legado). Ou seja: **a loja é dado de entrada do pedido, não resultado
+dele.** Sem ela escolhida, não dá para abrir o pedido no sistema.
+
+O checklist do serviço 50 não tem onde registrar isso. Não foi criado junto
+porque exigiria um tipo de documento novo no vocabulário fechado, e o
+`tipo_documento` tem CHECK em `qa_documentos_cliente` — mexer nele é trava
+compartilhada, atinge todo tipo de documento do sistema.
+
+**Opções, a decidir com o titular:**
+1. uma pergunta no checklist (`pergunta_*`), com a lista das lojas usadas;
+2. um campo no processo, fora do checklist;
+3. deixar fora do sistema, como é hoje, e a equipe combina por fora.
+
+Mesma pergunta vale para o **modelo da arma** (marca, modelo, calibre), que
+também sai impresso na autorização e hoje não é coletado em lugar nenhum do
+processo.
 
 ---
 
