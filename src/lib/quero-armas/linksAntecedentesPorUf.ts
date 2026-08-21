@@ -143,12 +143,72 @@ export function getLinksAntecedentesPorUf(uf: string | null | undefined): LinksA
  * Retorna `null` quando o tipo não é state-aware (ex.: TSE, STM) ou quando
  * a UF não estiver no catálogo.
  */
+/**
+ * Certidões de RESIDÊNCIA ANTERIOR: o código traz a UF (ou a região) no fim.
+ *
+ * `antecedentes_estadual_distribuicao_mg` é a certidão de Minas de um cliente
+ * que hoje mora no Paraná — o link dela é o do TJMG, nunca o do TJPR. O mapa
+ * abaixo devolve o par (código genérico, UF a usar). Espelho de
+ * public.qa_certidao_tipo_do_estado_anterior.
+ */
+const GENERICO_POR_FAMILIA_ANTERIOR: ReadonlyArray<[RegExp, string]> = [
+  [/^antecedentes_estadual_distribuicao_([a-z]{2})$/, "antecedentes_estadual_distribuicao"],
+  [/^antecedentes_estadual_execucoes_([a-z]{2})$/, "antecedentes_estadual_execucoes"],
+  [/^antecedentes_criminais_([a-z]{2})$/, "antecedentes_criminais"],
+  [/^antecedentes_federal_secao_judiciaria_([a-z]{2})$/, "antecedentes_federal_sjsp_jef"],
+  [/^antecedentes_militar_estadual_([a-z]{2})$/, "antecedentes_militar_estadual"],
+];
+
+/** Qualquer UF daquela região serve: o portal do TRF é o mesmo para todas. */
+function ufDaRegiaoFederal(trfSigla: string): string | null {
+  const achado = Object.entries(TRF_POR_UF).find(([, v]) => v.sigla === trfSigla);
+  return achado ? achado[0] : null;
+}
+
+/**
+ * Traduz um código de residência anterior no par (código genérico, UF própria).
+ * Devolve `null` quando o código não é de residência anterior.
+ */
+export function certidaoDeEstadoAnterior(
+  rawTipo: string | null | undefined,
+): { generico: string; uf: string } | null {
+  const t = String(rawTipo || "").trim().toLowerCase();
+  if (!t) return null;
+
+  for (const [re, generico] of GENERICO_POR_FAMILIA_ANTERIOR) {
+    const m = t.match(re);
+    if (m) {
+      const uf = normalizarUf(m[1]);
+      return uf ? { generico, uf } : null;
+    }
+  }
+
+  const regiao = t.match(/^antecedentes_federal_regional_(trf[1-6])$/);
+  if (regiao) {
+    const uf = ufDaRegiaoFederal(regiao[1].toUpperCase());
+    return uf ? { generico: "antecedentes_federal_trf3_regional", uf } : null;
+  }
+
+  return null;
+}
+
 export function resolveLinkAntecedentePorUf(
   rawTipo: string | null | undefined,
   uf: string | null | undefined,
 ): string | null {
-  if (!rawTipo || !uf) return null;
+  if (!rawTipo) return null;
   const t = String(rawTipo).trim().toLowerCase();
+
+  // Residência anterior: o próprio código diz de que estado é a certidão, e é
+  // ELE que manda — não o estado onde o cliente mora hoje. Vem antes da guarda
+  // da UF de propósito: a certidão de Minas tem link mesmo que o cadastro do
+  // cliente esteja com o estado em branco.
+  const anterior = certidaoDeEstadoAnterior(t);
+  if (anterior) {
+    return resolveLinkAntecedentePorUf(anterior.generico, anterior.uf);
+  }
+
+  if (!uf) return null;
   const links = getLinksAntecedentesPorUf(uf);
   if (!links) return null;
 

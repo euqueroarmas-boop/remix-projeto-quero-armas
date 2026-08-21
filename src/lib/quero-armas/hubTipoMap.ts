@@ -202,6 +202,18 @@ const HUB_TIPOS_VALIDOS = new Set([
   "outro",
 ]);
 
+/**
+ * Famílias de certidão por estado de residência ANTERIOR, criadas pela
+ * migration 20260821080000. Espelho de public.qa_certidao_e_territorial.
+ */
+// As 27 siglas por extenso, nunca `[a-z]{2}`: `antecedentes_criminais_zz` não é
+// documento nenhum e o CHECK do banco o recusaria — aqui ele tem de virar
+// "outro", como qualquer código desconhecido.
+const UF_ALT = "ac|al|am|ap|ba|ce|df|es|go|ma|mg|ms|mt|pa|pb|pe|pi|pr|rj|rn|ro|rr|rs|sc|se|sp|to";
+const RE_CERTIDAO_RESIDENCIA_ANTERIOR = new RegExp(
+  `^antecedentes_(?:(?:estadual_(?:distribuicao|execucoes)|criminais|militar_estadual|federal_secao_judiciaria)_(?:${UF_ALT})|federal_regional_trf[1-6])$`,
+);
+
 export function toHubTipoCompartilhado(processoTipo: string | null | undefined): string {
   const raw = String(processoTipo || "").trim().toLowerCase();
   if (!raw) return "outro";
@@ -209,6 +221,11 @@ export function toHubTipoCompartilhado(processoTipo: string | null | undefined):
   // antecedente. Mantida aqui explicitamente para que nenhuma tradução futura
   // a promova a documento válido.
   if (raw === "certidao_civel_nao_aceita") return "outro";
+  // Certidões de RESIDÊNCIA ANTERIOR (migration 20260821080000): o código traz
+  // a UF, ou a região federal, no fim. São 117 códigos — casá-los por padrão
+  // evita uma lista literal que envelheceria a cada estado novo, e o CHECK do
+  // banco (qa_doc_cliente_tipo_check) já os aceita um a um.
+  if (RE_CERTIDAO_RESIDENCIA_ANTERIOR.test(raw)) return raw;
   const mapped = PROCESSO_TO_HUB_TIPO[raw] ?? raw;
   return HUB_TIPOS_VALIDOS.has(mapped) ? mapped : "outro";
 }

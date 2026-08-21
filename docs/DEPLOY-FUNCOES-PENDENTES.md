@@ -506,3 +506,19 @@ ALTERADAS (redeploy):
 - qa-montar-juntada
 
 Status: publicadas com sucesso. Nenhum código-fonte alterado.
+
+## 2026-08-21 — Leva 18: certidões dos estados dos últimos 5 anos
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cadastro-publico/index.ts` — passa a aceitar duas
+  chaves novas no formulário público: `residiu_mesmo_endereco_5_anos` e
+  `enderecos_anteriores_json`. Sem o redeploy, a resposta do titular sobre onde
+  morou nos últimos 5 anos é **descartada em silêncio** pelo Zod (o schema
+  rejeita chave desconhecida antes de gravar), e nenhuma certidão de estado
+  anterior chega ao checklist.
+
+Migrations que precisam ir ANTES do deploy, nesta ordem:
+- `20260821070000_certidao_do_checklist_vira_patrimonio_do_cliente.sql`
+- `20260821080000_certidoes_dos_estados_dos_ultimos_5_anos.sql`
+- `20260821090000_residencia_5_anos_vem_do_cadastro_publico.sql`
+  (é ela que cria as duas colunas que a edge function grava)

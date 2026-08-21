@@ -31,6 +31,7 @@ import {
   getCategoriasPorObjetivo,
 } from "./qaServiceCatalog";
 import { admiteSegundoEnderecoNaEntradaPublica } from "@/lib/quero-armas/segundoEndereco";
+import { EnderecosAnterioresLista } from "@/components/quero-armas/EnderecosAnterioresLista";
 import {
   type ClienteData,
   emptyClienteData,
@@ -674,6 +675,20 @@ export default function QACadastroPublicoPage() {
         responsavel_endereco_geolocalizacao: (extracted as any).responsavel_endereco_geolocalizacao || null,
         responsavel_endereco_reside_desde: brDateToIso((extracted as any).responsavel_endereco_reside_desde || "") || null,
         responsavel_endereco_residiu_ate: brDateToIso((extracted as any).responsavel_endereco_residiu_ate || "") || null,
+        // ── Residência dos últimos 5 anos (SINARM CAC / SIGMA) ──
+        // Vai sempre, para qualquer serviço: quem não respondeu manda null e
+        // nada muda. Os estados viram blocos de certidão no checklist depois
+        // que o cadastro é aplicado ao cliente.
+        residiu_mesmo_endereco_5_anos:
+          typeof (extracted as any).residiu_mesmo_endereco_5_anos === "boolean"
+            ? (extracted as any).residiu_mesmo_endereco_5_anos
+            : null,
+        enderecos_anteriores_json: (((extracted as any).enderecos_anteriores as any[]) || [])
+          .map((e) => ({
+            uf: String(e?.uf || "").trim().toUpperCase().slice(0, 2),
+            cidade: String(e?.cidade || "").trim().slice(0, 120) || null,
+          }))
+          .filter((e) => e.uf.length === 2),
         documento_identidade_path: pathOf("identity"),
         comprovante_endereco_path: pathOf("address"),
         selfie_path: pathOf("selfie"),
@@ -2044,6 +2059,59 @@ function Step3Review({
             <p className="text-[10px] leading-snug text-amber-900/80">
               Anexe a <strong>declaração de residência</strong> e o <strong>comprovante em nome do responsável</strong> nos uploads de documentos.
             </p>
+          </div>
+        )}
+      </ReviewBlock>
+
+      {/* ─── Bloco 5c — Residência dos últimos 5 anos ───
+          Vem DEPOIS do comprovante de propósito: o cliente já informou onde
+          mora e só então é perguntado se morou sempre ali. O SINARM CAC e o
+          SIGMA exigem certidão de antecedentes de CADA estado de residência no
+          período — quem morou em cinco estados apresenta as certidões dos
+          cinco. Só o ESTADO importa: várias cidades do mesmo estado geram um
+          bloco de certidões só. */}
+      <ReviewBlock title="Residência nos últimos 5 anos" icon={MapPin}>
+        <div className="text-[12px] font-bold uppercase tracking-wider mb-1" style={{ color: "hsl(220 20% 22%)" }}>
+          Nos últimos 5 anos você morou sempre no endereço do comprovante que enviou?
+        </div>
+        <div className="flex gap-2">
+          {([true, false] as const).map((v) => {
+            const active = (data as any).residiu_mesmo_endereco_5_anos === v;
+            return (
+              <button
+                key={String(v)}
+                type="button"
+                onClick={() => {
+                  set("residiu_mesmo_endereco_5_anos" as any, v as any);
+                  // Respondeu que NÃO mudou: a lista declarada antes deixa de
+                  // valer. Nada é apagado no banco — o cadastro ainda nem foi
+                  // enviado.
+                  if (v) set("enderecos_anteriores" as any, [] as any);
+                }}
+                className={`flex-1 h-10 rounded-md border text-[12px] font-bold uppercase tracking-wider transition-colors ${active ? "bg-[#7A1F2B] text-white border-[#7A1F2B]" : "bg-white text-slate-700 border-slate-300 hover:border-[#7A1F2B]"}`}
+              >
+                {v ? "Sim, sempre o mesmo" : "Não, morei em outro estado"}
+              </button>
+            );
+          })}
+        </div>
+
+        {(data as any).residiu_mesmo_endereco_5_anos === false && (
+          <div className="mt-2 space-y-2 rounded-md border border-amber-200 bg-amber-50/40 p-2">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+              Onde você morou nos últimos 5 anos
+            </div>
+            <p className="text-[10px] leading-snug text-amber-900/80">
+              Informe todos os endereços, um por linha. Pode adicionar quantos
+              precisar. No fim, o que conta é o <strong>estado</strong>: quem
+              morou em três cidades de São Paulo entrega as certidões de São
+              Paulo uma vez só.
+            </p>
+            <EnderecosAnterioresLista
+              valor={((data as any).enderecos_anteriores as any[]) || []}
+              onChange={(v) => set("enderecos_anteriores" as any, v as any)}
+              ufAtual={data.end1_estado}
+            />
           </div>
         )}
       </ReviewBlock>

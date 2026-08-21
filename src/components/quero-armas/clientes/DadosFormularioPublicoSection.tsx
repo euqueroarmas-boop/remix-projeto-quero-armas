@@ -83,6 +83,11 @@ const MAPA: Array<{ campoForm: string; colunaCli: string; label: string }> = [
   { campoForm: "responsavel_endereco_geolocalizacao", colunaCli: "responsavel_endereco_geolocalizacao", label: "Geolocalização do responsável" },
   { campoForm: "responsavel_endereco_reside_desde", colunaCli: "responsavel_endereco_reside_desde", label: "Reside desde (responsável)" },
   { campoForm: "responsavel_endereco_residiu_ate", colunaCli: "responsavel_endereco_residiu_ate", label: "Residiu até (responsável)" },
+  // Residência dos últimos 5 anos (SINARM CAC / SIGMA).
+  // A LISTA de estados anteriores não entra aqui: ela é copiada sozinha para
+  // qa_cliente_enderecos_anteriores pelo gatilho de 20260821090000, assim que a
+  // ficha vira cliente. Aqui fica só a resposta sim/não, que é campo simples.
+  { campoForm: "residiu_mesmo_endereco_5_anos", colunaCli: "residiu_mesmo_endereco_5_anos", label: "Morou 5 anos no mesmo endereço" },
   // Segundo endereço
   { campoForm: "tem_segundo_endereco", colunaCli: "tem_segundo_endereco", label: "Possui 2º endereço" },
   { campoForm: "end2_cep", colunaCli: "cep2", label: "CEP (2º endereço)" },

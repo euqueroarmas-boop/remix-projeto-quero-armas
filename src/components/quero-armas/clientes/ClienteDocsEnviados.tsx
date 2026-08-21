@@ -580,9 +580,22 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     });
   };
 
+  /**
+   * Bucket do documento do Hub.
+   *
+   * O Hub guarda quase tudo em `qa-documentos`, mas desde 21/08/2026 a certidão
+   * aprovada dentro de um processo passa a existir também no cofre APONTANDO
+   * para o arquivo do processo, que vive em `qa-processo-docs`. Quem grava a
+   * linha registra o bucket em `metadados_documento_json.bucket` — é o mesmo
+   * campo que a edge `qa-hub-doc-signed-url` e os painéis do portal já leem.
+   * Ignorá-lo aqui fazia a tela da equipe abrir e baixar no bucket errado.
+   */
+  const bucketDoDocHub = (doc?: any): string =>
+    String(doc?.metadados_documento_json?.bucket || "qa-documentos");
+
   const handleViewFile = (path: string, doc?: any) => {
     const fileName = path.split("/").pop() || "documento";
-    viewer.abrirStorage("qa-documentos", path, { fileName, title: fileName });
+    viewer.abrirStorage(bucketDoDocHub(doc), path, { fileName, title: fileName });
     registrarAcesso("visualizado", doc);
   };
 
@@ -591,7 +604,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     const path = doc?.arquivo_storage_path;
     if (!path) { toast.error("Documento sem arquivo."); return; }
     try {
-      const { data, error } = await supabase.storage.from("qa-documentos").download(path);
+      const { data, error } = await supabase.storage.from(bucketDoDocHub(doc)).download(path);
       if (error || !data) throw error || new Error("Falha ao baixar");
       const url = URL.createObjectURL(data);
       const a = document.createElement("a");
@@ -748,7 +761,7 @@ export default function ClienteDocsEnviados({ cliente }: Props) {
     lista
       .filter((d) => d.arquivo_storage_path)
       .filter(utilParaDossie)
-      .map((d) => ({ bucket: "qa-documentos", path: String(d.arquivo_storage_path), doc: d }));
+      .map((d) => ({ bucket: bucketDoDocHub(d), path: String(d.arquivo_storage_path), doc: d }));
 
   /** Dossiê do escopo aberto: completo em "Todos", da juntada nas demais abas. */
   const handleBaixarTudo = async () => {

@@ -796,3 +796,47 @@ são conferências e uma decisão do usuário, não desenvolvimento.
 - **Deploy de edge function não sai no push.** Lista e comando em
   `docs/DEPLOY-FUNCOES-PENDENTES.md`. Mudança em `_shared` obriga a republicar
   todas as funções que importam o arquivo.
+
+---
+
+## 21/08/2026 — Certidões dos estados dos últimos 5 anos
+
+Regra do titular: quem mudou de estado no período apresenta as certidões de
+**cada** estado onde morou (SINARM CAC / SIGMA). Entregue em três migrations
+mais o front.
+
+### Decisões que ficaram registradas
+
+- **Código próprio por estado, não a mesma linha com um campo de UF.** Existe
+  índice único em `qa_processo_documentos (processo_id, tipo_documento)` desde
+  07/08 — o mesmo código duas vezes no mesmo processo é impossível. É também o
+  precedente da casa (`comprovante_endereco_ano_2025`).
+- **Nada é destruído quando o cliente muda de estado.** O estado antigo vira
+  residência anterior e a certidão já entregue é **movida** para a exigência
+  daquele estado, com arquivo, datas e status. Fica pendente só a certidão do
+  estado novo.
+- **O bloco só nasce onde já havia a exigência equivalente.** Serviço que não
+  pede certidão estadual não passa a pedir; estado sem Tribunal de Justiça
+  Militar não ganha TJM.
+- **A federal regional é por REGIÃO.** Estado anterior na mesma região do atual
+  não gera certidão extra.
+
+### Comportamento COMPARTILHADO que mudou (avisado antes de aplicar)
+
+| O que | Efeito nos demais documentos |
+|---|---|
+| `qa_doc_hub_satisfaz_exigencias_processo` passa a usar `qa_processo_relogio_parado` | documento do cofre deixa de reescrever dossiê já protocolado; notificação e recurso religam o relógio |
+| botão "Sincronizar checklist em lote" e painel de divergência param de dispensar linha **semeada** | corrige defeito que já existia: os `comprovante_endereco_ano_YYYY` dos serviços 31/44/50/51 deixam de virar "não aplicável" |
+| `qa_guard_pergunta_sem_resposta` conhece a pergunta nova | acréscimo puro, um tipo a mais na lista |
+| CHECK `qa_doc_cliente_tipo_check` ganha 117 códigos | acréscimo puro: nenhum tipo existente sai |
+
+### Ainda aberto
+
+- **Onde o cliente que já é cliente declara os estados.** O formulário público
+  já tem a pergunta e a lista. No portal, a pergunta
+  `pergunta_residencia_5_anos` aparece no checklist, mas a lista de estados
+  ainda não tem tela própria — hoje a equipe lança em
+  `qa_cliente_enderecos_anteriores`. Componente pronto e reutilizável:
+  `src/components/quero-armas/EnderecosAnterioresLista.tsx`.
+- **Serviço 59 (CRAF/GT) segue com checklist vazio** — decisão do titular,
+  aberta desde 21/08.

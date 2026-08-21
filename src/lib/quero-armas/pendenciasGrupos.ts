@@ -14,6 +14,7 @@ export type PendenciaGrupoId =
   | "identificacao"
   | "endereco"
   | "antecedentes"
+  | "antecedentes_anteriores"
   | "ocupacao"
   | "habitualidade"
   | "declaracoes"
@@ -45,6 +46,15 @@ const GRUPOS: Record<PendenciaGrupoId, PendenciaGrupoMeta> = {
   endereco:      { id: "endereco",      label: "Identificação residencial", ordem: 40 },
   ocupacao:      { id: "ocupacao",      label: "Ocupação lícita",          ordem: 50 },
   antecedentes:  { id: "antecedentes",  label: "Idoneidade",               ordem: 60 },
+  // Regra do SINARM CAC / SIGMA: quem mudou de estado nos últimos 5 anos
+  // apresenta as certidões de CADA estado onde morou. Grupo próprio, com ordem
+  // 65, para o cliente tirar primeiro as do estado onde mora e só depois as
+  // dos estados anteriores — que é a ordem em que ele consegue trabalhar.
+  antecedentes_anteriores: {
+    id: "antecedentes_anteriores",
+    label: "Idoneidade — estados onde você morou antes",
+    ordem: 65,
+  },
   habitualidade: { id: "habitualidade", label: "Habitualidade e clube",    ordem: 70 },
   arma:          { id: "arma",          label: "Documentos da arma",       ordem: 72 },
   declaracoes:   { id: "declaracoes",   label: "Declarações do processo",  ordem: 75 },
@@ -65,6 +75,45 @@ export function normalizarGrupoId(raw: string | null | undefined): PendenciaGrup
   if (!raw) return null;
   if (raw === "saude") return "laudos";
   return GRUPOS[raw as PendenciaGrupoId] ? (raw as PendenciaGrupoId) : null;
+}
+
+/**
+ * Certidão de um estado ONDE O CLIENTE MOROU ANTES.
+ *
+ * O SINARM CAC e o SIGMA exigem uma certidão por estado de residência nos
+ * últimos cinco anos. Como o banco tem índice único em
+ * (processo_id, tipo_documento), a certidão de cada estado precisa de um código
+ * próprio — o mesmo caminho que a casa já usa em `comprovante_endereco_ano_2025`.
+ *
+ * Os códigos criados pela migration 20260821080000:
+ *   antecedentes_estadual_distribuicao_<uf>
+ *   antecedentes_estadual_execucoes_<uf>
+ *   antecedentes_criminais_<uf>
+ *   antecedentes_federal_secao_judiciaria_<uf>
+ *   antecedentes_militar_estadual_<uf>      (só SP, MG e RS)
+ *   antecedentes_federal_regional_trf<1-6>  (a federal vale pela REGIÃO)
+ *
+ * Espelho de public.qa_certidao_e_territorial / qa_certidao_uf_do_tipo.
+ */
+// As 27 siglas por extenso, nunca `[a-z]{2}`: código com sufixo inventado não
+// pode ganhar grupo próprio como se fosse exigência legítima.
+const UF_ALT = "ac|al|am|ap|ba|ce|df|es|go|ma|mg|ms|mt|pa|pb|pe|pi|pr|rj|rn|ro|rr|rs|sc|se|sp|to";
+const RE_CERTIDAO_ESTADO_ANTERIOR = new RegExp(
+  `^antecedentes_(?:estadual_(?:distribuicao|execucoes)|criminais|militar_estadual|federal_secao_judiciaria)_(?:${UF_ALT})$`,
+);
+const RE_CERTIDAO_REGIAO_ANTERIOR = /^antecedentes_federal_regional_trf[1-6]$/;
+
+export function ehCertidaoDeEstadoAnterior(tipo?: string | null): boolean {
+  const t = String(tipo || "").trim().toLowerCase();
+  if (!t) return false;
+  return RE_CERTIDAO_ESTADO_ANTERIOR.test(t) || RE_CERTIDAO_REGIAO_ANTERIOR.test(t);
+}
+
+/** A UF que o próprio código da certidão declara. NULL quando é genérico. */
+export function ufDaCertidaoDeEstadoAnterior(tipo?: string | null): string | null {
+  const t = String(tipo || "").trim().toLowerCase();
+  if (!RE_CERTIDAO_ESTADO_ANTERIOR.test(t)) return null;
+  return t.slice(-2).toUpperCase();
 }
 
 /**
@@ -104,6 +153,15 @@ export function grupoDaPendencia(rawTipo?: string | null, hubTipo?: string | nul
     t.startsWith("titular_comprovante")
   ) {
     return GRUPOS.endereco;
+  }
+
+  // Certidões dos estados ANTERIORES: o código traz a UF no fim
+  // (`antecedentes_estadual_distribuicao_mg`, `antecedentes_criminais_pr`,
+  // `antecedentes_federal_regional_trf4`). Precisa vir ANTES da regra genérica
+  // de `antecedentes`, senão cai no grupo do estado atual e a separação que o
+  // cliente vê some.
+  if (ehCertidaoDeEstadoAnterior(t)) {
+    return GRUPOS.antecedentes_anteriores;
   }
 
   // Antecedentes criminais / certidões
@@ -328,6 +386,12 @@ export function grupoDaPendenciaDoItem(
  */
 export const GRUPOS_NAO_FILTRAVEIS: ReadonlySet<PendenciaGrupoId> = new Set<PendenciaGrupoId>([
   "exigencias_pf",
+  // As certidões dos estados anteriores só existem quando o cliente declarou
+  // ter morado em outro estado nos últimos 5 anos — nunca aparecem por engano.
+  // Ficam fora do filtro por serviço para não sumirem da fila do cliente por
+  // esquecimento de whitelist: o serviço que pede a certidão do estado atual
+  // pede, pela mesma norma, a dos estados anteriores.
+  "antecedentes_anteriores",
 ]);
 
 export function ordemGrupo(id: PendenciaGrupoId): number {
