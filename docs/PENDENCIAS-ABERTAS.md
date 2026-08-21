@@ -85,6 +85,30 @@ treinamentos ou competições"* — ou seja, o arquivo de maio.
 Enquanto os dois pontos não forem confirmados, existe risco de sair declaração
 com a base legal errada no dossiê do cliente.
 
+### Como conferir (5 minutos, sem SQL)
+
+1. Supabase → **Storage** → bucket `qa-templates` → pasta `declaracoes/`.
+2. Procurar `declaracao_compromisso_habitualidade_v2.docx`. **Se não estiver
+   lá, o botão "baixar declaração" está quebrado** para todo mundo desde a
+   migration de 20/08 — ela apontou os botões para a chave `_v2` contando com o
+   upload manual.
+3. Se estiver lá, baixar e ler o parágrafo do compromisso. Tem de dizer
+   **espécie de arma**. Se disser "calibre", é o arquivo de maio subido com
+   nome novo — e aí o texto precisa ser corrigido e resubido.
+
+Conferência rápida de qual chave os botões usam hoje:
+
+```sql
+SELECT DISTINCT regra_validacao ->> 'template_key' AS template_key,
+       count(*) AS exigencias
+  FROM public.qa_servicos_documentos
+ WHERE regra_validacao ->> 'template_key' ILIKE '%habitualidade%'
+ GROUP BY 1;
+```
+
+Esperado: só `declaracao_compromisso_habitualidade_v2`. Se ainda aparecer a
+chave sem `_v2`, sobrou exigência apontando para o modelo velho.
+
 ---
 
 ## 📌 CAC é gerido pela Polícia Federal — Exército não está atuando (20/08/2026)
