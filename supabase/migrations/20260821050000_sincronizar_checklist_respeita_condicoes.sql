@@ -111,9 +111,11 @@ BEGIN
 
   RETURN QUERY
   SELECT sd.tipo_documento,
-         -- Nome e link do tribunal do estado do cliente; fora das certidões
-         -- territoriais as funções devolvem NULL e o catálogo prevalece.
-         COALESCE(public.qa_certidao_nome_por_uf(sd.tipo_documento, v_uf), sd.nome_documento),
+         -- Nome, órgão e link do tribunal do estado do cliente; fora das
+         -- certidões territoriais as funções devolvem NULL e o catálogo
+         -- prevalece. Para cliente de São Paulo nada muda.
+         COALESCE(public.qa_certidao_texto_por_uf(sd.nome_documento, sd.tipo_documento, v_uf),
+                  sd.nome_documento),
          sd.etapa,
          sd.validade_dias,
          sd.formato_aceito,
@@ -123,7 +125,8 @@ BEGIN
          sd.observacoes_cliente,
          sd.modelo_url,
          sd.exemplo_url,
-         sd.orgao_emissor,
+         COALESCE(public.qa_certidao_texto_por_uf(sd.orgao_emissor, sd.tipo_documento, v_uf),
+                  sd.orgao_emissor),
          sd.prazo_recomendado_dias,
          sd.obrigatorio,
          sd.escopo,
@@ -184,9 +187,18 @@ BEGIN
   FOR v_proc IN
     SELECT p.id, p.cliente_id
       FROM public.qa_processos p
+      JOIN public.qa_clientes cl ON cl.id = p.cliente_id
      WHERE p.servico_id = p_servico_id
-       -- MUDANÇA DECLARADA: processo apagado por LGPD não é mais tocado.
-       AND p.status NOT IN ('concluido','cancelado','excluido_lgpd')
+       -- MUDANÇA DECLARADA: só processo que ainda está montando dossiê.
+       -- A lista antiga era NOT IN ('concluido','cancelado','excluido_lgpd'):
+       -- deixava passar protocolado, deferido, indeferido, notificado e em
+       -- recurso — dossiê já entregue à PF era reescrito — e 'excluido_lgpd'
+       -- nem sequer é status de processo (é de cliente), então era inerte.
+       AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+                        'aguardando_documentos','em_validacao','pendente_cliente',
+                        'revisao_humana','validado','pagamento_confirmado',
+                        'em_analise_interna')
+       AND COALESCE(cl.status, '') <> 'excluido_lgpd'
   LOOP
     v_procs_total := v_procs_total + 1;
 
@@ -260,8 +272,12 @@ BEGIN
              updated_at = now()
        WHERE pd.processo_id = v_proc.id
          AND NOT EXISTS (SELECT 1 FROM cat c WHERE c.tipo_documento = pd.tipo_documento)
-         AND pd.arquivo_storage_key IS NULL
-         AND pd.status NOT IN ('aprovado','validado','dispensado','dispensado_grupo','dispensado_por_reaproveitamento','nao_aplicavel','concluido','concluído')
+         -- "Tem arquivo" é qualquer um dos DOIS campos: é assim que a trava do
+         -- banco e a tela do Admin decidem. Olhar só storage_key deixava a
+         -- linha legada, gravada em arquivo_url, virar não-aplicável — o
+         -- documento entregue sumia do checklist.
+         AND coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NULL
+         AND pd.status NOT IN ('aprovado','validado','conforme','dispensado','dispensado_grupo','dispensado_por_reaproveitamento','nao_aplicavel','concluido','concluído','entregue','entregue_pelo_hub')
       RETURNING 1
     )
     SELECT COUNT(*) INTO v_arq_proc FROM arq;

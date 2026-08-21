@@ -10,7 +10,7 @@
 --   1) Cliente de São Paulo tira AS DUAS federais (regional + Seção Judiciária),
 --      igual aos demais estados. Isso encerra a divergência entre a decisão de
 --      30/07 ("paulista tira só a regional") e os três dossiês DEFERIDOS do
---      serviço 50, que levaram as duas. Vale a regra dos dossiês.
+--      serviço 50, que levaram as duas.
 --   2) Aplicar também nos processos JÁ ABERTOS.
 --
 -- ─── O QUE ESTAVA ERRADO ─────────────────────────────────────────────────────
@@ -27,24 +27,33 @@
 -- a migration 20260812203000 reescreveu o montador de checklist DEPOIS, sem o
 -- filtro territorial. Por isso esta migration arruma os dois lados.
 --
--- ─── ESCOLHA DE PROJETO: NENHUM CÓDIGO DE DOCUMENTO NOVO ─────────────────────
+-- ─── DUAS ESCOLHAS DE PROJETO QUE SEGURAM O RISCO ────────────────────────────
 --
--- A tentativa de 30/07 criava um código por região e por estado
--- (`antecedentes_federal_regional_trf1..6`, `..._secao_judiciaria_xx`): 32
--- linhas de catálogo por serviço, mais apelidos, biblioteca e prompts de IA.
--- Aqui NÃO se cria código nenhum. Os códigos atuais já são genéricos — o
--- próprio leitor de certidões diz, em src/lib/quero-armas/parsersCertidoes.ts,
--- que `antecedentes_federal_trf3_regional` "continua sendo o código das seis
--- regiões" e lê do papel a região de verdade. O que estava errado era o
--- RÓTULO e o LINK, e é só isso que muda, resolvido pela UF do cliente na hora
--- de montar o checklist.
+-- 1) NENHUM CÓDIGO DE DOCUMENTO NOVO. A tentativa de 30/07 criava um código por
+--    região e por estado (`antecedentes_federal_regional_trf1..6`,
+--    `..._secao_judiciaria_xx`): 32 linhas de catálogo por serviço, mais
+--    apelidos, biblioteca e prompts de IA. Aqui não se cria código nenhum. Os
+--    códigos atuais já são genéricos — o próprio leitor de certidões diz, em
+--    src/lib/quero-armas/parsersCertidoes.ts, que
+--    `antecedentes_federal_trf3_regional` "continua sendo o código das seis
+--    regiões" e lê do papel a região de verdade.
+--
+-- 2) O NOME É CORRIGIDO POR SUBSTITUIÇÃO, NÃO REESCRITO. Em vez de gerar um
+--    nome novo — o que renomearia em massa também as linhas do cliente de São
+--    Paulo, que estão certas, e quebraria o casamento com os nomes canônicos do
+--    Hub —, esta migration troca só os pedaços que dizem São Paulo: TRF3 vira
+--    TRF4, TJSP vira TJPR, "Seção Judiciária de SP" vira "Seção Judiciária de
+--    PR". Consequência importante: PARA CLIENTE DE SÃO PAULO NADA MUDA, nem
+--    nome nem link (os links de SP do mapa são idênticos aos do catálogo). E o
+--    nome da certidão do TJM, definido pelo titular em 07/08, fica intacto —
+--    ele não tem pedaço de São Paulo para trocar.
 --
 -- ─── ALCANCE (ATENÇÃO: COMPORTAMENTO COMPARTILHADO) ──────────────────────────
 --
 -- Conferido em 21/08: QUINZE serviços têm certidões presas a São Paulo
--- (2, 6, 31, 32, 33, 35, 36, 37, 38, 41, 42, 44, 48, 50, 60). O nome e o link
--- passam a seguir a UF do cliente em TODOS eles — é a mesma regra do titular,
--- e nenhum checklist ganha ou perde item por causa disso.
+-- (2, 6, 31, 32, 33, 35, 36, 37, 38, 41, 42, 44, 48, 50, 60). O nome, o órgão
+-- emissor e o link passam a seguir a UF do cliente em TODOS eles. Nenhum
+-- checklist ganha ou perde item por causa disso.
 --
 -- A ÚNICA mudança de composição é a certidão do TJM, que existe apenas nos
 -- serviços 44, 50 e 60 e passa a ser pedida só de quem mora em SP, MG ou RS.
@@ -53,9 +62,25 @@
 -- valendo até o endereço existir. Ninguém deixa de receber exigência por falta
 -- de dado.
 --
--- Idempotente.
+-- ─── O QUE OS BACKFILLS NÃO TOCAM ────────────────────────────────────────────
+--
+--   • processo que não está mais montando dossiê (protocolado, em análise no
+--     órgão, notificado, em recurso, deferido, indeferido, concluído,
+--     cancelado, bloqueado) — depois do protocolo o dossiê congela, mesmo
+--     princípio da 20260821010000;
+--   • processo de cliente apagado por LGPD;
+--   • linha com arquivo entregue, em QUALQUER um dos dois campos de arquivo;
+--   • linha em status que já conta como cumprida.
+--
+-- Idempotente. Escrito em DUAS transações: a primeira cria estrutura e regra,
+-- a segunda corrige os processos — assim o backfill não segura lock de DDL no
+-- catálogo enquanto roda.
 -- =============================================================================
 
+
+-- ╔═══════════════════════════════════════════════════════════════════════════╗
+-- ║ TRANSAÇÃO 1 — estrutura e regra                                           ║
+-- ╚═══════════════════════════════════════════════════════════════════════════╝
 BEGIN;
 
 -- ─── 1) O mapa dos 27 estados ────────────────────────────────────────────────
@@ -63,16 +88,23 @@ BEGIN;
 -- juntos. Regiões da Justiça Federal: TRF1 (AC AP AM BA DF GO MA MT PA PI RO
 -- RR TO), TRF2 (RJ ES), TRF3 (SP MS), TRF4 (RS SC PR), TRF5 (PE CE AL SE PB
 -- RN), TRF6 (MG, desde 2022).
+--
+-- `tj_sigla` é dado, não conta: no Distrito Federal o tribunal é o TJDFT, e
+-- não "TJDF" como sairia de uma regra "TJ + sigla do estado".
 CREATE TABLE IF NOT EXISTS public.qa_uf_certidao (
   uf         char(2) PRIMARY KEY,
   nome_uf    text     NOT NULL,
   trf_numero smallint NOT NULL CHECK (trf_numero BETWEEN 1 AND 6),
+  tj_sigla   text     NOT NULL,
   trf_link   text,
   tj_link    text,
   pc_link    text,
   tjm_link   text,           -- só SP, MG e RS têm Tribunal de Justiça Militar
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.qa_uf_certidao
+  ADD COLUMN IF NOT EXISTS tj_sigla text;
 
 COMMENT ON TABLE public.qa_uf_certidao IS
   'Tribunal e portal de emissão de cada certidão de antecedentes, por UF de '
@@ -81,49 +113,53 @@ COMMENT ON TABLE public.qa_uf_certidao IS
   'Tribunal de Justiça Militar estadual.';
 
 INSERT INTO public.qa_uf_certidao
-  (uf, nome_uf, trf_numero, trf_link, tj_link, pc_link, tjm_link) VALUES
-  ('AC', 'Acre', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://www.tjac.jus.br/servicos/certidoes/', 'https://www.pc.ac.gov.br/', NULL),
-  ('AL', 'Alagoas', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://www2.tjal.jus.br/certidaoOnline/', 'https://policiacivil.al.gov.br/servicos/atestado-de-antecedentes-criminais', NULL),
-  ('AP', 'Amapá', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://tucujuris.tjap.jus.br/', 'https://www.policiacivil.ap.gov.br/', NULL),
-  ('AM', 'Amazonas', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://consultasaj.tjam.jus.br/sco/abrirCadastro.do', 'https://www.pc.am.gov.br/atestado-de-antecedentes-criminais/', NULL),
-  ('BA', 'Bahia', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'http://esaj.tjba.jus.br/sco/abrirCadastro.do', 'https://servicos.policiacivil.ba.gov.br/atestado-de-antecedentes/', NULL),
-  ('CE', 'Ceará', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://esaj.tjce.jus.br/sco/abrirCadastro.do', 'https://www.pc.ce.gov.br/servicos/atestado-de-antecedentes-criminais/', NULL),
-  ('DF', 'Distrito Federal', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://cnc.tjdft.jus.br/', 'https://www.pcdf.df.gov.br/servicos/atestado-de-antecedentes-criminais', NULL),
-  ('ES', 'Espírito Santo', 2, 'https://www10.trf2.jus.br/portal/certidoes/', 'https://sistemas.tjes.jus.br/certidaonegativa/sistemas/certidaonegativa/CERTIDAOPESQUISA.cfm', 'https://pc.es.gov.br/atestado-de-antecedentes-criminais', NULL),
-  ('GO', 'Goiás', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://www.tjgo.jus.br/index.php/servicos/certidoes', 'https://www.policiacivil.go.gov.br/', NULL),
-  ('MA', 'Maranhão', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://www.tjma.jus.br/servicos/certidoes-online', 'https://www.pc.ma.gov.br/', NULL),
-  ('MT', 'Mato Grosso', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://cia.tjmt.jus.br/publico/CartaoDeCredito', 'https://www.pjc.mt.gov.br/atestado-de-antecedentes', NULL),
-  ('MS', 'Mato Grosso do Sul', 3, 'https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao', 'https://esaj.tjms.jus.br/sco/abrirCadastro.do', 'https://www.pc.ms.gov.br/', NULL),
-  ('MG', 'Minas Gerais', 6, 'https://portal.trf6.jus.br/servicos/certidoes/', 'https://www8.tjmg.jus.br/juridico/certidaoJudicial/publico/formConsultaAntecedentes.jsf', 'https://atestado.policiacivil.mg.gov.br/', 'https://www.tjmmg.jus.br/index.php/servicos/certidoes'),
-  ('PA', 'Pará', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://consultas.tjpa.jus.br/certidaoportalexterno/', 'https://www.policiacivil.pa.gov.br/servicos/atestado-de-antecedentes-criminais/', NULL),
-  ('PB', 'Paraíba', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://app.tjpb.jus.br/certidaoonline/pages/publico/consulta-registro-solicitacao.xhtml', 'https://www.policiacivil.pb.gov.br/', NULL),
-  ('PR', 'Paraná', 4, 'https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471', 'https://portal.tjpr.jus.br/certidoes/publico/consultaSolicitacao.do', 'https://www.policiacivil.pr.gov.br/servicos/atestado-de-antecedentes-criminais', NULL),
-  ('PE', 'Pernambuco', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://portaltjpe.tjpe.jus.br/servicos/certidoes/certidao-judicial', 'https://antecedentes.policiacivil.pe.gov.br/', NULL),
-  ('PI', 'Piauí', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://www.tjpi.jus.br/certidoesonline/', 'https://www.pc.pi.gov.br/', NULL),
-  ('RJ', 'Rio de Janeiro', 2, 'https://www10.trf2.jus.br/portal/certidoes/', 'https://www3.tjrj.jus.br/certidoeseletronicas/publico/solicitacao/incluir', 'https://portalservicos.policiacivilrj.net.br/', NULL),
-  ('RN', 'Rio Grande do Norte', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://www.tjrn.jus.br/index.php/servicos/certidoes', 'https://www.pc.rn.gov.br/', NULL),
-  ('RS', 'Rio Grande do Sul', 4, 'https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471', 'https://www.tjrs.jus.br/novo/servicos-e-consultas/certidoes/', 'https://ww4.pc.rs.gov.br/pcnet-fs-web/', 'https://www.tjmrs.jus.br/servicos/certidoes'),
-  ('RO', 'Rondônia', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://webapp.tjro.jus.br/certidao/pages/certidao/emissaoCertidao.xhtml', 'https://www.pc.ro.gov.br/', NULL),
-  ('RR', 'Roraima', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://certidao.tjrr.jus.br/', 'https://www.pc.rr.gov.br/', NULL),
-  ('SC', 'Santa Catarina', 4, 'https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471', 'https://esaj.tjsc.jus.br/sco/abrirCadastro.do', 'https://www.pc.sc.gov.br/servicos/atestado-de-antecedentes', NULL),
-  ('SP', 'São Paulo', 3, 'https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao', 'https://esaj.tjsp.jus.br/sco/abrirCadastro.do', 'https://servicos.sp.gov.br/fcarta/259d189e-dc87-4308-9812-7abed7494412', 'https://certidaocriminal.tjmsp.jus.br/'),
-  ('SE', 'Sergipe', 5, 'https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes', 'https://www.tjse.jus.br/portal/servicos/certidoes-1', 'https://www.ssp.se.gov.br/', NULL),
-  ('TO', 'Tocantins', 1, 'https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/', 'https://wwa.tjto.jus.br/certidaonada/', 'https://www.policiacivil.to.gov.br/', NULL)
+  (uf, nome_uf, trf_numero, tj_sigla, trf_link, tj_link, pc_link, tjm_link) VALUES
+  ('AC','Acre',1,'TJAC','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://www.tjac.jus.br/servicos/certidoes/','https://www.pc.ac.gov.br/',NULL),
+  ('AL','Alagoas',5,'TJAL','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://www2.tjal.jus.br/certidaoOnline/','https://policiacivil.al.gov.br/servicos/atestado-de-antecedentes-criminais',NULL),
+  ('AP','Amapá',1,'TJAP','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://tucujuris.tjap.jus.br/','https://www.policiacivil.ap.gov.br/',NULL),
+  ('AM','Amazonas',1,'TJAM','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://consultasaj.tjam.jus.br/sco/abrirCadastro.do','https://www.pc.am.gov.br/atestado-de-antecedentes-criminais/',NULL),
+  ('BA','Bahia',1,'TJBA','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','http://esaj.tjba.jus.br/sco/abrirCadastro.do','https://servicos.policiacivil.ba.gov.br/atestado-de-antecedentes/',NULL),
+  ('CE','Ceará',5,'TJCE','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://esaj.tjce.jus.br/sco/abrirCadastro.do','https://www.pc.ce.gov.br/servicos/atestado-de-antecedentes-criminais/',NULL),
+  ('DF','Distrito Federal',1,'TJDFT','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://cnc.tjdft.jus.br/','https://www.pcdf.df.gov.br/servicos/atestado-de-antecedentes-criminais',NULL),
+  ('ES','Espírito Santo',2,'TJES','https://www10.trf2.jus.br/portal/certidoes/','https://sistemas.tjes.jus.br/certidaonegativa/sistemas/certidaonegativa/CERTIDAOPESQUISA.cfm','https://pc.es.gov.br/atestado-de-antecedentes-criminais',NULL),
+  ('GO','Goiás',1,'TJGO','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://www.tjgo.jus.br/index.php/servicos/certidoes','https://www.policiacivil.go.gov.br/',NULL),
+  ('MA','Maranhão',1,'TJMA','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://www.tjma.jus.br/servicos/certidoes-online','https://www.pc.ma.gov.br/',NULL),
+  ('MT','Mato Grosso',1,'TJMT','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://cia.tjmt.jus.br/publico/CartaoDeCredito','https://www.pjc.mt.gov.br/atestado-de-antecedentes',NULL),
+  ('MS','Mato Grosso do Sul',3,'TJMS','https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao','https://esaj.tjms.jus.br/sco/abrirCadastro.do','https://www.pc.ms.gov.br/',NULL),
+  ('MG','Minas Gerais',6,'TJMG','https://portal.trf6.jus.br/servicos/certidoes/','https://www8.tjmg.jus.br/juridico/certidaoJudicial/publico/formConsultaAntecedentes.jsf','https://atestado.policiacivil.mg.gov.br/','https://www.tjmmg.jus.br/index.php/servicos/certidoes'),
+  ('PA','Pará',1,'TJPA','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://consultas.tjpa.jus.br/certidaoportalexterno/','https://www.policiacivil.pa.gov.br/servicos/atestado-de-antecedentes-criminais/',NULL),
+  ('PB','Paraíba',5,'TJPB','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://app.tjpb.jus.br/certidaoonline/pages/publico/consulta-registro-solicitacao.xhtml','https://www.policiacivil.pb.gov.br/',NULL),
+  ('PR','Paraná',4,'TJPR','https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471','https://portal.tjpr.jus.br/certidoes/publico/consultaSolicitacao.do','https://www.policiacivil.pr.gov.br/servicos/atestado-de-antecedentes-criminais',NULL),
+  ('PE','Pernambuco',5,'TJPE','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://portaltjpe.tjpe.jus.br/servicos/certidoes/certidao-judicial','https://antecedentes.policiacivil.pe.gov.br/',NULL),
+  ('PI','Piauí',1,'TJPI','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://www.tjpi.jus.br/certidoesonline/','https://www.pc.pi.gov.br/',NULL),
+  ('RJ','Rio de Janeiro',2,'TJRJ','https://www10.trf2.jus.br/portal/certidoes/','https://www3.tjrj.jus.br/certidoeseletronicas/publico/solicitacao/incluir','https://portalservicos.policiacivilrj.net.br/',NULL),
+  ('RN','Rio Grande do Norte',5,'TJRN','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://www.tjrn.jus.br/index.php/servicos/certidoes','https://www.pc.rn.gov.br/',NULL),
+  ('RS','Rio Grande do Sul',4,'TJRS','https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471','https://www.tjrs.jus.br/novo/servicos-e-consultas/certidoes/','https://ww4.pc.rs.gov.br/pcnet-fs-web/','https://www.tjmrs.jus.br/servicos/certidoes'),
+  ('RO','Rondônia',1,'TJRO','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://webapp.tjro.jus.br/certidao/pages/certidao/emissaoCertidao.xhtml','https://www.pc.ro.gov.br/',NULL),
+  ('RR','Roraima',1,'TJRR','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://certidao.tjrr.jus.br/','https://www.pc.rr.gov.br/',NULL),
+  ('SC','Santa Catarina',4,'TJSC','https://www2.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=1471','https://esaj.tjsc.jus.br/sco/abrirCadastro.do','https://www.pc.sc.gov.br/servicos/atestado-de-antecedentes',NULL),
+  ('SP','São Paulo',3,'TJSP','https://web.trf3.jus.br/certidao-regional/CertidaoCivelEleitoralCriminal/SolicitarDadosCertidao','https://esaj.tjsp.jus.br/sco/abrirCadastro.do','https://servicos.sp.gov.br/fcarta/259d189e-dc87-4308-9812-7abed7494412','https://certidaocriminal.tjmsp.jus.br/'),
+  ('SE','Sergipe',5,'TJSE','https://www.trf5.jus.br/index.php/servicos-do-cidadao/certidoes','https://www.tjse.jus.br/portal/servicos/certidoes-1','https://www.ssp.se.gov.br/',NULL),
+  ('TO','Tocantins',1,'TJTO','https://portal.trf1.jus.br/portaltrf1/servicos/certidoes/certidao-negativa/','https://wwa.tjto.jus.br/certidaonada/','https://www.policiacivil.to.gov.br/',NULL)
 ON CONFLICT (uf) DO UPDATE
    SET nome_uf    = EXCLUDED.nome_uf,
        trf_numero = EXCLUDED.trf_numero,
+       tj_sigla   = EXCLUDED.tj_sigla,
        trf_link   = EXCLUDED.trf_link,
        tj_link    = EXCLUDED.tj_link,
        pc_link    = EXCLUDED.pc_link,
        tjm_link   = EXCLUDED.tjm_link,
        updated_at = now();
 
+ALTER TABLE public.qa_uf_certidao ALTER COLUMN tj_sigla SET NOT NULL;
+
 GRANT SELECT ON public.qa_uf_certidao TO authenticated, anon, service_role;
 ALTER TABLE public.qa_uf_certidao ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS qa_uf_certidao_leitura ON public.qa_uf_certidao;
 -- Tabela de referência pública: só links de tribunal, nenhum dado de pessoa.
+-- Sem cláusula TO, para não deixar nenhum papel lendo zero linha em silêncio.
 CREATE POLICY qa_uf_certidao_leitura ON public.qa_uf_certidao
-  FOR SELECT TO authenticated, anon USING (true);
+  FOR SELECT USING (true);
 
 -- ─── 2) Normalizador de UF ───────────────────────────────────────────────────
 -- O cadastro grava o estado às vezes como sigla ("PR"), às vezes por extenso
@@ -149,6 +185,7 @@ AS $$
       OR translate(lower(c.nome_uf), 'áàâãäéèêëíìîïóòôõöúùûüç',
                                      'aaaaaeeeeiiiiooooouuuuc') = l.sem_acento
    WHERE l.v <> ''
+   ORDER BY c.uf
    LIMIT 1;
 $$;
 
@@ -156,44 +193,64 @@ COMMENT ON FUNCTION public.qa_uf_normalizar(text) IS
   'Sigla da UF a partir de sigla ou nome por extenso, com ou sem acento. '
   'NULL quando não reconhece — nesse caso nenhuma regra territorial se aplica.';
 
--- ─── 3) Nome e link da certidão conforme a UF ────────────────────────────────
--- Devolvem NULL para tudo que NÃO é certidão territorial (Justiça Eleitoral e
--- Justiça Militar da União valem para o país inteiro) e para UF desconhecida.
--- Quem chama usa COALESCE, então NULL = mantém o que já estava.
+-- ─── 3) Texto e link da certidão conforme a UF ───────────────────────────────
+-- CORRIGE POR SUBSTITUIÇÃO. Recebe o texto atual (nome do documento ou órgão
+-- emissor) e troca só os pedaços que dizem São Paulo. Devolve NULL quando
+-- nada muda — quem chama usa COALESCE, então NULL = fica como está. Por isso
+-- o cliente de São Paulo não sofre alteração nenhuma, e o nome do TJM (que não
+-- carrega pedaço de SP) permanece o que o titular definiu em 07/08.
 --
--- A certidão REGIONAL e a da SEÇÃO JUDICIÁRIA saem do MESMO portal do TRF,
--- mudando a opção de abrangência — é assim que o leitor de certidões do
--- sistema distingue as duas ("Abrangência: Regional" x "Seção Judiciária").
---
--- O TJM devolve NULL onde não existe tribunal militar estadual, mesmo que
--- alguém chame a função direto: nunca se inventa "TJM-PR".
-CREATE OR REPLACE FUNCTION public.qa_certidao_nome_por_uf(p_tipo text, p_uf text)
+-- Fora das certidões territoriais devolve NULL: Justiça Eleitoral e Justiça
+-- Militar da União valem para o país inteiro.
+CREATE OR REPLACE FUNCTION public.qa_certidao_texto_por_uf(p_texto text, p_tipo text, p_uf text)
 RETURNS text
 LANGUAGE sql
 STABLE
 SET search_path TO 'public'
 AS $$
-  SELECT CASE btrim(lower(coalesce(p_tipo, '')))
-    WHEN 'antecedentes_federal_trf3_regional' THEN
-      'Certidão Federal — TRF' || c.trf_numero || ' (abrangência Regional)'
-    WHEN 'antecedentes_federal_sjsp_jef' THEN
-      'Certidão Federal — Seção Judiciária de ' || c.uf || ' e JEF'
-    WHEN 'antecedentes_estadual_distribuicao' THEN
-      'Certidão Estadual de Distribuições Criminais — TJ' || c.uf
-    WHEN 'antecedentes_estadual_execucoes' THEN
-      'Certidão Estadual de Execuções Criminais — TJ' || c.uf
-    WHEN 'antecedentes_criminais' THEN
-      'Atestado de Antecedentes Criminais — Polícia Civil/' || c.uf
-    WHEN 'antecedentes_militar_estadual' THEN
-      CASE WHEN c.tjm_link IS NULL THEN NULL
-           ELSE 'Certidão Criminal — Tribunal de Justiça Militar (TJM-' || c.uf || ')'
-      END
-    ELSE NULL
-  END
-  FROM public.qa_uf_certidao c
- WHERE c.uf = public.qa_uf_normalizar(p_uf);
+  SELECT NULLIF(
+           replace(
+           replace(
+           replace(
+           replace(
+           replace(
+           replace(
+           replace(p_texto,
+             'TJMSP',                  'TJM' || c.uf),
+             'TJM-SP',                 'TJM-' || c.uf),
+             'TRF3',                   'TRF' || c.trf_numero),
+             'TJSP',                   c.tj_sigla),
+             'SJSP',                   'SJ' || c.uf),
+             'Seção Judiciária de SP', 'Seção Judiciária de ' || c.uf),
+             'Secao Judiciaria de SP', 'Secao Judiciaria de ' || c.uf),
+           p_texto)
+    FROM public.qa_uf_certidao c
+   WHERE c.uf = public.qa_uf_normalizar(p_uf)
+     AND p_texto IS NOT NULL
+     AND btrim(lower(coalesce(p_tipo,''))) IN (
+           'antecedentes_federal_trf3_regional',
+           'antecedentes_federal_sjsp_jef',
+           'antecedentes_estadual_distribuicao',
+           'antecedentes_estadual_execucoes',
+           'antecedentes_criminais',
+           'antecedentes_militar_estadual');
 $$;
 
+COMMENT ON FUNCTION public.qa_certidao_texto_por_uf(text, text, text) IS
+  'Troca no texto os pedaços presos a São Paulo (TRF3, TJSP, SJSP, Seção '
+  'Judiciária de SP) pelos do estado do cliente. NULL quando nada muda, '
+  'quando o tipo não é certidão territorial ou quando a UF é desconhecida.';
+
+-- O link do portal do estado. Aqui é substituição de valor mesmo: o cliente
+-- precisa do endereço do tribunal dele. Para São Paulo os endereços do mapa
+-- são idênticos aos que já estão no catálogo, então nada muda.
+--
+-- A certidão REGIONAL e a da SEÇÃO JUDICIÁRIA saem do MESMO portal do TRF,
+-- mudando a opção de abrangência — é assim que o leitor de certidões do
+-- sistema distingue as duas ("Abrangência: Regional" x "Seção Judiciária").
+--
+-- O TJM devolve NULL onde não existe tribunal militar estadual: nunca se
+-- inventa um portal de "TJM do Paraná".
 CREATE OR REPLACE FUNCTION public.qa_certidao_link_por_uf(p_tipo text, p_uf text)
 RETURNS text
 LANGUAGE sql
@@ -213,17 +270,13 @@ AS $$
  WHERE c.uf = public.qa_uf_normalizar(p_uf);
 $$;
 
-COMMENT ON FUNCTION public.qa_certidao_nome_por_uf(text, text) IS
-  'Nome da certidão com o tribunal da UF do cliente. NULL para certidão que '
-  'não depende de estado (TSE, STM), para UF desconhecida e para o TJM em '
-  'estado que não tem Tribunal de Justiça Militar.';
 COMMENT ON FUNCTION public.qa_certidao_link_por_uf(text, text) IS
   'Portal de emissão da certidão na UF do cliente. Regional e Seção '
   'Judiciária saem do mesmo portal do TRF, mudando a abrangência.';
 
-GRANT EXECUTE ON FUNCTION public.qa_uf_normalizar(text)              TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.qa_certidao_nome_por_uf(text, text) TO authenticated, anon, service_role;
-GRANT EXECUTE ON FUNCTION public.qa_certidao_link_por_uf(text, text) TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.qa_uf_normalizar(text)                    TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.qa_certidao_texto_por_uf(text,text,text)  TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.qa_certidao_link_por_uf(text, text)       TO authenticated, anon, service_role;
 
 -- ─── 4) A etiqueta de estado no catálogo ─────────────────────────────────────
 ALTER TABLE public.qa_servicos_documentos
@@ -231,7 +284,9 @@ ALTER TABLE public.qa_servicos_documentos
 
 COMMENT ON COLUMN public.qa_servicos_documentos.condicao_uf IS
   'UFs de residência que recebem esta exigência. NULL = todas. Lido por '
-  'qa_explodir_checklist_processo. Hoje só a certidão do TJM usa: SP, MG, RS.';
+  'qa_explodir_checklist_processo e por qa_catalogo_do_processo. Hoje só a '
+  'certidão do TJM usa: SP, MG, RS. Linha de TJM criada DEPOIS desta migration '
+  'precisa nascer com esta marcação — a conferência (C) no rodapé acusa.';
 
 -- O TJM passa a ser pedido só de quem tem para onde ir.
 UPDATE public.qa_servicos_documentos
@@ -241,10 +296,10 @@ UPDATE public.qa_servicos_documentos
    AND condicao_uf IS DISTINCT FROM ARRAY['SP','MG','RS'];
 
 -- ─── 5) O montador de checklist passa a ler a etiqueta de estado ────────────
--- Cópia fiel da definição vigente (migration 20260812203000) com QUATRO
--- pontos alterados, todos marcados com "NOVO" no corpo: a variável da UF, a
--- leitura da UF do cadastro, o filtro territorial e a troca de nome/link.
--- Nenhuma outra regra da função foi tocada.
+-- Cópia fiel da definição vigente (migration 20260812203000) com CINCO pontos
+-- alterados, todos marcados com "NOVO" no corpo: a variável da UF, a leitura
+-- da UF do cadastro, o filtro territorial, a correção de nome/órgão/link e a
+-- UF registrada no evento de log. Nenhuma outra regra da função foi tocada.
 
 CREATE OR REPLACE FUNCTION public.qa_explodir_checklist_processo(p_processo_id uuid)
  RETURNS TABLE(inseridos integer, ja_existentes integer, reaproveitados_cofre integer, pre_validados integer)
@@ -360,17 +415,19 @@ BEGIN
            CASE WHEN v_profissao_upper IS NOT NULL
                  AND (d.tipo_documento ILIKE 'renda_%' OR d.tipo_documento ILIKE '%atividade%')
                 THEN d.nome_documento || ' — ' || v_profissao_upper
-                -- NOVO: certidão estadual/regional ganha o nome do tribunal
-                -- da UF do cliente. Fora das certidões devolve NULL e o nome
-                -- do catálogo permanece.
-                ELSE COALESCE(public.qa_certidao_nome_por_uf(d.tipo_documento, v_uf),
+                -- NOVO: troca os pedaços "São Paulo" do nome pelos do estado do
+                -- cliente. Devolve NULL quando nada muda, e o catálogo prevalece.
+                ELSE COALESCE(public.qa_certidao_texto_por_uf(d.nome_documento, d.tipo_documento, v_uf),
                               d.nome_documento) END,
            d.etapa_segura, 'pendente', COALESCE(d.obrigatorio, true),
            d.validade_dias, d.formato_aceito, d.regra_validacao,
-           -- NOVO: link do portal da UF do cliente (mesma regra do nome).
+           -- NOVO: link do portal da UF do cliente.
            COALESCE(public.qa_certidao_link_por_uf(d.tipo_documento, v_uf), d.link_emissao),
            d.instrucoes, d.observacoes_cliente, d.modelo_url, d.exemplo_url,
-           d.orgao_emissor, d.prazo_recomendado_dias,
+           -- NOVO: o órgão emissor acompanha o nome.
+           COALESCE(public.qa_certidao_texto_por_uf(d.orgao_emissor, d.tipo_documento, v_uf),
+                    d.orgao_emissor),
+           d.prazo_recomendado_dias,
            COALESCE(d.escopo, 'processo'), d.ordem
       FROM desejados d
      WHERE NOT EXISTS (SELECT 1 FROM ja j WHERE j.tipo_documento = d.tipo_documento)
@@ -437,7 +494,7 @@ BEGIN
            v_ins, v_exi, v_dup, v_invalid, COALESCE(v_reuso.reaproveitados, 0), v_endereco_seed, v_endereco_aproveit, v_proc.servico_id, v_condicao),
     jsonb_build_object(
       'servico_id', v_proc.servico_id, 'condicao_profissional', v_condicao,
-      'uf_residencia', v_uf,
+      'uf_residencia', v_uf,   -- NOVO
       'documentos_inseridos', v_inserted_tipos,
       'documentos_ja_existentes', v_existing_tipos,
       'documentos_ignorados_por_duplicidade', v_duplicate_tipos,
@@ -456,14 +513,44 @@ BEGIN
 END;
 $function$;
 
--- ─── 6) Os processos JÁ ABERTOS acompanham (decisão do titular) ──────────────
--- Processo concluído, cancelado ou apagado por LGPD fica de fora.
+COMMIT;
 
--- 6.1 Nome e link de cada certidão passam a ser os do estado do cliente.
+
+-- ╔═══════════════════════════════════════════════════════════════════════════╗
+-- ║ TRANSAÇÃO 2 — os processos que já estão abertos                           ║
+-- ╚═══════════════════════════════════════════════════════════════════════════╝
+-- Separada da primeira de propósito: assim a correção dos processos não segura
+-- o lock de DDL do catálogo enquanto roda.
+BEGIN;
+
+-- Silencia os dois gatilhos de "documento mudou de status" durante a dispensa
+-- em massa. Sem isso, cada TJM dispensado vira um aviso no sino do Admin com o
+-- título "Documento recebido — em análise", para documento que ninguém enviou.
+-- Mesmo padrão da migration 20260813000000. O gatilho de log de evento continua
+-- ligado, que é o registro de auditoria.
+DO $off$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['trg_qa_processo_doc_verde','trg_qa_admin_notif_doc_processo'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_trigger g
+                 JOIN pg_class c ON c.oid = g.tgrelid
+                WHERE c.relname = 'qa_processo_documentos' AND g.tgname = t) THEN
+      EXECUTE format('ALTER TABLE public.qa_processo_documentos DISABLE TRIGGER %I', t);
+    END IF;
+  END LOOP;
+END $off$;
+
+-- 6.1 Nome, órgão emissor e link passam a ser os do estado do cliente.
+--     Só onde o texto realmente muda (cliente de São Paulo não é tocado) e só
+--     em linha que o cliente ainda vai emitir: documento já entregue continua
+--     com o nome do papel que está guardado.
 UPDATE public.qa_processo_documentos pd
    SET nome_documento = COALESCE(
-         public.qa_certidao_nome_por_uf(pd.tipo_documento, cl.estado),
+         public.qa_certidao_texto_por_uf(pd.nome_documento, pd.tipo_documento, cl.estado),
          pd.nome_documento),
+       orgao_emissor  = COALESCE(
+         public.qa_certidao_texto_por_uf(pd.orgao_emissor, pd.tipo_documento, cl.estado),
+         pd.orgao_emissor),
        link_emissao   = COALESCE(
          public.qa_certidao_link_por_uf(pd.tipo_documento, cl.estado),
          pd.link_emissao),
@@ -471,18 +558,27 @@ UPDATE public.qa_processo_documentos pd
   FROM public.qa_processos p
   JOIN public.qa_clientes cl ON cl.id = p.cliente_id
  WHERE p.id = pd.processo_id
-   AND p.status NOT IN ('concluido', 'cancelado', 'excluido_lgpd')
-   AND public.qa_certidao_nome_por_uf(pd.tipo_documento, cl.estado) IS NOT NULL
-   AND (pd.nome_documento IS DISTINCT FROM
-          public.qa_certidao_nome_por_uf(pd.tipo_documento, cl.estado)
+   -- só processo que ainda está montando dossiê
+   AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+                    'aguardando_documentos','em_validacao','pendente_cliente',
+                    'revisao_humana','validado','pagamento_confirmado',
+                    'em_analise_interna')
+   AND COALESCE(cl.status, '') <> 'excluido_lgpd'
+   -- nunca mexe em documento entregue ou já resolvido
+   AND coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NULL
+   AND pd.status NOT IN ('aprovado','validado','conforme','concluido','concluído',
+                         'entregue','entregue_pelo_hub','dispensado',
+                         'dispensado_grupo','dispensado_por_reaproveitamento',
+                         'nao_aplicavel')
+   -- e só quando há de fato o que mudar
+   AND (public.qa_certidao_texto_por_uf(pd.nome_documento, pd.tipo_documento, cl.estado) IS NOT NULL
+     OR public.qa_certidao_texto_por_uf(pd.orgao_emissor,  pd.tipo_documento, cl.estado) IS NOT NULL
      OR pd.link_emissao IS DISTINCT FROM
-          COALESCE(public.qa_certidao_link_por_uf(pd.tipo_documento, cl.estado),
-                   pd.link_emissao));
+          COALESCE(public.qa_certidao_link_por_uf(pd.tipo_documento, cl.estado), pd.link_emissao));
 
 -- 6.2 A exigência impossível do TJM sai do caminho de quem não é SP/MG/RS.
 --     NÃO apaga: marca como não aplicável, que o checklist já conta como
---     cumprida. E NUNCA toca em linha que já tem arquivo enviado ou que a
---     equipe já resolveu — documento entregue continua no lugar dele.
+--     cumprida. Mesmas travas do 6.1 — documento entregue continua no lugar.
 UPDATE public.qa_processo_documentos pd
    SET status      = 'nao_aplicavel',
        observacoes = COALESCE(pd.observacoes,'') ||
@@ -495,30 +591,72 @@ UPDATE public.qa_processo_documentos pd
   JOIN public.qa_clientes cl ON cl.id = p.cliente_id
  WHERE p.id = pd.processo_id
    AND pd.tipo_documento = 'antecedentes_militar_estadual'
-   AND p.status NOT IN ('concluido', 'cancelado', 'excluido_lgpd')
+   AND p.status IN ('aguardando_pagamento','aguardando_assinatura',
+                    'aguardando_documentos','em_validacao','pendente_cliente',
+                    'revisao_humana','validado','pagamento_confirmado',
+                    'em_analise_interna')
+   AND COALESCE(cl.status, '') <> 'excluido_lgpd'
    AND public.qa_uf_normalizar(cl.estado) IS NOT NULL
    AND public.qa_uf_normalizar(cl.estado) NOT IN ('SP','MG','RS')
-   AND pd.arquivo_storage_key IS NULL
-   AND pd.status NOT IN ('aprovado', 'dispensado_grupo',
-                         'dispensado_por_reaproveitamento', 'nao_aplicavel');
+   AND coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NULL
+   AND pd.status NOT IN ('aprovado','validado','conforme','concluido','concluído',
+                         'entregue','entregue_pelo_hub','dispensado',
+                         'dispensado_grupo','dispensado_por_reaproveitamento',
+                         'nao_aplicavel');
+
+-- Religa os gatilhos e aborta se algum ficar desligado.
+DO $on$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['trg_qa_processo_doc_verde','trg_qa_admin_notif_doc_processo'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_trigger g
+                 JOIN pg_class c ON c.oid = g.tgrelid
+                WHERE c.relname = 'qa_processo_documentos' AND g.tgname = t) THEN
+      EXECUTE format('ALTER TABLE public.qa_processo_documentos ENABLE TRIGGER %I', t);
+    END IF;
+  END LOOP;
+END $on$;
+
+DO $chk$
+DECLARE v_off text;
+BEGIN
+  SELECT string_agg(g.tgname, ', ') INTO v_off
+    FROM pg_trigger g JOIN pg_class c ON c.oid = g.tgrelid
+   WHERE c.relname = 'qa_processo_documentos'
+     AND g.tgname IN ('trg_qa_processo_doc_verde','trg_qa_admin_notif_doc_processo')
+     AND g.tgenabled = 'D';
+  IF v_off IS NOT NULL THEN
+    RAISE EXCEPTION 'ABORTADO: gatilho(s) ficaram desligados: %', v_off;
+  END IF;
+END $chk$;
+
+-- 6.3 O nome guardado em cache no cabeçalho do processo acompanha o rename.
+UPDATE public.qa_processos p
+   SET prazo_critico_doc_nome = pd.nome_documento
+  FROM public.qa_processo_documentos pd
+ WHERE pd.id = p.prazo_critico_doc_id
+   AND p.prazo_critico_doc_nome IS DISTINCT FROM pd.nome_documento;
 
 COMMIT;
 
 -- =============================================================================
 -- CONFERÊNCIA (rodar depois, UMA DE CADA VEZ)
 --
--- A) O mapa entrou completo — esperado: 27 UFs, 3 com TJM.
+-- A) O mapa entrou completo — esperado: 27 UFs, 3 com TJM, DF como TJDFT.
 --
 -- SELECT count(*) AS ufs,
---        count(*) FILTER (WHERE tjm_link IS NOT NULL) AS com_tjm
+--        count(*) FILTER (WHERE tjm_link IS NOT NULL) AS com_tjm,
+--        max(tj_sigla) FILTER (WHERE uf='DF')          AS sigla_do_df
 --   FROM public.qa_uf_certidao;
 --
--- B) Teste do Paraná. Esperado: TRF4, TJPR, Polícia Civil/PR, TJM VAZIO e
---    Justiça Eleitoral VAZIA (é da União, não muda por estado).
+-- B) Teste do Paraná x São Paulo. Esperado: para o PR, TRF4/TJPR/PR e TJM
+--    VAZIO; para SP, TODAS as colunas de nome VAZIAS (nada muda) e os links
+--    iguais aos que já estão no catálogo.
 --
 -- SELECT t AS tipo,
---        public.qa_certidao_nome_por_uf(t, 'Paraná') AS nome,
---        public.qa_certidao_link_por_uf(t, 'Paraná') AS link
+--        public.qa_certidao_texto_por_uf('Certidão Federal TRF3 — Abrangência Regional', t, 'Paraná')    AS nome_pr,
+--        public.qa_certidao_texto_por_uf('Certidão Federal TRF3 — Abrangência Regional', t, 'São Paulo') AS nome_sp,
+--        public.qa_certidao_link_por_uf(t, 'Paraná') AS link_pr
 --   FROM unnest(ARRAY['antecedentes_federal_trf3_regional',
 --                     'antecedentes_federal_sjsp_jef',
 --                     'antecedentes_estadual_distribuicao',
@@ -527,36 +665,41 @@ COMMIT;
 --                     'antecedentes_militar_estadual',
 --                     'antecedentes_eleitoral']) AS t;
 --
--- C) O TJM ficou marcado SP/MG/RS nos três serviços que o pedem.
+-- C) Toda linha de TJM do catálogo tem de estar marcada SP/MG/RS. Linha nova
+--    criada depois desta migration aparece aqui com condicao_uf vazia.
 --
--- SELECT servico_id, tipo_documento, condicao_uf
+-- SELECT servico_id, tipo_documento, condicao_uf, ativo
 --   FROM public.qa_servicos_documentos
---  WHERE ativo AND tipo_documento = 'antecedentes_militar_estadual'
---  ORDER BY servico_id;
+--  WHERE tipo_documento = 'antecedentes_militar_estadual'
+--  ORDER BY condicao_uf NULLS FIRST, servico_id;
 --
 -- D) Quem tinha o TJM sem poder emitir. Esperado: cliente de fora de SP/MG/RS
---    aparece com status 'nao_aplicavel'.
+--    com processo em montagem aparece como 'nao_aplicavel'.
 --
--- SELECT cl.nome_completo, cl.estado, p.servico_id, pd.status
+-- SELECT cl.nome_completo, cl.estado, p.servico_id, p.status AS status_processo,
+--        pd.status AS status_documento
 --   FROM public.qa_processo_documentos pd
 --   JOIN public.qa_processos p  ON p.id  = pd.processo_id
 --   JOIN public.qa_clientes  cl ON cl.id = p.cliente_id
 --  WHERE pd.tipo_documento = 'antecedentes_militar_estadual'
---    AND p.status NOT IN ('concluido','cancelado','excluido_lgpd')
 --  ORDER BY cl.estado;
 --
--- E) Nenhuma certidão de processo aberto pode ter sobrado com nome de São
---    Paulo para cliente de fora de SP. Esperado: 0 linhas.
+-- E) Nenhuma certidão de processo EM MONTAGEM pode ter sobrado com texto de
+--    São Paulo para cliente de fora de SP. Esperado: 0 linhas.
+--    (Mato Grosso do Sul é do TRF3 de verdade, por isso está fora do filtro.)
 --
 -- SELECT cl.estado, pd.tipo_documento, pd.nome_documento, count(*)
 --   FROM public.qa_processo_documentos pd
 --   JOIN public.qa_processos p  ON p.id  = pd.processo_id
 --   JOIN public.qa_clientes  cl ON cl.id = p.cliente_id
---  WHERE p.status NOT IN ('concluido','cancelado','excluido_lgpd')
---    AND public.qa_uf_normalizar(cl.estado) IS NOT NULL
---    AND public.qa_uf_normalizar(cl.estado) <> 'SP'
---    AND (pd.nome_documento ILIKE '%TJSP%' OR pd.nome_documento ILIKE '%TRF3%'
---         OR pd.nome_documento ILIKE '%de SP%' OR pd.nome_documento ILIKE '%/SP%')
+--  WHERE p.status IN ('aguardando_pagamento','aguardando_assinatura',
+--                     'aguardando_documentos','em_validacao','pendente_cliente',
+--                     'revisao_humana','validado','pagamento_confirmado',
+--                     'em_analise_interna')
+--    AND public.qa_uf_normalizar(cl.estado) NOT IN ('SP','MS')
+--    AND coalesce(nullif(pd.arquivo_storage_key,''), nullif(pd.arquivo_url,'')) IS NULL
+--    AND (pd.nome_documento LIKE '%TJSP%' OR pd.nome_documento LIKE '%TRF3%'
+--         OR pd.nome_documento LIKE '%Judiciária de SP%')
 --  GROUP BY cl.estado, pd.tipo_documento, pd.nome_documento
 --  ORDER BY cl.estado;
 -- =============================================================================
