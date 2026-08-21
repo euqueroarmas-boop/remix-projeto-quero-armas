@@ -7,11 +7,14 @@
 --
 -- ESTADO EM 21/08/2026 09:30 BRT:
 --   1  ✅ respondida — coluna exige_peca_defesa EXISTE (60=true, 44=false, 50=false)
---   2  ⬜ pendente
---   3  ⬜ pendente
---   4  ⬜ pendente
+--   2  ✅ respondida — trigger qa_trg_trava_protocolo_sem_defesa EXISTE
+--   3  ✅ respondida — 6 perguntas, TODAS com chave (titular_profissao é campo
+--         livre, sem opcoes, o que é esperado)
+--   4  ✅ respondida — STM: 44=90, 60=90, 50=30 (o 50 diverge)
 --   5  ✅ respondida — as duas funções de prazo existem
 --   6  ✅ respondida — to_regclass devolveu VAZIO
+--   7a ⬜ pendente
+--   7b ⬜ pendente
 --   7  ❌ falhou: ERROR 42703 column "condicao_uf" does not exist
 --         → refeita como 7a (colunas da tabela) + 7b (catálogo sem condicao_uf)
 --   8  ✅ respondida — 2 processos: LEO (34, 01/07, aguardando_documentos) e
