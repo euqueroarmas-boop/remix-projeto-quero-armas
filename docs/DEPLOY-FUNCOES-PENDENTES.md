@@ -1,5 +1,24 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
+## ✅ Leva 18 · Cadastro público aceita histórico de residência — FECHADA em 21/08/2026, 19:41 BRT
+
+Publicação isolada de `qa-cadastro-publico`. A função passa a aceitar os campos
+`residiu_mesmo_endereco_5_anos` e `enderecos_anteriores_json` enviados pelo
+frontend no cadastro refinado. Sem o redeploy, o Zod descarta esses campos em
+silêncio e o checklist nunca gera as certidões dos estados anteriores.
+
+**Edge function — ALTERADA, publicada em 21/08/2026, 19:41 BRT:**
+
+| Função | O que muda | O que quebra sem ela |
+|---|---|---|
+| `qa-cadastro-publico` ✅ 19:41 | Schema aceita `residiu_mesmo_endereco_5_anos` e `enderecos_anteriores_json`; lógica de seed de certidões por estado anterior | A resposta do titular sobre onde morou nos últimos 5 anos é descartada e nenhuma certidão de estado anterior chega ao checklist |
+
+**Nenhuma migration foi criada.** Código-fonte não foi alterado.
+
+---
+
+
+
 ## ✅ Leva 17 · Sobras da leva 16 — FECHADA em 21/08/2026, 18:36 BRT
 
 Fechamento das sobras que a revisão apontou e o titular mandou corrigir em
