@@ -11439,6 +11439,7 @@ export type Database = {
           biblioteca_id: string | null
           condicao_modalidade: string[] | null
           condicao_profissional: string | null
+          condicao_uf: string[] | null
           created_at: string
           emissor: string
           escopo: string
@@ -11468,6 +11469,7 @@ export type Database = {
           biblioteca_id?: string | null
           condicao_modalidade?: string[] | null
           condicao_profissional?: string | null
+          condicao_uf?: string[] | null
           created_at?: string
           emissor?: string
           escopo?: string
@@ -11497,6 +11499,7 @@ export type Database = {
           biblioteca_id?: string | null
           condicao_modalidade?: string[] | null
           condicao_profissional?: string | null
+          condicao_uf?: string[] | null
           created_at?: string
           emissor?: string
           escopo?: string
@@ -12327,6 +12330,42 @@ export type Database = {
             referencedColumns: ["tipo_documento"]
           },
         ]
+      }
+      qa_uf_certidao: {
+        Row: {
+          nome_uf: string
+          pc_link: string | null
+          tj_link: string | null
+          tj_sigla: string
+          tjm_link: string | null
+          trf_link: string | null
+          trf_numero: number
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          nome_uf: string
+          pc_link?: string | null
+          tj_link?: string | null
+          tj_sigla: string
+          tjm_link?: string | null
+          trf_link?: string | null
+          trf_numero: number
+          uf: string
+          updated_at?: string
+        }
+        Update: {
+          nome_uf?: string
+          pc_link?: string | null
+          tj_link?: string | null
+          tj_sigla?: string
+          tjm_link?: string | null
+          trf_link?: string | null
+          trf_numero?: number
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       qa_usuarios_perfis: {
         Row: {
@@ -13722,7 +13761,36 @@ export type Database = {
           user_agent: string
         }[]
       }
+      qa_catalogo_do_processo: {
+        Args: { p_processo_id: string }
+        Returns: {
+          escopo: string
+          etapa: string
+          exemplo_url: string
+          formato_aceito: string[]
+          instrucoes: string
+          link_emissao: string
+          modelo_url: string
+          nome_documento: string
+          obrigatorio: boolean
+          observacoes_cliente: string
+          ordem: number
+          orgao_emissor: string
+          prazo_recomendado_dias: number
+          regra_validacao: Json
+          tipo_documento: string
+          validade_dias: number
+        }[]
+      }
       qa_categoria_documento: { Args: { tipo: string }; Returns: string }
+      qa_certidao_link_por_uf: {
+        Args: { p_tipo: string; p_uf: string }
+        Returns: string
+      }
+      qa_certidao_texto_por_uf: {
+        Args: { p_texto: string; p_tipo: string; p_uf: string }
+        Returns: string
+      }
       qa_chat_sessao_por_assunto: {
         Args: { _cliente_id: number; _emb: string }
         Returns: {
@@ -14358,6 +14426,7 @@ export type Database = {
       qa_sync_fila_processar: { Args: { p_limite?: number }; Returns: number }
       qa_trf_por_uf: { Args: { p_uf: string }; Returns: number }
       qa_uf_do_cliente: { Args: { p_cliente_id: number }; Returns: string }
+      qa_uf_normalizar: { Args: { p_estado: string }; Returns: string }
       qa_venda_aprovar_valor: { Args: { p_venda_id: number }; Returns: Json }
       qa_venda_corrigir_valor: {
         Args: {

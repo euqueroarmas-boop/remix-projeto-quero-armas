@@ -497,3 +497,12 @@ profissão da pessoa errada — e a declaração do responsável sai com o dado 
 requerente.
 
 Nenhuma migration nesta leva.
+
+## 21/08/2026, 18:36 BRT — Deploy realizado
+
+ALTERADAS (redeploy):
+- qa-vencimentos-alertas
+- qa-documento-cliente-notificar
+- qa-montar-juntada
+
+Status: publicadas com sucesso. Nenhum código-fonte alterado.
