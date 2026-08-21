@@ -14214,6 +14214,10 @@ export type Database = {
         }[]
       }
       qa_processo_em_aberto: { Args: { p_status: string }; Returns: boolean }
+      qa_processo_relogio_parado: {
+        Args: { p_processo_id: string }
+        Returns: boolean
+      }
       qa_processo_rever_exigencias: {
         Args: { p_cliente_id?: number }
         Returns: number
