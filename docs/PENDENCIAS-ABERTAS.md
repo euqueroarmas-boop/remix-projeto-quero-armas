@@ -55,20 +55,24 @@ a varredura geral de certidões fora da tabela única voltou sem nenhuma linha.
 ---
 
 
-## 🟡 Deploy — banco em dia; front da leva 16 aguarda merge
+## ✅ Deploy — nada pendente
 
 As 23 edge functions da auditoria estão publicadas (leva 1 às 00:08, leva 2 às
 01:20, `qa-export-docx` às 11:22 BRT) e as **7 migrations** estão aplicadas e
 conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
 
-**Banco (21/08 12:36):** as três migrations do dia estão aplicadas e conferidas
-— `20260821030000` (STM 90 dias), `20260821040000` (certidão segue o estado) e
-`20260821050000` (botão e painel pela mesma régua). Nenhuma edge function foi
-tocada nessas três, então não há nada a publicar no Lovable.
+**Banco (21/08):** as QUATRO migrations do dia estão aplicadas e conferidas —
+`20260821030000` (STM 90 dias), `20260821040000` (certidão segue o estado),
+`20260821050000` (botão e painel pela mesma régua) e `20260821060000` (gatilho
+que faz o TJM nascer marcado).
 
-**Front (falta):** as correções em `src/lib/quero-armas/linksAntecedentesPorUf.ts`
-estão na branch `claude/servicos-autorizacao-armas-xbxd09` e ainda não foram para
-a `main`. Nada quebra sem elas — o link que o cliente vê vem do banco, que já
+**Edge functions (21/08 18:36):** `qa-vencimentos-alertas`,
+`qa-documento-cliente-notificar` e `qa-montar-juntada` publicadas — eram as que
+carregavam o texto de "onde emitir" e o nome do arquivo do dossiê.
+
+**Front:** publicado — a branch foi para a `main` em 21/08.  A anotação abaixo
+fica como histórico do que as correções trazem.  As correções em
+`src/lib/quero-armas/linksAntecedentesPorUf.ts` Nada quebra sem elas — o link que o cliente vê vem do banco, que já
 está certo —, mas quatro melhorias do popup guiado só valem depois do merge:
 resolução de link por igualdade (hoje, por prefixo, uma certidão de outro estado
 guardada no cofre recebe o link do estado atual), UF escrita por extenso sendo

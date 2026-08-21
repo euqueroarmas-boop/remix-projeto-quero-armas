@@ -1,6 +1,6 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
-## 🟠 Leva 17 · Sobras da leva 16 — SQL aplicado; TRÊS funções a republicar
+## ✅ Leva 17 · Sobras da leva 16 — FECHADA em 21/08/2026, 18:36 BRT
 
 Fechamento das sobras que a revisão apontou e o titular mandou corrigir em
 21/08. O problema comum: a leva 16 fez o checklist chamar a certidão pelo
@@ -15,15 +15,15 @@ conhecida, `aplicarUfEmTexto` especializa para o tribunal com nome e sobrenome.
 
 | Migration | O que faz | Estado |
 |---|---|---|
-| `20260821060000_tjm_nasce_com_marcacao_de_estado` | Gatilho: linha nova de `antecedentes_militar_estadual` nasce com `condicao_uf = {SP,MG,RS}`. Sem ele, um serviço criado amanhã voltaria a exigir o TJM de todo mundo | ⬜ **a aplicar** |
+| `20260821060000_tjm_nasce_com_marcacao_de_estado` | Gatilho: linha nova de `antecedentes_militar_estadual` nasce com `condicao_uf = {SP,MG,RS}`. Sem ele, um serviço criado amanhã voltaria a exigir o TJM de todo mundo | ✅ **aplicada 21/08 18:33** — conferência devolveu 0 linhas de TJM sem marcação |
 
-**Edge functions — todas ALTERADAS, redeploy obrigatório:**
+**Edge functions — todas ALTERADAS, publicadas em 21/08 18:36 BRT:**
 
 | Função | O que muda | O que quebra sem ela |
 |---|---|---|
-| `qa-vencimentos-alertas` | Usa `_shared/nomeDocumento.ts`, cujo texto de "onde emitir" saiu de "TJSP"/"TRF3" para forma neutra | O e-mail de vencimento continua mandando o cliente de fora de SP ao tribunal errado |
-| `qa-documento-cliente-notificar` | Mesmo `_shared/nomeDocumento.ts` | Idem, na notificação de documento |
-| `qa-montar-juntada` | Usa `_shared/ordemProtocolo.ts`, cujo rótulo de arquivo saiu de "Certidao Justica Federal TRF3/SJSP" para forma neutra | O ZIP entregue continua nomeando o arquivo do cliente do Paraná como "TRF3" |
+| `qa-vencimentos-alertas` ✅ 18:36 | Usa `_shared/nomeDocumento.ts`, cujo texto de "onde emitir" saiu de "TJSP"/"TRF3" para forma neutra | O e-mail de vencimento continua mandando o cliente de fora de SP ao tribunal errado |
+| `qa-documento-cliente-notificar` ✅ 18:36 | Mesmo `_shared/nomeDocumento.ts` | Idem, na notificação de documento |
+| `qa-montar-juntada` ✅ 18:36 | Usa `_shared/ordemProtocolo.ts`, cujo rótulo de arquivo saiu de "Certidao Justica Federal TRF3/SJSP" para forma neutra | O ZIP entregue continua nomeando o arquivo do cliente do Paraná como "TRF3" |
 
 **Front (vai com o push da `main`):** aviso de vencimento neutro, rótulos do
 cofre sem "TJSP", apelido legado do TJM devolvendo o link do tribunal militar
