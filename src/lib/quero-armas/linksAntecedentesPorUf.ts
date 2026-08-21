@@ -130,20 +130,41 @@ export function resolveLinkAntecedentePorUf(
   const links = getLinksAntecedentesPorUf(uf);
   if (!links) return null;
 
+  // Certidões da UNIÃO: valem para o país inteiro e não têm link por estado.
+  // Este guarda vem PRIMEIRO porque `antecedentes_militar` (STM) casaria com a
+  // regra do TJM logo abaixo se dependesse só de "militar".
+  if (t === "antecedentes_militar" || t === "antecedentes_eleitoral") {
+    return null;
+  }
   // Polícia Civil estadual.
-  if (t.startsWith("certidao_antecedentes_policia_civil") || t === "atestado_antecedentes_pc") {
+  if (
+    t === "antecedentes_criminais" || // código canônico do catálogo
+    t.startsWith("certidao_antecedentes_policia_civil") ||
+    t === "atestado_antecedentes_pc"
+  ) {
     return links.policiaCivil ?? null;
   }
   // TJM estadual (só SP/MG/RS).
-  if (t.includes("tjm") || t === "certidao_antecedentes_criminais_militar_estadual") {
+  if (
+    t === "antecedentes_militar_estadual" || // código canônico do catálogo
+    t.includes("tjm") ||
+    t === "certidao_antecedentes_criminais_militar_estadual"
+  ) {
     return links.tjm ?? null;
   }
-  // TRF regional (federal por região).
-  if (t.includes("trf") || t === "certidao_antecedentes_criminais_federal") {
+  // TRF: regional e Seção Judiciária/JEF saem do MESMO portal do TRF da região,
+  // mudando a opção de abrangência.
+  if (
+    t === "antecedentes_federal_sjsp_jef" || // código canônico do catálogo
+    t.startsWith("antecedentes_federal") ||
+    t.includes("trf") ||
+    t === "certidao_antecedentes_criminais_federal"
+  ) {
     return links.trfRegional ?? null;
   }
   // TJ estadual (distribuição, execuções, ações criminais).
   if (
+    t.startsWith("antecedentes_estadual_") || // códigos canônicos do catálogo
     t.startsWith("certidao_tjsp") || // legado — inclui variantes
     t.startsWith("certidao_estadual_") ||
     t === "certidao_antecedentes_criminais_estadual" ||
