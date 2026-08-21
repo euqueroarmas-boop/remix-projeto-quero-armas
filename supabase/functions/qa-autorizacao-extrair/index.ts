@@ -51,6 +51,17 @@ const tool = {
         calibre: { type: "string", description: "Calibre nominal autorizado (ex: 9mm, .380)." },
         quantidade: { type: "string", description: "Quantidade autorizada (ex: 1, 2)." },
         numero_serie: { type: "string", description: "Número de série, se já constar." },
+        // ── Seção 1 do formulário SisGCorp: o ADQUIRENTE ──
+        adquirente_nome: { type: "string", description: "Nome completo do adquirente (seção 1)." },
+        adquirente_cpf: { type: "string", description: "CPF do adquirente, apenas dígitos." },
+        adquirente_cr: { type: "string", description: "Número do CR do adquirente (seção 1)." },
+        adquirente_endereco: { type: "string", description: "Endereço do adquirente como impresso." },
+        acervo_utilizado: { type: "string", description: "Seção 2 — acervo utilizado (ex.: Tiro Desportivo - Atirador Desportivo)." },
+        // ── Seção 4: o FORNECEDOR (a loja) ──
+        fornecedor_razao_social: { type: "string", description: "Razão social do fornecedor (seção 4)." },
+        fornecedor_cnpj: { type: "string", description: "CNPJ do fornecedor, quando o emissor é a Polícia Federal." },
+        fornecedor_registro_sigma: { type: "string", description: "Nº de Registro SIGMA do fornecedor, quando o emissor é o Exército." },
+        fornecedor_endereco: { type: "string", description: "Endereço do fornecedor como impresso." },
       },
       additionalProperties: false,
     },
@@ -60,6 +71,12 @@ const tool = {
 const SYSTEM_PROMPT =
   "Você é especialista em documentos da Polícia Federal e do Exército Brasileiro. " +
   "Extraia TODOS os dados estruturados de uma AUTORIZAÇÃO DE COMPRA de arma de fogo. " +
+  "O formulário do SisGCorp ('AUTORIZAÇÃO PARA AQUISIÇÃO DE PCE NO COMÉRCIO NACIONAL') tem " +
+  "5 seções: 1-IDENTIFICAÇÃO DO ADQUIRENTE (nome, CR, CPF, endereço), 2-DO ACERVO UTILIZADO, " +
+  "3-PRODUTOS CONTROLADOS (produto, marca, modelo, calibre, quantidade), 4-FORNECEDOR " +
+  "(a Polícia Federal identifica a loja por CNPJ; o Exército por Nº Registro SIGMA) e " +
+  "5-DECLARAÇÃO. CUIDADO: o CPF do ADQUIRENTE está na seção 1 sob o rótulo 'CPF/CNPJ'; o " +
+  "CNPJ do FORNECEDOR está na seção 4 — não troque um pelo outro. " +
   "Datas DD/MM/AAAA. Vazio se não localizar. Responda exclusivamente chamando extrair_autorizacao.";
 
 function ddmmaaaaToISO(s?: string | null): string | null {
@@ -172,6 +189,40 @@ Deno.serve(async (req) => {
       return json({ error: msg }, 500);
     }
 
+    // ── Conferência: a autorização é MESMO deste cliente? ───────────────────
+    // Nos três dossiês deferidos usados como gabarito, o formulário traz nome,
+    // CPF e nº do CR do adquirente na seção 1. Comparamos com o cadastro; CPF
+    // divergente é o sinal clássico de autorização anexada na pasta errada.
+    // A conferência NÃO bloqueia nada sozinha: ela acende `revisao_necessaria`,
+    // que o Arsenal já exibe como alerta, e registra o detalhe campo a campo.
+    const soDigitos = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+    const normNome = (v: unknown) =>
+      String(v ?? "")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase().replace(/[^A-Z ]/g, " ").replace(/\s+/g, " ").trim();
+
+    let conferencia: Record<string, string> = {};
+    let temDivergencia = false;
+    try {
+      const [{ data: cli }, { data: cadCr }] = await Promise.all([
+        admin.from("qa_clientes").select("nome_completo, cpf").eq("id", doc.qa_cliente_id).maybeSingle(),
+        admin.from("qa_cadastro_cr").select("numero_cr").eq("cliente_id", doc.qa_cliente_id)
+             .order("id", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      const compara = (docVal: string, cadVal: string): string =>
+        !docVal ? "sem_dado_no_documento" : !cadVal ? "sem_dado_no_cadastro"
+        : docVal === cadVal ? "confere" : "divergente";
+      conferencia = {
+        cpf:  compara(soDigitos(raw?.adquirente_cpf), soDigitos(cli?.cpf)),
+        nome: compara(normNome(raw?.adquirente_nome), normNome(cli?.nome_completo)),
+        cr:   compara(soDigitos(raw?.adquirente_cr), soDigitos(cadCr?.numero_cr)),
+      };
+      temDivergencia = Object.values(conferencia).includes("divergente");
+    } catch (confErr) {
+      // Falha na conferência nunca derruba a extração — fica registrado o porquê.
+      conferencia = { erro: confErr instanceof Error ? confErr.message : "falha na conferência" };
+    }
+
     const ia_dados = {
       numero_autorizacao: raw?.numero_autorizacao || null,
       data_emissao: raw?.data_emissao || null,
@@ -184,6 +235,17 @@ Deno.serve(async (req) => {
       calibre: raw?.calibre || null,
       quantidade: raw?.quantidade || null,
       numero_serie: raw?.numero_serie || null,
+      adquirente_nome: raw?.adquirente_nome || null,
+      adquirente_cpf: soDigitos(raw?.adquirente_cpf) || null,
+      adquirente_cr: soDigitos(raw?.adquirente_cr) || null,
+      adquirente_endereco: raw?.adquirente_endereco || null,
+      acervo_utilizado: raw?.acervo_utilizado || null,
+      fornecedor_razao_social: raw?.fornecedor_razao_social || null,
+      fornecedor_cnpj: soDigitos(raw?.fornecedor_cnpj) || null,
+      fornecedor_registro_sigma: soDigitos(raw?.fornecedor_registro_sigma) || null,
+      fornecedor_endereco: raw?.fornecedor_endereco || null,
+      conferencia,
+      ...(temDivergencia ? { revisao_necessaria: true } : {}),
     };
 
     const updates = {

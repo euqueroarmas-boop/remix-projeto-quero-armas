@@ -1,0 +1,13 @@
+SISBB  -  SISTEMA DE INFORMACOES BANCO DO BRASIL
+06/11/2025 -     AUTOATENDIMENTO      - 09.21.41
+            COMPROVANTE DE PAGAMENTO
+CLIENTE: LEANDRO R PEREIRA
+================================================
+Convenio  GRU-GUIA RECOL.UNIAO(REF)
+Codigo de Barras   85880000000-8   25000363113-2
+                   00021850991-0   81025026558-1
+Data do pagamento                     06/11/2025
+Valor Total                                25,00
+------------------------------------------------
+DOCUMENTO:  110601
+AUTENTICACAO SISBB:        5.07F.91D.1F5.82C.8E3

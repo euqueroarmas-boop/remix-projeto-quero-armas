@@ -363,3 +363,15 @@ ALTERADAS (redeploy obrigatório):
 Migrations que precisam ir ANTES do deploy:
 - `20260820200000_segundo_endereco_cr_e_autorizacao_cac.sql`
 - `20260820210000_resposta_2o_endereco_volta_para_o_cadastro.sql`
+
+## 2026-08-20 — Autorização de compra: adquirente, fornecedor e conferência
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-autorizacao-extrair/index.ts` — o extrator passa a ler
+  também o ADQUIRENTE (nome, CPF, CR, endereço), o acervo e o FORNECEDOR
+  (razão social + CNPJ na PF / registro SIGMA no Exército), e confere CPF,
+  nome e CR contra o cadastro: divergência acende `revisao_necessaria`, que o
+  Arsenal já exibe. Sem o redeploy, a autorização continua sendo lida sem
+  dono — uma autorização anexada na pasta do cliente errado passa sem alerta.
+
+Nenhuma migration necessária para esta leva (tudo vai no JSONB que já existe).
