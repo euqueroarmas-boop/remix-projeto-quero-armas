@@ -32,8 +32,19 @@
 --      habitualidade do clube;
 --   3. dá chave e opções às perguntas novas, senão o portal desenha um upload
 --      no lugar do seletor e a linha nunca fecha;
---   4. reexplode os processos EM ABERTO — aditivo: entra o que falta, nada é
---      apagado e nada é duplicado. O que o cliente já entregou fica.
+--   4. NÃO encosta em processo nenhum que já exista.
+--
+-- SÓ VALE DAQUI PRA FRENTE (decisão do titular, 20/08/2026)
+--   Este bloco mexe APENAS no catálogo do serviço. Nenhum processo existente é
+--   reexplodido — nem os abertos. Há processos já concluídos, e o titular não
+--   quer nenhum deles reaberto por causa de exigência nova: processo entregue
+--   é processo entregue, e cliente que já cumpriu a lista não vai ser cobrado
+--   de novo por uma regra que passou a valer depois.
+--
+--   Quem nasce a partir de agora recebe o checklist completo. Se um dia algum
+--   processo antigo precisar ser completado, é caso a caso, chamando
+--   `qa_explodir_checklist_processo(<id do processo>)` para AQUELE processo —
+--   nunca em lote.
 --
 -- O QUE NÃO ENTRA AQUI, DE PROPÓSITO
 --   • Os cinco comprovantes anuais de endereço (item 08) NÃO são semeados
@@ -321,28 +332,6 @@ UPDATE public.qa_servicos_documentos
 
 COMMIT;
 
--- ── 5) Reexplosão dos processos EM ABERTO ───────────────────────────────────
--- Aditiva: entra o que falta, nada é apagado e nada é duplicado. O que o
--- cliente já entregou continua entregue. Fora da transação de propósito, para
--- que um processo problemático não derrube o acerto do catálogo.
-DO $$
-DECLARE
-  r     record;
-  v_res record;
-BEGIN
-  FOR r IN
-    SELECT p.id, p.cliente_id FROM public.qa_processos p
-     WHERE p.servico_id = 50 AND public.qa_processo_em_aberto(p.status)
-  LOOP
-    BEGIN
-      SELECT * INTO v_res FROM public.qa_explodir_checklist_processo(r.id);
-      RAISE NOTICE 'Processo %: % exigência(s) inserida(s)', r.id, v_res.inseridos;
-    EXCEPTION WHEN OTHERS THEN
-      RAISE WARNING 'Processo % falhou na reexplosão: %', r.id, SQLERRM;
-    END;
-  END LOOP;
-END $$;
-
 -- ── Conferência ─────────────────────────────────────────────────────────────
 -- 1) O checklist do serviço 50, na ordem do dossiê (esperado: 28 linhas ativas):
 --
@@ -357,16 +346,16 @@ END $$;
 -- SELECT tipo_documento, nome_documento FROM public.qa_servicos_documentos
 --  WHERE servico_id = 50 AND NOT ativo;
 --
--- 3) Os processos abertos agora carregam o checklist inteiro — os números
---    tinham de deixar de ser 6, 7, 13 e 13 e passar a bater entre si:
+-- 3) Os processos que já existiam NÃO podem ter mudado. Os números tinham de
+--    continuar 6, 7, 13 e 13 — se subiram, alguma coisa reexplodiu:
 --
--- SELECT pd.processo_id, cl.nome_completo, count(*) AS exigencias,
+-- SELECT pd.processo_id, cl.nome_completo, p.status, count(*) AS exigencias,
 --        count(*) FILTER (WHERE pd.status = 'pendente') AS pendentes
 --   FROM public.qa_processo_documentos pd
 --   JOIN public.qa_processos p ON p.id = pd.processo_id
 --   JOIN public.qa_clientes cl ON cl.id = p.cliente_id
 --  WHERE p.servico_id = 50
---  GROUP BY pd.processo_id, cl.nome_completo
+--  GROUP BY pd.processo_id, cl.nome_completo, p.status
 --  ORDER BY exigencias;
 --
 -- 4) As perguntas ficaram com chave e opções (esperado: 6 linhas, todas com

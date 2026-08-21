@@ -118,9 +118,14 @@ describe("o que este bloco deliberadamente NÃO faz", () => {
     expect(SQL).not.toContain("IN (50, 51)");
   });
 
-  it("a reexplosão é aditiva e não apaga entrega do cliente", () => {
-    expect(SQL).toContain("qa_explodir_checklist_processo");
-    expect(SQL).toContain("qa_processo_em_aberto");
-    expect(SQL).not.toContain("DELETE FROM public.qa_processo_documentos");
+  it("NÃO reexplode processo nenhum — o checklist vale só daqui pra frente", () => {
+    // Decisão do titular (20/08/2026): há processos já concluídos, e nenhum
+    // processo existente pode ganhar exigência nova em lote. A função de
+    // explosão só pode aparecer no SQL dentro de comentário, nunca executada.
+    const executavel = SQL.split("\n").filter((l) => !l.trimStart().startsWith("--")).join("\n");
+    expect(executavel).not.toContain("qa_explodir_checklist_processo");
+    expect(executavel).not.toContain("DO $$");
+    expect(executavel).not.toContain("DELETE FROM public.qa_processo_documentos");
+    expect(executavel).not.toContain("qa_processo_documentos");
   });
 });
