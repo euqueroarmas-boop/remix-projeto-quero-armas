@@ -5,9 +5,17 @@
 -- OITO consultas, UMA DE CADA VEZ. O Lovable/SQL Editor devolve só o último
 -- resultado quando várias vão juntas — então rode e me mande uma por vez.
 --
--- JÁ RESPONDIDA em 21/08/2026 (não precisa repetir): os processos abertos do
--- serviço 50 voltaram 2 linhas — Rivelino (13 exigências, deferido) e LEO DA
--- SILVA SOUZA (34 exigências, aguardando_documentos).
+-- ESTADO EM 21/08/2026 09:30 BRT:
+--   1  ✅ respondida — coluna exige_peca_defesa EXISTE (60=true, 44=false, 50=false)
+--   2  ⬜ pendente
+--   3  ⬜ pendente
+--   4  ⬜ pendente
+--   5  ✅ respondida — as duas funções de prazo existem
+--   6  ✅ respondida — to_regclass devolveu VAZIO
+--   7  ❌ falhou: ERROR 42703 column "condicao_uf" does not exist
+--         → refeita como 7a (colunas da tabela) + 7b (catálogo sem condicao_uf)
+--   8  ✅ respondida — 2 processos: LEO (34, 01/07, aguardando_documentos) e
+--         Rivelino (13, 13/07, deferido); nenhum protocolado
 -- ============================================================================
 
 
@@ -68,13 +76,22 @@ SELECT p.proname
 SELECT to_regclass('public.qa_prazo_certidao') AS tabela_prazo_certidao;
 
 
--- ╔══ 7 ═══════════════════════════════════════════════════════════════════════
--- ║ Catálogo vigente do serviço 50 — para saber se as 34 exigências do LEO
--- ║ batem com o catálogo novo ou se sobrou item duplicado/errado.
+-- ╔══ 7a ══════════════════════════════════════════════════════════════════════
+-- ║ Quais colunas a tabela do catálogo tem de verdade. Serve para saber se
+-- ║ condicao_uf / condicao_modalidade existem neste banco.
+-- ╚════════════════════════════════════════════════════════════════════════════
+SELECT column_name, data_type
+  FROM information_schema.columns
+ WHERE table_schema = 'public' AND table_name = 'qa_servicos_documentos'
+ ORDER BY ordinal_position;
+
+
+-- ╔══ 7b ══════════════════════════════════════════════════════════════════════
+-- ║ Catálogo vigente do serviço 50, só com colunas que existem com certeza —
+-- ║ para saber se as 34 exigências do LEO batem com o catálogo.
 -- ╚════════════════════════════════════════════════════════════════════════════
 SELECT ordem, etapa, tipo_documento, nome_documento, obrigatorio,
-       validade_dias, regra_validacao ->> 'grupo_checklist' AS grupo,
-       condicao_profissional, condicao_uf
+       validade_dias, regra_validacao ->> 'grupo_checklist' AS grupo
   FROM public.qa_servicos_documentos
  WHERE servico_id = 50 AND ativo
  ORDER BY ordem;
