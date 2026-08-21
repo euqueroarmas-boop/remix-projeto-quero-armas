@@ -1,6 +1,6 @@
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
-Índice único do que ficou em aberto. Atualizado em 20/08/2026, 20:35 BRT.
+Índice único do que ficou em aberto. Atualizado em 20/08/2026, 21:45 BRT.
 **Escopo de ataque CONCLUÍDO: F1–F11 + reauditoria.**
 
 ---
@@ -10,6 +10,107 @@
 As 23 edge functions da auditoria estão publicadas (leva 1 às 00:08, leva 2 às
 01:20, `qa-export-docx` às 11:22 BRT) e as **7 migrations** estão aplicadas e
 conferidas. Histórico e comandos em `docs/DEPLOY-FUNCOES-PENDENTES.md`.
+
+---
+
+## 🔴 Certidão não pode vencer depois do protocolo — Lei 9.784/99 (20/08/2026)
+
+Regra dada pelo titular: **depois que o processo é protocolado, a certidão não
+vence mais.** A Lei 9.784/99, que regula o processo administrativo federal, põe
+a demora na conta da Administração, não do requerente. Documento juntado no
+protocolo está juntado.
+
+### O furo
+
+O sistema calcula `qa_processos.prazo_critico_data` como a MENOR validade entre
+os documentos do processo, e usa isso para alertar e cobrar renovação. Não foi
+encontrado nada que desligue esse cálculo quando `protocolo_data` é preenchida.
+
+Isso não é hipótese barata: a autorização de compra CAC leva de **5 a 8 meses**
+entre protocolo e deferimento (medido nos três dossiês deferidos — Eduardo,
+Rivelino e Édson). Nesse intervalo, toda certidão de antecedentes vence. O
+cliente passa meses recebendo cobrança para renovar documento de um processo
+que já está na mão do órgão — e a equipe perde tempo tratando exigência que a
+lei não permite existir.
+
+### Por que não foi corrigido junto
+
+⚠️ **Comportamento compartilhado.** O prazo crítico vale para TODOS os serviços,
+não só para a autorização de compra. Mudar o cálculo muda alerta, cobrança e
+KPI de todo processo do sistema. Depende de aval do titular, que pediu para
+registrar como pendência.
+
+### Consulta que confirma se o furo existe
+
+```sql
+SELECT p.id, p.servico_id, p.servico_nome, p.status,
+       p.protocolo_data, p.protocolo_orgao,
+       p.prazo_critico_data, p.prazo_critico_doc_id
+  FROM public.qa_processos p
+ WHERE p.protocolo_data IS NOT NULL
+   AND p.prazo_critico_data IS NOT NULL
+ ORDER BY p.prazo_critico_data;
+```
+
+Se vier qualquer linha, há processo protocolado ainda com relógio de vencimento
+correndo. O conserto é parar o relógio quando `protocolo_data` existe.
+
+---
+
+## 🟠 ANEXO C — habitualidade é por ESPÉCIE de arma, não por calibre (20/08/2026)
+
+Regra dada pelo titular: os treinamentos são **por espécie de arma**, conforme a
+**IN DG/PF 311**. O texto "por calibre" vem do art. 35 do Decreto 11.615/2023 e
+não é o que vale para a conferência.
+
+### O que já foi feito e o que falta
+
+A migration `20260820120000_cr_templates_v2_e_link_lntd.sql` já tratou disso: o
+modelo de maio tinha o texto antigo "por calibre", e por isso os cinco modelos
+subiram com sufixo `_v2`, incluindo
+`declaracao_compromisso_habitualidade_v2`. Os botões do sistema já apontam para
+a chave nova.
+
+**O que falta conferir** — os modelos são arquivos `.docx` no Storage
+(`qa-templates` → `declaracoes/`), subidos à mão, e nenhum código garante o
+conteúdo deles:
+
+1. o `declaracao_compromisso_habitualidade_v2.docx` foi realmente subido?
+2. o texto dele diz **espécie de arma**, e não "calibre"?
+
+Evidência de que ainda circula versão errada: o dossiê deferido do Édson Campos
+(julho/2026) levou um ANEXO C dizendo *"no mínimo, por calibre registrado, oito
+treinamentos ou competições"* — ou seja, o arquivo de maio.
+
+Enquanto os dois pontos não forem confirmados, existe risco de sair declaração
+com a base legal errada no dossiê do cliente.
+
+---
+
+## 📌 CAC é gerido pela Polícia Federal — Exército não está atuando (20/08/2026)
+
+Regra dada pelo titular: pela **IN DG/PF 311**, os CACs passaram para a Polícia
+Federal. O Exército não está atuando desde a posse do presidente atual.
+
+Isso corrige uma leitura minha ao analisar os dossiês deferidos. Os três trazem
+o mesmo formulário do SisGCorp ("Autorização para Aquisição de PCE no Comércio
+Nacional"), mas com órgãos diferentes no cabeçalho:
+
+| dossiê | órgão no papel | assinou | autorização nº | fornecedor identificado por |
+|---|---|---|---|---|
+| Eduardo Rizek | Exército / DFPC | SFPC/DPF/SJK/SP | 99234025002588 | Nº Registro SIGMA |
+| Rivelino Pereira | Exército / DFPC | SFPC/DPF/SJK/SP | 99234025002548 | Nº Registro SIGMA |
+| Édson Campos | **Polícia Federal** | SFPC/SR/PF/SP | 99181025026558 | **CNPJ** |
+
+**Os dois do Exército são legado, não são o caminho atual.** O processo novo
+deve nascer com `protocolo_orgao = 'POLICIA_FEDERAL'`, que é o padrão que o
+front já usa. Não criar bifurcação de órgão no checklist da autorização de
+compra: se um dia o Exército voltar a atuar, aí sim se trata.
+
+Fica registrado o que muda no papel entre os dois, para quem for ler um dossiê
+antigo e estranhar: o Exército identifica a loja pelo **nº de registro SIGMA**,
+a PF pelo **CNPJ**. E o prefixo do número da autorização muda junto (9923 =
+Exército, 9918 = PF).
 
 ---
 
