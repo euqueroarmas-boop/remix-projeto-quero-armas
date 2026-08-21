@@ -28,6 +28,15 @@
 
 BEGIN;
 
+-- ── 0) Coluna órfã da migration 20260801201135 ──────────────────────────────
+-- Aquela migration referenciava `primeiro_endereco_validado_em` no corpo da
+-- função sem nunca criar a coluna. Como o PL/pgSQL só valida a linha quando
+-- ela executa, o erro ficou adormecido — até o gatilho desta migration passar
+-- a rodar o recálculo a cada mudança de status, quando TODO update de status
+-- quebraria. A coluna nasce aqui, inofensiva e nula.
+ALTER TABLE public.qa_processos
+  ADD COLUMN IF NOT EXISTS primeiro_endereco_validado_em timestamptz;
+
 -- ── 1) O portão, em função própria (uma definição, três usuários) ───────────
 CREATE OR REPLACE FUNCTION public.qa_processo_relogio_parado(p_processo_id uuid)
 RETURNS boolean
