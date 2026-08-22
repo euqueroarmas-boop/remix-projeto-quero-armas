@@ -7,6 +7,7 @@ import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/Proces
 import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
 import QASincronizarExigenciasBtn from "@/components/quero-armas/admin/QASincronizarExigenciasBtn";
 import { ehRevisaoHumana } from "@/lib/quero-armas/statusRevisaoHumana";
+import { nomeDaEtapa } from "@/lib/quero-armas/pendenciasGrupos";
 
 interface ProcessoRow {
   id: string;
@@ -24,12 +25,13 @@ interface ProcessoRow {
   contadores?: { total: number; cumpridos: number; pendentes: number; emAnalise: number; outros: number };
 }
 
+// Nome da etapa = nome do grupo (pendenciasGrupos), igual em toda tela.
 const ETAPA_LABEL: Record<number, string> = {
-  1: "ENDEREÇO",
-  2: "CONDIÇÃO PROFISSIONAL",
-  3: "ANTECEDENTES",
-  4: "DECLARAÇÕES",
-  5: "EXAMES",
+  1: nomeDaEtapa(1).toUpperCase(),
+  2: nomeDaEtapa(2).toUpperCase(),
+  3: nomeDaEtapa(3).toUpperCase(),
+  4: nomeDaEtapa(4).toUpperCase(),
+  5: nomeDaEtapa(5).toUpperCase(),
 };
 
 function diasAteData(d: string | null): number | null {

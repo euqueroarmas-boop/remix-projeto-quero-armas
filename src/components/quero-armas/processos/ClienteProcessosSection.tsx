@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FileStack, ChevronRight, AlertTriangle, CheckCircle, Clock, Eye, Sparkles, RefreshCw, FileText, CreditCard, CalendarClock, Timer, Activity } from "lucide-react";
 import { getStatusProcesso, formatDate, protocoloDoProcesso } from "./processoConstants";
 import { ProcessoDetalheDrawer } from "./ProcessoDetalheDrawer";
+import { nomeDaEtapa } from "@/lib/quero-armas/pendenciasGrupos";
 import { isChecklistCumprido, isChecklistPendente } from "@/lib/quero-armas/checklistMetrics";
 import { ehRevisaoHumana, STATUS_REVISAO_HUMANA } from "@/lib/quero-armas/statusRevisaoHumana";
 
@@ -35,12 +36,13 @@ interface Props {
   processoIdFiltro?: string | null;
 }
 
+// Nome da etapa = nome do grupo (pendenciasGrupos), igual em toda tela.
 const ETAPA_LABELS: Record<number, string> = {
-  1: "ENDEREÇO",
-  2: "CONDIÇÃO PROFISSIONAL",
-  3: "ANTECEDENTES",
-  4: "DECLARAÇÕES",
-  5: "EXAMES TÉCNICOS",
+  1: nomeDaEtapa(1).toUpperCase(),
+  2: nomeDaEtapa(2).toUpperCase(),
+  3: nomeDaEtapa(3).toUpperCase(),
+  4: nomeDaEtapa(4).toUpperCase(),
+  5: nomeDaEtapa(5).toUpperCase(),
 };
 
 const diasRestantes = (d?: string | null): number | null => {

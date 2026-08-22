@@ -30,6 +30,7 @@ import {
 } from "./checklistMetrics";
 import { wizardPendentePara } from "./checklistWizardGate";
 import { ordemGrupoChecklist } from "./simuladorChecklist";
+import { nomeDaEtapa } from "@/lib/quero-armas/pendenciasGrupos";
 import { filtrarIdentidadeUnica } from "./identidadeUnica";
 import { colapsarParesLaudo } from "./paresEquivalentes";
 import { mesclarRespostasCadastro } from "./respostasCadastro";
@@ -91,12 +92,13 @@ export interface GuiaDoc {
   [key: string]: any;
 }
 
+// Nome da etapa = nome do grupo (pendenciasGrupos).
 export const ETAPA_NOMES_GUIA: Record<number, string> = {
-  1: "Comprovação de endereço",
-  2: "Condição profissional",
-  3: "Antecedentes criminais",
-  4: "Declarações e compromissos",
-  5: "Exames técnicos",
+  1: nomeDaEtapa(1),
+  2: nomeDaEtapa(2),
+  3: nomeDaEtapa(3),
+  4: nomeDaEtapa(4),
+  5: nomeDaEtapa(5),
 };
 
 // Mesmas opções do drawer (CONDICAO_OPCOES). Mantido em sincronia.

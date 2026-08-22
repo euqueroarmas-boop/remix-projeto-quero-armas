@@ -184,14 +184,15 @@ export function rotuloGrupo(grupo: string): string {
   const g = String(grupo || "").trim().toLowerCase();
   const meta = (PENDENCIA_GRUPOS as any)[g];
   if (meta) return String(meta.label).toUpperCase();
+  // Abaixo vêm as ETAPAS do catálogo (base/endereco/condicao_profissional/
+  // complementar/tecnico/final). Onde a etapa corresponde a um grupo, usa o
+  // nome do grupo — nenhuma tela inventa palavra própria.
   if (g === "base") return "DOCUMENTOS BASE";
-  if (g === "endereco" || g === "endereço") return "COMPROVAÇÃO DE ENDEREÇO";
-  if (g === "condicao_profissional" || g === "renda") return "CONDIÇÃO PROFISSIONAL / RENDA";
+  if (g === "endereco" || g === "endereço") return PENDENCIA_GRUPOS.endereco.label.toUpperCase();
+  if (g === "condicao_profissional" || g === "renda") return PENDENCIA_GRUPOS.ocupacao.label.toUpperCase();
   if (g === "complementar") return "DOCUMENTOS COMPLEMENTARES";
-  if (g === "tecnico") return "EXAMES TÉCNICOS";
-  if (g === "final") return "ETAPA FINAL";
-  if (g === "antecedentes") return "ANTECEDENTES CRIMINAIS";
-  if (g === "declaracoes") return "DECLARAÇÕES";
+  if (g === "tecnico") return PENDENCIA_GRUPOS.laudos.label.toUpperCase();
+  if (g === "final") return PENDENCIA_GRUPOS.outros.label.toUpperCase();
   return g.replace(/_/g, " ").toUpperCase();
 }
 

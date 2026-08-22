@@ -20,6 +20,7 @@ import type {
 import { etapaDoTipoDocumento } from "@/lib/quero-armas/etapasAutoLiberacao";
 import { itemVisivelGuia } from "@/lib/quero-armas/checklistGuiadoEngine";
 import { filtrarIdentidadeUnica } from "@/lib/quero-armas/identidadeUnica";
+import { nomeDaEtapa } from "@/lib/quero-armas/pendenciasGrupos";
 import { isChecklistCumprido } from "@/lib/quero-armas/checklistMetrics";
 import { labelStatusDocumentoCliente } from "@/lib/quero-armas/statusDocumento";
 import {
@@ -279,13 +280,8 @@ function buildProcessoCard(args: {
     : [];
   const abertosGrupoAtual = docsGrupoAtual.filter((d) => !isCumprido(d));
 
-  const rotuloEtapa = (n: number | null) =>
-    n === 1 ? "COMPROVAÇÃO DE ENDEREÇO"
-    : n === 2 ? "CONDIÇÃO PROFISSIONAL / RENDA"
-    : n === 3 ? "ANTECEDENTES CRIMINAIS"
-    : n === 4 ? "DECLARAÇÕES"
-    : n === 5 ? "EXAMES TÉCNICOS"
-    : "";
+  // Nome da etapa = nome do grupo (pendenciasGrupos).
+  const rotuloEtapa = (n: number | null) => nomeDaEtapa(n).toUpperCase();
   // Quando resta uma única exigência, o nome dela é a etapa real percebida
   // pelo cliente (ex.: Certidão de Crimes Eleitorais — TSE), não o grupo amplo.
   let etapaAtual = abertosGrupoAtual.length === 1

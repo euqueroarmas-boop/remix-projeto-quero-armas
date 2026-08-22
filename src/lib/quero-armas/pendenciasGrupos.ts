@@ -394,6 +394,26 @@ export const GRUPOS_NAO_FILTRAVEIS: ReadonlySet<PendenciaGrupoId> = new Set<Pend
   "antecedentes_anteriores",
 ]);
 
+/**
+ * ETAPA (1..5) → GRUPO. A régua de etapas do processo e os grupos do checklist
+ * são eixos diferentes, mas falam do mesmo assunto — e falavam com palavras
+ * diferentes: a régua dizia "ANTECEDENTES CRIMINAIS" e "EXAMES TÉCNICOS" na
+ * mesma tela em que o grupo dizia "Idoneidade" e "Laudos". Agora o nome da
+ * etapa É o nome do grupo: existe um lugar só onde a palavra muda.
+ */
+export const ETAPA_GRUPO: Record<number, PendenciaGrupoId> = {
+  1: "endereco",
+  2: "ocupacao",
+  3: "antecedentes",
+  4: "declaracoes",
+  5: "laudos",
+};
+
+export function nomeDaEtapa(n: number | null | undefined): string {
+  const id = ETAPA_GRUPO[Number(n)];
+  return id ? GRUPOS[id].label : "";
+}
+
 export function ordemGrupo(id: PendenciaGrupoId): number {
   return GRUPOS[id]?.ordem ?? 999;
 }

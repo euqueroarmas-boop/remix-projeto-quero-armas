@@ -8,6 +8,7 @@ import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STAT
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
 import type { LucideIcon } from "lucide-react";
 import { grupoDaPendenciaDoItem } from "@/lib/quero-armas/pendenciasGrupos";
+import { nomeDaEtapa } from "@/lib/quero-armas/pendenciasGrupos";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
 import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
@@ -1702,12 +1703,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   };
   const etapaCompleta = etapaResumo(etapaLiberada).completo;
   const proximaEtapa = etapaLiberada < 5 ? etapaLiberada + 1 : null;
+  // Nome da etapa = nome do grupo (pendenciasGrupos). Antes esta régua dizia
+  // "ANTECEDENTES CRIMINAIS" logo acima de um grupo chamado "Idoneidade".
   const ETAPA_NOMES: Record<number, string> = {
-    1: "COMPROVAÇÃO DE ENDEREÇO",
-    2: "CONDIÇÃO PROFISSIONAL",
-    3: "ANTECEDENTES CRIMINAIS",
-    4: "DECLARAÇÕES E COMPROMISSOS",
-    5: "EXAMES TÉCNICOS",
+    1: nomeDaEtapa(1).toUpperCase(),
+    2: nomeDaEtapa(2).toUpperCase(),
+    3: nomeDaEtapa(3).toUpperCase(),
+    4: nomeDaEtapa(4).toUpperCase(),
+    5: nomeDaEtapa(5).toUpperCase(),
   };
 
   // Auto-liberação idempotente da próxima etapa: dispara quando a etapa atual

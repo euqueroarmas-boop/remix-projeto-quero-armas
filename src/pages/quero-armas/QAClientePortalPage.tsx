@@ -1575,15 +1575,17 @@ export default function QAClientePortalPage() {
   const processoSnap = useMemo(() => {
     const STATUS_CONCLUIDO = new Set(["concluido", "deferido", "finalizado"]);
     const STATUS_ENCERRADO = new Set(["concluido", "deferido", "finalizado", "indeferido", "cancelado", "desistiu", "restituido"]);
+    // Nome da etapa = nome do grupo (pendenciasGrupos). Onde a etapa não tem
+    // grupo correspondente (base, complementar), o rótulo próprio permanece.
     const ETAPA_LABELS: Record<string, string> = {
-      endereco: "Comprovação de endereço",
+      endereco: PENDENCIA_GRUPOS.endereco.label,
       base: "Documentação básica",
       complementar: "Documentação complementar",
-      tecnico: "Exames técnicos",
-      final: "Revisão final",
-      antecedentes: "Antecedentes criminais",
-      declaracoes: "Declarações e compromissos",
-      renda: "Condição profissional",
+      tecnico: PENDENCIA_GRUPOS.laudos.label,
+      final: PENDENCIA_GRUPOS.outros.label,
+      antecedentes: PENDENCIA_GRUPOS.antecedentes.label,
+      declaracoes: PENDENCIA_GRUPOS.declaracoes.label,
+      renda: PENDENCIA_GRUPOS.ocupacao.label,
     };
     const STATUS_LABELS: Record<string, string> = {
       aguardando_pagamento: "Aguardando pagamento",
