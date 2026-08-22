@@ -14491,6 +14491,10 @@ export type Database = {
           processos_divergentes: number
         }[]
       }
+      qa_servico_usa_residencia_5_anos: {
+        Args: { p_servico_id: number }
+        Returns: boolean
+      }
       qa_sincronizar_checklist_processos_servico: {
         Args: { p_servico_id: number }
         Returns: {
