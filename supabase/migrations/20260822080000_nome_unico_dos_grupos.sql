@@ -409,22 +409,3 @@ WHERE (b.total_docs>0 OR b.bloqueado)
   AND (public.qa_is_active_staff(auth.uid())
        OR coalesce(current_setting('request.jwt.claims', true)::json ->> 'role', '') = 'service_role');
 $function$;
-
--- =============================================================================
--- CONFERÊNCIA — os quatro lugares devem falar igual.
--- =============================================================================
-SELECT set_config('request.jwt.claims', '{"role":"service_role"}', true);
-
-SELECT 'dicionario' AS onde, s AS slug, public.qa_grupo_nome(s) AS nome
-  FROM unnest(ARRAY['exigencias_pf','assinaturas','perguntas','identificacao','endereco',
-                    'ocupacao','antecedentes','antecedentes_anteriores','habitualidade',
-                    'arma','declaracoes','efetiva_necessidade','laudos','requerimento','outros']) s
-UNION ALL
-SELECT 'tabela_grupos', g.slug, g.nome
-  FROM public.qa_checklist_grupos g
- WHERE g.ativo AND g.servico_id IS NULL
-UNION ALL
-SELECT 'painel_card (grupo_atual | fase)', p.grupo_atual, p.fase
-  FROM public.qa_painel_progresso_clientes() p
- WHERE p.cliente_id = 235
- ORDER BY 1, 2;
