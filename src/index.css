@@ -418,20 +418,52 @@ html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) :where(img, vid
   filter: none;
 }
 
-/* Ilha legada dentro de tela migrada.
-   Um componente ainda não migrado que abre por cima da página — hoje o drawer
-   de processo, compartilhado com telas antigas — desenharia as próprias cores
-   claras literalmente, aparecendo BRANCO sobre a tela escura. Marcado com
-   `data-qa-legado`, ele volta a ser desenhado pela inversão, exatamente como
-   em qualquer tela não migrada; a mídia dentro dele é re-invertida para não
-   ficar em negativo. A ilha é sempre `fixed inset-0`, então o filtro não
-   desloca layout. Quando o componente for migrado para os tokens --qa-*,
-   basta remover o atributo. */
-html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) [data-qa-legado] {
+/* Ilha de tema real: componente que desenha nos tokens --qa-* mesmo abrindo
+   por cima de tela ainda NÃO migrada (hoje o drawer de processo, usado em
+   Processos, Clientes, Contratações e no botão de gerar processo).
+
+   A conta do filtro muda conforme a tela que hospeda a ilha:
+   • tela não migrada — `.qa-scope` está invertido, então a ilha inverte de
+     novo e o que ela declara aparece como está;
+   • tela migrada — a casca já desfez a inversão, então a ilha não filtra nada.
+   Nos dois casos a ilha recebe a paleta noturna abaixo, igual à da tela
+   migrada, e a mídia dentro dela nunca aparece em negativo. */
+html.qa-noite .qa-scope [data-qa-conteudo]:not(:has([data-qa-pagina])) [data-qa-tema-real] {
   filter: invert(1) hue-rotate(180deg);
 }
-html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) [data-qa-legado] :where(img, video, canvas, iframe, svg image) {
+html.qa-noite .qa-scope [data-qa-conteudo]:not(:has([data-qa-pagina])) [data-qa-tema-real] :where(img, video, canvas, iframe, svg image) {
   filter: invert(1) hue-rotate(180deg);
+}
+html.qa-noite .qa-scope [data-qa-tema-real] {
+  --qa-app: hsl(240 6% 10%);
+  --qa-paper: hsl(240 6% 16%);
+  --qa-paper-2: hsl(240 5% 19%);
+  --qa-paper-3: hsl(240 6% 17%);
+  --qa-chip-bg: hsl(240 5% 22%);
+  --qa-chip-bg-2: hsl(240 5% 20%);
+  --qa-chip-ativo-bg: hsl(210 8% 29%);
+  --qa-hover: hsl(240 5% 21%);
+  --qa-trilho: hsl(240 5% 27%);
+  --qa-linha: hsl(240 5% 25%);
+  --qa-linha-2: hsl(240 5% 31%);
+  --qa-linha-3: hsl(240 5% 21%);
+  --qa-linha-4: hsl(240 5% 22%);
+  --qa-tinta: hsl(0 0% 96%);
+  --qa-tinta-2: hsl(240 5% 80%);
+  --qa-tinta-3: hsl(240 4% 62%);
+  --qa-tinta-4: hsl(240 4% 52%);
+  --qa-tinta-5: hsl(240 4% 42%);
+  --qa-neutro-bg: hsl(240 5% 22%);
+  --qa-neutro-borda: hsl(240 5% 33%);
+  --qa-verde: hsl(142 52% 62%);
+  --qa-verde-bg: hsl(142 35% 16%);
+  --qa-verde-borda: hsl(142 28% 32%);
+  --qa-ambar: hsl(41 78% 66%);
+  --qa-ambar-bg: hsl(41 42% 16%);
+  --qa-ambar-borda: hsl(41 34% 34%);
+  --qa-vermelho: hsl(0 72% 72%);
+  --qa-vermelho-bg: hsl(0 45% 17%);
+  --qa-vermelho-borda: hsl(0 34% 36%);
 }
 
 /* Chip do painel: nunca quebra linha — a fonte encolhe conforme a coluna aperta. */

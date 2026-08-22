@@ -1870,28 +1870,28 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
   ); // fallback defensivo (status novos/desconhecidos)
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative ml-auto w-full max-w-3xl h-full bg-slate-50 shadow-2xl flex flex-col overflow-hidden">
+    <div data-qa-tema-real className="fixed inset-0 z-50 flex">
+      <div className="absolute inset-0 bg-[var(--qa-tinta)]/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative ml-auto w-full max-w-3xl h-full bg-[var(--qa-paper-2)] shadow-2xl flex flex-col overflow-hidden">
         <input ref={fileInputRef} type="file" className="hidden" onChange={handleUpload} accept="image/*,application/pdf" />
 
         {/* Header */}
-        <div className="px-5 py-4 bg-white border-b border-slate-200 flex items-start justify-between gap-3">
+        <div className="px-5 py-4 bg-[var(--qa-paper)] border-b border-[var(--qa-linha)] flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">PROCESSO</div>
-            <h2 className="text-lg md:text-xl font-bold text-slate-900 uppercase truncate">{processo?.servico_nome ?? "—"}</h2>
-            <div className="text-xs text-slate-500 mt-0.5 uppercase">
+            <div className="text-[10px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)]">PROCESSO</div>
+            <h2 className="text-lg md:text-xl font-bold text-[var(--qa-tinta)] uppercase truncate">{processo?.servico_nome ?? "—"}</h2>
+            <div className="text-xs text-[var(--qa-tinta-3)] mt-0.5 uppercase">
               {processo?.cliente?.nome_completo} · {processo?.cliente?.cpf}
             </div>
           </div>
-          <button onClick={onClose} className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center">
-            <X className="h-4 w-4 text-slate-600" />
+          <button onClick={onClose} className="h-9 w-9 rounded-lg border border-[var(--qa-linha)] hover:bg-[var(--qa-paper-2)] flex items-center justify-center">
+            <X className="h-4 w-4 text-[var(--qa-tinta-2)]" />
           </button>
         </div>
 
         {/* Status bar */}
         {st && (
-          <div className={`px-5 py-3 border-b border-slate-200 ${st.bg}`}>
+          <div className={`px-5 py-3 border-b border-[var(--qa-linha)] ${st.bg}`}>
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 <ShieldCheck className="h-4 w-4" style={{ color: st.color }} />
@@ -1981,8 +1981,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
               {!aguardandoPagto && (
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600">PROGRESSO {progresso}%</span>
-                  <div className="w-32 h-1.5 bg-white/60 rounded-full overflow-hidden">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)]">PROGRESSO {progresso}%</span>
+                  <div className="w-32 h-1.5 bg-[var(--qa-paper)] rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all" style={{ width: `${progresso}%`, background: progresso === 100 ? "#059669" : st.color }} />
                   </div>
                 </div>
@@ -1993,7 +1993,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
         {/* PAINEL DE ETAPAS / PRAZOS — visível ao cliente e admin */}
         {!aguardandoPagto && processo && (
-          <div className="px-5 py-3 border-b border-slate-200 bg-white space-y-2">
+          <div className="px-5 py-3 border-b border-[var(--qa-linha)] bg-[var(--qa-paper)] space-y-2">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-1.5">
                 {[1, 2, 3, 4, 5].map((n) => {
@@ -2008,11 +2008,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       >
                         {r.completo ? <CheckCircle className="h-3 w-3" /> : n}
                       </div>
-                      {n < 5 && <div className="w-3 h-px bg-slate-200" />}
+                      {n < 5 && <div className="w-3 h-px bg-[var(--qa-trilho)]" />}
                     </div>
                   );
                 })}
-                <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-slate-600">
+                <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)]">
                   ETAPA {etapaLiberada}/5: {ETAPA_NOMES[etapaLiberada]}
                 </span>
               </div>
@@ -2039,7 +2039,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         toast.error("Erro ao reconciliar: " + (e?.message ?? "desconhecido"));
                       }
                     }}
-                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-[var(--qa-ambar-bg)] text-[var(--qa-ambar)] hover:bg-[var(--qa-ambar-bg)]"
                     title="Reconciliar itens condicionais / perguntas-pivot pendentes e liberar próxima etapa"
                   >
                     <CheckCircle className="h-3 w-3" />
@@ -2048,7 +2048,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 ) : (
                   <button
                     onClick={liberarProximaEtapa}
-                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                    className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-amber-400 bg-[var(--qa-ambar-bg)] text-[var(--qa-ambar)] hover:bg-[var(--qa-ambar-bg)]"
                     title="Forçar liberação antecipada (fallback administrativo)"
                   >
                     <ChevronRight className="h-3 w-3" />
@@ -2060,7 +2060,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 <button
                   onClick={() => reprocessarReaproveitamento()}
                   disabled={reaproveitandoId === processo?.id}
-                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                  className="h-7 px-3 inline-flex items-center gap-1.5 rounded-md text-[10px] uppercase tracking-wider font-bold border border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] text-[var(--qa-verde)] hover:bg-[var(--qa-verde-bg)] disabled:opacity-50"
                   title="Reprocessar reaproveitamento documental de todo o processo com a Central de Documentos"
                 >
                   <Database className={`h-3 w-3 ${reaproveitandoId === processo?.id ? "animate-pulse" : ""}`} />
@@ -2070,11 +2070,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
             </div>
             {processo.prazo_critico_data && (
               <div className="flex items-center gap-2 text-[11px]">
-                <CalendarClock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                <span className="uppercase tracking-wider font-bold text-amber-800">
+                <CalendarClock className="h-3.5 w-3.5 text-[var(--qa-ambar)] shrink-0" />
+                <span className="uppercase tracking-wider font-bold text-[var(--qa-ambar)]">
                   PRAZO MAIS CRÍTICO:
                 </span>
-                <span className="font-mono font-bold text-slate-800">
+                <span className="font-mono font-bold text-[var(--qa-tinta)]">
                   {formatDate(processo.prazo_critico_data)}
                 </span>
                 {(() => {
@@ -2092,7 +2092,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         )}
 
         {/* Tabs */}
-        <div className="flex border-b border-slate-200 bg-white">
+        <div className="flex border-b border-[var(--qa-linha)] bg-[var(--qa-paper)]">
           <TabBtn active={tab === "checklist"} onClick={() => setTab("checklist")} icon={<FileText className="h-3.5 w-3.5" />} label="CHECKLIST" />
           <TabBtn active={tab === "historico"} onClick={() => setTab("historico")} icon={<History className="h-3.5 w-3.5" />} label="HISTÓRICO" />
           {equipeMode && <TabBtn active={tab === "equipe"} onClick={() => setTab("equipe")} icon={<ShieldAlert className="h-3.5 w-3.5" />} label="EQUIPE" />}
@@ -2101,7 +2101,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
         {/* Content */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-5">
           {loading ? (
-            <div className="text-center py-12 text-xs uppercase tracking-wider text-slate-400">CARREGANDO...</div>
+            <div className="text-center py-12 text-xs uppercase tracking-wider text-[var(--qa-tinta-4)]">CARREGANDO...</div>
           ) : tab === "checklist" ? (
             aguardandoPagto ? (
               <div className="rounded-xl border border-[#D1D3D6] bg-[#F7F7F8] p-5">
@@ -2133,15 +2133,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               {/* Condição Profissional NÃO é card decorativo — é o item
                   "renda_definir_condicao" da Etapa 2. Renderizado pelo
                   fluxo normal de docsChecklist abaixo. */}
-              {docs.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
+              {docs.length === 0 && <div className="text-xs uppercase text-[var(--qa-tinta-4)] text-center py-8">NENHUM DOCUMENTO NESTE CHECKLIST</div>}
               {/* Resumo de exigências */}
               {totalExigencias > 0 && (
-                <div className="rounded-lg border border-slate-200 bg-white px-4 py-2.5 flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-wider font-bold">
-                  <span className="text-slate-500">EXIGÊNCIAS DOCUMENTAIS:</span>
-                  <span className="text-emerald-700">{cumpridos} CUMPRIDAS</span>
-                  <span className="text-amber-700">{docsPendencias.length} PENDENTES DO CLIENTE</span>
+                <div className="rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] px-4 py-2.5 flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-wider font-bold">
+                  <span className="text-[var(--qa-tinta-3)]">EXIGÊNCIAS DOCUMENTAIS:</span>
+                  <span className="text-[var(--qa-verde)]">{cumpridos} CUMPRIDAS</span>
+                  <span className="text-[var(--qa-ambar)]">{docsPendencias.length} PENDENTES DO CLIENTE</span>
                   <span className="text-[#2F3337]">{docsAnalise.length} EM ANÁLISE</span>
-                  <span className="text-slate-400">TOTAL {totalExigencias}</span>
+                  <span className="text-[var(--qa-tinta-4)]">TOTAL {totalExigencias}</span>
                 </div>
               )}
               {/* Bloco 15/16 — Saúde do checklist (auditoria + correção assistida) */}
@@ -2177,14 +2177,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   });
                 };
                 return (
-                  <div className="rounded-lg border border-amber-300 bg-amber-50/70 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                  <div className="rounded-lg border border-[var(--qa-ambar-borda)] bg-[var(--qa-ambar-bg)] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-start gap-2 min-w-0">
-                      <ExternalLink className="h-4 w-4 text-amber-700 mt-0.5 shrink-0" />
+                      <ExternalLink className="h-4 w-4 text-[var(--qa-ambar)] mt-0.5 shrink-0" />
                       <div className="min-w-0">
-                        <div className="text-[11px] uppercase tracking-wider font-bold text-amber-900">
+                        <div className="text-[11px] uppercase tracking-wider font-bold text-[var(--qa-ambar)]">
                           EMITIR CERTIDÕES OFICIAIS ({certidoesPendentes.length})
                         </div>
-                        <div className="text-[10px] uppercase tracking-wide text-amber-800/80 mt-0.5">
+                        <div className="text-[10px] uppercase tracking-wide text-[var(--qa-ambar)]/80 mt-0.5">
                           ABRE TODOS OS PORTAIS DOS ÓRGÃOS EMISSORES DE UMA VEZ — LINKS COPIADOS PARA COMPARTILHAR COM O CLIENTE
                         </div>
                       </div>
@@ -2229,28 +2229,28 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <div
                     key={doc.id}
                     data-doc-id={doc.id}
-                    className={`bg-white border rounded-xl overflow-hidden transition-shadow duration-300 ${
+                    className={`bg-[var(--qa-paper)] border rounded-xl overflow-hidden transition-shadow duration-300 ${
                       isHighlighted
                         ? "border-amber-400 ring-2 ring-amber-300 shadow-lg"
-                        : "border-slate-200"
+                        : "border-[var(--qa-linha)]"
                     }`}
                   >
                     {isHighlighted && (
-                      <div className="px-4 py-1.5 bg-amber-100 border-b border-amber-200 text-[10px] uppercase tracking-[0.14em] font-bold text-amber-800 inline-flex items-center gap-1.5">
+                      <div className="px-4 py-1.5 bg-[var(--qa-ambar-bg)] border-b border-[var(--qa-ambar-borda)] text-[10px] uppercase tracking-[0.14em] font-bold text-[var(--qa-ambar)] inline-flex items-center gap-1.5">
                         <ChevronRight className="h-3 w-3" /> PRÓXIMO ITEM PARA REVISAR
                       </div>
                     )}
-                    <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-slate-100">
+                    <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-[var(--qa-linha-4)]">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">{doc.etapa}</span>
-                          {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
+                          <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-4)]">{doc.etapa}</span>
+                          {doc.obrigatorio && <span className="text-[9px] uppercase font-bold text-[var(--qa-ambar)] bg-[var(--qa-ambar-bg)] px-1.5 py-0.5 rounded">OBRIGATÓRIO</span>}
                           {pergunta && <span className="text-[9px] uppercase font-bold text-[#2F3337] bg-[#F7F7F8] px-1.5 py-0.5 rounded">PERGUNTA</span>}
-                          {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
+                          {tplEscolhido && !pergunta && <span className="text-[9px] uppercase font-bold text-[var(--qa-verde)] bg-[var(--qa-verde-bg)] px-1.5 py-0.5 rounded">MODELO PREENCHÍVEL</span>}
                           {exigeAssinaturaGovBr && <span className="text-[9px] uppercase font-bold text-[#2F3337] bg-[#F7F7F8] px-1.5 py-0.5 rounded">ASSINATURA GOV.BR</span>}
-                          {reaproveitado && <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded"><Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL</span>}
+                          {reaproveitado && <span className="inline-flex items-center gap-1 text-[9px] uppercase font-bold text-[var(--qa-verde)] bg-[var(--qa-verde-bg)] px-1.5 py-0.5 rounded"><Database className="h-3 w-3" /> REAPROVEITADO DA CENTRAL</span>}
                         </div>
-                        <div className="font-bold text-sm text-slate-800 uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
+                        <div className="font-bold text-sm text-[var(--qa-tinta)] uppercase mt-0.5 break-words [overflow-wrap:anywhere]">{doc.nome_documento}</div>
                       </div>
                       {perguntaBadge ? (
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap" style={{ background: `${perguntaBadge.color}15`, color: perguntaBadge.color, border: `1px solid ${perguntaBadge.color}40` }}>
@@ -2266,7 +2266,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     {/* Detalhes */}
                     <div className="px-4 py-3 space-y-2">
                       {reaproveitado && (
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50/70 p-2.5 text-[11px] text-emerald-900">
+                        <div className="rounded-md border border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] p-2.5 text-[11px] text-emerald-900">
                           <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
                             <Database className="h-3.5 w-3.5" /> REAPROVEITADO DA CENTRAL DE DOCUMENTOS
                           </div>
@@ -2282,8 +2282,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           O placeholder "renda_definir_condicao" é o item
                           do checklist que substitui o antigo card fixo. */}
                       {doc.tipo_documento === "renda_definir_condicao" && (
-                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-3">
-                          <div className="text-[10px] uppercase tracking-wider font-bold text-amber-800 mb-2">
+                        <div className="rounded-md border border-[var(--qa-ambar-borda)] bg-[var(--qa-ambar-bg)] p-3">
+                          <div className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-ambar)] mb-2">
                             SELECIONE A CONDIÇÃO PROFISSIONAL DO TITULAR
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -2294,16 +2294,16 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                   key={op.id}
                                   disabled={!!savingCond}
                                   onClick={() => setCondicao(op.id)}
-                                  className="text-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 px-3 py-2 transition flex flex-col items-center justify-center"
+                                  className="text-center rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] hover:bg-[var(--qa-paper-2)] disabled:opacity-50 px-3 py-2 transition flex flex-col items-center justify-center"
                                 >
-                                  <div className="text-[11px] uppercase tracking-wider font-bold text-slate-800">{op.label}</div>
-                                  <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">{op.hint}</div>
-                                  {carregando && <div className="text-[10px] uppercase font-bold text-slate-500 mt-1">SALVANDO...</div>}
+                                  <div className="text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta)]">{op.label}</div>
+                                  <div className="text-[10px] text-[var(--qa-tinta-3)] mt-0.5 leading-tight">{op.hint}</div>
+                                  {carregando && <div className="text-[10px] uppercase font-bold text-[var(--qa-tinta-3)] mt-1">SALVANDO...</div>}
                                 </button>
                               );
                             })}
                           </div>
-                          <div className="mt-2 text-[10px] uppercase tracking-wider text-amber-800/80">
+                          <div className="mt-2 text-[10px] uppercase tracking-wider text-[var(--qa-ambar)]/80">
                             APÓS A SELEÇÃO, OS COMPROVANTES DE RENDA CORRETOS SERÃO LIBERADOS AUTOMATICAMENTE.
                           </div>
                         </div>
@@ -2313,19 +2313,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         <div
                           className={`rounded-md p-2.5 border ${
                             doc.assinatura_status === "valida"
-                              ? "border-emerald-200 bg-emerald-50/60"
+                              ? "border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)]"
                               : doc.assinatura_status === "sem_assinatura"
-                              ? "border-amber-200 bg-amber-50/60"
-                              : "border-red-200 bg-red-50/60"
+                              ? "border-[var(--qa-ambar-borda)] bg-[var(--qa-ambar-bg)]"
+                              : "border-[var(--qa-vermelho-borda)] bg-[var(--qa-vermelho-bg)]"
                           }`}
                         >
                           <div
                             className={`flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold ${
                               doc.assinatura_status === "valida"
-                                ? "text-emerald-800"
+                                ? "text-[var(--qa-verde)]"
                                 : doc.assinatura_status === "sem_assinatura"
-                                ? "text-amber-800"
-                                : "text-red-800"
+                                ? "text-[var(--qa-ambar)]"
+                                : "text-[var(--qa-vermelho)]"
                             }`}
                           >
                             {doc.assinatura_status === "valida" ? (
@@ -2339,46 +2339,46 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               ? "DOCUMENTO SEM ASSINATURA DIGITAL"
                               : "ASSINATURA INVÁLIDA"}
                             {doc.assinatura_detalhes_json?.icp_brasil && (
-                              <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px]">
+                              <span className="ml-1 px-1.5 py-0.5 rounded bg-[var(--qa-verde-bg)] text-[var(--qa-verde)] text-[9px]">
                                 ICP-BRASIL
                               </span>
                             )}
                           </div>
                           {doc.assinatura_status === "valida" && (
-                            <div className="mt-1.5 text-[11px] text-slate-800 leading-relaxed font-mono">
+                            <div className="mt-1.5 text-[11px] text-[var(--qa-tinta)] leading-relaxed font-mono">
                               {doc.assinatura_signatario && (
                                 <div>
-                                  <span className="text-slate-500">SIGNATÁRIO: </span>
+                                  <span className="text-[var(--qa-tinta-3)]">SIGNATÁRIO: </span>
                                   <span className="font-bold uppercase">{doc.assinatura_signatario}</span>
                                 </div>
                               )}
                               {doc.assinatura_cpf && (
                                 <div>
-                                  <span className="text-slate-500">CPF: </span>
+                                  <span className="text-[var(--qa-tinta-3)]">CPF: </span>
                                   {doc.assinatura_cpf}
                                 </div>
                               )}
                               {doc.assinatura_data && (
                                 <div>
-                                  <span className="text-slate-500">DATA: </span>
+                                  <span className="text-[var(--qa-tinta-3)]">DATA: </span>
                                   {formatDateTime(doc.assinatura_data)}
                                 </div>
                               )}
                               {doc.assinatura_autoridade && (
                                 <div>
-                                  <span className="text-slate-500">AUTORIDADE: </span>
+                                  <span className="text-[var(--qa-tinta-3)]">AUTORIDADE: </span>
                                   <span className="uppercase">{doc.assinatura_autoridade}</span>
                                 </div>
                               )}
                             </div>
                           )}
                           {doc.assinatura_status !== "valida" && doc.assinatura_motivo_falha && (
-                            <p className="mt-1 text-[11px] text-slate-700 leading-relaxed">
+                            <p className="mt-1 text-[11px] text-[var(--qa-tinta-2)] leading-relaxed">
                               {doc.assinatura_motivo_falha}
                             </p>
                           )}
                           {doc.assinatura_validada_em && (
-                            <div className="mt-1 text-[9px] uppercase tracking-wider text-slate-500">
+                            <div className="mt-1 text-[9px] uppercase tracking-wider text-[var(--qa-tinta-3)]">
                               Verificado em {formatDateTime(doc.assinatura_validada_em)}
                             </div>
                           )}
@@ -2418,7 +2418,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                   key={op.valor}
                                   disabled={respondendoPerguntaId === doc.id}
                                   onClick={() => responderPergunta(doc, op.valor)}
-                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-[#2F3337] text-white border-[#2F3337]" : "bg-white text-[#2F3337] border-[#D1D3D6] hover:bg-[#F7F7F8]"} disabled:opacity-50`}
+                                  className={`h-9 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border ${ativo ? "bg-[#2F3337] text-white border-[#2F3337]" : "bg-[var(--qa-paper)] text-[#2F3337] border-[#D1D3D6] hover:bg-[#F7F7F8]"} disabled:opacity-50`}
                                 >
                                   {String(op.label || op.valor).toUpperCase()}
                                 </button>
@@ -2435,8 +2435,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* MODELO PREENCHÍVEL — botão para baixar .docx com dados do cliente */}
                       {!pergunta && tplEscolhido && doc.status !== "aprovado" && (
-                        <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-2.5 flex flex-wrap items-center gap-2">
-                          <FileDown className="h-3.5 w-3.5 text-emerald-700" />
+                        <div className="rounded-md border border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] p-2.5 flex flex-wrap items-center gap-2">
+                          <FileDown className="h-3.5 w-3.5 text-[var(--qa-verde)]" />
                           <span className="text-[11px] text-emerald-900 leading-snug flex-1 min-w-[200px]">
                             Baixe o modelo já preenchido com os seus dados, assine via GOV.BR e envie aqui o PDF assinado.
                           </span>
@@ -2452,7 +2452,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             href="https://assinador.iti.br/assinatura/index.xhtml"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-[#2F3337] bg-white border border-[#D1D3D6] hover:bg-[#F7F7F8]"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-[#2F3337] bg-[var(--qa-paper)] border border-[#D1D3D6] hover:bg-[#F7F7F8]"
                           >
                             <ExternalLink className="h-3 w-3" /> ASSINAR NO GOV.BR
                           </a>
@@ -2461,8 +2461,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* MODELO CONDICIONAL — pergunta ainda não respondida */}
                       {!pergunta && !tplEscolhido && doc.regra_validacao && typeof doc.regra_validacao === "object" && (doc.regra_validacao as any).template_condicional && (
-                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2.5 text-[11px] text-amber-900 inline-flex items-start gap-1.5">
-                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-amber-700 shrink-0" />
+                        <div className="rounded-md border border-[var(--qa-ambar-borda)] bg-[var(--qa-ambar-bg)] p-2.5 text-[11px] text-[var(--qa-ambar)] inline-flex items-start gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 mt-0.5 text-[var(--qa-ambar)] shrink-0" />
                           <span>
                             <strong className="uppercase tracking-wider text-[10px]">RESPONDA AS PERGUNTAS DO CHECKLIST</strong> para liberarmos o modelo correto desta declaração.
                           </span>
@@ -2471,14 +2471,14 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* Checklist do Operador — exclusivo Equipe Quero Armas */}
                       {equipeMode && checklistOperador.length > 0 && (
-                        <div className="rounded-md border border-slate-300 bg-slate-50 p-2.5">
-                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-slate-700">
+                        <div className="rounded-md border border-[var(--qa-linha-2)] bg-[var(--qa-paper-2)] p-2.5">
+                          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)]">
                             <ShieldAlert className="h-3 w-3" /> CHECKLIST DO OPERADOR
                           </div>
                           <ul className="mt-1.5 space-y-1">
                             {checklistOperador.map((item, i) => (
-                              <li key={i} className="text-[11px] text-slate-800 leading-snug flex items-start gap-1.5">
-                                <span className="text-slate-400 mt-0.5">▢</span>
+                              <li key={i} className="text-[11px] text-[var(--qa-tinta)] leading-snug flex items-start gap-1.5">
+                                <span className="text-[var(--qa-tinta-4)] mt-0.5">▢</span>
                                 <span>{item}</span>
                               </li>
                             ))}
@@ -2488,10 +2488,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* Grupo alternativo — orientação clara quando aplicável */}
                       {doc.regra_validacao && typeof doc.regra_validacao === "object" && doc.regra_validacao.grupo_documental && doc.status !== "aprovado" && doc.status !== "dispensado_grupo" && (
-                        <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-[11px] text-slate-700 inline-flex items-start gap-1.5">
-                          <Layers className="h-3 w-3 mt-0.5 text-slate-500 shrink-0" />
+                        <div className="rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper-2)] p-2 text-[11px] text-[var(--qa-tinta-2)] inline-flex items-start gap-1.5">
+                          <Layers className="h-3 w-3 mt-0.5 text-[var(--qa-tinta-3)] shrink-0" />
                           <span>
-                            <strong className="uppercase tracking-wider text-[10px] text-slate-600">ALTERNATIVA:</strong>{" "}
+                            <strong className="uppercase tracking-wider text-[10px] text-[var(--qa-tinta-2)]">ALTERNATIVA:</strong>{" "}
                             envie 1 dos documentos aceitos deste grupo. Após aprovação de qualquer um, os demais ficam dispensados.
                           </span>
                         </div>
@@ -2501,12 +2501,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       {(doc.orgao_emissor || doc.prazo_recomendado_dias || doc.modelo_url || doc.exemplo_url) && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider">
                           {doc.orgao_emissor && (
-                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold inline-flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded bg-[var(--qa-chip-bg)] border border-[var(--qa-linha)] text-[var(--qa-tinta-2)] font-bold inline-flex items-center gap-1">
                               <Building2 className="h-3 w-3" /> ÓRGÃO: {doc.orgao_emissor}
                             </span>
                           )}
                           {doc.prazo_recomendado_dias != null && (
-                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-bold inline-flex items-center gap-1">
+                            <span className="px-2 py-0.5 rounded bg-[var(--qa-chip-bg)] border border-[var(--qa-linha)] text-[var(--qa-tinta-2)] font-bold inline-flex items-center gap-1">
                               <CalendarClock className="h-3 w-3" /> PRAZO RECOMENDADO: {doc.prazo_recomendado_dias} DIAS
                             </span>
                           )}
@@ -2515,7 +2515,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               href={doc.modelo_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold inline-flex items-center gap-1 hover:bg-emerald-100"
+                              className="px-2 py-0.5 rounded bg-[var(--qa-verde-bg)] border border-[var(--qa-verde-borda)] text-[var(--qa-verde)] font-bold inline-flex items-center gap-1 hover:bg-[var(--qa-verde-bg)]"
                             >
                               <FileDown className="h-3 w-3" /> BAIXAR MODELO
                             </a>
@@ -2537,12 +2537,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       {(doc.validade_dias || doc.data_validade || doc.link_emissao) && (
                         <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-wider">
                           {doc.validade_dias != null && (
-                            <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[var(--qa-chip-bg)] border border-[var(--qa-linha)] text-[var(--qa-tinta-2)] font-bold">
                               VALIDADE: {doc.validade_dias} DIAS
                             </span>
                           )}
                           {doc.data_validade && (
-                            <span className="px-2 py-0.5 rounded bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                            <span className="px-2 py-0.5 rounded bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] text-[var(--qa-ambar)] font-bold">
                               VENCE EM {formatDate(doc.data_validade)}
                             </span>
                           )}
@@ -2559,7 +2559,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </div>
                       )}
                       {doc.motivo_rejeicao && (
-                        <div className="text-[11px] bg-red-50 border border-red-200 rounded-md p-2 text-red-800">
+                        <div className="text-[11px] bg-[var(--qa-vermelho-bg)] border border-[var(--qa-vermelho-borda)] rounded-md p-2 text-[var(--qa-vermelho)]">
                           <strong className="uppercase tracking-wider">MOTIVO:</strong> {doc.motivo_rejeicao}
                         </div>
                       )}
@@ -2570,8 +2570,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         const orient = compl?.orientacoes_cliente;
                         if (!orient || typeof orient !== "string" || orient.trim().length === 0) return null;
                         return (
-                          <div className="text-[11px] bg-amber-50 border border-amber-200 rounded-md p-2 text-amber-900 min-w-0 max-w-full overflow-hidden">
-                            <div className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-amber-800">
+                          <div className="text-[11px] bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] rounded-md p-2 text-[var(--qa-ambar)] min-w-0 max-w-full overflow-hidden">
+                            <div className="inline-flex items-center gap-1.5 font-bold uppercase tracking-wider text-[var(--qa-ambar)]">
                               <Info className="h-3 w-3" /> O QUE PRECISA CORRIGIR
                             </div>
                             <p className="mt-1 leading-relaxed whitespace-pre-line break-words [overflow-wrap:anywhere]">{orient}</p>
@@ -2579,11 +2579,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         );
                       })()}
                       {div.length > 0 && (
-                        <div className={`text-[11px] rounded-md p-2 ${doc.status === "divergente" ? "bg-amber-100 border-2 border-amber-400" : "bg-amber-50 border border-amber-200"}`}>
-                          <div className="font-bold uppercase tracking-wider text-amber-800 mb-1 inline-flex items-center gap-1">
+                        <div className={`text-[11px] rounded-md p-2 ${doc.status === "divergente" ? "bg-[var(--qa-ambar-bg)] border-2 border-amber-400" : "bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)]"}`}>
+                          <div className="font-bold uppercase tracking-wider text-[var(--qa-ambar)] mb-1 inline-flex items-center gap-1">
                             <AlertTriangle className="h-3 w-3" /> DIVERGÊNCIAS DETECTADAS
                           </div>
-                          <ul className="space-y-0.5 text-amber-900">
+                          <ul className="space-y-0.5 text-[var(--qa-ambar)]">
                             {div.slice(0, 5).map((d: any, i: number) => (
                               <li key={i}>• <strong>{d.campo}:</strong> esperado "{d.esperado}", encontrado "{d.encontrado}"</li>
                             ))}
@@ -2591,15 +2591,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         </div>
                       )}
                       {ext && Object.keys(ext).length > 0 && (
-                        <details className="text-[11px] text-slate-700 rounded-md border border-slate-200 bg-white">
-                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-600 inline-flex items-center gap-1.5">
+                        <details className="text-[11px] text-[var(--qa-tinta-2)] rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper)]">
+                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] inline-flex items-center gap-1.5">
                             <Sparkles className="h-3 w-3 text-amber-500" /> DADOS EXTRAÍDOS AUTOMATICAMENTE
                           </summary>
-                          <div className="border-t border-slate-100 p-2.5 space-y-1">
+                          <div className="border-t border-[var(--qa-linha-4)] p-2.5 space-y-1">
                             {Object.entries(ext).filter(([k, v]) => v !== null && v !== "" && k !== "_meta").map(([k, v]) => (
                               <div key={k} className="grid grid-cols-[140px_1fr] gap-2 items-start">
-                                <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 truncate">{k}</div>
-                                <div className="text-[11px] text-slate-800 break-words">{typeof v === "object" ? JSON.stringify(v) : String(v)}</div>
+                                <div className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-3)] truncate">{k}</div>
+                                <div className="text-[11px] text-[var(--qa-tinta)] break-words">{typeof v === "object" ? JSON.stringify(v) : String(v)}</div>
                               </div>
                             ))}
                           </div>
@@ -2628,11 +2628,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                       {/* FASE 4 — Metadados do documento */}
                       {doc.metadados_documento_json && typeof doc.metadados_documento_json === "object" && Object.keys(doc.metadados_documento_json).length > 0 && (
-                        <details className="text-[11px] text-slate-600 rounded-md border border-slate-200 bg-white">
-                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-500 inline-flex items-center gap-1.5">
-                            <Database className="h-3 w-3 text-slate-500" /> METADADOS DO DOCUMENTO
+                        <details className="text-[11px] text-[var(--qa-tinta-2)] rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper)]">
+                          <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-[var(--qa-tinta-3)] inline-flex items-center gap-1.5">
+                            <Database className="h-3 w-3 text-[var(--qa-tinta-3)]" /> METADADOS DO DOCUMENTO
                           </summary>
-                          <pre className="mt-0 border-t border-slate-100 p-2 text-[10px] bg-slate-50 overflow-x-auto">{JSON.stringify(doc.metadados_documento_json, null, 2)}</pre>
+                          <pre className="mt-0 border-t border-[var(--qa-linha-4)] p-2 text-[10px] bg-[var(--qa-paper-2)] overflow-x-auto">{JSON.stringify(doc.metadados_documento_json, null, 2)}</pre>
                         </details>
                       )}
 
@@ -2642,15 +2642,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         const extras = Object.entries(compl).filter(([k]) => k !== "conflitos_reconciliacao" && k !== "conflitos_resolvidos");
                         if (extras.length === 0) return null;
                         return (
-                          <details className="text-[11px] text-slate-600 rounded-md border border-slate-200 bg-white">
-                            <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-slate-500 inline-flex items-center gap-1.5">
-                              <Layers className="h-3 w-3 text-slate-500" /> CAMPOS COMPLEMENTARES
+                          <details className="text-[11px] text-[var(--qa-tinta-2)] rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper)]">
+                            <summary className="cursor-pointer px-2.5 py-1.5 uppercase tracking-wider font-bold text-[var(--qa-tinta-3)] inline-flex items-center gap-1.5">
+                              <Layers className="h-3 w-3 text-[var(--qa-tinta-3)]" /> CAMPOS COMPLEMENTARES
                             </summary>
-                            <div className="border-t border-slate-100 p-2.5 space-y-1">
+                            <div className="border-t border-[var(--qa-linha-4)] p-2.5 space-y-1">
                               {extras.map(([k, v]) => (
                                 <div key={k} className="grid grid-cols-[160px_1fr] gap-2 items-start">
-                                  <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 truncate">{k}</div>
-                                  <div className="text-[11px] text-slate-800 break-words">{typeof v === "object" ? JSON.stringify(v) : String(v ?? "—")}</div>
+                                  <div className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-3)] truncate">{k}</div>
+                                  <div className="text-[11px] text-[var(--qa-tinta)] break-words">{typeof v === "object" ? JSON.stringify(v) : String(v ?? "—")}</div>
                                 </div>
                               ))}
                             </div>
@@ -2671,24 +2671,24 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             </div>
                             <ul className="mt-1.5 space-y-2">
                               {conflitos.map((c: any, i: number) => (
-                                <li key={i} className="text-[11px] bg-white border border-orange-200 rounded p-2">
-                                  <div className="font-bold uppercase tracking-wider text-slate-700">{c.campo ?? "—"}</div>
+                                <li key={i} className="text-[11px] bg-[var(--qa-paper)] border border-orange-200 rounded p-2">
+                                  <div className="font-bold uppercase tracking-wider text-[var(--qa-tinta-2)]">{c.campo ?? "—"}</div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 mt-1">
-                                    <div className="rounded bg-emerald-50 border border-emerald-200 p-1.5">
-                                      <div className="text-[9px] uppercase tracking-wider font-bold text-emerald-700">VALOR DO CLIENTE (MANTIDO)</div>
+                                    <div className="rounded bg-[var(--qa-verde-bg)] border border-[var(--qa-verde-borda)] p-1.5">
+                                      <div className="text-[9px] uppercase tracking-wider font-bold text-[var(--qa-verde)]">VALOR DO CLIENTE (MANTIDO)</div>
                                       <div className="text-emerald-900 break-words">{String(c.valor_cliente ?? "—")}</div>
                                     </div>
-                                    <div className="rounded bg-amber-50 border border-amber-200 p-1.5">
-                                      <div className="text-[9px] uppercase tracking-wider font-bold text-amber-700">VALOR EXTRAÍDO PELA IA</div>
-                                      <div className="text-amber-900 break-words">{String(c.valor_ia ?? c.valor_extraido ?? "—")}</div>
+                                    <div className="rounded bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] p-1.5">
+                                      <div className="text-[9px] uppercase tracking-wider font-bold text-[var(--qa-ambar)]">VALOR EXTRAÍDO PELA IA</div>
+                                      <div className="text-[var(--qa-ambar)] break-words">{String(c.valor_ia ?? c.valor_extraido ?? "—")}</div>
                                     </div>
                                   </div>
                                   {equipeMode && (
                                     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-bold">PADRÃO: MANTER VALOR ATUAL</span>
+                                      <span className="text-[10px] uppercase tracking-wider text-[var(--qa-tinta-3)] font-bold">PADRÃO: MANTER VALOR ATUAL</span>
                                       <button
                                         onClick={() => aplicarConflitoIA(doc, c)}
-                                        className="h-7 px-2.5 inline-flex items-center gap-1 rounded border border-amber-400 bg-white text-[10px] uppercase tracking-wider font-bold text-amber-800 hover:bg-amber-50"
+                                        className="h-7 px-2.5 inline-flex items-center gap-1 rounded border border-amber-400 bg-[var(--qa-paper)] text-[10px] uppercase tracking-wider font-bold text-[var(--qa-ambar)] hover:bg-[var(--qa-ambar-bg)]"
                                       >
                                         ATUALIZAR MANUALMENTE COM VALOR DA IA
                                       </button>
@@ -2701,7 +2701,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         );
                       })()}
                       {doc.validacao_ia_confianca !== null && (
-                        <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                        <div className="text-[10px] uppercase tracking-wider text-[var(--qa-tinta-4)]">
                           IA: {doc.validacao_ia_modelo ?? "—"} · CONFIANÇA {Math.round((doc.validacao_ia_confianca ?? 0) * 100)}%
                         </div>
                       )}
@@ -2709,26 +2709,26 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                     {/* Ações por status do documento */}
                     {doc.status === "dispensado_grupo" ? (
-                      <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
-                        <div className="text-[11px] text-slate-600 leading-relaxed">
-                          <span className="font-bold uppercase tracking-wider text-slate-700">DISPENSADO PELA EQUIPE QUERO ARMAS.</span>{" "}
+                      <div className="px-4 py-3 bg-[var(--qa-paper-2)] border-t border-[var(--qa-linha-4)]">
+                        <div className="text-[11px] text-[var(--qa-tinta-2)] leading-relaxed">
+                          <span className="font-bold uppercase tracking-wider text-[var(--qa-tinta-2)]">DISPENSADO PELA EQUIPE QUERO ARMAS.</span>{" "}
                           Outro documento do mesmo grupo já satisfaz esta exigência. Nenhuma ação necessária.
                         </div>
                       </div>
                     ) : (
-                      <div className="px-4 py-3 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-2">
+                      <div className="px-4 py-3 bg-[var(--qa-paper-2)] border-t border-[var(--qa-linha-4)] flex flex-wrap items-center gap-2">
                         {/* Visualizar/Baixar — só se houver arquivo enviado */}
                         {doc.arquivo_storage_key && (
                           <>
                             <button
                               onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar")}
-                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
                             >
                               <Eye className="h-3 w-3" /> VISUALIZAR
                             </button>
                             <button
                               onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar")}
-                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white text-[11px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                              className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
                             >
                               <Download className="h-3 w-3" /> BAIXAR
                             </button>
@@ -2799,7 +2799,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           <button
                             onClick={() => reprocessarIA(doc)}
                             disabled={reprocessandoId === doc.id}
-                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-white bg-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold bg-[var(--qa-tinta)] text-[var(--qa-app)] hover:bg-[var(--qa-tinta-2)] disabled:opacity-50"
                           >
                             <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
                             {reprocessandoId === doc.id ? "REPROCESSANDO..." : "REPROCESSAR IA"}
@@ -2809,7 +2809,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           <button
                             onClick={() => reprocessarReaproveitamento(doc)}
                             disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
-                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-50"
+                            className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-[var(--qa-verde)] bg-[var(--qa-verde-bg)] border border-[var(--qa-verde-borda)] hover:bg-[var(--qa-verde-bg)] disabled:opacity-50"
                             title="Tentar atender esta exigência com documento já aprovado na Central de Documentos"
                           >
                             <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} />
@@ -2838,12 +2838,12 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           </button>
                         )}
                         {equipeMode && doc.usado_como_modelo && (
-                          <span className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-amber-700 bg-amber-100 border border-amber-300">
+                          <span className="h-8 px-3 inline-flex items-center gap-1.5 rounded-md text-[11px] uppercase tracking-wider font-bold text-[var(--qa-ambar)] bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)]">
                             <BookOpen className="h-3 w-3" /> MODELO APROVADO
                           </span>
                         )}
                         {equipeMode && doc.score_modelo_aprovado != null && (
-                          <span className="h-8 px-2 inline-flex items-center gap-1 rounded-md text-[10px] uppercase tracking-wider font-mono text-slate-700 bg-slate-100 border border-slate-300">
+                          <span className="h-8 px-2 inline-flex items-center gap-1 rounded-md text-[10px] uppercase tracking-wider font-mono text-[var(--qa-tinta-2)] bg-[var(--qa-chip-bg)] border border-[var(--qa-linha-2)]">
                             SIM. MODELO {(Number(doc.score_modelo_aprovado) * 100).toFixed(0)}%
                           </span>
                         )}
@@ -2856,8 +2856,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 const SectionHeader = ({ color, label, count }: { color: string; label: string; count: number }) => (
                   <div className="flex items-center gap-2 mt-4 mb-1.5">
                     <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-                    <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-600">{label}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">({count})</span>
+                    <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-2)]">{label}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-4)]">({count})</span>
                   </div>
                 );
 
@@ -2919,7 +2919,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               {meta.label}
                               <span className="ml-2 text-[10px] font-bold opacity-70">({dlist.length} ITEM{dlist.length > 1 ? "S" : ""})</span>
                             </div>
-                            <div className="text-[10px] uppercase tracking-wide text-slate-600 mt-0.5">
+                            <div className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-2)] mt-0.5">
                               {meta.descricao}
                             </div>
                           </div>
@@ -2931,7 +2931,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             style={{ color: meta.color }}
                           />
                         </summary>
-                        <div className="p-3 space-y-3 bg-white">
+                        <div className="p-3 space-y-3 bg-[var(--qa-paper)]">
                           {dlist.map(renderDoc)}
                         </div>
                       </details>
@@ -2973,13 +2973,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       docsAnalise.length === 0 &&
                       docsOutros.length === 0 &&
                       totalExigencias > 0 && (
-                        <div className="rounded-xl border-2 border-emerald-300 bg-emerald-50/70 px-4 py-5 flex items-start gap-3">
-                          <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                        <div className="rounded-xl border-2 border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] px-4 py-5 flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-[var(--qa-verde)] shrink-0 mt-0.5" />
                           <div className="min-w-0">
-                            <div className="text-[12px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                            <div className="text-[12px] uppercase tracking-[0.14em] font-bold text-[var(--qa-verde)]">
                               NENHUMA PENDÊNCIA DOCUMENTAL NO MOMENTO.
                             </div>
-                            <p className="text-[11px] text-emerald-800/80 mt-1 leading-relaxed normal-case">
+                            <p className="text-[11px] text-[var(--qa-verde)]/80 mt-1 leading-relaxed normal-case">
                               Checklist concluído por enquanto. Você pode liberar a próxima etapa
                               ou consultar os itens já cumpridos na seção arquivada abaixo.
                             </p>
@@ -2990,23 +2990,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     {/* 4. EXIGÊNCIAS CUMPRIDAS — recolhido por padrão para o cliente */}
                     {/* 3.5 ETAPAS CONCLUÍDAS — docs de etapas anteriores (consulta) */}
                     {docsArquivados.length > 0 && (
-                      <details className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/40 overflow-hidden">
-                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-slate-100">
-                          <CheckCircle className="h-4 w-4 text-slate-500" />
-                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-700">
+                      <details className="group mt-4 rounded-xl border border-[var(--qa-linha)] bg-[var(--qa-paper-2)] overflow-hidden">
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-[var(--qa-chip-bg)]">
+                          <CheckCircle className="h-4 w-4 text-[var(--qa-tinta-3)]" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-2)]">
                             ETAPAS CONCLUÍDAS · CONSULTA ({docsArquivados.length})
                           </span>
-                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-slate-500">
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-3)]">
                             EXPANDIR PARA VER
                           </span>
                         </summary>
-                        <div className="border-t border-slate-200 p-3 space-y-4 bg-white">
+                        <div className="border-t border-[var(--qa-linha)] p-3 space-y-4 bg-[var(--qa-paper)]">
                           {[1, 2, 3, 4].filter((n) => n < etapaLiberada).map((n) => {
                             const lista = docsArquivados.filter((d) => etapaDoTipo(d.tipo_documento) === n);
                             if (lista.length === 0) return null;
                             return (
                               <div key={n}>
-                                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-slate-500 mb-2">
+                                <div className="text-[10px] uppercase tracking-[0.18em] font-bold text-[var(--qa-tinta-3)] mb-2">
                                   ETAPA {n} · {ETAPA_NOMES[n]}
                                 </div>
                                 <div className="space-y-3">{lista.map(renderDoc)}</div>
@@ -3017,34 +3017,34 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       </details>
                     )}
                     {(docsCumpridos.length + pseudoDocsCadastro.length) > 0 && (
-                      <details className="group mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 overflow-hidden">
-                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-emerald-50">
-                          <CheckCircle className="h-4 w-4 text-emerald-600" />
-                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-emerald-800">
+                      <details className="group mt-4 rounded-xl border border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] overflow-hidden">
+                        <summary className="cursor-pointer px-4 py-3 flex items-center gap-2 hover:bg-[var(--qa-verde-bg)]">
+                          <CheckCircle className="h-4 w-4 text-[var(--qa-verde)]" />
+                          <span className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-verde)]">
                             ARQUIVADAS · EXIGÊNCIAS CUMPRIDAS ({docsCumpridos.length}/{totalExigencias})
                           </span>
-                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-emerald-700">
+                          <span className="ml-auto text-[10px] uppercase tracking-wider font-bold text-[var(--qa-verde)]">
                             EXPANDIR PARA VER
                           </span>
                         </summary>
-                        <div className="border-t border-emerald-200 p-3 space-y-3 bg-white">
+                        <div className="border-t border-[var(--qa-verde-borda)] p-3 space-y-3 bg-[var(--qa-paper)]">
                           {docsCumpridos.map(renderDoc)}
                           {pseudoDocsCadastro.map((p) => (
-                            <div key={p.key} className="bg-white border border-emerald-200 rounded-xl overflow-hidden">
-                              <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-emerald-100">
+                            <div key={p.key} className="bg-[var(--qa-paper)] border border-[var(--qa-verde-borda)] rounded-xl overflow-hidden">
+                              <div className="px-4 py-3 flex items-start justify-between gap-3 border-b border-[var(--qa-verde-borda)]">
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">CADASTRO PÚBLICO</span>
-                                    <span className="text-[9px] uppercase font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">JÁ ENTREGUE</span>
+                                    <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-4)]">CADASTRO PÚBLICO</span>
+                                    <span className="text-[9px] uppercase font-bold text-[var(--qa-verde)] bg-[var(--qa-verde-bg)] px-1.5 py-0.5 rounded">JÁ ENTREGUE</span>
                                   </div>
-                                  <div className="font-bold text-sm text-slate-800 uppercase mt-0.5">{p.nome}</div>
+                                  <div className="font-bold text-sm text-[var(--qa-tinta)] uppercase mt-0.5">{p.nome}</div>
                                   {p.enviado_em && (
-                                    <div className="text-[10px] text-slate-400 mt-0.5 uppercase">
+                                    <div className="text-[10px] text-[var(--qa-tinta-4)] mt-0.5 uppercase">
                                       ENVIADO EM {formatDateTime(p.enviado_em)}
                                     </div>
                                   )}
                                 </div>
-                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap bg-[var(--qa-verde-bg)] text-[var(--qa-verde)] border border-[var(--qa-verde-borda)]">
                                   CUMPRIDO
                                 </span>
                               </div>
@@ -3054,7 +3054,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                     const fileName = p.path.split("/").pop() || "documento";
                                     viewer.abrirStorage(p.bucket, p.path, { fileName, title: p.nome });
                                   }}
-                                  className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-100"
+                                  className="h-7 px-2 inline-flex items-center gap-1 rounded border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
                                 >
                                   <Eye className="h-3 w-3" /> VISUALIZAR
                                 </button>
@@ -3081,15 +3081,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   recarregarEm={manifestacoesVersao}
                 />
               )}
-              {eventos.length === 0 && <div className="text-xs uppercase text-slate-400 text-center py-8">SEM EVENTOS REGISTRADOS</div>}
+              {eventos.length === 0 && <div className="text-xs uppercase text-[var(--qa-tinta-4)] text-center py-8">SEM EVENTOS REGISTRADOS</div>}
               {eventos.map((ev) => (
-                <div key={ev.id} className="bg-white border border-slate-200 rounded-lg px-4 py-2.5">
+                <div key={ev.id} className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-lg px-4 py-2.5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-500">{ev.tipo_evento.replace(/_/g, " ")}</span>
-                    <span className="text-[10px] text-slate-400">{formatDateTime(ev.created_at)}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-3)]">{ev.tipo_evento.replace(/_/g, " ")}</span>
+                    <span className="text-[10px] text-[var(--qa-tinta-4)]">{formatDateTime(ev.created_at)}</span>
                   </div>
-                  {ev.descricao && <div className="text-xs text-slate-700 mt-1 uppercase">{ev.descricao}</div>}
-                  {ev.ator && <div className="text-[10px] text-slate-400 mt-0.5 uppercase">POR: {ev.ator}</div>}
+                  {ev.descricao && <div className="text-xs text-[var(--qa-tinta-2)] mt-1 uppercase">{ev.descricao}</div>}
+                  {ev.ator && <div className="text-[10px] text-[var(--qa-tinta-4)] mt-0.5 uppercase">POR: {ev.ator}</div>}
                 </div>
               ))}
             </div>
@@ -3097,13 +3097,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
             <div className="space-y-3">
               {/* Alerta: serviço fora do catálogo de preços ativo */}
               {servicoForaDoCatalogo && (
-                <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 flex items-start gap-3">
-                  <span className="text-amber-600 mt-0.5 text-lg leading-none">⚠️</span>
+                <div className="rounded-xl border border-[var(--qa-ambar-borda)] bg-[var(--qa-ambar-bg)] px-4 py-3 flex items-start gap-3">
+                  <span className="text-[var(--qa-ambar)] mt-0.5 text-lg leading-none">⚠️</span>
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-amber-800">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--qa-ambar)]">
                       SERVIÇO FORA DO CATÁLOGO DE PREÇOS
                     </p>
-                    <p className="text-[11px] text-amber-700 mt-0.5 leading-snug">
+                    <p className="text-[11px] text-[var(--qa-ambar)] mt-0.5 leading-snug">
                       O serviço <strong>{processo?.servico_nome}</strong> não está no catálogo de preços ativo. Este processo foi criado em modo de teste. Exclua o cadastro manualmente e gere novamente com um serviço do catálogo.
                     </p>
                   </div>
@@ -3122,31 +3122,31 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 !["decisao", "indeferimento", "deferimento"].includes(
                   String(manifestacaoPF.tipo ?? "").toLowerCase(),
                 ) && (
-                <div className={`bg-white border rounded-xl p-4 ${
-                  manifestacaoPF.respondida_em ? "border-slate-200" : "border-amber-300"
+                <div className={`bg-[var(--qa-paper)] border rounded-xl p-4 ${
+                  manifestacaoPF.respondida_em ? "border-[var(--qa-linha)]" : "border-[var(--qa-ambar-borda)]"
                 }`}>
-                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)] mb-2">
                     RESPOSTA À POLÍCIA FEDERAL
                   </h4>
                   {manifestacaoPF.respondida_em ? (
                     <div>
-                      <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                      <p className="text-xs font-bold text-[var(--qa-verde)] uppercase tracking-wide">
                         ENTREGUE
                         {manifestacaoPF.respondida_protocolo
                           ? ` · Nº ${manifestacaoPF.respondida_protocolo}`
                           : ""}
                       </p>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] mt-0.5">
                         EM {formatDateTime(manifestacaoPF.respondida_em)} · PRAZO CUMPRIDO
                       </p>
                     </div>
                   ) : (
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-amber-900 uppercase tracking-wide">
+                        <p className="text-xs font-bold text-[var(--qa-ambar)] uppercase tracking-wide">
                           AGUARDANDO A ENTREGA NA PF
                         </p>
-                        <p className="text-[10px] uppercase tracking-wide text-slate-500 mt-0.5">
+                        <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-3)] mt-0.5">
                           {manifestacaoPF.prazo_limite
                             ? `PRAZO ATÉ ${manifestacaoPF.prazo_limite.split("-").reverse().join("/")}`
                             : "ENQUANTO NÃO FOR REGISTRADA, O PRAZO CONTINUA CORRENDO"}
@@ -3174,8 +3174,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 isso dependia de alguém lembrar de colar uma manifestação.
               */}
               {recurso && (
-                <div className="bg-white border border-indigo-200 rounded-xl p-4">
-                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-2">
+                <div className="bg-[var(--qa-paper)] border border-indigo-200 rounded-xl p-4">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)] mb-2">
                     RECURSO ADMINISTRATIVO
                   </h4>
                   {recurso.status === "protocolado" ? (
@@ -3183,17 +3183,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       <p className="text-xs font-bold text-indigo-800 uppercase tracking-wide">
                         PROTOCOLADO · Nº {recurso.numero_protocolo ?? "—"}
                       </p>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] mt-0.5">
                         EM {formatDateTime(recurso.protocolado_em)}
                       </p>
                     </div>
                   ) : ["aprovado", "enviado_equipe"].includes(String(recurso.status)) ? (
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
+                        <p className="text-xs font-bold text-[var(--qa-verde)] uppercase tracking-wide">
                           APROVADO PELO CLIENTE — AGUARDA PROTOCOLO
                         </p>
-                        <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                        <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] mt-0.5">
                           EM {formatDateTime(recurso.aprovado_em)}
                         </p>
                       </div>
@@ -3206,7 +3206,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       </button>
                     </div>
                   ) : (
-                    <p className="text-[11px] uppercase tracking-wide text-slate-500">
+                    <p className="text-[11px] uppercase tracking-wide text-[var(--qa-tinta-3)]">
                       AGUARDANDO O CLIENTE LER E APROVAR O RELATO.
                     </p>
                   )}
@@ -3223,23 +3223,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 de endereço. Quem pega isso é ele, não o revisor.
               */}
               {pecas.length > 0 && (
-                <div className="bg-white border border-slate-200 rounded-xl p-4">
-                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">
+                <div className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-xl p-4">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)] mb-3">
                     PETIÇÃO · APROVAÇÃO DO CLIENTE
                   </h4>
-                  <ul className="divide-y divide-slate-100">
+                  <ul className="divide-y divide-[var(--qa-linha-4)]">
                     {pecas.map((pc) => {
                       const st = String(pc.status_cliente ?? "nao_enviada");
                       const desteProcesso = !pc.processo_id || pc.processo_id === processo?.id;
                       const badge =
-                        st === "aprovada" ? { txt: "APROVADA PELO CLIENTE", cls: "bg-emerald-50 text-emerald-800 border-emerald-200" } :
-                        st === "aguardando_cliente" ? { txt: "AGUARDANDO O CLIENTE", cls: "bg-sky-50 text-sky-800 border-sky-200" } :
+                        st === "aprovada" ? { txt: "APROVADA PELO CLIENTE", cls: "bg-[var(--qa-verde-bg)] text-[var(--qa-verde)] border-[var(--qa-verde-borda)]" } :
+                        st === "aguardando_cliente" ? { txt: "AGUARDANDO O CLIENTE", cls: "bg-[var(--qa-chip-bg)] text-sky-800 border-sky-200" } :
                         st === "devolvida" ? { txt: "CLIENTE PEDIU AJUSTE", cls: "bg-orange-50 text-orange-900 border-orange-300" } :
-                        { txt: "NÃO ENVIADA", cls: "bg-slate-50 text-slate-600 border-slate-200" };
+                        { txt: "NÃO ENVIADA", cls: "bg-[var(--qa-paper-2)] text-[var(--qa-tinta-2)] border-[var(--qa-linha)]" };
                       return (
                         <li key={pc.id} className="py-3 flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="text-xs font-semibold text-slate-800 truncate">
+                            <p className="text-xs font-semibold text-[var(--qa-tinta)] truncate">
                               {pc.titulo_geracao || pc.tipo_peca || "Petição"}
                             </p>
                             <span className={`mt-1 inline-block px-2 py-0.5 rounded text-[9px] uppercase tracking-wider font-bold border ${badge.cls}`}>
@@ -3251,7 +3251,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               </p>
                             )}
                             {st === "aprovada" && (
-                              <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-1">
+                              <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] mt-1">
                                 EM {formatDateTime(pc.aprovada_cliente_em)}
                                 {pc.editada_pelo_cliente ? " · COM EDIÇÕES DELE" : ""}
                               </p>
@@ -3297,7 +3297,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                         title: "Petição — via lacrada (arquivo interno)",
                                       })
                                     }
-                                    className="text-[10px] uppercase tracking-wider font-bold text-slate-500 hover:underline"
+                                    className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-3)] hover:underline"
                                   >
                                     VER A VIA LACRADA
                                   </button>
@@ -3334,7 +3334,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </ul>
                   {/* Aviso honesto: aprovar é o que destrava o protocolo. */}
                   {pecas.some((p) => ["aguardando_cliente", "devolvida"].includes(String(p.status_cliente))) && (
-                    <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400 leading-relaxed">
+                    <p className="mt-3 text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] leading-relaxed">
                       ENQUANTO HOUVER PETIÇÃO SEM APROVAÇÃO, O PROCESSO NÃO VIRA "PRONTO PARA PROTOCOLAR".
                     </p>
                   )}
@@ -3351,20 +3351,20 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 ficou de fora e quando foi montado.
               */}
               {juntada && (
-                <div className="bg-white border border-emerald-200 rounded-xl p-4">
+                <div className="bg-[var(--qa-paper)] border border-[var(--qa-verde-borda)] rounded-xl p-4">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div className="min-w-0">
-                      <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">
+                      <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)]">
                         JUNTADA PARA O ÓRGÃO · V{juntada.versao}
                       </h4>
-                      <p className="text-[11px] uppercase tracking-wide text-slate-600 mt-1">
+                      <p className="text-[11px] uppercase tracking-wide text-[var(--qa-tinta-2)] mt-1">
                         {juntada.paginas} PÁGINAS ·{" "}
                         {Array.isArray(juntada.itens_json) ? juntada.itens_json.length : 0} DOCUMENTOS
                         {Array.isArray(juntada.ignorados_json) && juntada.ignorados_json.length > 0
                           ? ` · ${juntada.ignorados_json.length} FORA`
                           : ""}
                       </p>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-400 mt-0.5">
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] mt-0.5">
                         MONTADA EM {formatDateTime(juntada.montada_em)}
                       </p>
                       {/*
@@ -3409,13 +3409,13 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     </button>
                   </div>
                   {Array.isArray(juntada.ignorados_json) && juntada.ignorados_json.length > 0 && (
-                    <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-wider font-bold text-amber-800 mb-1">
+                    <div className="mt-3 rounded-lg bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-ambar)] mb-1">
                         FICOU DE FORA
                       </p>
                       <ul className="space-y-0.5">
                         {(juntada.ignorados_json as Array<{ tipo?: string; motivo?: string }>).map((ig, i) => (
-                          <li key={i} className="text-[10px] uppercase tracking-wide text-amber-700">
+                          <li key={i} className="text-[10px] uppercase tracking-wide text-[var(--qa-ambar)]">
                             {String(ig?.tipo ?? "").replace(/_/g, " ")} — {ig?.motivo ?? "sem motivo"}
                           </li>
                         ))}
@@ -3435,10 +3435,10 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 cliente. Agora o seletor pergunta à máquina de estados para onde
                 ESTE processo pode ir, e protocolar só acontece pelo modal.
               */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
+              <div className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-xl p-4">
                 <div className="flex items-baseline justify-between gap-3 mb-3">
-                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500">ALTERAR STATUS DO PROCESSO</h4>
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
+                  <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)]">ALTERAR STATUS DO PROCESSO</h4>
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-4)]">
                     ATUAL: {getStatusProcesso(String(processo?.status ?? "")).label}
                   </span>
                 </div>
@@ -3446,7 +3446,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   const destinos = transicoesPermitidas(processo?.status);
                   if (destinos.length === 0) {
                     return (
-                      <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                      <p className="text-[11px] uppercase tracking-wide text-[var(--qa-tinta-4)]">
                         PROCESSO ENCERRADO — NÃO HÁ PRÓXIMO STATUS.
                       </p>
                     );
@@ -3460,7 +3460,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                             <button
                               key={k}
                               onClick={() => equipeSetProcessoStatus(k)}
-                              className="h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border border-slate-200 text-slate-700 hover:bg-slate-50 bg-white"
+                              className="h-9 px-3 rounded-md text-[10px] uppercase tracking-wider font-bold border border-[var(--qa-linha)] text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] bg-[var(--qa-paper)]"
                             >
                               {v.label}
                             </button>
@@ -3468,7 +3468,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                         })}
                       </div>
                       {processo?.status === "pronto_para_protocolar" && (
-                        <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400 leading-relaxed">
+                        <p className="mt-3 text-[10px] uppercase tracking-wide text-[var(--qa-tinta-4)] leading-relaxed">
                           PARA PROTOCOLAR, USE "MARCAR COMO PROTOCOLADO" NO TOPO — É LÁ QUE ENTRAM O NÚMERO, O ÓRGÃO E O AVISO AO CLIENTE.
                         </p>
                       )}
@@ -3478,8 +3478,8 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
               </div>
 
               {/* Documentos do processo — gestão direta pela Equipe Quero Armas */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4">
-                <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-slate-500 mb-3">
+              <div className="bg-[var(--qa-paper)] border border-[var(--qa-linha)] rounded-xl p-4">
+                <h4 className="text-[11px] uppercase tracking-[0.14em] font-bold text-[var(--qa-tinta-3)] mb-3">
                   DOCUMENTOS DO PROCESSO ({docs.length})
                 </h4>
                 {/* Bloco 11 — resumo das 3 caixas (aditivo, não muda a listagem abaixo) */}
@@ -3487,9 +3487,9 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   <DocsTresCaixasPanel docs={docs} />
                 </div>
                 {docs.length === 0 ? (
-                  <div className="text-[11px] uppercase text-slate-400">NENHUM DOCUMENTO REGISTRADO.</div>
+                  <div className="text-[11px] uppercase text-[var(--qa-tinta-4)]">NENHUM DOCUMENTO REGISTRADO.</div>
                 ) : (
-                  <ul className="divide-y divide-slate-100">
+                  <ul className="divide-y divide-[var(--qa-linha-4)]">
                     {docs.map((doc) => {
                       const ds = getStatusDocumento(doc.status, doc.validacao_ia_status);
                       const reaproveitado = isDocReaproveitado(doc);
@@ -3499,7 +3499,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       return (
                         <li
                           key={doc.id}
-                          className={`py-3 flex items-start gap-3 transition-colors${highlightedDocId === doc.id ? " bg-amber-50 -mx-4 px-4 rounded-lg" : ""}`}
+                          className={`py-3 flex items-start gap-3 transition-colors${highlightedDocId === doc.id ? " bg-[var(--qa-ambar-bg)] -mx-4 px-4 rounded-lg" : ""}`}
                         >
                           {/* Status — coluna esquerda */}
                           <span
@@ -3511,19 +3511,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
                           {/* Informações */}
                           <div className="min-w-0 flex-1">
-                            <div className="text-[11px] font-bold uppercase text-slate-800 leading-tight">
+                            <div className="text-[11px] font-bold uppercase text-[var(--qa-tinta)] leading-tight">
                               {doc.nome_documento}
                             </div>
-                            <div className="text-[9.5px] uppercase tracking-wider text-slate-400 mt-0.5">
+                            <div className="text-[9.5px] uppercase tracking-wider text-[var(--qa-tinta-4)] mt-0.5">
                               {doc.tipo_documento}{doc.etapa ? ` · ${doc.etapa}` : ""}
                             </div>
                             {reaproveitado && (
-                              <span className="mt-1 inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                              <span className="mt-1 inline-flex items-center gap-1 rounded bg-[var(--qa-verde-bg)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[var(--qa-verde)]">
                                 <Database className="h-2.5 w-2.5" /> CENTRAL
                               </span>
                             )}
                             {doc.motivo_rejeicao && (
-                              <p className="text-[10px] text-red-700 mt-1 leading-snug">
+                              <p className="text-[10px] text-[var(--qa-vermelho)] mt-1 leading-snug">
                                 ↳ {doc.motivo_rejeicao}
                               </p>
                             )}
@@ -3533,17 +3533,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                           <div className="shrink-0 flex items-center gap-1.5 flex-wrap justify-end">
                             {/* VER + BAIXAR unidos (split button) — bucket correto por tipo */}
                             {temArquivo && (
-                              <div className="inline-flex rounded border border-slate-200 overflow-hidden">
+                              <div className="inline-flex rounded border border-[var(--qa-linha)] overflow-hidden">
                                 <button
                                   onClick={() => baixarArquivo(doc.arquivo_storage_key, "visualizar", bucket)}
-                                  className="h-7 px-2.5 inline-flex items-center gap-1 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-50 border-r border-slate-200"
+                                  className="h-7 px-2.5 inline-flex items-center gap-1 bg-[var(--qa-paper)] text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] border-r border-[var(--qa-linha)]"
                                 >
                                   <Eye className="h-3 w-3" /> VER
                                 </button>
                                 <button
                                   onClick={() => baixarArquivo(doc.arquivo_storage_key, "baixar", bucket)}
                                   title="Baixar arquivo"
-                                  className="h-7 px-2 inline-flex items-center bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                                  className="h-7 px-2 inline-flex items-center bg-[var(--qa-paper)] text-[var(--qa-tinta-3)] hover:bg-[var(--qa-paper-2)] hover:text-[var(--qa-tinta-2)]"
                                 >
                                   <Download className="h-3 w-3" />
                                 </button>
@@ -3556,7 +3556,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                 onClick={() => reprocessarIA(doc)}
                                 disabled={reprocessandoId === doc.id}
                                 title="Reprocessar validação IA"
-                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-slate-200 bg-white text-[10px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] disabled:opacity-40"
                               >
                                 <RefreshCw className={`h-3 w-3 ${reprocessandoId === doc.id ? "animate-spin" : ""}`} />
                                 {reprocessandoId === doc.id ? "..." : "IA"}
@@ -3569,7 +3569,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                                 onClick={() => reprocessarReaproveitamento(doc)}
                                 disabled={reaproveitandoId === doc.id || reaproveitandoId === processo?.id}
                                 title="Buscar na Central de Documentos"
-                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 text-[10px] uppercase tracking-wider font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-40"
+                                className="h-7 px-2 inline-flex items-center gap-1 rounded border border-[var(--qa-verde-borda)] bg-[var(--qa-verde-bg)] text-[10px] uppercase tracking-wider font-bold text-[var(--qa-verde)] hover:bg-[var(--qa-verde-bg)] disabled:opacity-40"
                               >
                                 <Database className={`h-3 w-3 ${reaproveitandoId === doc.id ? "animate-pulse" : ""}`} />
                                 {reaproveitandoId === doc.id ? "..." : "CENTRAL"}
@@ -3605,7 +3605,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 )}
               </div>
 
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">
+              <div className="text-[10px] uppercase tracking-wider text-[var(--qa-tinta-4)]">
                 ID: {processo?.id} · CRIADO: {formatDateTime(processo?.data_criacao)}
               </div>
             </div>
@@ -3615,31 +3615,31 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
       {/* Modal — Confirmar APROVAÇÃO */}
       {aprovacao && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">CONFIRMAR APROVAÇÃO</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-[var(--qa-verde)]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">CONFIRMAR APROVAÇÃO</h3>
             </div>
             <div className="px-5 py-4 space-y-3">
-              <p className="text-xs text-slate-700 uppercase tracking-wide">
+              <p className="text-xs text-[var(--qa-tinta-2)] uppercase tracking-wide">
                 Documento: <strong>{aprovacao.nome}</strong>
               </p>
               {aprovacao.divergente ? (
-                <div className="text-[11px] bg-amber-50 border border-amber-300 rounded-md p-2.5 text-amber-900">
+                <div className="text-[11px] bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] rounded-md p-2.5 text-[var(--qa-ambar)]">
                   <strong className="uppercase tracking-wider">ATENÇÃO:</strong> este documento possui divergências detectadas. Deseja aprovar mesmo assim?
                 </div>
               ) : (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[var(--qa-tinta-3)]">
                   O documento passará a status APROVADO e o motivo de rejeição anterior, se houver, será limpo.
                 </p>
               )}
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="px-5 py-3 bg-[var(--qa-paper-2)] border-t border-[var(--qa-linha-4)] flex items-center justify-end gap-2">
               <button
                 onClick={() => setAprovacao(null)}
                 disabled={salvandoAcao}
-                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] disabled:opacity-50"
               >
                 CANCELAR
               </button>
@@ -3657,17 +3657,17 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
       {/* Modal — Recusar com MOTIVO obrigatório */}
       {rejeicao && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">RECUSAR DOCUMENTO</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-[var(--qa-vermelho)]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">RECUSAR DOCUMENTO</h3>
             </div>
             <div className="px-5 py-4 space-y-3">
-              <p className="text-xs text-slate-700 uppercase tracking-wide">
+              <p className="text-xs text-[var(--qa-tinta-2)] uppercase tracking-wide">
                 Documento: <strong>{rejeicao.nome}</strong>
               </p>
-              <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600">
+              <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)]">
                 MOTIVO DA RECUSA (OBRIGATÓRIO)
               </label>
               <textarea
@@ -3676,20 +3676,20 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 placeholder="EX.: ARQUIVO ILEGÍVEL, FOTO CORTADA, DOCUMENTO VENCIDO..."
                 rows={4}
                 maxLength={500}
-                className="w-full text-xs uppercase tracking-wide rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-300"
+                className="w-full text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-300"
               />
-              <div className="text-[10px] text-slate-400 text-right">
+              <div className="text-[10px] text-[var(--qa-tinta-4)] text-right">
                 {motivoRejeicao.length}/500
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[var(--qa-tinta-3)]">
                 O cliente verá este motivo e o botão para SUBSTITUIR DOCUMENTO no portal.
               </p>
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="px-5 py-3 bg-[var(--qa-paper-2)] border-t border-[var(--qa-linha-4)] flex items-center justify-end gap-2">
               <button
                 onClick={() => { setRejeicao(null); setMotivoRejeicao(""); }}
                 disabled={salvandoAcao}
-                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] disabled:opacity-50"
               >
                 CANCELAR
               </button>
@@ -3713,21 +3713,21 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
       {/* Modal — Registrar deferimento */}
       {deferModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-700" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">REGISTRAR DEFERIMENTO</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[var(--qa-verde)]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">REGISTRAR DEFERIMENTO</h3>
             </div>
             <div className="px-5 py-4 space-y-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   DOCUMENTO LIBERADO PELO ÓRGÃO
                 </label>
                 <select
                   value={deferForm.documento_id}
                   onChange={(e) => setDeferForm((f) => ({ ...f, documento_id: e.target.value }))}
-                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 >
                   <option value="">— escolha —</option>
                   {docsResultado.map((d) => (
@@ -3738,46 +3738,46 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   ))}
                 </select>
                 {docsResultado.length === 0 && (
-                  <p className="mt-1 text-[10px] uppercase tracking-wide text-amber-700 leading-snug">
+                  <p className="mt-1 text-[10px] uppercase tracking-wide text-[var(--qa-ambar)] leading-snug">
                     NENHUM DOCUMENTO DE RESULTADO NO HUB DESTE CLIENTE. SUBA A AUTORIZAÇÃO
                     (OU O CR) PELO HUB DE DOCUMENTOS ANTES, COM A DATA DE VALIDADE.
                   </p>
                 )}
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   NÚMERO (OPCIONAL)
                 </label>
                 <input
                   type="text"
                   value={deferForm.numero}
                   onChange={(e) => setDeferForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   DATA DO DEFERIMENTO
                 </label>
                 <input
                   type="date"
                   value={deferForm.data}
                   onChange={(e) => setDeferForm((f) => ({ ...f, data: e.target.value }))}
-                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
               </div>
               {/* A validade é o que aciona o monitoramento — sem ela o cliente
                   recebe o papel e perde o prazo dele. */}
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+              <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-3)] leading-relaxed">
                 O DOCUMENTO ESCOLHIDO É ENTREGUE AO CLIENTE E FICA NO ARSENAL. SE ELE TIVER
                 VALIDADE, O MONITORAMENTO DE VENCIMENTO COMEÇA AUTOMATICAMENTE.
               </p>
             </div>
-            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <div className="px-5 py-3 border-t border-[var(--qa-linha-4)] flex justify-end gap-2">
               <button
                 onClick={() => setDeferModal(false)}
                 disabled={salvandoDefer}
-                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
               >
                 CANCELAR
               </button>
@@ -3796,31 +3796,31 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       {/* Modal — Protocolo do recurso */}
       {/* Modal — Registrar a resposta entregue à PF */}
       {respostaModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <FileSignature className="h-4 w-4 text-amber-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-[var(--qa-ambar)]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">
                 RESPOSTA ENTREGUE À PF
               </h3>
             </div>
             <div className="px-5 py-4 space-y-3">
-              <p className="text-xs text-slate-700 uppercase tracking-wide">
+              <p className="text-xs text-[var(--qa-tinta-2)] uppercase tracking-wide">
                 Registre quando a resposta à notificação foi entregue na Polícia Federal.
               </p>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   DATA DA ENTREGA
                 </label>
                 <input
                   type="date"
                   value={respostaForm.data}
                   onChange={(e) => setRespostaForm((f) => ({ ...f, data: e.target.value }))}
-                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  className="w-full h-9 text-xs rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   Nº DO PROTOCOLO (OPCIONAL)
                 </label>
                 <input
@@ -3828,23 +3828,23 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   value={respostaForm.protocolo}
                   onChange={(e) => setRespostaForm((f) => ({ ...f, protocolo: e.target.value.toUpperCase() }))}
                   placeholder="EX.: 2026.0001234-56"
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-amber-300"
                 />
               </div>
               {/*
                 A data é o dado que importa: é ela, comparada com a data da
                 notificação, que decide se a resposta foi tempestiva.
               */}
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+              <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-3)] leading-relaxed">
                 ESTA DATA FECHA O PRAZO DE 10 DIAS NO PAINEL E NO E-MAIL DE ALERTA. USE A DATA
                 REAL DA ENTREGA, NÃO A DE HOJE, SE FOREM DIFERENTES.
               </p>
             </div>
-            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <div className="px-5 py-3 border-t border-[var(--qa-linha-4)] flex justify-end gap-2">
               <button
                 onClick={() => setRespostaModal(false)}
                 disabled={salvandoResposta}
-                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
               >
                 CANCELAR
               </button>
@@ -3861,20 +3861,20 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
       )}
 
       {protocoloRecursoModal && recurso && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
               <FileSignature className="h-4 w-4 text-indigo-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">
                 PROTOCOLO DO RECURSO
               </h3>
             </div>
             <div className="px-5 py-4 space-y-3">
-              <p className="text-xs text-slate-700 uppercase tracking-wide">
+              <p className="text-xs text-[var(--qa-tinta-2)] uppercase tracking-wide">
                 Registre o número que a Polícia Federal devolveu ao receber o recurso.
               </p>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   NÚMERO DO PROTOCOLO
                 </label>
                 <input
@@ -3882,31 +3882,31 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   value={recursoForm.numero}
                   onChange={(e) => setRecursoForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
                   placeholder="EX.: 2026.0001234-56"
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   DATA DO PROTOCOLO
                 </label>
                 <input
                   type="date"
                   value={recursoForm.data}
                   onChange={(e) => setRecursoForm((f) => ({ ...f, data: e.target.value }))}
-                  className="w-full h-9 text-xs rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                  className="w-full h-9 text-xs rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                 />
               </div>
               {/* A data importa: é ela que fecha o contador de 10 dias. */}
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 leading-relaxed">
+              <p className="text-[10px] uppercase tracking-wide text-[var(--qa-tinta-3)] leading-relaxed">
                 ESTA DATA FECHA O PRAZO DE 10 DIAS NO PAINEL. USE A DATA REAL DO PROTOCOLO,
                 NÃO A DE HOJE, SE FOREM DIFERENTES.
               </p>
             </div>
-            <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <div className="px-5 py-3 border-t border-[var(--qa-linha-4)] flex justify-end gap-2">
               <button
                 onClick={() => setProtocoloRecursoModal(false)}
                 disabled={salvandoRecurso}
-                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-slate-600 hover:bg-slate-100"
+                className="h-9 px-4 rounded-md text-[11px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] hover:bg-[var(--qa-chip-bg)]"
               >
                 CANCELAR
               </button>
@@ -3924,22 +3924,22 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
 
       {/* Modal — Marcar como protocolado */}
       {protocoloModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60">
-          <div className="w-full max-w-md bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
-              <FileSignature className="h-4 w-4 text-emerald-600" />
-              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800">MARCAR COMO PROTOCOLADO</h3>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[var(--qa-tinta)]/60">
+          <div className="w-full max-w-md bg-[var(--qa-paper)] rounded-xl shadow-2xl border border-[var(--qa-linha)] overflow-hidden">
+            <div className="px-5 py-4 border-b border-[var(--qa-linha-4)] flex items-center gap-2">
+              <FileSignature className="h-4 w-4 text-[var(--qa-verde)]" />
+              <h3 className="text-sm font-bold uppercase tracking-wider text-[var(--qa-tinta)]">MARCAR COMO PROTOCOLADO</h3>
             </div>
             <div className="px-5 py-4 space-y-3">
-              <p className="text-xs text-slate-700 uppercase tracking-wide">
+              <p className="text-xs text-[var(--qa-tinta-2)] uppercase tracking-wide">
                 Confirma que este processo foi protocolado no órgão competente?
               </p>
               {juntada ? (
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-800">
+                <div className="rounded-lg bg-[var(--qa-verde-bg)] border border-[var(--qa-verde-borda)] px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-verde)]">
                     JUNTADA V{juntada.versao} · {juntada.paginas} PÁGINAS
                   </p>
-                  <p className="text-[10px] uppercase tracking-wide text-emerald-700 mt-0.5">
+                  <p className="text-[10px] uppercase tracking-wide text-[var(--qa-verde)] mt-0.5">
                     MONTADA EM {formatDateTime(juntada.montada_em)}
                   </p>
                   {juntadaDesatualizada && (
@@ -3950,11 +3950,11 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   )}
                 </div>
               ) : (
-                <div className="rounded-lg bg-amber-50 border border-amber-300 px-3 py-2">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-amber-800 leading-snug">
+                <div className="rounded-lg bg-[var(--qa-ambar-bg)] border border-[var(--qa-ambar-borda)] px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-[var(--qa-ambar)] leading-snug">
                     NENHUMA JUNTADA MONTADA PARA ESTE PROCESSO
                   </p>
-                  <p className="text-[10px] uppercase tracking-wide text-amber-700 mt-1 leading-snug">
+                  <p className="text-[10px] uppercase tracking-wide text-[var(--qa-ambar)] mt-1 leading-snug">
                     A JUNTADA É O DOSSIÊ ÚNICO QUE VAI PARA O ÓRGÃO. FECHE ESTA JANELA E
                     CLIQUE EM "MONTAR JUNTADA".
                   </p>
@@ -3965,20 +3965,20 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                       onChange={(e) => setProtocoloSemJuntada(e.target.checked)}
                       className="mt-0.5 h-3.5 w-3.5 accent-amber-600"
                     />
-                    <span className="text-[10px] uppercase tracking-wide font-bold text-amber-800 leading-snug">
+                    <span className="text-[10px] uppercase tracking-wide font-bold text-[var(--qa-ambar)] leading-snug">
                       O DOSSIÊ FOI MONTADO E ENTREGUE FORA DO SISTEMA — REGISTRAR ASSIM MESMO
                     </span>
                   </label>
                 </div>
               )}
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   ÓRGÃO
                 </label>
                 <select
                   value={protocoloForm.orgao}
                   onChange={(e) => setProtocoloForm((f) => ({ ...f, orgao: e.target.value as any }))}
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 >
                   <option value="POLICIA_FEDERAL">POLÍCIA FEDERAL</option>
                   <option value="EXERCITO">EXÉRCITO</option>
@@ -3987,7 +3987,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   NÚMERO DO PROTOCOLO
                 </label>
                 <input
@@ -3995,7 +3995,7 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   value={protocoloForm.numero}
                   onChange={(e) => setProtocoloForm((f) => ({ ...f, numero: e.target.value.toUpperCase() }))}
                   placeholder="EX.: 2026.0001234-56"
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
                 {/*
                   O número deixou de ser opcional. É por ele que o cliente
@@ -4012,24 +4012,24 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                     onChange={(e) => setProtocoloSemNumero(e.target.checked)}
                     className="mt-0.5 h-3.5 w-3.5 accent-amber-600"
                   />
-                  <span className="text-[10px] uppercase tracking-wide font-bold text-amber-700 leading-snug">
+                  <span className="text-[10px] uppercase tracking-wide font-bold text-[var(--qa-ambar)] leading-snug">
                     O ÓRGÃO NÃO FORNECEU NÚMERO — REGISTRAR ASSIM MESMO
                   </span>
                 </label>
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   DATA DO PROTOCOLO
                 </label>
                 <input
                   type="date"
                   value={protocoloForm.data}
                   onChange={(e) => setProtocoloForm((f) => ({ ...f, data: e.target.value }))}
-                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-slate-300 px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full h-9 text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider font-bold text-slate-600 mb-1">
+                <label className="block text-[10px] uppercase tracking-wider font-bold text-[var(--qa-tinta-2)] mb-1">
                   OBSERVAÇÃO (OPCIONAL)
                 </label>
                 <textarea
@@ -4037,15 +4037,15 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   onChange={(e) => setProtocoloForm((f) => ({ ...f, observacao: e.target.value }))}
                   rows={3}
                   maxLength={500}
-                  className="w-full text-xs uppercase tracking-wide rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                  className="w-full text-xs uppercase tracking-wide rounded-md border border-[var(--qa-linha-2)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                 />
               </div>
             </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+            <div className="px-5 py-3 bg-[var(--qa-paper-2)] border-t border-[var(--qa-linha-4)] flex items-center justify-end gap-2">
               <button
                 onClick={() => setProtocoloModalOpen(false)}
                 disabled={salvandoProtocolo}
-                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="h-8 px-3 rounded-md text-[11px] uppercase tracking-wider font-bold border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)] disabled:opacity-50"
               >
                 CANCELAR
               </button>
@@ -4104,7 +4104,7 @@ function TabBtn({ active, onClick, icon, label }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`flex-1 h-11 inline-flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-bold border-b-2 transition-colors ${active ? "border-[#2F3337] text-[#2F3337] bg-[#F7F7F8]" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+      className={`flex-1 h-11 inline-flex items-center justify-center gap-2 text-[11px] uppercase tracking-wider font-bold border-b-2 transition-colors ${active ? "border-[#2F3337] text-[#2F3337] bg-[#F7F7F8]" : "border-transparent text-[var(--qa-tinta-3)] hover:text-[var(--qa-tinta-2)] hover:bg-[var(--qa-paper-2)]"}`}
     >
       {icon} {label}
     </button>
