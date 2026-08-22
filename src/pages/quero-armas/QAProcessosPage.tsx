@@ -381,7 +381,14 @@ export default function QAProcessosPage() {
       </div>
 
       {selectedId && (
-        <ProcessoDetalheDrawer processoId={selectedId} equipeMode onClose={() => setSelectedId(null)} onUpdated={carregar} />
+        /* O drawer ainda não usa os tokens --qa-*: dentro de uma tela migrada
+           ele desenharia as próprias cores claras e apareceria BRANCO sobre a
+           tela escura. `data-qa-legado` devolve a ele a inversão do modo
+           noturno — a mesma aparência que tem nas telas não migradas.
+           Ver "Ilha legada dentro de tela migrada" em index.css. */
+        <div data-qa-legado className="fixed inset-0 z-50">
+          <ProcessoDetalheDrawer processoId={selectedId} equipeMode onClose={() => setSelectedId(null)} onUpdated={carregar} />
+        </div>
       )}
     </div>
   );

@@ -418,6 +418,22 @@ html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) :where(img, vid
   filter: none;
 }
 
+/* Ilha legada dentro de tela migrada.
+   Um componente ainda não migrado que abre por cima da página — hoje o drawer
+   de processo, compartilhado com telas antigas — desenharia as próprias cores
+   claras literalmente, aparecendo BRANCO sobre a tela escura. Marcado com
+   `data-qa-legado`, ele volta a ser desenhado pela inversão, exatamente como
+   em qualquer tela não migrada; a mídia dentro dele é re-invertida para não
+   ficar em negativo. A ilha é sempre `fixed inset-0`, então o filtro não
+   desloca layout. Quando o componente for migrado para os tokens --qa-*,
+   basta remover o atributo. */
+html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) [data-qa-legado] {
+  filter: invert(1) hue-rotate(180deg);
+}
+html.qa-noite .qa-scope [data-qa-conteudo]:has([data-qa-pagina]) [data-qa-legado] :where(img, video, canvas, iframe, svg image) {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* Chip do painel: nunca quebra linha — a fonte encolhe conforme a coluna aperta. */
 .qa-dash-compact td,
 .qa-dash-compact .qa-cq { container-type: inline-size; }
