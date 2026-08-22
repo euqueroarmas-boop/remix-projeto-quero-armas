@@ -29,12 +29,13 @@ describe("mensagemAgendamento", () => {
       .toContain("Olá! Encontrei você pelo Arsenal Inteligente");
   });
 
-  it("leva o site e o convite com o WhatsApp da equipe em todas as versões", () => {
+  it("leva o endereço do site em todas as versões, sem recado da Quero Armas na mensagem", () => {
     for (const tipo of ["psicologo", "instrutor_tiro"] as const) {
       const msg = mensagemAgendamento({ tipo, nome: "Gilson", cidade: "Goiânia", uf: "GO" });
       expect(msg).toContain("https://www.euqueroarmas.com.br");
-      expect(msg).toContain("11 97848-1919");
-      expect(msg).toContain("Para entrar na lista de indicados");
+      // Só a voz do cliente: nada de convite ao profissional enxertado no texto.
+      expect(msg).not.toMatch(/97848|indicados|credenciado:/i);
+      expect(msg.trim().split("\n")).toHaveLength(1);
     }
   });
 });

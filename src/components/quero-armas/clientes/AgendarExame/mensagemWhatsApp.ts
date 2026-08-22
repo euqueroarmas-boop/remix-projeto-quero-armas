@@ -1,19 +1,16 @@
 // ============================================================================
 // mensagemWhatsApp — texto que já vai preenchido quando o cliente clica no
-// botão WhatsApp de um credenciado da PF. Faz duas coisas ao mesmo tempo:
+// botão WhatsApp de um credenciado da PF. O cliente pede o agendamento sem
+// precisar digitar nada, e o profissional entende de cara de onde veio o
+// contato: pelo Arsenal Inteligente, no endereço do site.
 //
-//   1. o cliente pede o agendamento sem precisar digitar nada, e o
-//      profissional entende de cara de onde veio o contato;
-//   2. o profissional descobre que existe uma fila de clientes chegando pelo
-//      Arsenal Inteligente — e qual é o número para entrar na lista.
-//
-// O convite fica num bloco separado, assinado pela Quero Armas. Na voz do
-// cliente viraria propaganda: ele apagaria antes de enviar (o WhatsApp deixa
-// editar o texto) e o profissional trataria como spam.
+// A mensagem é só a voz do cliente — nenhum convite ou recado da Quero Armas
+// enxertado nela. O profissional que se interessar entra no site e procura a
+// gente; texto de propaganda na boca do cliente ele apagaria antes de enviar
+// (o WhatsApp deixa editar) e o profissional trataria como spam.
 // ============================================================================
 
 const SITE = "https://www.euqueroarmas.com.br";
-const WHATSAPP_EQUIPE = "11 97848-1919";
 
 /** O que se agenda com cada tipo de credenciado. Psicólogo faz laudo; instrutor
  *  aplica o exame de capacidade técnica — chamar os dois de "exame" fazia o
@@ -76,13 +73,9 @@ export function mensagemAgendamento({ tipo, nome, cidade, uf }: DadosMensagem) {
   else if (onde) abertura = `Sou de ${onde} e encontrei você`;
   else abertura = "Encontrei você";
 
-  return [
+  return (
     `Olá! ${abertura} pelo Arsenal Inteligente da Quero Armas em ${SITE}, ` +
-      `que me mostrou os credenciados mais perto de mim. ` +
-      `Gostaria de agendar ${AGENDAMENTO[tipo]} para adquirir uma arma de fogo, obrigado(a).`,
-    "",
-    "⎯⎯⎯",
-    `Profissional credenciado: a Quero Armas indica psicólogos e instrutores de tiro ` +
-      `para clientes em todo o país. Para entrar na lista de indicados, chame ${WHATSAPP_EQUIPE}.`,
-  ].join("\n");
+    `que me mostrou os credenciados mais perto de mim. ` +
+    `Gostaria de agendar ${AGENDAMENTO[tipo]} para adquirir uma arma de fogo, obrigado(a).`
+  );
 }
