@@ -1,16 +1,20 @@
 -- =============================================================================
--- COLAR NO SQL EDITOR — extração NUNCA sobrescreve filiação já preenchida
--- (idêntico à migration 20260822050000_extracao_nao_sobrescreve_filiacao.sql)
+-- CNH NUNCA SOBRESCREVE OS CAMPOS DE RG (22/08/2026)
+-- -----------------------------------------------------------------------------
+-- Caso real (cliente 235 — IGOR ANTONINO FERREIRA DA SILVA): ele digitou o RG
+-- 508303291 expedido em 02/03/2016; horas depois aprovou a CNH no Hub e o
+-- gatilho qa_doc_sync_to_cliente gravou por cima o NÚMERO DE REGISTRO DA CNH
+-- (2639248691) e a DATA DE EMISSÃO DA CNH (17/06/2023) em rg/expedicao_rg,
+-- sem aviso. O numero_documento extraído de uma CNH é o registro da CNH —
+-- nunca é RG.
 --
--- Caso real (cliente 235 — IGOR): a CNH aprovada no Hub trocou o nome da mãe
--- digitado ("Marisa Antonino da Silva") pelo texto extraído ("Marisa Antonino").
--- A partir daqui, documento só PREENCHE filiação vazia — nunca regrava.
--- Vale para todos os clientes e todos os tipos de documento.
---
--- 1) Recria o gatilho qa_doc_sync_to_cliente com a trava de filiação
---    (mantendo a trava de CNH × RG já aplicada).
--- 2) Devolve ao cliente 235 o nome da mãe digitado por ele.
--- Conferência no final.
+-- Correção cirúrgica: no bloco de identidade do gatilho, a CNH deixa de
+-- escrever em rg / emissor_rg / expedicao_rg. Nada mais muda:
+--   • CIN e RG-com-CPF continuam atualizando os campos de RG como hoje;
+--   • a CNH continua sincronizando os demais campos Tier 1 (nascimento,
+--     sexo, filiação, naturalidade) exatamente como antes;
+--   • comprovante_residencia e renda_ccmei intocados.
+-- Função reescrita a partir da versão viva (migration 20260812155942).
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.qa_doc_sync_to_cliente()
@@ -59,16 +63,24 @@ BEGIN
     END IF;
   END IF;
 
-  -- Filiação: extração NUNCA sobrescreve nome de mãe/pai já preenchido.
-  -- Qualquer documento (CIN, RG e CNH incluídos) só PREENCHE campo vazio.
   IF TRIM(COALESCE(v_campos->>'filiacao_mae','')) <> '' THEN
-    UPDATE public.qa_clientes SET nome_mae = INITCAP(TRIM(v_campos->>'filiacao_mae'))
-    WHERE id = NEW.qa_cliente_id AND (nome_mae IS NULL OR nome_mae = '');
+    IF v_is_t1 THEN
+      UPDATE public.qa_clientes SET nome_mae = INITCAP(TRIM(v_campos->>'filiacao_mae'))
+      WHERE id = NEW.qa_cliente_id;
+    ELSE
+      UPDATE public.qa_clientes SET nome_mae = INITCAP(TRIM(v_campos->>'filiacao_mae'))
+      WHERE id = NEW.qa_cliente_id AND (nome_mae IS NULL OR nome_mae = '');
+    END IF;
   END IF;
 
   IF TRIM(COALESCE(v_campos->>'filiacao_pai','')) <> '' THEN
-    UPDATE public.qa_clientes SET nome_pai = INITCAP(TRIM(v_campos->>'filiacao_pai'))
-    WHERE id = NEW.qa_cliente_id AND (nome_pai IS NULL OR nome_pai = '');
+    IF v_is_t1 THEN
+      UPDATE public.qa_clientes SET nome_pai = INITCAP(TRIM(v_campos->>'filiacao_pai'))
+      WHERE id = NEW.qa_cliente_id;
+    ELSE
+      UPDATE public.qa_clientes SET nome_pai = INITCAP(TRIM(v_campos->>'filiacao_pai'))
+      WHERE id = NEW.qa_cliente_id AND (nome_pai IS NULL OR nome_pai = '');
+    END IF;
   END IF;
 
   v_nat := TRIM(COALESCE(v_campos->>'naturalidade',''));
@@ -138,14 +150,16 @@ BEGIN
 END;
 $function$;
 
--- Restauro do cliente 235: devolve o nome da mãe digitado por ele em 15/08.
--- Só roda se o campo ainda estiver com o texto encurtado pela extração.
-UPDATE public.qa_clientes
-   SET nome_mae = 'Marisa Antonino da Silva'
- WHERE id = 235
-   AND nome_mae = 'Marisa Antonino';
+-- =============================================================================
+-- Restauro do cliente 235 — devolve o RG digitado por ele em 15/08 e guarda o
+-- número da CNH no campo próprio (hoje vazio). Só roda se o RG ainda estiver
+-- com o número da CNH, para não passar por cima de correção manual posterior.
+-- =============================================================================
 
--- Conferência: nome da mãe restaurado.
-SELECT id, nome_completo, nome_mae, nome_pai
-  FROM public.qa_clientes
- WHERE id = 235;
+UPDATE public.qa_clientes
+   SET rg           = '508303291',
+       emissor_rg   = 'SSP',
+       expedicao_rg = DATE '2016-03-02',
+       cnh          = COALESCE(cnh, '2639248691')
+ WHERE id = 235
+   AND rg = '2639248691';

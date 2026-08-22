@@ -257,6 +257,9 @@ function normalizar(col: string, valor: string): string | null {
   return v;
 }
 
+// Filiação nunca é sobrescrita por extração — só preenche campo vazio.
+const CAMPOS_FILIACAO: ReadonlySet<string> = new Set(["nome_mae", "nome_pai"]);
+
 function isCampoVazio(v: unknown): boolean {
   if (v === null || v === undefined) return true;
   const s = String(v).trim().toLowerCase();
@@ -358,6 +361,13 @@ Deno.serve(async (req) => {
       const origem = origens[col]?.source;
       const atual = clienteAtual?.[col];
       if (origem === "manual_override_ai" && !isCampoVazio(atual)) {
+        skippedLocked.push(col);
+        continue;
+      }
+      // Filiação preenchida é intocável: extração de documento só PREENCHE
+      // campo vazio. A CNH do cliente 235 encurtou "Marisa Antonino da Silva"
+      // para "Marisa Antonino" — nome de mãe/pai não se corrige por OCR.
+      if (CAMPOS_FILIACAO.has(col) && !isCampoVazio(atual)) {
         skippedLocked.push(col);
         continue;
       }

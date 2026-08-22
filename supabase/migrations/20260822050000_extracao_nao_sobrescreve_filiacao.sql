@@ -1,16 +1,21 @@
 -- =============================================================================
--- COLAR NO SQL EDITOR — extração NUNCA sobrescreve filiação já preenchida
--- (idêntico à migration 20260822050000_extracao_nao_sobrescreve_filiacao.sql)
+-- EXTRAÇÃO NUNCA SOBRESCREVE FILIAÇÃO JÁ PREENCHIDA (22/08/2026)
+-- -----------------------------------------------------------------------------
+-- Caso real (cliente 235 — IGOR ANTONINO FERREIRA DA SILVA): ele digitou
+-- "Marisa Antonino da Silva"; a aprovação da CNH fez o gatilho
+-- qa_doc_sync_to_cliente regravar o campo com o texto extraído do documento
+-- ("Marisa Antonino"), perdendo o sobrenome — sem aviso.
 --
--- Caso real (cliente 235 — IGOR): a CNH aprovada no Hub trocou o nome da mãe
--- digitado ("Marisa Antonino da Silva") pelo texto extraído ("Marisa Antonino").
--- A partir daqui, documento só PREENCHE filiação vazia — nunca regrava.
--- Vale para todos os clientes e todos os tipos de documento.
+-- Regra autorizada pelo titular (22/08/2026): nome de mãe e de pai digitados
+-- (ou já preenchidos por qualquer via) NÃO podem ser sobrescritos por extração
+-- de documento, em nenhuma hipótese, para nenhum cliente. Documento só
+-- PREENCHE filiação quando o campo está vazio.
 --
--- 1) Recria o gatilho qa_doc_sync_to_cliente com a trava de filiação
---    (mantendo a trava de CNH × RG já aplicada).
--- 2) Devolve ao cliente 235 o nome da mãe digitado por ele.
--- Conferência no final.
+-- Alcance desta migration: o gatilho do banco. O segundo caminho de escrita
+-- (edge function qa-cliente-auto-prefill) recebe a mesma trava no código e
+-- precisa de redeploy — ver docs/DEPLOY-FUNCOES-PENDENTES.md.
+-- Função reescrita a partir da versão vigente (20260822040000); nada além do
+-- bloco de filiação muda.
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.qa_doc_sync_to_cliente()
@@ -138,14 +143,13 @@ BEGIN
 END;
 $function$;
 
+-- =============================================================================
 -- Restauro do cliente 235: devolve o nome da mãe digitado por ele em 15/08.
 -- Só roda se o campo ainda estiver com o texto encurtado pela extração.
+-- (Nome do pai não precisa: a extração só normalizou maiúsculas, sem perda.)
+-- =============================================================================
+
 UPDATE public.qa_clientes
    SET nome_mae = 'Marisa Antonino da Silva'
  WHERE id = 235
    AND nome_mae = 'Marisa Antonino';
-
--- Conferência: nome da mãe restaurado.
-SELECT id, nome_completo, nome_mae, nome_pai
-  FROM public.qa_clientes
- WHERE id = 235;
