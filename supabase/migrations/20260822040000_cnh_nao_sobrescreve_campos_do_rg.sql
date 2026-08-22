@@ -1,10 +1,20 @@
 -- =============================================================================
--- COLAR NO SQL EDITOR — CNH nunca sobrescreve os campos de RG + restauro Igor
--- (idêntico à migration 20260822040000_cnh_nao_sobrescreve_campos_do_rg.sql)
--- 1) Recria o gatilho qa_doc_sync_to_cliente SEM o caminho CNH → campos de RG.
--- 2) Devolve ao cliente 235 o RG digitado (508303291, SSP/SP, 02/03/2016) e
---    guarda o número da CNH (2639248691) no campo próprio.
--- Conferência ao final do arquivo.
+-- CNH NUNCA SOBRESCREVE OS CAMPOS DE RG (22/08/2026)
+-- -----------------------------------------------------------------------------
+-- Caso real (cliente 235 — IGOR ANTONINO FERREIRA DA SILVA): ele digitou o RG
+-- 508303291 expedido em 02/03/2016; horas depois aprovou a CNH no Hub e o
+-- gatilho qa_doc_sync_to_cliente gravou por cima o NÚMERO DE REGISTRO DA CNH
+-- (2639248691) e a DATA DE EMISSÃO DA CNH (17/06/2023) em rg/expedicao_rg,
+-- sem aviso. O numero_documento extraído de uma CNH é o registro da CNH —
+-- nunca é RG.
+--
+-- Correção cirúrgica: no bloco de identidade do gatilho, a CNH deixa de
+-- escrever em rg / emissor_rg / expedicao_rg. Nada mais muda:
+--   • CIN e RG-com-CPF continuam atualizando os campos de RG como hoje;
+--   • a CNH continua sincronizando os demais campos Tier 1 (nascimento,
+--     sexo, filiação, naturalidade) exatamente como antes;
+--   • comprovante_residencia e renda_ccmei intocados.
+-- Função reescrita a partir da versão viva (migration 20260812155942).
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.qa_doc_sync_to_cliente()
@@ -140,8 +150,12 @@ BEGIN
 END;
 $function$;
 
--- Restauro do cliente 235: devolve o RG digitado e guarda a CNH no campo dela.
--- Só roda se o RG ainda estiver com o número da CNH.
+-- =============================================================================
+-- Restauro do cliente 235 — devolve o RG digitado por ele em 15/08 e guarda o
+-- número da CNH no campo próprio (hoje vazio). Só roda se o RG ainda estiver
+-- com o número da CNH, para não passar por cima de correção manual posterior.
+-- =============================================================================
+
 UPDATE public.qa_clientes
    SET rg           = '508303291',
        emissor_rg   = 'SSP',
@@ -149,9 +163,3 @@ UPDATE public.qa_clientes
        cnh          = COALESCE(cnh, '2639248691')
  WHERE id = 235
    AND rg = '2639248691';
-
--- Conferência: RG de volta ao digitado, CNH no campo próprio.
-SELECT id, nome_completo, rg, emissor_rg, uf_emissor_rg, expedicao_rg,
-       cnh, tipo_documento_identidade
-  FROM public.qa_clientes
- WHERE id = 235;
