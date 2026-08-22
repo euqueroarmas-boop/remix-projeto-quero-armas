@@ -24,14 +24,22 @@ describe("mensagemAgendamento", () => {
     const base = { tipo: "psicologo" as const, nome: "Gilson", cidade: "Goiânia", uf: "GO" };
     expect(mensagemAgendamento({ ...base, sexo: "M" })).toContain("arma de fogo, obrigado.");
     expect(mensagemAgendamento({ ...base, nome: "Maria", sexo: "F" })).toContain("arma de fogo, obrigada.");
-    // Cadastro antigo guardou a palavra inteira em vez da inicial.
-    expect(mensagemAgendamento({ ...base, sexo: "Masculino" })).toContain("arma de fogo, obrigado.");
-    expect(mensagemAgendamento({ ...base, sexo: "FEMININO" })).toContain("arma de fogo, obrigada.");
-    // Sem sexo no cadastro (ou "Outro"): agradece sem gênero, nunca chuta.
-    for (const sexo of [undefined, "", "Outro"]) {
+    // Cadastro antigo e leitura de documento já trouxeram a palavra inteira.
+    for (const sexo of ["Masculino", "MASCULINO", "homem", "H"]) {
+      expect(mensagemAgendamento({ ...base, sexo })).toContain("arma de fogo, obrigado.");
+    }
+    // "MULHER" começa com M: tem que cair em feminino mesmo assim.
+    for (const sexo of ["Feminino", "FEMININO", "mulher", "MULHER"]) {
+      expect(mensagemAgendamento({ ...base, nome: "Maria", sexo })).toContain("arma de fogo, obrigada.");
+    }
+  });
+
+  it("sem sexo no cadastro, termina a frase sem a palavra — nunca uma terceira forma", () => {
+    const base = { tipo: "psicologo" as const, nome: "Alex", cidade: "Curitiba", uf: "PR" };
+    for (const sexo of [undefined, "", "   ", "Outro"]) {
       const msg = mensagemAgendamento({ ...base, sexo });
-      expect(msg).toContain("arma de fogo, desde já agradeço.");
-      expect(msg).not.toMatch(/obrigad/i);
+      expect(msg).toContain("para adquirir uma arma de fogo.");
+      expect(msg).not.toMatch(/obrigad|agrade/i);
     }
   });
 

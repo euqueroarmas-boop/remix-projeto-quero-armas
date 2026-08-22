@@ -22,16 +22,28 @@ const AGENDAMENTO: Record<"psicologo" | "instrutor_tiro", string> = {
 
 const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e", "d'"]);
 
-/** Fecho concordando com o sexo do cadastro. O campo chega como M/F (o gatilho
- *  de sincronia dos documentos guarda só a inicial), mas registro antigo pode
- *  ter vindo "MASCULINO"/"FEMININO" — os dois formatos valem. Sexo "Outro",
- *  vazio ou não preenchido cai no agradecimento sem gênero: melhor isso do que
- *  chamar a cliente de "obrigado". */
-function agradecimento(sexo?: string | null) {
+/** Normaliza o que estiver salvo no campo sexo para "M" ou "F". O padrão é a
+ *  inicial (o gatilho de sincronia dos documentos guarda UPPER(LEFT(...,1))),
+ *  mas cadastro antigo e leitura de documento já trouxeram a palavra inteira.
+ *  "MULHER" é testado antes de "M": pela inicial ela cairia em masculino.
+ *  Devolve null só quando não dá para saber — campo vazio ou "Outro". */
+export function normalizarSexo(sexo?: string | null): "M" | "F" | null {
   const s = String(sexo || "").trim().toUpperCase();
-  if (s === "M" || s.startsWith("MASC")) return ", obrigado";
-  if (s === "F" || s.startsWith("FEM")) return ", obrigada";
-  return ", desde já agradeço";
+  if (!s) return null;
+  if (s.startsWith("MULH") || s === "F" || s.startsWith("FEM")) return "F";
+  if (s === "M" || s.startsWith("MASC") || s === "H" || s.startsWith("HOM")) return "M";
+  return null;
+}
+
+/** Fecho concordando com o sexo do cliente: só existem duas formas, "obrigado"
+ *  e "obrigada". Não havendo como saber (cadastro ainda sem o campo), a frase
+ *  termina sem a palavra — em vez de inventar uma terceira forma ou chutar um
+ *  gênero e chamar a cliente de "obrigado". */
+function agradecimento(sexo?: string | null) {
+  const s = normalizarSexo(sexo);
+  if (s === "M") return ", obrigado";
+  if (s === "F") return ", obrigada";
+  return "";
 }
 
 /** Cadastro chega quase sempre em caixa alta ("SÃO JOSÉ DOS CAMPOS"). */
