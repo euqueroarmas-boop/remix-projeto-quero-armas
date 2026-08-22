@@ -1,151 +1,77 @@
 -- =============================================================================
--- COLAR NO SQL EDITOR — extração NUNCA sobrescreve filiação já preenchida
--- (idêntico à migration 20260822050000_extracao_nao_sobrescreve_filiacao.sql)
---
--- Caso real (cliente 235 — IGOR): a CNH aprovada no Hub trocou o nome da mãe
--- digitado ("Marisa Antonino da Silva") pelo texto extraído ("Marisa Antonino").
--- A partir daqui, documento só PREENCHE filiação vazia — nunca regrava.
--- Vale para todos os clientes e todos os tipos de documento.
---
--- 1) Recria o gatilho qa_doc_sync_to_cliente com a trava de filiação
---    (mantendo a trava de CNH × RG já aplicada).
--- 2) Devolve ao cliente 235 o nome da mãe digitado por ele.
--- Conferência no final.
+-- CONFERÊNCIA — Igor (cliente 235) trocou para ASSALARIADO (CLT):
+-- os documentos de renda entraram? O grupo Ocupação Lícita existe e vem antes
+-- da Idoneidade? Somente leitura, um bloco só.
+-- Processo: 3c40ff08-5377-4090-9be2-894a8b04bb43 (serviço 60 — Autorização de
+-- Compra / Posse de Arma de Fogo).
 -- =============================================================================
 
-CREATE OR REPLACE FUNCTION public.qa_doc_sync_to_cliente()
-RETURNS trigger
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_campos jsonb;
-  v_tipo   text;
-  v_nat    text;
-  v_parts  text[];
-  v_dt     date;
-  v_is_t1  boolean;
-BEGIN
-  IF NEW.status IS DISTINCT FROM 'aprovado'
-     OR (TG_OP = 'UPDATE' AND OLD.status = 'aprovado') THEN
-    RETURN NEW;
-  END IF;
-  IF NEW.qa_cliente_id IS NULL THEN RETURN NEW; END IF;
+-- 1) Condição gravada no processo e respostas do questionário.
+SELECT 'condicao_no_processo' AS bloco,
+       p.condicao_profissional,
+       p.respostas_questionario_json,
+       p.etapa_liberada_ate,
+       p.updated_at
+  FROM public.qa_processos p
+ WHERE p.id = '3c40ff08-5377-4090-9be2-894a8b04bb43';
 
-  v_campos := NEW.ia_dados_extraidos->'camposExtraidos';
-  v_tipo   := NEW.tipo_documento;
-  IF v_campos IS NULL THEN RETURN NEW; END IF;
+-- 2) O que a troca de condição fez (criados / removidos / preservados).
+SELECT 'eventos_condicao' AS bloco,
+       pe.created_at, pe.descricao, pe.dados_json
+  FROM public.qa_processo_eventos pe
+ WHERE pe.processo_id = '3c40ff08-5377-4090-9be2-894a8b04bb43'
+   AND pe.tipo_evento IN ('condicao_profissional_definida','checklist_explodido','documento_criado')
+ ORDER BY pe.created_at DESC
+ LIMIT 30;
 
-  v_is_t1 := v_tipo IN ('cin','rg_com_cpf','cnh');
+-- 3) TODO o checklist do processo hoje, na ordem, com o grupo de cada item.
+--    Procurar aqui as linhas renda_* (holerite, CTPS, INSS).
+SELECT 'checklist_hoje' AS bloco,
+       pd.etapa, pd.ordem, pd.tipo_documento, pd.nome_documento,
+       pd.status, pd.obrigatorio,
+       pd.regra_validacao ->> 'grupo_checklist' AS grupo_no_item
+  FROM public.qa_processo_documentos pd
+ WHERE pd.processo_id = '3c40ff08-5377-4090-9be2-894a8b04bb43'
+ ORDER BY pd.ordem NULLS LAST, pd.tipo_documento;
 
-  v_dt := public.qa_parse_date_safe(v_campos->>'data_nascimento');
-  IF v_dt IS NOT NULL THEN
-    IF v_is_t1 THEN
-      UPDATE public.qa_clientes SET data_nascimento = v_dt WHERE id = NEW.qa_cliente_id;
-    ELSE
-      UPDATE public.qa_clientes SET data_nascimento = v_dt
-      WHERE id = NEW.qa_cliente_id AND data_nascimento IS NULL;
-    END IF;
-  END IF;
+-- 4) Só as linhas de renda/ocupação — se vier vazio, os documentos de CLT
+--    não foram criados.
+SELECT 'itens_de_renda' AS bloco,
+       pd.tipo_documento, pd.nome_documento, pd.status, pd.ordem, pd.created_at
+  FROM public.qa_processo_documentos pd
+ WHERE pd.processo_id = '3c40ff08-5377-4090-9be2-894a8b04bb43'
+   AND (lower(pd.tipo_documento) LIKE 'renda%'
+        OR lower(pd.tipo_documento) LIKE '%ocupacao%'
+        OR lower(pd.tipo_documento) LIKE '%condicao%')
+ ORDER BY pd.ordem NULLS LAST;
 
-  IF TRIM(COALESCE(v_campos->>'sexo','')) <> '' THEN
-    IF v_is_t1 THEN
-      UPDATE public.qa_clientes SET sexo = UPPER(LEFT(TRIM(v_campos->>'sexo'),1))
-      WHERE id = NEW.qa_cliente_id;
-    ELSE
-      UPDATE public.qa_clientes SET sexo = UPPER(LEFT(TRIM(v_campos->>'sexo'),1))
-      WHERE id = NEW.qa_cliente_id AND (sexo IS NULL OR sexo = '');
-    END IF;
-  END IF;
+-- 5) O catálogo do serviço 60 tem exigências marcadas para CLT?
+SELECT 'catalogo_servico_60_renda' AS bloco,
+       sd.tipo_documento, sd.nome_documento, sd.etapa, sd.ordem,
+       sd.obrigatorio, sd.ativo, sd.condicao_profissional
+  FROM public.qa_servicos_documentos sd
+ WHERE sd.servico_id = 60
+   AND (sd.condicao_profissional IS NOT NULL
+        OR lower(sd.tipo_documento) LIKE 'renda%'
+        OR lower(sd.tipo_documento) LIKE '%ocupacao%')
+ ORDER BY sd.ordem NULLS LAST;
 
-  -- Filiação: extração NUNCA sobrescreve nome de mãe/pai já preenchido.
-  -- Qualquer documento (CIN, RG e CNH incluídos) só PREENCHE campo vazio.
-  IF TRIM(COALESCE(v_campos->>'filiacao_mae','')) <> '' THEN
-    UPDATE public.qa_clientes SET nome_mae = INITCAP(TRIM(v_campos->>'filiacao_mae'))
-    WHERE id = NEW.qa_cliente_id AND (nome_mae IS NULL OR nome_mae = '');
-  END IF;
+-- 6) O que o catálogo entende que vale para ESTE processo agora
+--    (já filtrado por condição, modalidade e UF).
+SELECT 'catalogo_do_processo' AS bloco,
+       cat.tipo_documento, cat.nome_documento, cat.etapa, cat.ordem, cat.obrigatorio
+  FROM public.qa_catalogo_do_processo('3c40ff08-5377-4090-9be2-894a8b04bb43') cat
+ ORDER BY cat.ordem NULLS LAST;
 
-  IF TRIM(COALESCE(v_campos->>'filiacao_pai','')) <> '' THEN
-    UPDATE public.qa_clientes SET nome_pai = INITCAP(TRIM(v_campos->>'filiacao_pai'))
-    WHERE id = NEW.qa_cliente_id AND (nome_pai IS NULL OR nome_pai = '');
-  END IF;
+-- 7) Como o painel está lendo o processo (grupo atual e próximo passo do card).
+SELECT 'painel_do_cliente' AS bloco, pc.*
+  FROM public.qa_painel_progresso_clientes() pc
+ WHERE pc.cliente_id = 235;
 
-  v_nat := TRIM(COALESCE(v_campos->>'naturalidade',''));
-  IF v_nat <> '' THEN
-    v_parts := regexp_split_to_array(v_nat, '\s*[/–\-]\s*');
-    IF array_length(v_parts,1) >= 2 THEN
-      IF v_is_t1 THEN
-        UPDATE public.qa_clientes
-        SET naturalidade_municipio = INITCAP(TRIM(v_parts[1])),
-            naturalidade_uf        = UPPER(TRIM(v_parts[array_length(v_parts,1)]))
-        WHERE id = NEW.qa_cliente_id;
-      ELSE
-        UPDATE public.qa_clientes
-        SET naturalidade_municipio = COALESCE(NULLIF(naturalidade_municipio,''), INITCAP(TRIM(v_parts[1]))),
-            naturalidade_uf        = COALESCE(NULLIF(naturalidade_uf,''), UPPER(TRIM(v_parts[array_length(v_parts,1)])))
-        WHERE id = NEW.qa_cliente_id AND (naturalidade_municipio IS NULL OR naturalidade_municipio = '');
-      END IF;
-    ELSE
-      IF v_is_t1 THEN
-        UPDATE public.qa_clientes SET naturalidade_municipio = INITCAP(v_nat)
-        WHERE id = NEW.qa_cliente_id;
-      ELSE
-        UPDATE public.qa_clientes SET naturalidade_municipio = COALESCE(NULLIF(naturalidade_municipio,''), INITCAP(v_nat))
-        WHERE id = NEW.qa_cliente_id AND (naturalidade_municipio IS NULL OR naturalidade_municipio = '');
-      END IF;
-    END IF;
-  END IF;
-
-  -- Campos de RG: a CNH fica de fora — numero_documento de CNH é o registro
-  -- da CNH e data_emissao é a da CNH; gravar isso aqui troca o RG do cliente.
-  IF v_is_t1 AND v_tipo <> 'cnh' THEN
-    UPDATE public.qa_clientes
-    SET
-      rg           = COALESCE(NULLIF(TRIM(COALESCE(v_campos->>'numero_documento','')),''), rg),
-      emissor_rg   = COALESCE(NULLIF(TRIM(COALESCE(v_campos->>'orgao_emissor','')),''), emissor_rg),
-      expedicao_rg = COALESCE(public.qa_parse_date_safe(v_campos->>'data_emissao'), expedicao_rg)
-    WHERE id = NEW.qa_cliente_id;
-  END IF;
-
-  IF v_tipo = 'comprovante_residencia' THEN
-    UPDATE public.qa_clientes
-    SET
-      cep      = COALESCE(NULLIF(cep,''),      NULLIF(REGEXP_REPLACE(COALESCE(v_campos->>'cep',''),'[^0-9]','','g'),'')),
-      endereco = COALESCE(NULLIF(endereco,''), NULLIF(TRIM(COALESCE(v_campos->>'endereco_completo','')),''))
-    WHERE id = NEW.qa_cliente_id AND (cep IS NULL OR cep = '');
-  END IF;
-
-  IF v_tipo = 'renda_ccmei' THEN
-    UPDATE public.qa_clientes
-    SET
-      ocupacao_licita_cnpj = COALESCE(
-        NULLIF(REGEXP_REPLACE(COALESCE(v_campos->>'cnpj',''),'[^0-9]','','g'),''),
-        ocupacao_licita_cnpj
-      ),
-      ocupacao_licita_razao_social = COALESCE(
-        NULLIF(TRIM(COALESCE(v_campos->>'razao_social', v_campos->>'nome_empresarial')),''),
-        ocupacao_licita_razao_social
-      ),
-      ocupacao_licita_atividade = COALESCE(
-        NULLIF(TRIM(COALESCE(v_campos->>'cnae_principal', v_campos->>'atividade_principal', v_campos->>'ocupacao_principal')),''),
-        ocupacao_licita_atividade
-      )
-    WHERE id = NEW.qa_cliente_id;
-  END IF;
-
-  RETURN NEW;
-END;
-$function$;
-
--- Restauro do cliente 235: devolve o nome da mãe digitado por ele em 15/08.
--- Só roda se o campo ainda estiver com o texto encurtado pela extração.
-UPDATE public.qa_clientes
-   SET nome_mae = 'Marisa Antonino da Silva'
- WHERE id = 235
-   AND nome_mae = 'Marisa Antonino';
-
--- Conferência: nome da mãe restaurado.
-SELECT id, nome_completo, nome_mae, nome_pai
-  FROM public.qa_clientes
- WHERE id = 235;
+-- 8) Item a item por trás dos chips do card (grupo, ordem e bandeiras).
+SELECT 'painel_itens' AS bloco,
+       i.grupo_ordem, i.grupo_nome, i.item_ordem, i.tipo_documento,
+       i.nome_documento, i.status, i.familia, i.aplicavel,
+       i.conta_pendente, i.conta_cadastro, i.conta_entregue, i.conta_nao_se_aplica
+  FROM public.qa_painel_progresso_itens('3c40ff08-5377-4090-9be2-894a8b04bb43') i
+ ORDER BY i.grupo_ordem, i.item_ordem;
