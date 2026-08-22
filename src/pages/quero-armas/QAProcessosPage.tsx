@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Search, FileStack, RefreshCw, Filter, ChevronRight, FileText, AlertTriangle, CheckCircle, Clock, Sparkles, Eye, Upload, XCircle, User as UserIcon, Calendar, Timer } from "lucide-react";
-import { getStatusProcesso, getStatusDocumento, formatDate, formatDateTime, STATUS_PROCESSO } from "@/components/quero-armas/processos/processoConstants";
+import { Search, FileStack, RefreshCw, Filter, ChevronRight, XCircle, CheckCircle, Clock, Eye, Timer } from "lucide-react";
+import { getStatusProcesso, formatDate, STATUS_PROCESSO } from "@/components/quero-armas/processos/processoConstants";
 import { ProcessoDetalheDrawer } from "@/components/quero-armas/processos/ProcessoDetalheDrawer";
 import { computeChecklistMetrics } from "@/lib/quero-armas/checklistMetrics";
 import QASincronizarExigenciasBtn from "@/components/quero-armas/admin/QASincronizarExigenciasBtn";
@@ -41,13 +41,14 @@ function diasAteData(d: string | null): number | null {
   return Math.floor((t - today.getTime()) / 86400000);
 }
 
-function prazoTone(dias: number | null) {
-  if (dias === null) return { bg: "bg-slate-100", text: "text-slate-500", label: "—" };
-  if (dias < 0) return { bg: "bg-red-600", text: "text-white", label: `VENCIDO ${Math.abs(dias)}D` };
-  if (dias <= 3) return { bg: "bg-red-500", text: "text-white", label: `${dias}D` };
-  if (dias <= 7) return { bg: "bg-orange-500", text: "text-white", label: `${dias}D` };
-  if (dias <= 30) return { bg: "bg-amber-500", text: "text-white", label: `${dias}D` };
-  return { bg: "bg-emerald-600", text: "text-white", label: `${dias}D` };
+/* Tons de prazo pelos tokens do tema real (--qa-*): no modo noturno a tela sai
+   do filtro de inversão, então cor fixa de Tailwind não serve mais. */
+function prazoTone(dias: number | null): { bg: string; fg: string; label: string } {
+  if (dias === null) return { bg: "var(--qa-chip-bg)", fg: "var(--qa-tinta-3)", label: "—" };
+  if (dias < 0) return { bg: "var(--qa-vermelho-bg)", fg: "var(--qa-vermelho)", label: `VENCIDO ${Math.abs(dias)}D` };
+  if (dias <= 7) return { bg: "var(--qa-vermelho-bg)", fg: "var(--qa-vermelho)", label: `${dias}D` };
+  if (dias <= 30) return { bg: "var(--qa-ambar-bg)", fg: "var(--qa-ambar)", label: `${dias}D` };
+  return { bg: "var(--qa-verde-bg)", fg: "var(--qa-verde)", label: `${dias}D` };
 }
 
 export default function QAProcessosPage() {
@@ -145,68 +146,66 @@ export default function QAProcessosPage() {
   }, [processos]);
 
   return (
-    <div className="space-y-5">
+    <div
+      /* Tela migrada para o tema real, igual à Dashboard: a casca sai do filtro
+         de inversão do modo noturno e desenha nos tokens --qa-*.
+         Ver "PÁGINAS — tema real" em index.css. */
+      data-qa-pagina
+      className="space-y-5 md:space-y-6 w-full max-w-[1760px] ml-0 mr-auto"
+    >
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold uppercase tracking-tight" style={{ color: "#0F172A" }}>CENTRAL DE DOCUMENTOS</h1>
-          <p className="text-xs uppercase tracking-[0.14em] text-slate-500 mt-1">PROCESSOS, CHECKLISTS E VALIDAÇÕES POR CLIENTE</p>
+        <div className="min-w-0">
+          <h1 className="text-lg md:text-2xl font-bold uppercase tracking-tight break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta)" }}>
+            CENTRAL DE DOCUMENTOS
+          </h1>
+          <p className="text-[10px] md:text-xs uppercase tracking-[0.14em] mt-1" style={{ color: "var(--qa-tinta-3)" }}>
+            PROCESSOS, CHECKLISTS E VALIDAÇÕES POR CLIENTE
+          </p>
         </div>
-        <button onClick={carregar} className="h-9 px-4 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white text-xs uppercase tracking-wider font-bold text-slate-700 hover:bg-slate-50">
+        <button
+          onClick={carregar}
+          className="h-9 px-4 inline-flex items-center gap-2 rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-xs uppercase tracking-wider font-bold hover:bg-[var(--qa-hover)] transition-colors"
+          style={{ color: "var(--qa-tinta-2)" }}
+        >
           <RefreshCw className="h-3.5 w-3.5" /> ATUALIZAR
         </button>
       </header>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <KpiCard label="TOTAL" value={kpis.total} color="#0F172A" icon={<FileStack className="h-4 w-4" />} />
-        <KpiCard label="AGUARDANDO DOCS" value={kpis.pendentes} color="#F59E0B" icon={<Clock className="h-4 w-4" />} />
-        <KpiCard label="REVISÃO HUMANA" value={kpis.revisao} color="#0EA5E9" icon={<Eye className="h-4 w-4" />} />
-        <KpiCard label="APROVADOS / EM CURSO" value={kpis.aprovados} color="#10B981" icon={<CheckCircle className="h-4 w-4" />} />
-        <KpiCard label="BLOQUEADOS" value={kpis.bloqueados} color="#EF4444" icon={<XCircle className="h-4 w-4" />} />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 md:gap-3">
+        <KpiCard label="TOTAL" value={kpis.total} cor="var(--qa-tinta)" icon={<FileStack className="h-4 w-4" />} />
+        <KpiCard label="AGUARDANDO DOCS" value={kpis.pendentes} cor="var(--qa-ambar)" icon={<Clock className="h-4 w-4" />} />
+        <KpiCard label="REVISÃO HUMANA" value={kpis.revisao} cor="var(--qa-tinta-2)" icon={<Eye className="h-4 w-4" />} />
+        <KpiCard label="APROVADOS / EM CURSO" value={kpis.aprovados} cor="var(--qa-verde)" icon={<CheckCircle className="h-4 w-4" />} />
+        <KpiCard label="BLOQUEADOS" value={kpis.bloqueados} cor="var(--qa-vermelho)" icon={<XCircle className="h-4 w-4" />} />
       </div>
 
       {/* Matriz de prazos */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <PrazoKpi
-          label="DOCS VENCIDOS"
-          value={kpis.vencidos}
-          color="#dc2626"
-          active={prazoFilter === "vencidos"}
-          onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "todos" : "vencidos")}
-        />
-        <PrazoKpi
-          label="EM RISCO ≤ 7 DIAS"
-          value={kpis.risco7}
-          color="#ea580c"
-          active={prazoFilter === "7d"}
-          onClick={() => setPrazoFilter(prazoFilter === "7d" ? "todos" : "7d")}
-        />
-        <PrazoKpi
-          label="ATENÇÃO ≤ 30 DIAS"
-          value={kpis.risco30}
-          color="#f59e0b"
-          active={prazoFilter === "30d"}
-          onClick={() => setPrazoFilter(prazoFilter === "30d" ? "todos" : "30d")}
-        />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 md:gap-3">
+        <PrazoKpi label="DOCS VENCIDOS" value={kpis.vencidos} cor="var(--qa-vermelho)" active={prazoFilter === "vencidos"} onClick={() => setPrazoFilter(prazoFilter === "vencidos" ? "todos" : "vencidos")} />
+        <PrazoKpi label="EM RISCO ≤ 7 DIAS" value={kpis.risco7} cor="var(--qa-vermelho)" active={prazoFilter === "7d"} onClick={() => setPrazoFilter(prazoFilter === "7d" ? "todos" : "7d")} />
+        <PrazoKpi label="ATENÇÃO ≤ 30 DIAS" value={kpis.risco30} cor="var(--qa-ambar)" active={prazoFilter === "30d"} onClick={() => setPrazoFilter(prazoFilter === "30d" ? "todos" : "30d")} />
       </div>
 
       {/* Filtros */}
-      <div className="bg-white border border-slate-200 rounded-xl p-3 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+      <div className="qa-card rounded-xl border border-[var(--qa-linha)] bg-[var(--qa-paper)] p-3 flex flex-wrap items-center gap-2.5 md:gap-3">
+        <div className="relative w-full md:flex-1 md:min-w-[240px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--qa-tinta-4)" }} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value.toUpperCase())}
             placeholder="BUSCAR POR CLIENTE, CPF, SERVIÇO OU ID..."
-            className="w-full h-9 pl-9 pr-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#2F3337]"
+            className="w-full h-9 pl-9 pr-3 rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-xs uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-[var(--qa-linha-2)]"
+            style={{ color: "var(--qa-tinta)" }}
           />
         </div>
-        <div className="flex items-center gap-1.5">
-          <Filter className="h-3.5 w-3.5 text-slate-400" />
+        <div className="flex flex-1 items-center gap-1.5 min-w-0">
+          <Filter className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--qa-tinta-4)" }} />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2F3337]"
+            className="h-9 min-w-0 flex-1 px-2 md:px-3 rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[11px] md:text-xs uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--qa-linha-2)]"
+            style={{ color: "var(--qa-tinta-2)" }}
           >
             <option value="todos">TODOS OS STATUS</option>
             {Object.entries(STATUS_PROCESSO).map(([k, v]) => (
@@ -214,12 +213,13 @@ export default function QAProcessosPage() {
             ))}
           </select>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Timer className="h-3.5 w-3.5 text-slate-400" />
+        <div className="flex flex-1 items-center gap-1.5 min-w-0">
+          <Timer className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--qa-tinta-4)" }} />
           <select
             value={prazoFilter}
             onChange={(e) => setPrazoFilter(e.target.value as any)}
-            className="h-9 px-3 rounded-lg border border-slate-200 text-xs uppercase tracking-wide font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2F3337]"
+            className="h-9 min-w-0 flex-1 px-2 md:px-3 rounded-lg border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-[11px] md:text-xs uppercase tracking-wide font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--qa-linha-2)]"
+            style={{ color: "var(--qa-tinta-2)" }}
           >
             <option value="todos">TODOS OS PRAZOS</option>
             <option value="vencidos">SOMENTE VENCIDOS</option>
@@ -229,87 +229,154 @@ export default function QAProcessosPage() {
         </div>
       </div>
 
-      {/* Tabela */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
+      {/* Lista */}
+      <div className="qa-card rounded-xl border border-[var(--qa-linha)] bg-[var(--qa-paper)] overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-xs uppercase tracking-wider text-slate-400">CARREGANDO PROCESSOS...</div>
+          <div className="p-12 text-center text-xs uppercase tracking-wider" style={{ color: "var(--qa-tinta-4)" }}>CARREGANDO PROCESSOS...</div>
         ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-xs uppercase tracking-wider text-slate-400">NENHUM PROCESSO ENCONTRADO</div>
+          <div className="p-12 text-center text-xs uppercase tracking-wider" style={{ color: "var(--qa-tinta-4)" }}>NENHUM PROCESSO ENCONTRADO</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr className="text-[10px] uppercase tracking-[0.12em] font-bold text-slate-500">
-                  <th className="text-left px-4 py-3">CLIENTE</th>
-                  <th className="text-left px-4 py-3">SERVIÇO</th>
-                  <th className="text-left px-4 py-3">STATUS</th>
-                  <th className="text-left px-4 py-3">ETAPA</th>
-                  <th className="text-left px-4 py-3">PRAZO CRÍTICO</th>
-                  <th className="text-left px-4 py-3">DOCUMENTOS</th>
-                  <th className="text-left px-4 py-3">CRIADO</th>
-                  <th className="text-right px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((p) => {
-                  const st = getStatusProcesso(p.status);
-                  const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
-                  const dias = diasAteData(p.prazo_critico_data);
-                  const tone = prazoTone(dias);
-                  const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
-                  return (
-                    <tr key={p.id} onClick={() => setSelectedId(p.id)} className="border-b border-slate-100 hover:bg-slate-50/60 cursor-pointer">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-slate-800 text-xs uppercase">{p.cliente?.nome_completo ?? "—"}</div>
-                        <div className="text-[10px] text-slate-400">{p.cliente?.cpf ?? "—"}</div>
-                      </td>
-                      <td className="px-4 py-3 text-xs uppercase text-slate-700">{p.servico_nome}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${st.bg} ${st.text} border ${st.border}`}>
+          <>
+            {/* CELULAR: um cartão por processo. A tabela espremida quebrava o
+                texto letra a letra na vertical — mesmo padrão da Dashboard. */}
+            <div className="md:hidden">
+              {filtered.map((p) => {
+                const st = getStatusProcesso(p.status);
+                const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
+                const dias = diasAteData(p.prazo_critico_data);
+                const tone = prazoTone(dias);
+                const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
+                return (
+                  <div key={p.id} className="px-4 py-3 border-b border-[var(--qa-linha-4)]">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(p.id)}
+                      className="w-full text-left"
+                    >
+                      <div className="flex items-start gap-2">
+                        <span className="min-w-0 flex-1 text-[12.5px] font-bold uppercase break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta)" }}>
+                          {p.cliente?.nome_completo ?? "—"}
+                        </span>
+                        <ChevronRight className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "var(--qa-tinta-4)" }} />
+                      </div>
+                      <div className="text-[10px] font-medium tabular-nums" style={{ color: "var(--qa-tinta-4)" }}>
+                        {p.cliente?.cpf ?? "—"}
+                      </div>
+                      <div className="mt-1 text-[10.5px] font-medium uppercase tracking-wider break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta-3)" }}>
+                        {p.servico_nome}
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-[9.5px] font-bold uppercase tracking-wider border ${st.bg} ${st.text} ${st.border}`}>
                           {st.label}
                         </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200">
+                        <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-2)">
                           {etapa}/5 · {ETAPA_LABEL[etapa]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {p.prazo_critico_data ? (
-                          <div className="flex flex-col gap-0.5">
-                            <span className={`inline-flex w-fit items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${tone.bg} ${tone.text}`}>
-                              {tone.label}
-                            </span>
-                            <span className="text-[10px] text-slate-500">{formatDate(p.prazo_critico_data)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] uppercase text-slate-400">—</span>
+                        </Chip>
+                        {p.prazo_critico_data && (
+                          <Chip fundo={tone.bg} cor={tone.fg} titulo={`Prazo crítico em ${formatDate(p.prazo_critico_data)}`}>
+                            {tone.label}
+                          </Chip>
                         )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase">
-                          <Badge color="#10B981" label={`${c.cumpridos}/${c.total}`} title="CUMPRIDOS" />
-                          {c.pendentes > 0 && <Badge color="#F59E0B" label={`${c.pendentes}`} title="PENDENTES" />}
-                          {c.emAnalise > 0 && <Badge color="#0EA5E9" label={`${c.emAnalise}`} title="EM ANÁLISE" />}
-                          {c.outros > 0 && <Badge color="#94A3B8" label={`${c.outros}`} title="OUTROS" />}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{formatDate(p.data_criacao)}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="inline-flex items-center gap-2">
-                          <QASincronizarExigenciasBtn
-                            processoId={p.id}
-                            onDone={() => carregar()}
-                          />
-                          <ChevronRight className="h-4 w-4 text-slate-400 inline" />
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <Chip fundo="var(--qa-verde-bg)" cor="var(--qa-verde)" titulo="Documentos cumpridos">
+                          {c.cumpridos}/{c.total}
+                        </Chip>
+                        {c.pendentes > 0 && <Chip fundo="var(--qa-ambar-bg)" cor="var(--qa-ambar)" titulo="Pendentes">{c.pendentes} PENDENTE(S)</Chip>}
+                        {c.emAnalise > 0 && <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-2)" titulo="Em análise">{c.emAnalise} EM ANÁLISE</Chip>}
+                        {c.outros > 0 && <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-3)" titulo="Outros">{c.outros} OUTROS</Chip>}
+                        <span className="text-[9.5px] font-bold uppercase tracking-[0.12em]" style={{ color: "var(--qa-tinta-4)" }}>
+                          CRIADO {formatDate(p.data_criacao)}
+                        </span>
+                      </div>
+                    </button>
+                    <div className="mt-2">
+                      <QASincronizarExigenciasBtn processoId={p.id} onDone={() => carregar()} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* DESKTOP: tabela */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="border-b border-[var(--qa-linha)]" style={{ background: "var(--qa-paper-2)" }}>
+                  <tr className="text-[10px] uppercase tracking-[0.12em] font-bold" style={{ color: "var(--qa-tinta-3)" }}>
+                    <th className="text-left px-4 py-3">CLIENTE</th>
+                    <th className="text-left px-4 py-3">SERVIÇO</th>
+                    <th className="text-left px-4 py-3">STATUS</th>
+                    <th className="text-left px-4 py-3">ETAPA</th>
+                    <th className="text-left px-4 py-3">PRAZO CRÍTICO</th>
+                    <th className="text-left px-4 py-3">DOCUMENTOS</th>
+                    <th className="text-left px-4 py-3 whitespace-nowrap">CRIADO</th>
+                    <th className="text-right px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((p) => {
+                    const st = getStatusProcesso(p.status);
+                    const c = p.contadores ?? { total: 0, cumpridos: 0, pendentes: 0, emAnalise: 0, outros: 0 };
+                    const dias = diasAteData(p.prazo_critico_data);
+                    const tone = prazoTone(dias);
+                    const etapa = Math.max(1, Math.min(5, p.etapa_liberada_ate ?? 1));
+                    return (
+                      <tr
+                        key={p.id}
+                        onClick={() => setSelectedId(p.id)}
+                        className="border-b border-[var(--qa-linha-4)] hover:bg-[var(--qa-hover)] cursor-pointer"
+                      >
+                        <td className="px-4 py-3 align-top">
+                          <div className="font-semibold text-xs uppercase break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta)" }}>
+                            {p.cliente?.nome_completo ?? "—"}
+                          </div>
+                          <div className="text-[10px] tabular-nums" style={{ color: "var(--qa-tinta-4)" }}>{p.cliente?.cpf ?? "—"}</div>
+                        </td>
+                        <td className="px-4 py-3 align-top text-xs uppercase break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta-2)" }}>
+                          {p.servico_nome}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider whitespace-nowrap border ${st.bg} ${st.text} ${st.border}`}>
+                            {st.label}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-2)">
+                            {etapa}/5 · {ETAPA_LABEL[etapa]}
+                          </Chip>
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          {p.prazo_critico_data ? (
+                            <div className="flex flex-col gap-0.5">
+                              <Chip fundo={tone.bg} cor={tone.fg}>{tone.label}</Chip>
+                              <span className="text-[10px] whitespace-nowrap" style={{ color: "var(--qa-tinta-3)" }}>{formatDate(p.prazo_critico_data)}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] uppercase" style={{ color: "var(--qa-tinta-4)" }}>—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 align-top">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Chip fundo="var(--qa-verde-bg)" cor="var(--qa-verde)" titulo="Cumpridos">{c.cumpridos}/{c.total}</Chip>
+                            {c.pendentes > 0 && <Chip fundo="var(--qa-ambar-bg)" cor="var(--qa-ambar)" titulo="Pendentes">{c.pendentes}</Chip>}
+                            {c.emAnalise > 0 && <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-2)" titulo="Em análise">{c.emAnalise}</Chip>}
+                            {c.outros > 0 && <Chip fundo="var(--qa-chip-bg)" cor="var(--qa-tinta-3)" titulo="Outros">{c.outros}</Chip>}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 align-top text-xs whitespace-nowrap" style={{ color: "var(--qa-tinta-3)" }}>{formatDate(p.data_criacao)}</td>
+                        <td className="px-4 py-3 align-top text-right">
+                          <div className="inline-flex items-center gap-2">
+                            <QASincronizarExigenciasBtn processoId={p.id} onDone={() => carregar()} />
+                            <ChevronRight className="h-4 w-4 inline" style={{ color: "var(--qa-tinta-4)" }} />
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
@@ -320,42 +387,50 @@ export default function QAProcessosPage() {
   );
 }
 
-function KpiCard({ label, value, color, icon }: { label: string; value: number; color: string; icon: React.ReactNode }) {
+function Chip({ children, fundo, cor, titulo }: { children: React.ReactNode; fundo: string; cor: string; titulo?: string }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-xl p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">{label}</span>
-        <span style={{ color }}>{icon}</span>
+    <span
+      title={titulo}
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wider whitespace-nowrap"
+      style={{ background: fundo, color: cor }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function KpiCard({ label, value, cor, icon }: { label: string; value: number; cor: string; icon: React.ReactNode }) {
+  return (
+    <div className="qa-card rounded-xl border border-[var(--qa-linha)] bg-[var(--qa-paper)] p-3 md:p-4">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[9px] md:text-[10px] uppercase tracking-[0.14em] font-bold leading-tight break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta-3)" }}>
+          {label}
+        </span>
+        <span className="shrink-0" style={{ color: cor }}>{icon}</span>
       </div>
-      <div className="text-2xl font-bold mt-2" style={{ color }}>{value}</div>
+      <div className="text-xl md:text-2xl font-bold mt-2 tabular-nums" style={{ color: cor }}>{value}</div>
     </div>
   );
 }
 
-function PrazoKpi({ label, value, color, active, onClick }: { label: string; value: number; color: string; active: boolean; onClick: () => void }) {
+function PrazoKpi({ label, value, cor, active, onClick }: { label: string; value: number; cor: string; active: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`text-left bg-white border rounded-xl p-4 transition hover:shadow-sm ${active ? "ring-2" : "border-slate-200"}`}
-      style={active ? { borderColor: color, boxShadow: `0 0 0 2px ${color}20` } : undefined}
+      className="qa-card rounded-xl border border-[var(--qa-linha)] bg-[var(--qa-paper)] text-left p-3 md:p-4 transition hover:bg-[var(--qa-hover)]"
+      style={active ? { borderColor: cor, boxShadow: `0 0 0 2px ${cor}33` } : undefined}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-slate-500">{label}</span>
-        <Timer className="h-4 w-4" style={{ color }} />
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[9px] md:text-[10px] uppercase tracking-[0.14em] font-bold leading-tight break-words [overflow-wrap:anywhere]" style={{ color: "var(--qa-tinta-3)" }}>
+          {label}
+        </span>
+        <Timer className="h-4 w-4 shrink-0" style={{ color: cor }} />
       </div>
-      <div className="text-2xl font-bold mt-2" style={{ color }}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-slate-400 mt-1">
-        {active ? "FILTRO ATIVO · CLIQUE PARA LIMPAR" : "CLIQUE PARA FILTRAR"}
+      <div className="text-xl md:text-2xl font-bold mt-2 tabular-nums" style={{ color: cor }}>{value}</div>
+      <div className="text-[9px] md:text-[10px] uppercase tracking-wider mt-1 leading-tight" style={{ color: "var(--qa-tinta-4)" }}>
+        {active ? "FILTRO ATIVO · TOQUE PARA LIMPAR" : "TOQUE PARA FILTRAR"}
       </div>
     </button>
-  );
-}
-
-function Badge({ color, label, title }: { color: string; label: string; title: string }) {
-  return (
-    <span title={title} className="inline-flex items-center px-1.5 py-0.5 rounded text-white" style={{ background: color }}>
-      {label}
-    </span>
   );
 }
