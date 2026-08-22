@@ -1028,6 +1028,11 @@ backfill; reexecução não cria nada; e aborto se a lista viva não for a esper
 
 ### 22/08/2026 — o caçador passa a pedir as mesmas certidões do atirador
 
+> **APLICADA E CONFERIDA em 22/08, 23:50 BRT.** As seis conferências bateram:
+> as oito certidões presentes nos dois serviços; TJM com `{SP,MG,RS}` no 50 e
+> no 51; a pergunta dos 5 anos agora em 32, 33, 44, 50 e 51; as três do item 05
+> com `exige_quando` e as duas opções intactas; catálogo do 51 com 16 linhas.
+
 Item 3 da lista de decisões, resolvido por ordem do titular: "O serviço 51 pede
 as mesmas certidões que o serviço 50." `20260822030000`.
 
