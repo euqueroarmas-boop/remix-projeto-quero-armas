@@ -39,10 +39,11 @@ import {
 
 const ESTADOS_CIVIS = ["Solteiro(a)", "Casado(a)", "Divorciado(a)", "Viúvo(a)", "Separado(a)", "União Estável"];
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RS","SC","SE","SP","TO"];
+// Só masculino e feminino: é o que os documentos oficiais e os formulários da
+// PF/SINARM registram, e é o que o cadastro precisa casar na conferência.
 const SEXO_OPTIONS = [
   { value: "M", label: "Masculino" },
   { value: "F", label: "Feminino" },
-  { value: "Outro", label: "Outro" },
 ];
 
 const estadoCivilOptions = ESTADOS_CIVIS.map(e => ({ value: e, label: e }));
@@ -585,13 +586,15 @@ export default function ClienteFormModal({ open, onClose, onSaved, cliente }: Cl
       return nextStr ? String(next) : cur;
     };
 
-    // Normaliza sexo para os valores aceitos pelo select (M/F/Outro).
+    // Normaliza sexo para os valores aceitos pelo select (M/F). "MULHER" é
+    // testado antes de "M": pela inicial cairia em masculino. Qualquer outra
+    // coisa (inclusive o antigo "Outro") volta vazio, para o campo ser
+    // preenchido à mão em vez de gravar valor que o select não oferece.
     const normSexo = (v: any): string => {
       const s = String(v ?? "").trim().toUpperCase();
       if (!s) return "";
-      if (s === "M" || s.startsWith("MASC")) return "M";
-      if (s === "F" || s.startsWith("FEM")) return "F";
-      if (s === "OUTRO" || s === "O") return "Outro";
+      if (s.startsWith("MULH") || s === "F" || s.startsWith("FEM")) return "F";
+      if (s === "M" || s.startsWith("MASC") || s === "H" || s.startsWith("HOM")) return "M";
       return "";
     };
     // Normaliza estado civil para os valores aceitos pelo select.

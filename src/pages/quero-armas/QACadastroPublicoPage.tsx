@@ -1610,7 +1610,6 @@ const SEXO_OPTS = [
   { value: "", label: "—" },
   { value: "M", label: "Masculino" },
   { value: "F", label: "Feminino" },
-  { value: "Outro", label: "Outro" },
 ];
 const ESTADO_CIVIL_OPTS = [
   { value: "", label: "—" },

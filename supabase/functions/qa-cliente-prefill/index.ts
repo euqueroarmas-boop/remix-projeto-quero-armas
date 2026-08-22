@@ -46,7 +46,7 @@ const PREFILL_TOOL = {
         uf_emissor_rg: { type: "string", description: "UF do órgão emissor do RG/CIN, SEMPRE em 2 letras maiúsculas (ex: SP, RJ, MG). Extraia separadamente do órgão." },
         data_expedicao_rg: { type: "string", description: "DD/MM/AAAA" },
         data_nascimento: { type: "string", description: "DD/MM/AAAA" },
-        sexo: { type: "string", description: "M, F ou Outro" },
+        sexo: { type: "string", description: "M ou F. Não existe outro valor — se o documento não disser, deixe vazio." },
         nacionalidade: { type: "string" },
         estado_civil: { type: "string" },
         profissao: { type: "string" },

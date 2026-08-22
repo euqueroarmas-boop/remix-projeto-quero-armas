@@ -56,7 +56,7 @@ export const CAMPOS_CADASTRO: CampoCadastro[] = [
   // Pessoais
   { key: "data_nascimento", label: "Data de nascimento", grupo: "pessoais", crucial: true, pergunta: "Qual é a sua data de nascimento?", ajuda: "Como está no seu documento de identidade.", tipo: "date", placeholder: "DD/MM/AAAA", colSpan: 1 },
   { key: "sexo", label: "Sexo", grupo: "pessoais", crucial: true, pergunta: "Qual é o seu sexo?", ajuda: "Conforme consta no documento oficial.", tipo: "select", opcoes: [
-    { value: "M", label: "Masculino" }, { value: "F", label: "Feminino" }, { value: "Outro", label: "Outro" },
+    { value: "M", label: "Masculino" }, { value: "F", label: "Feminino" },
   ], colSpan: 1 },
   { key: "estado_civil", label: "Estado civil", grupo: "pessoais", crucial: true, pergunta: "Qual é o seu estado civil?", tipo: "select", opcoes: [
     { value: "Solteiro(a)", label: "Solteiro(a)" }, { value: "Casado(a)", label: "Casado(a)" },
