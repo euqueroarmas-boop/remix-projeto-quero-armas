@@ -4,9 +4,11 @@
 // também dentro do AgendarExameModal.
 // ============================================================================
 import { useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useCredenciadosPsico, type CredenciadoPsico } from "./useCredenciadosPsico";
 import { useCredenciadosIAT, type CredenciadoIAT } from "./useCredenciadosIAT";
 import { AgendarExameList } from "./AgendarExameList";
+import { normalizarSexo } from "./mensagemWhatsApp";
 import { INSTRUTOR_PDF_PF } from "./instrutorPdfLinks";
 
 export type AgendarExamePainelProps = {
@@ -18,6 +20,11 @@ export type AgendarExamePainelProps = {
   /** Entram no texto pronto do WhatsApp ("Sou Willian, de Goiânia/GO... obrigado"). */
   nomeCliente?: string | null;
   sexoCliente?: string | null;
+  /** Deixa o próprio cliente completar o sexo do cadastro daqui, quando falta.
+   *  Só no portal: a gravação é sempre no cadastro de quem está logado, então
+   *  na tela da equipe (que abre a lista vendo o cadastro de outra pessoa)
+   *  isso fica desligado. */
+  permitirCompletarSexo?: boolean;
   /** Cabeçalho (título + fonte). Desligado quando o container já tem título. */
   comCabecalho?: boolean;
 };
@@ -30,8 +37,32 @@ const TITULO = {
 const AVISO =
   "qa-caption rounded-sm border border-[#f0d893] bg-[#fff8e1] px-3 py-2 !text-[#5a4500]";
 
-export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, nomeCliente, sexoCliente, comCabecalho = true }: AgendarExamePainelProps) {
+export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, nomeCliente, sexoCliente, permitirCompletarSexo = false, comCabecalho = true }: AgendarExamePainelProps) {
   const [raio, setRaio] = useState(25);
+  // Sexo respondido aqui mesmo: vale na hora para a mensagem do WhatsApp, sem
+  // esperar o portal recarregar o cadastro.
+  const [sexoLocal, setSexoLocal] = useState<"M" | "F" | null>(null);
+  const [salvandoSexo, setSalvandoSexo] = useState<"M" | "F" | null>(null);
+  const [erroSexo, setErroSexo] = useState<string | null>(null);
+  const sexoEfetivo = sexoLocal ?? sexoCliente ?? null;
+  const faltaSexo = permitirCompletarSexo && !normalizarSexo(sexoEfetivo);
+
+  async function salvarSexo(valor: "M" | "F") {
+    setSalvandoSexo(valor);
+    setErroSexo(null);
+    try {
+      const { error } = await supabase.functions.invoke("qa-cliente-atualizar-cadastro", {
+        body: { fields: { sexo: valor }, field_origins: { sexo: "manual" } },
+      });
+      if (error) throw error;
+      setSexoLocal(valor);
+    } catch (e) {
+      setErroSexo(e instanceof Error ? e.message : "Não conseguimos salvar agora. Tente de novo.");
+    } finally {
+      setSalvandoSexo(null);
+    }
+  }
+
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
   const isInstrutor = tipo === "instrutor_tiro";
@@ -144,13 +175,36 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, nomeCliente, 
         </div>
       ) : null}
 
+      {faltaSexo ? (
+        <div className="rounded-sm border border-[#f0d893] bg-[#fff8e1] px-3 py-2.5">
+          <div className="qa-caption !text-[#5a4500]">
+            Falta um dado do seu cadastro: você é homem ou mulher? Sem isso a mensagem que
+            vai para o profissional fica sem o fecho — “obrigado” ou “obrigada”.
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {([["M", "Masculino"], ["F", "Feminino"]] as const).map(([valor, label]) => (
+              <button
+                key={valor}
+                type="button"
+                disabled={salvandoSexo !== null}
+                onClick={() => salvarSexo(valor)}
+                className="qa-btn-label rounded-full border border-[#2F3439] bg-white px-3 py-1 text-[#0A0A0A] transition-colors hover:bg-[#FAFAFA] disabled:opacity-50"
+              >
+                {salvandoSexo === valor ? "Salvando…" : label}
+              </button>
+            ))}
+          </div>
+          {erroSexo ? <div className="qa-caption mt-1.5 !text-[#df2727]">{erroSexo}</div> : null}
+        </div>
+      ) : null}
+
       <AgendarExameList
         loading={loading}
         results={results}
         clienteNome={nomeCliente}
         clienteCidade={cidadeResolved}
         clienteUf={ufResolved}
-        clienteSexo={sexoCliente}
+        clienteSexo={sexoEfetivo}
         empty={
           isInstrutor
             ? "Nenhum instrutor encontrado para esta UF."
