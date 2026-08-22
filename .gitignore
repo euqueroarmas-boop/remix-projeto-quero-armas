@@ -26,3 +26,4 @@ public/test-docs/
 
 # amostras sinteticas geradas por scripts/gerar-doc-teste.mjs
 tmp/doc-teste/
+tmp/doc-teste-*.zip
