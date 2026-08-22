@@ -83,8 +83,76 @@ export const GRUPOS = {
   residencia: "Comprovante de residência (item 08)",
   endereco5anos: "Endereço dos últimos 5 anos — um comprovante por ano",
   ocupacao: "Ocupação lícita — as ramificações (item 09)",
+  instituicao: "Segurança pública — atestados da própria instituição (só serviço 60)",
+  cacador: "Caçador — habilitação ambiental (só serviço 51)",
+  posse: "Posse — efetiva necessidade, requerimento e juntada (só serviço 60)",
   taxa: "GRU e comprovante de pagamento",
   final: "Saída do processo — a AC deferida e o pedido da loja",
+};
+
+// ── QUEM PEDE O QUÊ ─────────────────────────────────────────────────────────
+// Conferido contra o catálogo vivo em 22/08/2026 (qa_servicos_documentos),
+// não contra as migrations — o banco é a fonte da verdade, o repositório não.
+// O export daquela consulta está em
+// src/lib/quero-armas/__tests__/fixtures/catalogo-autorizacao-compra-20260822.csv
+// e a suíte cobra este mapa contra ele.
+//
+//   50 — Autorização de Compra Atirador (CAC)
+//   51 — Autorização de Compra Caçador (CAC)
+//   60 — Autorização de Compra / Posse (Polícia Federal)
+const SERVICOS_POR_TIPO = {
+  rg_com_cpf: [50, 51],
+  cin: [60],
+  foto_3x4: [50, 60],
+  credencial_gov_br: [50, 60],
+  comprovante_residencia: [50, 51, 60],
+  documento_identificacao_terceiro: [50, 60],
+  declaracao_responsavel_imovel: [50, 60],
+  antecedentes_eleitoral: [50, 51, 60],
+  antecedentes_militar: [50, 51, 60],
+  antecedentes_militar_estadual: [50, 51, 60],
+  antecedentes_federal_trf3_regional: [50, 51, 60],
+  antecedentes_federal_sjsp_jef: [50, 51, 60],
+  antecedentes_estadual_distribuicao: [50, 51, 60],
+  antecedentes_estadual_execucoes: [50, 51, 60],
+  antecedentes_criminais: [50, 51, 60],
+  declaracao_homonimia: [50, 51],
+  declaracao_sem_inquerito_processo_criminal: [50, 51],
+  laudo_psicologico: [50, 60],
+  laudo_capacidade_tecnica: [50, 51, 60],
+  comprovante_filiacao_entidade_tiro: [50],
+  comprovante_competicao: [50],
+  declaracao_compromisso_habitualidade: [50],
+  dsa_declaracao_seguranca_acervo: [50],
+  documento_complementar_caso: [50],
+  autorizacao_compra: [50],
+  gru: [50, 60],
+  gru_comprovante: [50, 60],
+  habilitacao_cacador_ibama: [51],
+  comprovante_efetiva_necessidade: [60],
+  requerimento_de_posse_de_arma_de_fogo: [60],
+  juntada_assinada: [60],
+  atestado_aptidao_psicologica_instituicao: [60],
+  atestado_capacidade_tecnica_instituicao: [60],
+  ctps: [60],
+  renda_holerite_mes_atual: [60],
+  renda_contra_cheque_mes_atual: [60],
+  renda_carteira_funcional: [60],
+  renda_contrato_social: [60],
+  renda_ccmei: [60],
+  renda_cartao_cnpj: [60],
+  renda_qsa: [60],
+  renda_nf_empresa: [60],
+  renda_extrato_inss: [60],
+  renda_comprovante_beneficio: [60],
+  // Slots por ano: quem semeia é qa_seed_endereco_5_anos, disparada pela
+  // pergunta_residencia_5_anos — que existe em 50 e 51. Por isso estes tipos
+  // NÃO aparecem no catálogo da consulta, e mesmo assim são parte do fluxo.
+  comprovante_endereco_ano: [50, 51],
+  // Sem serviço: iscas de teste, não são exigência de ninguém.
+  certidao_civel_isca: [],
+  certidao_combinada_isca: [],
+  renda_holerite_funcionario_publico: [],
 };
 
 // Exportado para que a suíte de testes confira as amostras contra as regras
@@ -927,6 +995,230 @@ export const MODELOS = {
   },
 };
 
+// ── O QUE SÓ O CAÇADOR (51) E A POSSE (60) PEDEM ────────────────────────────
+Object.assign(MODELOS, {
+  habilitacao_cacador_ibama: {
+    grupo: "cacador",
+    titulo: "CACADOR — habilitacao ambiental (IBAMA/IBRAM)",
+    slot: "habilitacao_cacador_ibama",
+    linhas: [
+      "INSTITUTO BRASILEIRO DO MEIO AMBIENTE E DOS RECURSOS NATURAIS RENOVAVEIS",
+      "IBAMA",
+      "LICENCA DE CACADOR - CONTROLE DE FAUNA EXOTICA INVASORA",
+      "",
+      `Nome: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Numero da licenca: 0000000",
+      "Categoria: CONTROLADOR DE FAUNA EXOTICA INVASORA",
+      "",
+      "Data de emissao: 10/02/2026",
+      "Data de validade: 10/02/2027",
+      "Situacao: ATIVA",
+    ],
+  },
+
+  cin: {
+    grupo: "identidade",
+    titulo: "CIN — Carteira de Identidade Nacional",
+    slot: "cin",
+    linhas: [
+      "REPUBLICA FEDERATIVA DO BRASIL",
+      "CARTEIRA DE IDENTIDADE NACIONAL",
+      "CIN",
+      "",
+      `Nome: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      `Numero do registro geral: ${T.rg}`,
+      `Data de nascimento: ${T.nasc}`,
+      `Filiacao: ${T.mae}`,
+      "Naturalidade: SAO PAULO - SP",
+      "",
+      "Data de expedicao: 15/01/2026",
+      "Validade: 15/01/2036",
+    ],
+  },
+
+  comprovante_efetiva_necessidade: {
+    grupo: "posse",
+    titulo: "POSSE — declaracao de efetiva necessidade",
+    slot: "comprovante_efetiva_necessidade",
+    linhas: [
+      "DECLARACAO DE EFETIVA NECESSIDADE",
+      "AQUISICAO DE ARMA DE FOGO PARA DEFESA PESSOAL - POSSE",
+      "",
+      `Eu, ${T.nome}, portador do CPF ${T.cpf},`,
+      `residente em ${T.endereco}, ${T.bairro}, ${T.cidade}-${T.uf},`,
+      "DECLARO a efetiva necessidade de adquirir arma de fogo para a defesa",
+      "pessoal e a protecao da minha residencia, pelos fatos abaixo:",
+      "",
+      "O imovel situa-se em area com registros de furto e invasao a",
+      "residencia, sem posto policial proximo, e o declarante permanece no",
+      "local com familiares em periodo noturno.",
+      "",
+      "Declaro estar ciente das responsabilidades pela guarda da arma.",
+      "",
+      `${T.cidade}-${T.uf}, 01 de agosto de 2026.`,
+      `${T.nome}`,
+    ],
+  },
+
+  requerimento_de_posse_de_arma_de_fogo: {
+    grupo: "posse",
+    titulo: "POSSE — requerimento de posse de arma de fogo",
+    slot: "requerimento_de_posse_de_arma_de_fogo",
+    linhas: [
+      "MINISTERIO DA JUSTICA E SEGURANCA PUBLICA",
+      "POLICIA FEDERAL",
+      "REQUERIMENTO DE POSSE DE ARMA DE FOGO",
+      "",
+      "1. IDENTIFICACAO DO REQUERENTE",
+      `Nome: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      `Documento de identidade: ${T.rg}`,
+      `Data de nascimento: ${T.nasc}`,
+      `Filiacao: ${T.mae}`,
+      `Endereco: ${T.endereco}, ${T.bairro}`,
+      `Cidade/UF: ${T.cidade} - ${T.uf}   CEP: ${T.cep}`,
+      "",
+      "2. DO PEDIDO",
+      "Requer a expedicao de autorizacao para aquisicao de arma de fogo",
+      "com registro na modalidade POSSE, para manutencao no interior da",
+      "residencia.",
+      "",
+      "Especie: PISTOLA   Calibre: .380   Quantidade: 01",
+      "",
+      "Data: 01/08/2026",
+    ],
+  },
+
+  juntada_assinada: {
+    grupo: "posse",
+    titulo: "POSSE — juntada final assinada no gov.br (so PDF)",
+    slot: "juntada_assinada",
+    linhas: [
+      "JUNTADA DE DOCUMENTOS - PROCESSO DE POSSE DE ARMA DE FOGO",
+      "",
+      `Requerente: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Protocolo: 00000.000000/2026-00",
+      "",
+      "RELACAO DOS DOCUMENTOS JUNTADOS",
+      "01 - Requerimento de posse de arma de fogo",
+      "02 - Documento de identidade (CIN)",
+      "03 - Comprovante de residencia",
+      "04 - Declaracao de efetiva necessidade",
+      "05 - Certidoes de antecedentes criminais",
+      "06 - Laudo psicologico",
+      "07 - Laudo de capacidade tecnica",
+      "08 - Comprovante de ocupacao licita",
+      "09 - GRU e comprovante de pagamento",
+      "",
+      "DOCUMENTO ASSINADO DIGITALMENTE",
+      "Assinado por: FULANO DE TAL DA SILVA",
+      "Padrao: GOV.BR - assinatura eletronica avancada",
+      "Data da assinatura: 01/08/2026 14:30:00",
+    ],
+  },
+
+  atestado_aptidao_psicologica_instituicao: {
+    grupo: "instituicao",
+    titulo: "SEGURANCA PUBLICA — atestado psicologico da instituicao",
+    slot: "atestado_aptidao_psicologica_instituicao",
+    linhas: [
+      "POLICIA MILITAR DO ESTADO DE SAO PAULO",
+      "DIRETORIA DE SAUDE",
+      "ATESTADO DE APTIDAO PSICOLOGICA",
+      "",
+      `Nome: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Matricula funcional: 000000-0",
+      "Posto/Graduacao: SOLDADO PM",
+      "",
+      "Data da avaliacao: 12/06/2026",
+      "RESULTADO: APTO para o porte e uso de arma de fogo institucional.",
+      "",
+      "Responsavel: ANA PSICOLOGA DE TESTE - CRP 06/000000",
+      "Data de emissao: 12/06/2026",
+    ],
+  },
+
+  atestado_capacidade_tecnica_instituicao: {
+    grupo: "instituicao",
+    titulo: "SEGURANCA PUBLICA — atestado de capacidade tecnica da instituicao",
+    slot: "atestado_capacidade_tecnica_instituicao",
+    linhas: [
+      "POLICIA MILITAR DO ESTADO DE SAO PAULO",
+      "CENTRO DE INSTRUCAO DE ARMAMENTO E TIRO",
+      "ATESTADO DE CAPACIDADE TECNICA E TIRO",
+      "",
+      `Nome: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Matricula funcional: 000000-0",
+      "Posto/Graduacao: SOLDADO PM",
+      "",
+      "Data da avaliacao: 20/06/2026",
+      "Estande: CENTRO DE INSTRUCAO - SAO PAULO/SP",
+      "RESULTADO: APTO no estagio de qualificacao de tiro institucional.",
+      "",
+      "Instrutor responsavel: JOAO INSTRUTOR DE TESTE",
+      "Data de emissao: 20/06/2026",
+    ],
+  },
+
+  renda_contra_cheque_mes_atual: {
+    grupo: "ocupacao",
+    titulo: "SERVIDOR PUBLICO — contra-cheque do mes atual (tipo do servico 60)",
+    slot: "renda_contra_cheque_mes_atual",
+    linhas: [
+      "GOVERNO DO ESTADO DE SAO PAULO",
+      "SECRETARIA DA FAZENDA",
+      "DEMONSTRATIVO DE PAGAMENTO - SERVIDOR PUBLICO ESTADUAL",
+      "",
+      `Servidor: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Matricula: 000000-0",
+      "Cargo: AGENTE DE SEGURANCA",
+      "Vinculo: ESTATUTARIO",
+      "Competencia: 07/2026",
+      "",
+      "VENCIMENTOS",
+      "Vencimento base ................  6.100,00",
+      "DESCONTOS",
+      "Previdencia estadual ...........     671,00",
+      "",
+      "TOTAL LIQUIDO ..................  5.429,00",
+    ],
+  },
+
+  renda_nf_empresa: {
+    grupo: "ocupacao",
+    titulo: "AUTONOMO/EMPRESARIO — nota fiscal da empresa",
+    slot: "renda_nf_empresa",
+    linhas: [
+      "PREFEITURA DO MUNICIPIO DE SAO PAULO",
+      "NOTA FISCAL DE SERVICOS ELETRONICA - NFS-e",
+      "",
+      "Numero da nota: 00000001",
+      "Data de emissao: 30/07/2026",
+      "Codigo de verificacao: TESTE-0000",
+      "",
+      "PRESTADOR DE SERVICOS",
+      "EMPRESA FICTICIA DE TESTE LTDA",
+      "CNPJ: 00.000.000/0001-00",
+      `Responsavel: ${T.nome} - CPF ${T.cpf}`,
+      "",
+      "TOMADOR DE SERVICOS",
+      "CLIENTE FICTICIO DE TESTE S.A.",
+      "CNPJ: 11.111.111/0001-11",
+      "",
+      "DISCRIMINACAO DOS SERVICOS",
+      "Desenvolvimento de sistema sob encomenda - competencia 07/2026",
+      "",
+      "VALOR TOTAL DA NOTA: R$ 12.000,00",
+    ],
+  },
+});
+
 // ── ENDEREÇO DOS ÚLTIMOS 5 ANOS ─────────────────────────────────────────────
 // Ramo à parte do checklist: quem semeia é a rotina qa_seed_endereco_5_anos,
 // não a migration do serviço 50. Cada ano tem SEU PRÓPRIO slot
@@ -958,6 +1250,21 @@ for (const ano of [2022, 2023, 2024, 2025, 2026]) {
     ],
   };
 }
+
+// Anexa a cada modelo os serviços que o exigem. Os slots por ano compartilham
+// a mesma entrada do mapa, porque o catálogo não os lista um a um.
+for (const [chave, m] of Object.entries(MODELOS)) {
+  const base = chave.startsWith("comprovante_endereco_ano_")
+    ? "comprovante_endereco_ano"
+    : chave;
+  m.servicos = SERVICOS_POR_TIPO[base] ?? [];
+}
+
+export const SERVICOS = {
+  50: "Autorização de Compra Atirador (CAC)",
+  51: "Autorização de Compra Caçador (CAC)",
+  60: "Autorização de Compra / Posse (Polícia Federal)",
+};
 
 // ============================================================================
 // PDF
@@ -1173,14 +1480,30 @@ const args = process.argv.slice(2);
 const semTexto = args.includes("--sem-texto");
 const iGrupo = args.indexOf("--grupo");
 const grupoPedido = iGrupo >= 0 ? args[iGrupo + 1] : null;
-// O valor de --grupo não é alvo. Sem --grupo, iGrupo é -1 e nenhum índice
-// pode ser excluído — senão o primeiro argumento some.
-const alvo = args.filter((a, i) => !a.startsWith("--") && (iGrupo < 0 || i !== iGrupo + 1))[0];
+const iServico = args.indexOf("--servico");
+const servicoPedido = iServico >= 0 ? Number(args[iServico + 1]) : null;
+// O valor de --grupo/--servico não é alvo. Sem eles o índice é -1 e nenhuma
+// posição pode ser excluída — senão o primeiro argumento some.
+const consumidos = new Set([iGrupo + 1, iServico + 1].filter((i) => i > 0));
+const alvo = args.filter((a, i) => !a.startsWith("--") && !consumidos.has(i))[0];
 
-if (!alvo && !grupoPedido) {
-  console.log("\nDOSSIE COMPLETO");
-  console.log("  autorizacao-compra    servico 50 - Autorizacao de Compra Atirador (CAC)");
-  console.log("                        gera os " + Object.keys(MODELOS).length + " documentos, em pastas por etapa\n");
+if (servicoPedido !== null && !SERVICOS[servicoPedido]) {
+  console.error(
+    `Servico desconhecido: ${args[iServico + 1]}. Ha: ${Object.entries(SERVICOS)
+      .map(([id, nome]) => `${id} (${nome})`)
+      .join(", ")}`,
+  );
+  process.exit(1);
+}
+
+if (!alvo && !grupoPedido && servicoPedido === null) {
+  console.log("\nPOR SERVICO (--servico <id>)  <- o mais util para testar um fluxo inteiro");
+  for (const [id, nome] of Object.entries(SERVICOS)) {
+    const qtd = Object.values(MODELOS).filter((m) => m.servicos.includes(Number(id))).length;
+    console.log(`  ${id}  ${String(qtd).padStart(2)} doc  ${nome}`);
+  }
+  console.log("\nTUDO DE UMA VEZ");
+  console.log("  autorizacao-compra    os " + Object.keys(MODELOS).length + " documentos dos tres servicos, em pastas por etapa\n");
   console.log("GRUPOS (--grupo <nome>)");
   for (const [g, desc] of Object.entries(GRUPOS)) {
     const qtd = Object.values(MODELOS).filter((m) => m.grupo === g).length;
@@ -1196,7 +1519,16 @@ if (!alvo && !grupoPedido) {
 
 let chaves;
 let porGrupo = false;
-if (alvo === "autorizacao-compra") {
+if (servicoPedido !== null) {
+  // As iscas entram junto: elas existem para o serviço quebrar, não para o
+  // dossiê ficar completo. Sem elas o teste só exercita o caminho feliz.
+  chaves = Object.keys(MODELOS).filter(
+    (k) => MODELOS[k].servicos.includes(servicoPedido) || k.endsWith("_isca"),
+  );
+  porGrupo = true;
+  await rm(SAIDA, { recursive: true, force: true });
+  console.log(`\nServico ${servicoPedido} — ${SERVICOS[servicoPedido]}`);
+} else if (alvo === "autorizacao-compra") {
   chaves = Object.keys(MODELOS);
   porGrupo = true;
   await rm(SAIDA, { recursive: true, force: true });

@@ -1,0 +1,91 @@
+condicao_profissional;etapa;formato_aceito;nome_documento;obrigatorio;servico;servico_id;tipo_documento
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Documento de identidade (CIN, RG ou CNH);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;rg_com_cpf
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Foto 3x4 recente;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;foto_3x4
+;base;[];O comprovante de residência está no seu nome?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_comprovante_em_nome
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de residência atual;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;comprovante_residencia
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão de Antecedentes Criminais — Justiça Eleitoral;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_eleitoral
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Justiça Militar da União (STM);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_militar
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal TRF3 — Abrangência Regional;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_federal_trf3_regional
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal — Seção Judiciária de SP e JEF;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_federal_sjsp_jef
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Estadual de Distribuições Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_estadual_distribuicao
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Estadual de Execuções Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_estadual_execucoes
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Tribunal de Justiça Militar (TJM);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_militar_estadual
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Atestado de Antecedentes Criminais — Polícia Civil (SSP);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;antecedentes_criminais
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Documento de identificação do titular do comprovante;false;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;documento_identificacao_terceiro
+;complementar;[];Você ainda mora no endereço do comprovante?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_ainda_reside_imovel
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Qual o estado civil do titular do comprovante?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_titular_estado_civil
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Qual a profissão do titular do comprovante?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_titular_profissao
+;complementar;"[""application/pdf"",""pdf""]";Declaração do responsável pelo imóvel;false;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;declaracao_responsavel_imovel
+;complementar;[];Defina sua condição profissional;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;renda_definir_condicao
+;complementar;[];Nos últimos 5 anos você morou sempre no endereço do comprovante que enviou?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_residencia_5_anos
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de Homonímia;false;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;declaracao_homonimia
+;complementar;[];Você responde a algum inquérito ou processo criminal?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_responde_inquerito_criminal
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de não responder a inquérito ou processo criminal;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;declaracao_sem_inquerito_processo_criminal
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de filiação ativa a entidade de tiro;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;comprovante_filiacao_entidade_tiro
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de participação em treinamentos e competições de tiro;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;comprovante_competicao
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de compromisso de habitualidade (ANEXO C);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;declaracao_compromisso_habitualidade
+;complementar;[];Você já fechou com a loja a arma que vai comprar?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;pergunta_arma_loja_definida
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Contrato ou pedido da loja (dados da arma e CNPJ);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;documento_complementar_caso
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";DSA — Declaração de Segurança do Acervo;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;dsa_declaracao_seguranca_acervo
+;final;"[""pdf"",""jpg"",""jpeg"",""png""]";Boleto da GRU — taxa de autorização de aquisição (R$ 25,00);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;gru
+;final;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de pagamento da taxa (GRU);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;gru_comprovante
+;final;"[""pdf"",""jpg"",""jpeg"",""png""]";Acesso ao gov.br para protocolar;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;credencial_gov_br
+;final;"[""pdf"",""jpg"",""jpeg"",""png""]";Autorização de compra deferida;false;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;autorizacao_compra
+;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Laudo psicológico (psicólogo credenciado pela PF);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;laudo_psicologico
+;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de capacidade técnica (instrutor credenciado pela PF);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO ATIRADOR ESPORTIVO (CAC);50;laudo_capacidade_tecnica
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";RG com CPF;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;rg_com_cpf
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de residência atual;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;comprovante_residencia
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão de Antecedentes Criminais — Justiça Eleitoral;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_eleitoral
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Justiça Militar da União (STM);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_militar
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal TRF3 — Abrangência Regional;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_federal_trf3_regional
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal — Seção Judiciária de SP e JEF;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_federal_sjsp_jef
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Estadual de Distribuições Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_estadual_distribuicao
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Estadual de Execuções Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_estadual_execucoes
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Tribunal de Justiça Militar (TJM);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_militar_estadual
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Atestado de Antecedentes Criminais — Polícia Civil (SSP);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;antecedentes_criminais
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Habilitação ambiental de caçador (IBAMA/IBRAM);true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;habilitacao_cacador_ibama
+;complementar;[];Nos últimos 5 anos você morou sempre no endereço do comprovante que enviou?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;pergunta_residencia_5_anos
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de Homonímia;false;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;declaracao_homonimia
+;complementar;[];Você responde a algum inquérito ou processo criminal?;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;pergunta_responde_inquerito_criminal
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de não responder a inquérito ou processo criminal;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;declaracao_sem_inquerito_processo_criminal
+;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Atestado de Capacidade Técnica vigente;true;AUTORIZAÇÃO DE COMPRA DE ARMA DE FOGO PARA CAÇADOR (CAC);51;laudo_capacidade_tecnica
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Foto 3x4 do requerente;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;foto_3x4
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";CIN — Carteira de Identidade Nacional;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;cin
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão de Antecedentes Criminais — Justiça Eleitoral;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_eleitoral
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Justiça Militar da União (STM);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_militar
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal TRF3 — Abrangência Regional;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_federal_trf3_regional
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Federal — Seção Judiciária de SP e JEF;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_federal_sjsp_jef
+;base;"[""pdf""]";Certidão Estadual de Distribuições Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_estadual_distribuicao
+;base;"[""pdf""]";Certidão Estadual de Execuções Criminais — TJSP;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_estadual_execucoes
+;base;"[""pdf""]";Antecedentes Criminais — Polícia Civil (SSP);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_criminais
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Certidão Criminal — Tribunal de Justiça Militar (TJM);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;antecedentes_militar_estadual
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Declaração de efetiva necessidade;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;comprovante_efetiva_necessidade
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Requerimento de Posse de Arma de Fogo;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;requerimento_de_posse_de_arma_de_fogo
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Boleto da GRU — taxa do requerimento (Polícia Federal);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;gru
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de pagamento da taxa (GRU);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;gru_comprovante
+;base;"[""pdf"",""jpg"",""jpeg"",""png""]";Acesso ao gov.br para protocolar;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;credencial_gov_br
+;base;"[""application/pdf""]";Juntada final assinada no gov.br;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;juntada_assinada
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Qual o estado civil do titular do comprovante?;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;pergunta_titular_estado_civil
+;complementar;"[""pdf"",""jpg"",""jpeg"",""png""]";Qual a profissão do titular do comprovante?;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;pergunta_titular_profissao
+;condicao_profissional;[];Defina sua condição profissional;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_definir_condicao
+funcionario_publico,seguranca_publica;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Identidade Funcional Digital;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_carteira_funcional
+funcionario_publico,seguranca_publica;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Contra-cheque do mês atual (servidor público);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_contra_cheque_mes_atual
+clt;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Carteira de Trabalho Digital;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;ctps
+clt;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Holerite mais recente (mês atual);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_holerite_mes_atual
+clt;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Extrato completo de contribuições do INSS (CNIS);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_extrato_inss
+empresario;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Contrato Social, Requerimento de Empresário ou Ficha Cadastral (Junta Comercial);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_contrato_social
+autonomo;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";CCMEI — Certificado da Condição de Microempreendedor Individual;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_ccmei
+autonomo,empresario;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Cartão CNPJ (emitido nos últimos 30 dias);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_cartao_cnpj
+autonomo,empresario;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";QSA — Quadro de Sócios e Administradores;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_qsa
+autonomo,empresario;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Nota Fiscal da Empresa;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_nf_empresa
+aposentado;condicao_profissional;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de pagamento do benefício (último mês);true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;renda_comprovante_beneficio
+;endereco;[];O comprovante de residência está em seu nome?;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;pergunta_comprovante_em_nome
+;endereco;"[""pdf"",""jpg"",""jpeg"",""png""]";Comprovante de residência do responsável pelo imóvel;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;comprovante_residencia
+;endereco;"[""pdf"",""jpg"",""jpeg"",""png""]";Documento de identificação do responsável pelo imovél;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;documento_identificacao_terceiro
+;endereco;[];Você ainda mora no endereço do comprovante?;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;pergunta_ainda_reside_imovel
+;endereco;"[""application/pdf"",""pdf""]";Declaração do responsável pelo imóvel;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;declaracao_responsavel_imovel
+seguranca_publica;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Você trabalha na Segurança Pública: vai usar os exames da sua instituição ou de um credenciado da PF?;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;exames_instituicao_definir
+seguranca_publica;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Atestado de Aptidão Psicológica da Instituição;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;atestado_aptidao_psicologica_instituicao
+seguranca_publica;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Atestado de Capacidade Técnica e Tiro da Instituição;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;atestado_capacidade_tecnica_instituicao
+;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Laudo Psicológico;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;laudo_psicologico
+;tecnico;"[""pdf"",""jpg"",""jpeg"",""png""]";Laudo de Capacidade Técnica para Manuseio de Arma de Fogo;true;AUTORIZAÇÃO DE COMPRA / POSSE DE ARMA DE FOGO;60;laudo_capacidade_tecnica
