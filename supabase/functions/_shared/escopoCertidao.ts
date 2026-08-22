@@ -115,3 +115,20 @@ export function mensagemCertidaoCivel(texto: string): string {
 export function ehCertidaoCivel(texto: string): boolean {
   return detectarEscopoCertidao(texto) === "civel";
 }
+/**
+ * A trava de escopo cível só faz sentido quando o espaço aberto ESPERA uma
+ * certidão. Em 22/08/2026 o Igor tentou enviar a Carteira de Trabalho Digital
+ * no slot da CTPS e levou "você enviou a certidão cível": a trava rodava em
+ * TODO envio, antes de olhar para o que o slot pedia, e bastava o texto do
+ * arquivo tropeçar num marcador para o cliente ser barrado num documento que
+ * não é certidão nenhuma.
+ *
+ * Sem tipo esperado (envio livre ao Hub) a trava continua valendo — é o caso
+ * em que o cliente escolhe o tipo depois, e uma certidão cível ali seria
+ * arquivada como documento bom.
+ */
+export function slotEsperaCertidao(tipoEsperado?: string | null): boolean {
+  const t = String(tipoEsperado ?? "").trim().toLowerCase();
+  if (!t) return true; // envio livre: mantém a proteção antiga
+  return t.startsWith("certidao") || t.startsWith("antecedentes");
+}

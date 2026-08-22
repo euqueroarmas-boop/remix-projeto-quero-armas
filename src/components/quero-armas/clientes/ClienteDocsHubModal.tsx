@@ -43,7 +43,7 @@ import ResidenciaTerceiroModal, { type ResidenciaTerceiroPayload } from "./Resid
 import DeclaracaoResponsavelImovelModal from "./DeclaracaoResponsavelImovelModal";
 import ConfrontoCpfComprovanteModal from "./ConfrontoCpfComprovanteModal";
 import { extrairItensPdfPorPagina, extrairTextoPdf } from "@/lib/quero-armas/extracaoLocalPdf";
-import { detectarEscopoCertidao, mensagemCertidaoCivel } from "@/lib/quero-armas/escopoCertidao";
+import { slotEsperaCertidao, detectarEscopoCertidao, mensagemCertidaoCivel } from "@/lib/quero-armas/escopoCertidao";
 import { lerQrCodeDoPdf } from "@/lib/quero-armas/qrCodePdf";
 import {
   isTipoIdentidadeComQr,
@@ -2870,10 +2870,34 @@ export function ClienteDocsHubModal({
         // Antes de qualquer leitura ou classificação: certidão cível não
         // instrui processo de arma de fogo. Não é salva, não vai para a IA e
         // não ocupa slot nenhum do Hub.
-        if (limpo.length >= 80 && detectarEscopoCertidao(textoNativo) === "civel") {
+        if (
+          limpo.length >= 80 &&
+          // A trava só vale onde o slot ESPERA certidão. Rodando em todo envio,
+          // ela reprovou a Carteira de Trabalho Digital do Igor (22/08/2026)
+          // dizendo que era certidão cível.
+          slotEsperaCertidao(expectedTipoMeta?.value) &&
+          detectarEscopoCertidao(textoNativo) === "civel"
+        ) {
           const msg = mensagemCertidaoCivel(textoNativo);
           setResultadoCarimbo({ tipo: "reprovado", mensagem: msg });
           setExtracting(false);
+          // RASTRO: esta recusa acontece na leitura, antes de qualquer
+          // gravação. Sem registro, o cliente diz "eu enviei", a equipe não
+          // acha nada e ninguém consegue auditar — foi o que aconteceu com o
+          // Igor. Regra canônica: docs/RASTRO-DOCUMENTAL.md.
+          void registrarTentativaBloqueada({
+            qaClienteId: qaClienteId ?? null,
+            customerId: customerId ?? null,
+            codigo: "certidao_incorreta",
+            motivo: msg,
+            tipoPretendido: form.tipo_documento || null,
+            tipoLido: "certidao_civel",
+            exigenciaAlvo: expectedTipoMeta?.value ?? null,
+            arquivoNome: target.name || null,
+            arquivoMime: target.type || null,
+            arquivoTamanho: target.size ?? null,
+            arquivoApagado: false,
+          });
           if (qaClienteId) {
             supabase.functions.invoke("qa-notify-event", {
               body: {

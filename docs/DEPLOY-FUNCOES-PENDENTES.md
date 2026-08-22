@@ -625,3 +625,20 @@ trava passa a valer no caminho do portal.
 **Publicada:**
 - ✅ `qa-cliente-auto-prefill`
 
+
+## 2026-08-22 — Leva 21: trava de certidão cível só onde o slot pede certidão
+
+Caso do cliente 235 (Igor): enviou a Carteira de Trabalho Digital no slot da
+CTPS e recebeu "VOCÊ ENVIOU A CERTIDÃO CÍVEL. O PROCESSO EXIGE A CERTIDÃO
+CRIMINAL". A trava rodava em TODO envio, antes de olhar o que o slot pedia.
+
+**Correção no front** (sobe com o publish normal):
+- `src/components/quero-armas/clientes/ClienteDocsHubModal.tsx` — a trava passa
+  a valer só quando o slot espera certidão; a recusa passa a deixar rastro.
+- `src/lib/quero-armas/escopoCertidao.ts` — novo `slotEsperaCertidao()`.
+
+**ARQUIVO ESPELHO (sem deploy próprio):**
+- `supabase/functions/_shared/escopoCertidao.ts` — ganhou a mesma função para
+  não divergir do front. Nenhuma edge function usa `slotEsperaCertidao` ainda,
+  então NÃO há função a publicar nesta leva. Quando alguma edge passar a usar,
+  ela precisará de redeploy.
