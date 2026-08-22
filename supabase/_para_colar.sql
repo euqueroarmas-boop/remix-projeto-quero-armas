@@ -155,3 +155,43 @@ SELECT id, nome_completo, rg, emissor_rg, uf_emissor_rg, expedicao_rg,
        cnh, tipo_documento_identidade
   FROM public.qa_clientes
  WHERE id = 235;
+
+-- =============================================================================
+-- SEÇÃO 2 — Recoloca o seletor de condição profissional no processo do Igor
+-- -----------------------------------------------------------------------------
+-- O seletor do admin/portal vive dentro do item "Defina sua condição
+-- profissional" (renda_definir_condicao), que é apagado quando uma condição é
+-- escolhida. Este bloco recoloca o item SÓ no processo do Igor
+-- (3c40ff08-… · serviço 60 — Autorização de Compra / Posse de Arma de Fogo).
+-- Depois de colar: abrir o processo no admin (ou o Igor no portal), clicar em
+-- CLT no seletor amarelo — a função do sistema apaga os itens de segurança
+-- pública (todos ainda pendentes) e monta a renda de CLT.
+-- =============================================================================
+
+INSERT INTO public.qa_processo_documentos
+  (processo_id, cliente_id, tipo_documento, nome_documento, obrigatorio,
+   escopo, etapa, ordem, formato_aceito, instrucoes, observacoes_cliente,
+   link_emissao, modelo_url, exemplo_url, orgao_emissor,
+   prazo_recomendado_dias, validade_dias, regra_validacao, status)
+SELECT '3c40ff08-5377-4090-9be2-894a8b04bb43', 235,
+       sd.tipo_documento, sd.nome_documento, sd.obrigatorio,
+       sd.escopo,
+       CASE WHEN sd.etapa IN ('base','complementar','tecnico','final')
+            THEN sd.etapa ELSE 'base' END,
+       sd.ordem, COALESCE(sd.formato_aceito, '{}'), sd.instrucoes,
+       sd.observacoes_cliente, sd.link_emissao, sd.modelo_url, sd.exemplo_url,
+       sd.orgao_emissor, sd.prazo_recomendado_dias, sd.validade_dias,
+       sd.regra_validacao, 'pendente'
+  FROM public.qa_servicos_documentos sd
+ WHERE sd.servico_id = 60
+   AND sd.tipo_documento = 'renda_definir_condicao'
+   AND sd.ativo
+   AND NOT EXISTS (SELECT 1 FROM public.qa_processo_documentos pd
+                    WHERE pd.processo_id = '3c40ff08-5377-4090-9be2-894a8b04bb43'
+                      AND pd.tipo_documento = 'renda_definir_condicao');
+
+-- Conferência: o item deve voltar como PENDENTE no checklist do processo.
+SELECT tipo_documento, nome_documento, status, etapa, ordem
+  FROM public.qa_processo_documentos
+ WHERE processo_id = '3c40ff08-5377-4090-9be2-894a8b04bb43'
+   AND tipo_documento = 'renda_definir_condicao';
