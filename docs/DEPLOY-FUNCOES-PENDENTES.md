@@ -1,5 +1,17 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
+## ✅ Leva 21 · qa-cliente-auto-prefill — publicada em 22/08/2026, 01:19 BRT
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cliente-auto-prefill/index.ts` — o deploy da Leva 20 (22/08 às 01:00 BRT) saiu com a versão anterior, pois o código ainda não estava na main. Agora está. Sem esta publicação, o preenchimento automático do portal continua sobrescrevendo o nome de mãe e de pai digitados, em qualquer cliente.
+
+**Publicada:**
+- ✅ `qa-cliente-auto-prefill`
+
+**Nenhuma migration foi criada.** Código-fonte não foi alterado.
+
+---
+
 ## ✅ Leva 19 · Cadastro público remove campos de residência dos 5 anos — FECHADA em 21/08/2026, 21:46 BRT
 
 Publicação isolada de `qa-cadastro-publico`. A função deixa de usar as chaves
@@ -602,3 +614,14 @@ momento a alteração ainda estava no branch de trabalho; o Lovable publicou a
 versão anterior da função (o commit `a48ba79` da main não toca no arquivo).
 Com o código já na main, a função precisa ser publicada DE NOVO — só então a
 trava passa a valer no caminho do portal.
+
+---
+
+## Leva 21 — 22/08/2026, 01:19 BRT
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cliente-auto-prefill/index.ts` — o deploy da Leva 20 (22/08 às 01:00 BRT) saiu com a versão anterior, pois o código ainda não estava na main. Agora está. Sem esta publicação, o preenchimento automático do portal continua sobrescrevendo o nome de mãe e de pai digitados, em qualquer cliente.
+
+**Publicada:**
+- ✅ `qa-cliente-auto-prefill`
+
