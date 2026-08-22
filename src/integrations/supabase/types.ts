@@ -3194,7 +3194,6 @@ export type Database = {
           end2_numero: string | null
           end2_observacao: string | null
           end2_tipo: string | null
-          enderecos_anteriores_json: Json | null
           estado_civil: string | null
           id: string
           motivo_arquivamento: string | null
@@ -3217,7 +3216,6 @@ export type Database = {
           processado_em: string | null
           processado_por: string | null
           profissao: string | null
-          residiu_mesmo_endereco_5_anos: boolean | null
           responsavel_endereco_bairro: string | null
           responsavel_endereco_cep: string | null
           responsavel_endereco_cidade: string | null
@@ -3333,7 +3331,6 @@ export type Database = {
           end2_numero?: string | null
           end2_observacao?: string | null
           end2_tipo?: string | null
-          enderecos_anteriores_json?: Json | null
           estado_civil?: string | null
           id?: string
           motivo_arquivamento?: string | null
@@ -3356,7 +3353,6 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
-          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -3472,7 +3468,6 @@ export type Database = {
           end2_numero?: string | null
           end2_observacao?: string | null
           end2_tipo?: string | null
-          enderecos_anteriores_json?: Json | null
           estado_civil?: string | null
           id?: string
           motivo_arquivamento?: string | null
@@ -3495,7 +3490,6 @@ export type Database = {
           processado_em?: string | null
           processado_por?: string | null
           profissao?: string | null
-          residiu_mesmo_endereco_5_anos?: boolean | null
           responsavel_endereco_bairro?: string | null
           responsavel_endereco_cep?: string | null
           responsavel_endereco_cidade?: string | null
@@ -13959,10 +13953,6 @@ export type Database = {
           orgao_competente: string
           sistema_registro: string
         }[]
-      }
-      qa_copia_residencia_5_anos_do_cadastro: {
-        Args: { p_cadastro_id: string; p_cliente_id: number }
-        Returns: number
       }
       qa_create_processo_from_venda: {
         Args: { p_servico_id: number; p_venda_id: number }
