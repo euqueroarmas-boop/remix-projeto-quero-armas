@@ -1081,6 +1081,40 @@ A prova pegou um defeito real antes da entrega: sem prefixar as colunas com
 
 ### Ainda aberto
 
+- **PARADO por decisão do titular (22/08/2026): o resto do checklist do 51 —
+  Autorização de Compra Caçador.** As certidões já foram equiparadas às do 50.
+  Fora delas, o 51 ainda tem 19 exigências a menos que o 50. Só uma coisa ele
+  tem que o 50 não tem, e está correta: `habilitacao_cacador_ibama`.
+
+  A diferença se divide em três grupos:
+
+  | Grupo | O que é | Leitura |
+  |---|---|---|
+  | Processo genérico da PF (14) | foto 3x4, laudo psicológico, DSA, ocupação lícita (`renda_definir_condicao`), as cinco perguntas do comprovante de residência + declaração do responsável pelo imóvel, contrato/pedido da loja, pergunta da arma definida, credencial gov.br, GRU e comprovante de pagamento | quase certamente iguais nos dois |
+  | Fecho do processo (1) | `autorizacao_compra` (autorização deferida) | vale para os dois |
+  | Habitualidade (3) | `comprovante_filiacao_entidade_tiro`, `comprovante_competicao`, `declaracao_compromisso_habitualidade` (ANEXO C) | **NÃO copiar sem decisão**: habitualidade de atirador se prova com competição em clube de tiro; a do caçador é outra coisa |
+
+  Duas saídas quando o assunto voltar: levar os 15 primeiros e parar nos três da
+  habitualidade, ou montar a lista inteira em cima de um dossiê de caçador já
+  deferido — como foi feito com o do atirador em 20/08.
+
+  Consulta que levanta a diferença atual:
+
+  ```sql
+  SELECT COALESCE(a.tipo_documento, b.tipo_documento) AS exigencia,
+         a.nome_documento,
+         (a.tipo_documento IS NOT NULL) AS no_50,
+         (b.tipo_documento IS NOT NULL) AS no_51
+    FROM (SELECT tipo_documento, nome_documento FROM public.qa_servicos_documentos
+           WHERE servico_id = 50 AND ativo) a
+    FULL JOIN (SELECT tipo_documento FROM public.qa_servicos_documentos
+                WHERE servico_id = 51 AND ativo) b
+      ON b.tipo_documento = a.tipo_documento
+   WHERE a.tipo_documento IS NULL OR b.tipo_documento IS NULL
+   ORDER BY 1;
+  ```
+
+
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
   já tem a pergunta e a lista. No portal, a pergunta
   `pergunta_residencia_5_anos` aparece no checklist, mas a lista de estados
