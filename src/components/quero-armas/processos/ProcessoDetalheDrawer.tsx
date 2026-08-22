@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { X, Upload, RefreshCw, CheckCircle, XCircle, AlertTriangle, Clock, Eye, Sparkles, FileText, Download, ExternalLink, ShieldCheck, ShieldAlert, History, Send, Info, BookOpen, FileDown, Building2, CalendarClock, Layers, Home, Database, GitCompareArrows, FileSignature, ChevronRight } from "lucide-react";
 import { getStatusProcesso, getStatusDocumento, formatDateTime, formatDate, STATUS_PROCESSO, transicoesPermitidas } from "./processoConstants";
 import DocumentoViewerModal, { useDocumentoViewer } from "@/components/quero-armas/DocumentoViewerModal";
+import type { LucideIcon } from "lucide-react";
+import { grupoDaPendenciaDoItem } from "@/lib/quero-armas/pendenciasGrupos";
 import { computeChecklistMetrics, isChecklistCumprido, isChecklistEmAnalise, isChecklistPendente, ordenarDocumentosChecklist, getProximoItemAcionavelAdmin } from "@/lib/quero-armas/checklistMetrics";
 import SaudeChecklistPanel from "./SaudeChecklistPanel";
 import TemplateDataConfirmationModal from "@/components/quero-armas/portal/TemplateDataConfirmationModal";
@@ -2861,45 +2863,72 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   </div>
                 );
 
-                // Agrupa documentos por categoria de exigência (mesma lógica da Condição Profissional)
-                const categorizar = (d: DocRow): { key: string; label: string; color: string; icon: any; descricao: string } => {
-                  const t = (d.tipo_documento || "").toLowerCase();
-                  if (t.startsWith("certidao") || t.includes("antecedentes")) {
-                    return { key: "antecedentes", label: "ANTECEDENTES CRIMINAIS", color: "#DC2626", icon: ShieldAlert,
-                      descricao: "8 CERTIDÕES OFICIAIS EXIGIDAS PELA POLÍCIA FEDERAL — TODAS GRATUITAS E COM EMISSÃO ONLINE." };
-                  }
-                  if (t.includes("laudo") || t.includes("psicologic") || t.includes("capacidade_tecnica") || t.includes("tiro") || t.includes("aptidao")) {
-                    return { key: "exames", label: "EXAMES TÉCNICOS", color: "#7C3AED", icon: ShieldCheck,
-                      descricao: "EMITIDOS POR PROFISSIONAIS CREDENCIADOS PELA PF — VALIDADE DE 1 ANO." };
-                  }
-                  if (t.includes("endereco") || t.includes("residenc") || t.includes("comprovante_endereco")) {
-                    return { key: "endereco", label: "COMPROVAÇÃO DE ENDEREÇO", color: "#0891B2", icon: Home,
-                      descricao: "HISTÓRICO COMPLETO DOS ÚLTIMOS 5 ANOS DE RESIDÊNCIA, CONFORME EXIGÊNCIA DA PF." };
-                  }
-                  if (t.includes("declaracao") || t.includes("dsa_") || t.includes("compromisso")) {
-                    return { key: "declaracoes", label: "DECLARAÇÕES E COMPROMISSOS", color: "#2F3337", icon: FileSignature,
-                      descricao: "MODELOS DO SISTEMA — BAIXE PREENCHIDO, ASSINE NO GOV.BR E ENVIE O PDF DE VOLTA." };
-                  }
-                  return { key: "outros", label: "OUTROS DOCUMENTOS", color: "#64748B", icon: FileText,
-                    descricao: "ITENS COMPLEMENTARES DESTE PROCESSO." };
+                // GRUPOS DO CHECKLIST — ordem em que o cliente resolve.
+                //
+                // Antes o drawer classificava por conta própria em cinco caixas
+                // (endereço, antecedentes, declarações, exames, outros). Faltava
+                // OCUPAÇÃO LÍCITA: holerite, CTPS e afins caíam em "outros" e
+                // apareciam no fim da lista, depois da idoneidade — fora da
+                // ordem real de trabalho do cliente.
+                //
+                // A classificação e a ordem passam a vir de `pendenciasGrupos`,
+                // a mesma fonte que o painel usa. Sequência canônica:
+                // Exigências da PF → Contratos → Cadastros → Identificação civil
+                // → Identificação residencial → Ocupação lícita → Idoneidade
+                // (+ estados anteriores) → Habitualidade → Arma → Declarações
+                // → Efetiva necessidade → Laudos → Requerimento → Fechamento.
+                // Aqui ficam só a cor, o ícone e a frase de cada grupo.
+                const VISUAL_GRUPO: Record<string, { color: string; icon: LucideIcon; descricao: string }> = {
+                  exigencias_pf: { color: "#DC2626", icon: ShieldAlert,
+                    descricao: "EXIGÊNCIA FEITA PELA POLÍCIA FEDERAL — PRAZO FATAL DE 10 DIAS." },
+                  assinaturas: { color: "#2F3337", icon: FileSignature,
+                    descricao: "CONTRATO DO SERVIÇO — ASSINAR NO GOV.BR E DEVOLVER O PDF." },
+                  perguntas: { color: "#0891B2", icon: Info,
+                    descricao: "RESPOSTAS DO CLIENTE QUE DEFINEM O RESTANTE DO CHECKLIST." },
+                  identificacao: { color: "#2563EB", icon: FileText,
+                    descricao: "DOCUMENTO DE IDENTIDADE E FOTO DO REQUERENTE." },
+                  endereco: { color: "#0891B2", icon: Home,
+                    descricao: "HISTÓRICO COMPLETO DOS ÚLTIMOS 5 ANOS DE RESIDÊNCIA, CONFORME EXIGÊNCIA DA PF." },
+                  ocupacao: { color: "#B45309", icon: Building2,
+                    descricao: "COMPROVAÇÃO DE RENDA E OCUPAÇÃO LÍCITA, CONFORME A CONDIÇÃO PROFISSIONAL DECLARADA." },
+                  antecedentes: { color: "#DC2626", icon: ShieldAlert,
+                    descricao: "CERTIDÕES OFICIAIS EXIGIDAS PELA POLÍCIA FEDERAL — TODAS GRATUITAS E COM EMISSÃO ONLINE." },
+                  antecedentes_anteriores: { color: "#DC2626", icon: ShieldAlert,
+                    descricao: "CERTIDÕES DOS ESTADOS ONDE O REQUERENTE MOROU NOS ÚLTIMOS 5 ANOS." },
+                  habitualidade: { color: "#7C3AED", icon: CalendarClock,
+                    descricao: "COMPROVAÇÃO DE HABITUALIDADE E VÍNCULO COM CLUBE DE TIRO." },
+                  arma: { color: "#64748B", icon: Layers,
+                    descricao: "DOCUMENTOS DA ARMA ENVOLVIDA NO PROCESSO." },
+                  declaracoes: { color: "#2F3337", icon: FileSignature,
+                    descricao: "MODELOS DO SISTEMA — BAIXE PREENCHIDO, ASSINE NO GOV.BR E ENVIE O PDF DE VOLTA." },
+                  efetiva_necessidade: { color: "#C2410C", icon: BookOpen,
+                    descricao: "JUSTIFICATIVA DO PEDIDO — É A PEÇA QUE SUSTENTA O REQUERIMENTO." },
+                  laudos: { color: "#7C3AED", icon: ShieldCheck,
+                    descricao: "EMITIDOS POR PROFISSIONAIS CREDENCIADOS PELA PF — VALIDADE DE 1 ANO." },
+                  requerimento: { color: "#2F3337", icon: FileDown,
+                    descricao: "PEÇA FINAL QUE CONSOLIDA O PROCESSO." },
+                  outros: { color: "#64748B", icon: FileText,
+                    descricao: "FECHAMENTO — TAXA, ACESSO AO GOV.BR E JUNTADA FINAL." },
                 };
-
-                // Ordem lógica do fluxo PF: 1) Endereço, 2) Antecedentes,
-                // 3) Declarações e Compromissos, 4) Exames Técnicos, 5) Outros.
-                const ORDEM_CATEGORIAS = ["endereco", "antecedentes", "declaracoes", "exames", "outros"] as const;
 
                 const renderGrupoPendencias = (lista: DocRow[]) => {
                   if (lista.length === 0) return null;
                   // Agrupa
-                  const grupos = new Map<string, { meta: ReturnType<typeof categorizar>; docs: DocRow[] }>();
+                  type MetaGrupo = { key: string; label: string; ordem: number; color: string; icon: LucideIcon; descricao: string };
+                  const grupos = new Map<string, { meta: MetaGrupo; docs: DocRow[] }>();
                   for (const d of lista) {
-                    const meta = categorizar(d);
-                    if (!grupos.has(meta.key)) grupos.set(meta.key, { meta, docs: [] });
-                    grupos.get(meta.key)!.docs.push(d);
+                    const g = grupoDaPendenciaDoItem(d);
+                    const vis = VISUAL_GRUPO[g.id] ?? VISUAL_GRUPO.outros;
+                    if (!grupos.has(g.id)) {
+                      grupos.set(g.id, {
+                        meta: { key: g.id, label: g.label.toUpperCase(), ordem: g.ordem, ...vis },
+                        docs: [],
+                      });
+                    }
+                    grupos.get(g.id)!.docs.push(d);
                   }
-                  const ordenadas = ORDEM_CATEGORIAS
-                    .map((k) => grupos.get(k))
-                    .filter((g): g is NonNullable<typeof g> => !!g);
+                  // Ordem do módulo = ordem em que o cliente resolve.
+                  const ordenadas = Array.from(grupos.values()).sort((a, b) => a.meta.ordem - b.meta.ordem);
                   // Cada grupo nasce RECOLHIDO: com todos abertos, o checklist
                   // virava uma rolagem sem fim e a equipe perdia a visão do que
                   // faltava. O cabeçalho mostra quantos itens há dentro e abre
