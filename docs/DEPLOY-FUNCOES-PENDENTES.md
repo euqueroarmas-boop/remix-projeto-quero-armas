@@ -1,5 +1,23 @@
 # Deploy — auditoria do fluxo de posse/autorização
 
+## ✅ Leva 19 · Cadastro público remove campos de residência dos 5 anos — FECHADA em 21/08/2026, 21:46 BRT
+
+Publicação isolada de `qa-cadastro-publico`. A função deixa de usar as chaves
+`residiu_mesmo_endereco_5_anos` e `enderecos_anteriores_json` no seu schema Zod,
+porque a migration seguinte remove essas colunas do banco. Sem este deploy, a
+função continuaria tentando gravar em colunas que não existem mais e todo
+cadastro público passaria a falhar.
+
+**Edge function — ALTERADA, publicada em 21/08/2026, 21:46 BRT:**
+
+| Função | O que muda | O que quebra sem ela |
+|---|---|---|
+| `qa-cadastro-publico` ✅ 21:46 | Sai do schema Zod as duas chaves da residência dos 5 anos | A função tenta gravar em colunas apagadas pela migration e todo cadastro público falha |
+
+**Nenhuma migration foi criada.** Código-fonte não foi alterado.
+
+---
+
 ## ✅ Leva 18 · Cadastro público aceita histórico de residência — FECHADA em 21/08/2026, 19:41 BRT
 
 Publicação isolada de `qa-cadastro-publico`. A função passa a aceitar os campos
