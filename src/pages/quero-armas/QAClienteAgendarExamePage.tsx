@@ -31,16 +31,29 @@ export default function QAClienteAgendarExamePage() {
   const [incluirVencidos, setIncluirVencidos] = useState(false);
   const [busca, setBusca] = useState("");
 
+  // Identidade do cadastro, guardada à parte dos filtros: os campos acima são
+  // editáveis (o cliente pode buscar em outra cidade), e o texto do WhatsApp
+  // precisa dizer de onde ele é de verdade, não onde ele está pesquisando.
+  const [identidade, setIdentidade] = useState<{ nome: string; cidade: string; uf: string } | null>(null);
+
   useEffect(() => {
-    if (cep || uf || cidade) return;
     (async () => {
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user?.user) return;
-        const { data } = await supabase.from("qa_clientes").select("cep,cidade,estado").eq("user_id", user.user.id).maybeSingle();
-        if ((data as any)?.cep) setCep(String((data as any).cep));
-        if ((data as any)?.cidade) setCidade(String((data as any).cidade));
-        if ((data as any)?.estado) setUf(String((data as any).estado).toUpperCase());
+        const { data } = await supabase.from("qa_clientes").select("nome_completo,cep,cidade,estado").eq("user_id", user.user.id).maybeSingle();
+        if (!data) return;
+        setIdentidade({
+          nome: String(data.nome_completo || ""),
+          cidade: String(data.cidade || ""),
+          uf: String(data.estado || "").toUpperCase(),
+        });
+        // Os filtros só recebem o cadastro quando o cliente ainda não escolheu
+        // nada — vindo com ?cep=/?uf= na URL, a escolha dele manda.
+        if (cep || uf || cidade) return;
+        if (data.cep) setCep(String(data.cep));
+        if (data.cidade) setCidade(String(data.cidade));
+        if (data.estado) setUf(String(data.estado).toUpperCase());
       } catch { /* noop */ }
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -199,7 +212,14 @@ export default function QAClienteAgendarExamePage() {
           </div>
         )}
 
-        <AgendarExameList loading={loading} results={filtered} empty="Informe o CEP cadastrado, uma UF ou um termo de busca para localizar profissionais credenciados pela PF." />
+        <AgendarExameList
+          loading={loading}
+          results={filtered}
+          clienteNome={identidade?.nome}
+          clienteCidade={identidade?.cidade}
+          clienteUf={identidade?.uf}
+          empty="Informe o CEP cadastrado, uma UF ou um termo de busca para localizar profissionais credenciados pela PF."
+        />
         {isInstrutor && (
           <div style={{ marginTop: 14, background: "#fff", border: "1px solid #e3e3e1", padding: 14, borderRadius: 4, fontSize: 12, color: "#303030" }}>
             <strong style={{ display: "block", fontFamily: "Oswald, sans-serif", letterSpacing: ".14em", marginBottom: 6 }}>LISTA OFICIAL PF (PDF)</strong>

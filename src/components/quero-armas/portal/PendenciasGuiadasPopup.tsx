@@ -834,6 +834,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 cep={cepCliente ?? null}
                 uf={ufCliente ?? null}
                 cidade={cidadeCliente ?? null}
+                nomeCliente={nomeCliente ?? null}
               />
             </div>
           ) : active.corpo ? (

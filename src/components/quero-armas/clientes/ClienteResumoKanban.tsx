@@ -844,6 +844,7 @@ export default function ClienteResumoKanban({
   const clienteCep = (cadastro?.cep || (cliente as any)?.cep || "") as string;
   const clienteUf = (cadastro?.estado || (cliente as any)?.estado || "") as string;
   const clienteCidade = (cadastro?.cidade || (cliente as any)?.cidade || "") as string;
+  const clienteNomeCompleto = ((cliente as any)?.nome_completo || (cliente as any)?.nome || "") as string;
 
 
   const filteredUrgents = useMemo(
@@ -1233,6 +1234,7 @@ export default function ClienteResumoKanban({
           cep={clienteCep}
           uf={clienteUf}
           cidade={clienteCidade}
+          nomeCliente={clienteNomeCompleto}
           onClose={() => setExameModal(null)}
           onVerListaCompleta={() => {
             const qs = new URLSearchParams();

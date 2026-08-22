@@ -15,6 +15,8 @@ export type AgendarExamePainelProps = {
   cep?: string | null;
   uf?: string | null;
   cidade?: string | null;
+  /** Entra no texto pronto do WhatsApp ("Sou Willian, de Goiânia/GO..."). */
+  nomeCliente?: string | null;
   /** Cabeçalho (título + fonte). Desligado quando o container já tem título. */
   comCabecalho?: boolean;
 };
@@ -27,7 +29,7 @@ const TITULO = {
 const AVISO =
   "qa-caption rounded-sm border border-[#f0d893] bg-[#fff8e1] px-3 py-2 !text-[#5a4500]";
 
-export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho = true }: AgendarExamePainelProps) {
+export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, nomeCliente, comCabecalho = true }: AgendarExamePainelProps) {
   const [raio, setRaio] = useState(25);
   const cepLimpo = (cep || "").replace(/\D/g, "");
   const cepValido = cepLimpo.length === 8;
@@ -144,6 +146,9 @@ export function AgendarExamePainel({ ativo, tipo, cep, uf, cidade, comCabecalho 
       <AgendarExameList
         loading={loading}
         results={results}
+        clienteNome={nomeCliente}
+        clienteCidade={cidadeResolved}
+        clienteUf={ufResolved}
         empty={
           isInstrutor
             ? "Nenhum instrutor encontrado para esta UF."

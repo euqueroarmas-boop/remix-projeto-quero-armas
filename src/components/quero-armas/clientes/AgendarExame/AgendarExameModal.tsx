@@ -11,6 +11,8 @@ type Props = {
   cep?: string | null;
   uf?: string | null;
   cidade?: string | null;
+  /** Entra no texto pronto do WhatsApp ("Sou Willian, de Goiânia/GO..."). */
+  nomeCliente?: string | null;
   onVerListaCompleta?: () => void;
 };
 
@@ -19,7 +21,7 @@ const TITULO = {
   instrutor_tiro: "INSTRUTORES DE TIRO CREDENCIADOS PELA PF",
 };
 
-export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerListaCompleta }: Props) {
+export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, nomeCliente, onVerListaCompleta }: Props) {
   // 25 km é o raio padrão definido pelo usuário — a distância que ele
   // considera razoável para o cliente se deslocar. Continua ajustável nos
   // botões, para quem mora em região com poucos credenciados.
@@ -137,7 +139,7 @@ export function AgendarExameModal({ open, onClose, tipo, cep, uf, cidade, onVerL
               {" "}Amplie o raio se quiser.
             </div>
           )}
-          <AgendarExameList loading={loading} results={results} empty={
+          <AgendarExameList loading={loading} results={results} clienteNome={nomeCliente} clienteCidade={cidadeResolved} clienteUf={ufResolved} empty={
             isInstrutor
               ? "Nenhum instrutor encontrado para esta UF."
               : "Nenhum profissional encontrado neste raio. Tente aumentar o raio ou ver a lista do estado."

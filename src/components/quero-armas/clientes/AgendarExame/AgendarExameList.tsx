@@ -1,4 +1,5 @@
 import type { CredenciadoPsico } from "./useCredenciadosPsico";
+import { mensagemAgendamento } from "./mensagemWhatsApp";
 
 function fmtKm(d?: number | null) {
   if (d === null || d === undefined) return null;
@@ -20,7 +21,19 @@ function mapsLink(c: CredenciadoPsico) {
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
-export function AgendarExameList({ results, loading, empty }: { results: CredenciadoPsico[]; loading: boolean; empty: string }) {
+export type AgendarExameListProps = {
+  results: CredenciadoPsico[];
+  loading: boolean;
+  empty: string;
+  /** Nome, cidade e UF do cliente entram no texto pronto do WhatsApp: o
+   *  profissional já recebe o contato identificado. Opcionais — cliente sem
+   *  cadastro completo ainda manda a mensagem, só sem a apresentação. */
+  clienteNome?: string | null;
+  clienteCidade?: string | null;
+  clienteUf?: string | null;
+};
+
+export function AgendarExameList({ results, loading, empty, clienteNome, clienteCidade, clienteUf }: AgendarExameListProps) {
   if (loading) return <div className="qa-caption py-7 text-center">Buscando profissionais credenciados na Polícia Federal…</div>;
   if (results.length === 0) return <div className="qa-caption py-7 text-center">{empty}</div>;
   return (
@@ -57,7 +70,12 @@ export function AgendarExameList({ results, loading, empty }: { results: Credenc
                     const d = t.replace(/\D/g, "");
                     if (d.length < 10 || d.length > 11) return null;
                     const msg = encodeURIComponent(
-                      "Olá! Encontrei seu contato pelo Arsenal Inteligente da Quero Armas e gostaria de agendar o exame.",
+                      mensagemAgendamento({
+                        tipo: c.tipo,
+                        nome: clienteNome,
+                        cidade: clienteCidade,
+                        uf: clienteUf,
+                      }),
                     );
                     return (
                       <a
