@@ -918,6 +918,32 @@ deviam.
 `qa_seed_endereco_5_anos`. A conferência (E) da migration compara as duas e
 acusa se divergirem.
 
+### O critério virou a categoria do serviço — 21/08/2026
+
+A conferência contra o banco derrubou a lista `IN (31, 44, 50, 51)` que eu tinha
+escrito em `20260821120000`, por dois motivos independentes:
+
+- **o serviço 31 não existe.** Não há linha dele em `qa_servicos_catalogo` — só
+  sobraram documentos de catálogo órfãos apontando para esse id;
+- **a lista viva de `qa_seed_endereco_5_anos` é `(31, 44)`,** não
+  `(31, 44, 50, 51)`. Ancorei numa função que está desatualizada em produção.
+
+`20260821130000` troca a régua pela coluna que o catálogo já tem:
+`categoria = 'SINARM CAC'` contra `'POLÍCIA FEDERAL'`. Não envelhece, não vive
+em dois lugares, e é literalmente o que o titular disse ("clientes CACs").
+
+A dupla trava se mantém: além de ser CAC, o serviço precisa **já** pedir a
+certidão estadual de antecedentes. Alcance conferido antes de aplicar — 32 e 33
+entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
+
+### Três achados que NÃO foram corrigidos (não é o que foi pedido)
+
+| Achado | Situação |
+|---|---|
+| **Serviço 31 não existe** no catálogo, mas tem documentos de catálogo órfãos apontando para ele | a pergunta dos 5 anos saiu de lá; o resto dos órfãos continua |
+| **A migration `20260618050000` nunca chegou ao banco.** A lista viva de `qa_seed_endereco_5_anos` é `(31, 44)` — os serviços **50 e 51** não recebem os cinco comprovantes de endereço por ano desde junho, só o atual | intocado |
+| **O serviço 51 (Autorização de Compra Caçador) não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | intocado — por isso ele não entrou na regra dos 5 anos |
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
