@@ -1164,3 +1164,27 @@ A prova pegou um defeito real antes da entrega: sem prefixar as colunas com
    GROUP BY p.id, p.status, p.created_at
    ORDER BY p.created_at;
   ```
+
+---
+
+## Selo de saúde acende por documento que a regra já manda reemitir no fim
+
+**Aberta em 22/08/2026.** Decisão do titular: anotar como pendência, não
+aplicar agora.
+
+O cartão do cliente mostra "SAÚDE: ATENÇÃO CRÍTICA" quando algum documento
+está com a validade vencida — hoje é o comprovante de residência do cliente
+235 (Igor), conta de 21/07 que venceu um dia depois de aceita.
+
+Só que **isso não é pendência**: o checklist já trata o item como cumprido
+(`entregue_pelo_hub`) e a regra do processo prevê reemitir os vencidos de uma
+vez no fechamento, para o dossiê chegar à PF com tudo dentro da validade. O
+selo lê a data de validade sem saber dessa regra, e acaba pintando de vermelho
+um cliente que está em dia.
+
+**O que fazer:** o selo de saúde deixa de acender por documento cujo
+vencimento a regra de fechamento já prevê reemitir. Não mexer na contagem de
+pendências (que já está certa) nem no checklist.
+
+Onde mora o cálculo: `useClienteStatusAgregado.ts` (KPIs de validade e a lista
+de alertas que define o tom geral do cartão).
