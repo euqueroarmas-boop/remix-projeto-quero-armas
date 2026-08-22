@@ -579,3 +579,13 @@ Migration que precisa ir **junto** (antes ou depois, mas na mesma janela):
 
 Ordem segura: publicar a função PRIMEIRO (ela para de mandar as chaves), depois
 rodar a migration.
+
+## 2026-08-22 — Leva 20: auto-prefill não sobrescreve nomes dos pais
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cliente-auto-prefill/index.ts` — sem ela, o preenchimento automático do portal continua sobrescrevendo o nome de mãe e de pai digitados, em qualquer cliente.
+
+Publicada em **22/08/2026, 01:00 BRT**:
+- ✅ `qa-cliente-auto-prefill`
+
+Nenhum código-fonte foi alterado, nenhuma migration criada.
