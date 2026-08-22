@@ -21,58 +21,6 @@
 -- nenhum checklist é remontado.
 -- =============================================================================
 
--- =============================================================================
--- PRÉVIA — rode primeiro. Mostra, linha a linha, em que grupo cada documento
--- vai ficar, com o número e o nome do serviço. Nada é alterado por esta parte.
--- =============================================================================
-
-SELECT sc.servico_id || ' — ' || COALESCE(sc.nome, '(sem nome no catálogo)') AS servico,
-       sd.tipo_documento,
-       sd.nome_documento,
-       CASE
-         WHEN lower(sd.tipo_documento) = 'ctps'                                       THEN 'ocupacao'
-         WHEN lower(sd.tipo_documento) = 'nota_fiscal_da_arma'                        THEN 'arma'
-         WHEN lower(sd.tipo_documento) = 'autorizacao'                                THEN 'arma'
-         WHEN lower(sd.tipo_documento) = 'comprovante_filiacao_entidade_tiro'         THEN 'habitualidade'
-         WHEN lower(sd.tipo_documento) = 'dsa_declaracao_seguranca_acervo'            THEN 'declaracoes'
-         WHEN lower(sd.tipo_documento) = 'declaracao_endereco_acervo'                 THEN 'declaracoes'
-         WHEN lower(sd.tipo_documento) = 'declaracao_sem_inquerito_processo_criminal' THEN 'declaracoes'
-         WHEN lower(sd.tipo_documento) IN ('declaracao_necessidade_efetiva','comprovante_efetiva_necessidade')
-           OR lower(sd.tipo_documento) LIKE '%efetiva_necessidade%'                   THEN 'efetiva_necessidade'
-         WHEN lower(sd.tipo_documento) LIKE 'renda%'
-           OR lower(sd.tipo_documento) LIKE '%ocupacao%'
-           OR lower(sd.tipo_documento) LIKE '%contracheque%'
-           OR lower(sd.tipo_documento) LIKE '%cnpj%'
-           OR lower(sd.tipo_documento) LIKE '%nota_fiscal%'
-           OR lower(sd.tipo_documento) LIKE '%identidade_funcional%'                  THEN 'ocupacao'
-         WHEN lower(sd.tipo_documento) LIKE 'certidao%'
-           OR lower(sd.tipo_documento) LIKE 'antecedentes%'                           THEN 'antecedentes'
-         WHEN lower(sd.tipo_documento) LIKE '%laudo%'
-           OR lower(sd.tipo_documento) LIKE '%psicologic%'
-           OR lower(sd.tipo_documento) LIKE '%capacidade_tecnica%'
-           OR lower(sd.tipo_documento) LIKE 'exame%'                                  THEN 'laudos'
-         WHEN lower(sd.tipo_documento) LIKE 'requerimento%'                           THEN 'requerimento'
-         WHEN lower(sd.tipo_documento) LIKE 'pergunta%'                               THEN 'perguntas'
-         WHEN lower(sd.tipo_documento) LIKE '%endereco%'
-           OR lower(sd.tipo_documento) LIKE '%residencia%'
-           OR lower(sd.tipo_documento) LIKE '%titular_comprovante%'
-           OR lower(sd.tipo_documento) = 'documento_identificacao_terceiro'           THEN 'endereco'
-         WHEN lower(sd.tipo_documento) IN ('cin','rg','rg_com_cpf','cnh','cpf','passaporte','foto','foto_3x4')
-                                                                                      THEN 'identificacao'
-         ELSE 'outros'
-       END AS grupo_que_sera_gravado,
-       sd.condicao_profissional,
-       sd.ordem
-  FROM public.qa_servicos_documentos sd
-  LEFT JOIN public.qa_servicos_catalogo sc ON sc.servico_id = sd.servico_id
- WHERE sd.ativo
-   AND (sd.regra_validacao ->> 'grupo_checklist') IS NULL
- ORDER BY sd.servico_id, sd.ordem NULLS LAST;
-
--- =============================================================================
--- APLICAR — rode depois de conferir a prévia.
--- =============================================================================
-
 WITH alvo AS (
   SELECT sd.id,
          CASE
@@ -118,8 +66,3 @@ UPDATE public.qa_servicos_documentos sd
          COALESCE(sd.regra_validacao, '{}'::jsonb), '{grupo_checklist}', to_jsonb(a.grupo), true)
   FROM alvo a
  WHERE sd.id = a.id;
-
--- Conferência: depois do UPDATE não deve sobrar linha ativa sem grupo.
-SELECT count(*) AS linhas_ativas_ainda_sem_grupo
-  FROM public.qa_servicos_documentos
- WHERE ativo AND (regra_validacao ->> 'grupo_checklist') IS NULL;
