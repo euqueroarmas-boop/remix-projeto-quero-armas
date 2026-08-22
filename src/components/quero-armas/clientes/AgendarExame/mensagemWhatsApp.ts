@@ -22,6 +22,18 @@ const AGENDAMENTO: Record<"psicologo" | "instrutor_tiro", string> = {
 
 const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e", "d'"]);
 
+/** Fecho concordando com o sexo do cadastro. O campo chega como M/F (o gatilho
+ *  de sincronia dos documentos guarda só a inicial), mas registro antigo pode
+ *  ter vindo "MASCULINO"/"FEMININO" — os dois formatos valem. Sexo "Outro",
+ *  vazio ou não preenchido cai no agradecimento sem gênero: melhor isso do que
+ *  chamar a cliente de "obrigado". */
+function agradecimento(sexo?: string | null) {
+  const s = String(sexo || "").trim().toUpperCase();
+  if (s === "M" || s.startsWith("MASC")) return ", obrigado";
+  if (s === "F" || s.startsWith("FEM")) return ", obrigada";
+  return ", desde já agradeço";
+}
+
 /** Cadastro chega quase sempre em caixa alta ("SÃO JOSÉ DOS CAMPOS"). */
 function capitalizar(texto: string) {
   return texto
@@ -57,9 +69,10 @@ export type DadosMensagem = {
   nome?: string | null;
   cidade?: string | null;
   uf?: string | null;
+  sexo?: string | null;
 };
 
-export function mensagemAgendamento({ tipo, nome, cidade, uf }: DadosMensagem) {
+export function mensagemAgendamento({ tipo, nome, cidade, uf, sexo }: DadosMensagem) {
   const quem = primeiroNome(nome);
   const onde = cidadeUf(cidade, uf);
 
@@ -76,6 +89,6 @@ export function mensagemAgendamento({ tipo, nome, cidade, uf }: DadosMensagem) {
   return (
     `Olá! ${abertura} pelo Arsenal Inteligente da Quero Armas em ${SITE}, ` +
     `que me mostrou os credenciados mais perto de mim. ` +
-    `Gostaria de agendar ${AGENDAMENTO[tipo]} para adquirir uma arma de fogo, obrigado(a).`
+    `Gostaria de agendar ${AGENDAMENTO[tipo]} para adquirir uma arma de fogo${agradecimento(sexo)}.`
   );
 }

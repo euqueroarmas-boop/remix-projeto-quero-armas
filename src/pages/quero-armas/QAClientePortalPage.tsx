@@ -363,6 +363,8 @@ export default function QAClientePortalPage() {
   const [loading, setLoading] = useState(true);
   const [authKnown, setAuthKnown] = useState(false);
   const [cliente, setCliente] = useState<any>(null);
+  // Só o fecho da mensagem do WhatsApp usa o sexo ("obrigado"/"obrigada").
+  const sexoCliente = (cliente as { sexo?: string | null } | null)?.sexo ?? null;
   const arsenalPremium = useArsenalPremium(cliente?.id ?? null);
   const [vendas, setVendas] = useState<any[]>([]);
   const [itens, setItens] = useState<any[]>([]);
@@ -5670,6 +5672,7 @@ export default function QAClientePortalPage() {
                 ufCliente={(cliente as any)?.estado ?? null}
                 onDismiss={dismissPendenciasGuiadas}
                 nomeCliente={(cliente as any)?.nome_completo ?? null}
+                sexoCliente={sexoCliente}
                 cepCliente={(cliente as any)?.cep ?? null}
                 cidadeCliente={(cliente as any)?.cidade ?? null}
                 resumoProcesso={resumoProcesso}
@@ -5880,6 +5883,7 @@ export default function QAClientePortalPage() {
         ufCliente={(cliente as any)?.estado ?? null}
         onDismiss={dismissPendenciasGuiadas}
         nomeCliente={(cliente as any)?.nome_completo ?? null}
+        sexoCliente={sexoCliente}
         cepCliente={(cliente as any)?.cep ?? null}
         cidadeCliente={(cliente as any)?.cidade ?? null}
                 resumoProcesso={resumoProcesso}

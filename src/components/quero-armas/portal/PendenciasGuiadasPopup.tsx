@@ -199,6 +199,8 @@ interface Props {
   } | null;
   /** Nome do cliente — usado no H1 de abertura do popup. */
   nomeCliente?: string | null;
+  /** Só para o fecho da mensagem do WhatsApp concordar com o gênero. */
+  sexoCliente?: string | null;
   /** CEP do cliente — usado para listar credenciados da PF mais próximos. */
   cepCliente?: string | null;
   /** Cidade do cliente — fallback quando não há CEP válido. */
@@ -242,7 +244,7 @@ function TextoComLinks({ texto }: { texto: string }) {
   );
 }
 
-export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
+export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pinnedId, ufCliente, cepCliente, cidadeCliente, resumoProcesso, nomeCliente, sexoCliente, bloqueante = false, asPage = false }: Props & { asPage?: boolean }) {
   if (!open || pendencias.length === 0) return null;
   const total = pendencias.length;
 
@@ -835,6 +837,7 @@ export default function PendenciasGuiadasPopup({ open, pendencias, onDismiss, pi
                 uf={ufCliente ?? null}
                 cidade={cidadeCliente ?? null}
                 nomeCliente={nomeCliente ?? null}
+                sexoCliente={sexoCliente ?? null}
               />
             </div>
           ) : active.corpo ? (

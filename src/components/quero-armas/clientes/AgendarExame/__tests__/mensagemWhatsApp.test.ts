@@ -20,6 +20,21 @@ describe("mensagemAgendamento", () => {
       .toContain("agendar meu exame de capacidade técnica e manuseio para adquirir uma arma de fogo");
   });
 
+  it("fecha concordando com o sexo do cadastro", () => {
+    const base = { tipo: "psicologo" as const, nome: "Gilson", cidade: "Goiânia", uf: "GO" };
+    expect(mensagemAgendamento({ ...base, sexo: "M" })).toContain("arma de fogo, obrigado.");
+    expect(mensagemAgendamento({ ...base, nome: "Maria", sexo: "F" })).toContain("arma de fogo, obrigada.");
+    // Cadastro antigo guardou a palavra inteira em vez da inicial.
+    expect(mensagemAgendamento({ ...base, sexo: "Masculino" })).toContain("arma de fogo, obrigado.");
+    expect(mensagemAgendamento({ ...base, sexo: "FEMININO" })).toContain("arma de fogo, obrigada.");
+    // Sem sexo no cadastro (ou "Outro"): agradece sem gênero, nunca chuta.
+    for (const sexo of [undefined, "", "Outro"]) {
+      const msg = mensagemAgendamento({ ...base, sexo });
+      expect(msg).toContain("arma de fogo, desde já agradeço.");
+      expect(msg).not.toMatch(/obrigad/i);
+    }
+  });
+
   it("não deixa vírgula nem barra solta quando falta nome ou cidade", () => {
     expect(mensagemAgendamento({ tipo: "psicologo", nome: "Gilson" }))
       .toContain("Sou Gilson e encontrei você");

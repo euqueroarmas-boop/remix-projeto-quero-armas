@@ -34,19 +34,20 @@ export default function QAClienteAgendarExamePage() {
   // Identidade do cadastro, guardada à parte dos filtros: os campos acima são
   // editáveis (o cliente pode buscar em outra cidade), e o texto do WhatsApp
   // precisa dizer de onde ele é de verdade, não onde ele está pesquisando.
-  const [identidade, setIdentidade] = useState<{ nome: string; cidade: string; uf: string } | null>(null);
+  const [identidade, setIdentidade] = useState<{ nome: string; cidade: string; uf: string; sexo: string } | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user?.user) return;
-        const { data } = await supabase.from("qa_clientes").select("nome_completo,cep,cidade,estado").eq("user_id", user.user.id).maybeSingle();
+        const { data } = await supabase.from("qa_clientes").select("nome_completo,sexo,cep,cidade,estado").eq("user_id", user.user.id).maybeSingle();
         if (!data) return;
         setIdentidade({
           nome: String(data.nome_completo || ""),
           cidade: String(data.cidade || ""),
           uf: String(data.estado || "").toUpperCase(),
+          sexo: String(data.sexo || ""),
         });
         // Os filtros só recebem o cadastro quando o cliente ainda não escolheu
         // nada — vindo com ?cep=/?uf= na URL, a escolha dele manda.
@@ -218,6 +219,7 @@ export default function QAClienteAgendarExamePage() {
           clienteNome={identidade?.nome}
           clienteCidade={identidade?.cidade}
           clienteUf={identidade?.uf}
+          clienteSexo={identidade?.sexo}
           empty="Informe o CEP cadastrado, uma UF ou um termo de busca para localizar profissionais credenciados pela PF."
         />
         {isInstrutor && (

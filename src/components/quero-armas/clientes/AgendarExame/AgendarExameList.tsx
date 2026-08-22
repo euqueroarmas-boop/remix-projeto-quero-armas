@@ -25,15 +25,17 @@ export type AgendarExameListProps = {
   results: CredenciadoPsico[];
   loading: boolean;
   empty: string;
-  /** Nome, cidade e UF do cliente entram no texto pronto do WhatsApp: o
-   *  profissional já recebe o contato identificado. Opcionais — cliente sem
-   *  cadastro completo ainda manda a mensagem, só sem a apresentação. */
+  /** Nome, cidade, UF e sexo do cliente entram no texto pronto do WhatsApp: o
+   *  profissional já recebe o contato identificado e o fecho concorda com o
+   *  gênero. Opcionais — cliente sem cadastro completo ainda manda a mensagem,
+   *  só sem a apresentação. */
   clienteNome?: string | null;
   clienteCidade?: string | null;
   clienteUf?: string | null;
+  clienteSexo?: string | null;
 };
 
-export function AgendarExameList({ results, loading, empty, clienteNome, clienteCidade, clienteUf }: AgendarExameListProps) {
+export function AgendarExameList({ results, loading, empty, clienteNome, clienteCidade, clienteUf, clienteSexo }: AgendarExameListProps) {
   if (loading) return <div className="qa-caption py-7 text-center">Buscando profissionais credenciados na Polícia Federal…</div>;
   if (results.length === 0) return <div className="qa-caption py-7 text-center">{empty}</div>;
   return (
@@ -75,6 +77,7 @@ export function AgendarExameList({ results, loading, empty, clienteNome, cliente
                         nome: clienteNome,
                         cidade: clienteCidade,
                         uf: clienteUf,
+                        sexo: clienteSexo,
                       }),
                     );
                     return (
