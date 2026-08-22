@@ -1116,10 +1116,51 @@ A prova pegou um defeito real antes da entrega: sem prefixar as colunas com
 
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
-  já tem a pergunta e a lista. No portal, a pergunta
+  **não** tem mais a pergunta nem a lista — saíram pela `20260821110000`, por
+  decisão do titular ("no checkout não faz sentido"). No portal, a pergunta
   `pergunta_residencia_5_anos` aparece no checklist, mas a lista de estados
   ainda não tem tela própria — hoje a equipe lança em
   `qa_cliente_enderecos_anteriores`. Componente pronto e reutilizável:
   `src/components/quero-armas/EnderecosAnterioresLista.tsx`.
-- **Serviço 59 — CRAF e GT / Posse (Polícia Federal) — segue com checklist vazio** — decisão do titular,
-  aberta desde 21/08.
+- **PARADO por decisão do titular (22/08/2026): serviço 59 — CRAF e GT / Posse
+  (Polícia Federal), com checklist VAZIO.** Aberto desde 21/08. Qualquer
+  processo desse serviço nasce hoje sem exigência nenhuma: zero linha em
+  `qa_servicos_documentos`, então o explodidor não tem o que montar e o cliente
+  vê um dossiê em branco.
+
+  **Antes de montar qualquer coisa, confirmar se isso é defeito ou se é o
+  desenho certo.** A decisão de 20/08 registrada acima diz que, para CRAF e
+  GTEs, o sistema guarda **só gestão de acervo, sem ciclo de documentos** — e o
+  nome do 59 é justamente "CRAF e GT". Se for esse o caso, checklist vazio é o
+  comportamento correto e a pendência se fecha sem código; o que faltaria seria
+  impedir que o serviço seja vendido como se tivesse ciclo de documentos.
+
+  O nome mistura duas coisas — "CRAF e GT" (acervo) e "Posse" (que tem dossiê
+  próprio, hoje no 60 — Autorização de Compra / Posse). É essa ambiguidade que
+  precisa da sua palavra.
+
+  Três saídas quando o assunto voltar:
+  1. **É acervo mesmo** → não montar checklist; marcar o serviço como sem ciclo
+     de documentos, para não prometer dossiê a quem compra.
+  2. **É posse de verdade** → montar em cima de um dossiê de posse já deferido,
+     como foi feito com o do atirador em 20/08 — nunca por semelhança.
+  3. **São dois serviços dentro de um** → separar antes de montar qualquer
+     lista.
+
+  Consultas que levantam o estado atual:
+
+  ```sql
+  -- o que o 59 pede hoje (esperado: nenhuma linha)
+  SELECT ordem, tipo_documento, nome_documento, obrigatorio, ativo
+    FROM public.qa_servicos_documentos
+   WHERE servico_id = 59
+   ORDER BY ordem;
+
+  -- quantos processos já nasceram vazios por causa disso
+  SELECT p.id, p.status, p.created_at, count(pd.id) AS exigencias
+    FROM public.qa_processos p
+    LEFT JOIN public.qa_processo_documentos pd ON pd.processo_id = p.id
+   WHERE p.servico_id = 59
+   GROUP BY p.id, p.status, p.created_at
+   ORDER BY p.created_at;
+  ```
