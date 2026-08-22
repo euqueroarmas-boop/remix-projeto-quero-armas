@@ -977,7 +977,7 @@ entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
 | # | Assunto | O que se sabe | Por que não mexi |
 |---|---|---|---|
 | 1 | **Serviço 31 não existe** no catálogo, mas deixou documentos de catálogo órfãos apontando para esse id | a pergunta dos 5 anos já saiu de lá pela `130000`; os outros documentos órfãos continuam | limpar catálogo órfão é faxina de escopo próprio, não foi pedido |
-| 2 | **A migration `20260618050000` nunca chegou ao banco.** A lista viva de `qa_seed_endereco_5_anos` é `(31, 44)` — os serviços **50 e 51** pedem só o comprovante de endereço ATUAL desde junho, não os cinco anos | conferido na consulta do dia 21/08 | é função COMPARTILHADA e anterior a mim; mudar altera o checklist de processos vivos |
+| 2 | ~~**A migration `20260618050000` nunca chegou ao banco** — 50 e 51 sem os cinco anos~~ | **RESOLVIDA em 22/08** pela `20260822020000`: lista vira `(44, 50, 51)` e o ano corrente não é semeado onde o catálogo já pede o comprovante atual | — |
 | 3 | **Serviço 51 (Autorização de Compra Caçador) não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | por isso ele não entrou na regra dos 5 anos, mesmo sendo CAC | é buraco no catálogo do 51; corrigir acrescenta exigência a processos vivos |
 | 4 | **Serviço 59 (CRAF e GT / Posse) está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
 | 5 | **O cliente que JÁ é cliente não tem tela para listar os estados** onde morou. Ele responde sim/não no checklist do portal; a lista de estados só existe no admin, para a equipe | componente pronto e reutilizável: `EnderecosAnterioresLista` | falta decidir se o cliente declara sozinho ou se a equipe lança sempre |
@@ -992,6 +992,39 @@ sem linha em `qa_servicos_catalogo` e sem nenhum processo apontando para ele.
 encontrar qualquer registro transacional — processo, item de venda, protocolo,
 procuração, solicitação ou rascunho — apontando para o 31. Também aborta se o
 serviço voltar a existir no catálogo. História não se apaga por engano.
+
+### 22/08/2026 — os 5 anos de endereço chegam à Autorização de Compra CAC
+
+Item 2 da lista de decisões, atacado a pedido do titular. `20260822020000`.
+
+O achado se confirmou e ficou pior do que parecia: a lista viva de
+`qa_seed_endereco_5_anos` é `(31, 44)`; o **31 foi apagado ontem** e o **44 não
+tem processo nenhum**. Ou seja, o semeador dos cinco anos **nunca rodou para
+cliente nenhum** — é código morto em produção desde maio.
+
+Trocar só a lista não bastava. O 50 e o 51 pedem `comprovante_residencia`
+("Comprovante de residência atual") no próprio catálogo; o 44 não pede. Semear
+os cinco anos sem mais nada faria o cliente do 50/51 ver o comprovante do ano
+corrente **duas vezes**.
+
+Por isso o semeador mudou em dois pontos — e os dois são **comportamento
+compartilhado**, avisados antes de aplicar:
+
+- a lista passa de `(31, 44)` para `(44, 50, 51)`;
+- o ano corrente **não é semeado** quando o processo já exige
+  `comprovante_residencia`. Isso nunca tira documento de ninguém: só impede que
+  o mesmo comprovante nasça duas vezes. O 44 não tem essa linha no catálogo e
+  segue recebendo os cinco anos, o corrente inclusive.
+
+Alcance medido em 21/08: **um** processo vivo de serviço 50 ganha quatro anos
+anteriores. O outro processo do 50 está com o relógio parado e não é tocado. Os
+serviços 44 e 51 não têm processo.
+
+Provado em PostgreSQL 16 local antes de entregar: lista nova; 44 com cinco anos
+incluindo o corrente; 50 e 51 com quatro anos sem o corrente; relógio parado,
+cliente LGPD, cliente excluído, serviço fora da lista e processo sem checklist
+intocados; zero duplicata do ano corrente; gatilhos religados e sem disparo no
+backfill; reexecução não cria nada; e aborto se a lista viva não for a esperada.
 
 ### Ainda aberto
 
