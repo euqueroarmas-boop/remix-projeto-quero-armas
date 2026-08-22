@@ -978,7 +978,7 @@ entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
 |---|---|---|---|
 | 1 | **Serviço 31 não existe** no catálogo, mas deixou documentos de catálogo órfãos apontando para esse id | a pergunta dos 5 anos já saiu de lá pela `130000`; os outros documentos órfãos continuam | limpar catálogo órfão é faxina de escopo próprio, não foi pedido |
 | 2 | ~~**A migration `20260618050000` nunca chegou ao banco** — 50 e 51 sem os cinco anos~~ | **RESOLVIDA em 22/08** pela `20260822020000`: lista vira `(44, 50, 51)` e o ano corrente não é semeado onde o catálogo já pede o comprovante atual | — |
-| 3 | **Serviço 51 — Autorização de Compra Caçador (SINARM CAC) — não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | por isso ele não entrou na regra dos 5 anos, mesmo sendo CAC | é buraco no catálogo do 51; corrigir acrescenta exigência a processos vivos |
+| 3 | ~~**Serviço 51 — Autorização de Compra Caçador (SINARM CAC) — não pede as certidões que o 50 pede**~~ | **RESOLVIDA em 22/08** pela `20260822030000`: as oito certidões do 50 copiadas do catálogo vivo, mais a pergunta dos 5 anos | — |
 | 4 | **Serviço 59 — CRAF e GT / Posse (Polícia Federal) — está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
 | 5 | **O cliente que JÁ é cliente não tem tela para listar os estados** onde morou. Ele responde sim/não no checklist do portal; a lista de estados só existe no admin, para a equipe | componente pronto e reutilizável: `EnderecosAnterioresLista` | falta decidir se o cliente declara sozinho ou se a equipe lança sempre |
 
@@ -1025,6 +1025,51 @@ incluindo o corrente; 50 e 51 com quatro anos sem o corrente; relógio parado,
 cliente LGPD, cliente excluído, serviço fora da lista e processo sem checklist
 intocados; zero duplicata do ano corrente; gatilhos religados e sem disparo no
 backfill; reexecução não cria nada; e aborto se a lista viva não for a esperada.
+
+### 22/08/2026 — o caçador passa a pedir as mesmas certidões do atirador
+
+Item 3 da lista de decisões, resolvido por ordem do titular: "O serviço 51 pede
+as mesmas certidões que o serviço 50." `20260822030000`.
+
+Fecha o que ficou em aberto em 20/08. Naquele dia o checklist do **50 —
+Autorização de Compra Atirador** foi montado a partir de três dossiês deferidos
+(`20260820220000`) e o **51 — Autorização de Compra Caçador** ficou intocado de
+propósito: os três dossiês eram de atirador, e montar o do caçador por
+semelhança seria chute. O titular decidiu que é igual.
+
+As **oito** certidões de idoneidade foram copiadas **do catálogo vivo do 50**,
+não de literal escrito na migration. Copiar do banco é o que garante que o 51
+nasça com tudo que o 50 ganhou depois da montagem original: o TJM
+(`20260820230000`), a marcação territorial `condicao_uf` que só pede TJM a quem
+mora em SP, MG ou RS (`20260821040000`) e o prazo de 90 dias do STM
+(`20260821030000`).
+
+Junto veio `pergunta_residencia_5_anos`, e não por capricho: a instrução da
+própria certidão estadual diz "uma certidão por estado onde você morou nos
+últimos cinco anos". Sem a pergunta o sistema nunca descobre os estados
+anteriores e a frase fica impossível de cumprir. A `20260821130000` só semeou
+essa pergunta para quem **já** exigia a certidão estadual — o 51 não exigia, e
+aquele INSERT não roda de novo.
+
+Ficaram de fora, como **proposta** no rodapé do arquivo: `declaracao_homonimia`,
+`pergunta_responde_inquerito_criminal` e
+`declaracao_sem_inquerito_processo_criminal` — são declarações e pergunta, não
+certidões, e o pedido foi sobre certidões.
+
+Alcance: só o catálogo do 51. Nenhuma função compartilhada, nenhum tipo de
+documento novo, a trava do cofre intocada, e o 51 não tem processo nenhum —
+ninguém é cobrado retroativamente.
+
+Provado em PostgreSQL 16 local: as oito certidões presentes nos dois serviços;
+`condicao_uf`, prazos, instruções e biblioteca copiados; certidão inativa do 50
+não copiada; nada além das certidões e da pergunta copiado; `grupo_id` global
+preservado e `grupo_id` que pertencia ao 50 remapeado para o grupo de mesmo
+slug do 51; reexecução cria 0; e aborto tanto quando a origem está quebrada
+(menos de oito certidões ativas) quanto quando o 51 não é SINARM CAC.
+
+A prova pegou um defeito real antes da entrega: sem prefixar as colunas com
+`sd.`, o SELECT ficava ambíguo — `ordem`, `nome` e `ativo` existem tanto em
+`qa_servicos_documentos` quanto em `qa_checklist_grupos`.
 
 ### Ainda aberto
 
