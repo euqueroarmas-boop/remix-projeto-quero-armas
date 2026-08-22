@@ -12,9 +12,3 @@ DELETE FROM public.qa_tipo_documento_aliases
       WHERE ok.hub_tipo = 'ctps'
         AND ok.processo_tipo = 'carteira_de_trabalho_digital'
    );
-
--- Conferência: deve sobrar só o apelido correto.
-SELECT hub_tipo, processo_tipo
-  FROM public.qa_tipo_documento_aliases
- WHERE hub_tipo = 'ctps'
- ORDER BY processo_tipo;

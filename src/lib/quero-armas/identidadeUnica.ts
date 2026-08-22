@@ -54,6 +54,36 @@ export function mesmaExigenciaIdentidade(
   if (!a || !b) return false;
   return ehDocumentoIdentidade(a) && ehDocumentoIdentidade(b);
 }
+/**
+ * HOLERITE: privado e de servidor são a MESMA exigência (renda do mês).
+ *
+ * Caso real (22/08/2026): o leitor tem dois tipos — `renda_holerite_mes_atual`
+ * (empresa privada) e `renda_holerite_funcionario_publico`. O slot pede um; se
+ * a leitura devolver o outro, o cliente levava "documento incorreto" por um
+ * contracheque perfeitamente válido. Quem separa privado de servidor é a
+ * CONDIÇÃO PROFISSIONAL do processo, que já decide qual slot existe — não o
+ * palpite do leitor sobre o empregador.
+ *
+ * Autorizado pelo titular: "deixe compartilhado os holerites".
+ */
+const TIPOS_HOLERITE = new Set([
+  "renda_holerite_mes_atual",
+  "renda_holerite_funcionario_publico",
+  "renda_contra_cheque_mes_atual",
+]);
+
+export function ehHolerite(tipo?: string | null): boolean {
+  return TIPOS_HOLERITE.has(String(tipo ?? "").trim().toLowerCase());
+}
+
+export function mesmaExigenciaHolerite(
+  a?: string | null,
+  b?: string | null,
+): boolean {
+  if (!a || !b) return false;
+  return ehHolerite(a) && ehHolerite(b);
+}
+
 export function filtrarIdentidadeUnica<T>(
   docs: T[],
   opts: {

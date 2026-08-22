@@ -136,7 +136,7 @@ import {
 } from "@/lib/quero-armas/titularComprovante";
 import { getLinkEmissaoCertidao } from "@/lib/quero-armas/certidoesAbrangencia";
 import { toHubTipoCompartilhado } from "@/lib/quero-armas/hubTipoMap";
-import { mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
+import { mesmaExigenciaHolerite, mesmaExigenciaIdentidade, ehDocumentoIdentidade } from "@/lib/quero-armas/identidadeUnica";
 import { grupoDaPendencia } from "@/lib/quero-armas/pendenciasGrupos";
 import {
   HUB_CATEGORIAS,
@@ -2060,7 +2060,11 @@ export function ClienteDocsHubModal({
     form.tipo_documento !== expectedTipoMeta.value &&
     // CIN, CNH e RG são vias da MESMA exigência de identidade civil:
     // enviar a CNH num slot que pedia CIN não é documento incorreto.
-    !mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value)
+    !mesmaExigenciaIdentidade(form.tipo_documento, expectedTipoMeta.value) &&
+    // Holerite privado e de servidor idem: é a mesma exigência de renda do
+    // mês. Quem separa os dois é a condição profissional do processo, não o
+    // palpite do leitor sobre o empregador.
+    !mesmaExigenciaHolerite(form.tipo_documento, expectedTipoMeta.value)
   );
   // Conjunto de tipos ainda pendentes no checklist (vocabulário Hub).
   const pendingSet = new Set(
