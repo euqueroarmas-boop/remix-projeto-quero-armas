@@ -579,3 +579,21 @@ Migration que precisa ir **junto** (antes ou depois, mas na mesma janela):
 
 Ordem segura: publicar a função PRIMEIRO (ela para de mandar as chaves), depois
 rodar a migration.
+
+## 2026-08-22 — Leva 20: extração nunca sobrescreve filiação
+
+Decisão do titular (22/08/2026), depois do caso do cliente 235 (Igor): a CNH
+aprovada no Hub trocou o nome da mãe digitado ("Marisa Antonino da Silva") pelo
+texto extraído do documento ("Marisa Antonino"). *"Aplique, isso não pode
+acontecer em hipótese nenhuma em nenhum outro cliente."*
+
+**ALTERADA (redeploy obrigatório):**
+- `supabase/functions/qa-cliente-auto-prefill/index.ts` — nome de mãe e de pai
+  já preenchidos passam a ser intocáveis: extração só preenche campo vazio.
+  Sem o redeploy, o gatilho do banco fica travado mas esta função continua
+  sobrescrevendo a filiação de qualquer cliente ao reaproveitar extrações.
+
+Migration que fecha o outro caminho de escrita (o gatilho do banco):
+- `20260822050000_extracao_nao_sobrescreve_filiacao.sql`
+
+Ordem: tanto faz — as duas travam o mesmo comportamento em caminhos diferentes.
