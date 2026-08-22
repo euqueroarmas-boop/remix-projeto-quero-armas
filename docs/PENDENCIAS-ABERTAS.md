@@ -982,6 +982,17 @@ entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
 | 4 | **Serviço 59 (CRAF e GT / Posse) está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
 | 5 | **O cliente que JÁ é cliente não tem tela para listar os estados** onde morou. Ele responde sim/não no checklist do portal; a lista de estados só existe no admin, para a equipe | componente pronto e reutilizável: `EnderecosAnterioresLista` | falta decidir se o cliente declara sozinho ou se a equipe lança sempre |
 
+### 22/08/2026 — o catálogo órfão do serviço 31 foi apagado
+
+Decisão do titular: "Apagar". Era o catálogo antigo de POSSE DE ARMA DE FOGO
+(dossiê civil pela PF), substituído pelo 60 e pelo 59. Estava órfão de verdade:
+sem linha em `qa_servicos_catalogo` e sem nenhum processo apontando para ele.
+
+`20260822010000` apaga só a CONFIGURAÇÃO (o desenho do serviço) e **aborta** se
+encontrar qualquer registro transacional — processo, item de venda, protocolo,
+procuração, solicitação ou rascunho — apontando para o 31. Também aborta se o
+serviço voltar a existir no catálogo. História não se apaga por engano.
+
 ### Ainda aberto
 
 - **Onde o cliente que já é cliente declara os estados.** O formulário público
