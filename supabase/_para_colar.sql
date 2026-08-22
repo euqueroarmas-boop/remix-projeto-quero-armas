@@ -45,11 +45,14 @@ SELECT '03_slot_da_ctps_no_processo', to_jsonb(z) FROM (
 ) z
 
 UNION ALL
-SELECT '04_alias_do_tipo_ctps', to_jsonb(w) FROM (
-  SELECT * FROM public.qa_tipo_documento_aliases
-   WHERE lower(alias) LIKE '%ctps%'
-      OR lower(alias) LIKE '%carteira%trabalho%'
-      OR lower(tipo_canonico) = 'ctps'
+SELECT '04_apelidos_do_tipo_ctps', to_jsonb(w) FROM (
+  -- A tabela de apelidos tem hub_tipo/processo_tipo (não 'alias').
+  SELECT a.hub_tipo, a.processo_tipo
+    FROM public.qa_tipo_documento_aliases a
+   WHERE lower(a.hub_tipo) LIKE '%ctps%'
+      OR lower(a.processo_tipo) LIKE '%ctps%'
+      OR lower(a.hub_tipo) LIKE '%carteira%'
+      OR lower(a.processo_tipo) LIKE '%carteira%'
 ) w
 
 ORDER BY 1;
