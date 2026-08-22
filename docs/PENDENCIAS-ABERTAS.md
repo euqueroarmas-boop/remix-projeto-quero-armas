@@ -1,20 +1,28 @@
 # PENDÊNCIAS ABERTAS — Quero Armas
 
-> ## ⚠️ PARA APLICAR — estado em 22/08/2026, 00:30 BRT
+> ## ✅ LEVA DAS CERTIDÕES DOS 5 ANOS — APLICADA E CONFERIDA
 >
-> A leva das certidões dos 5 anos está escrita, testada e no `main`, mas **três
-> passos ainda não foram executados em produção**. Um deles tem ordem
-> obrigatória.
+> Fechada em **21/08/2026, 21:56 BRT**. Migrations aplicadas em produção, na
+> ordem: `070000`, `080000`, `090000`, `100000`, `110000`, `120000`, `130000`.
+> Edge function `qa-cadastro-publico` publicada às 21:46, antes da `110000` —
+> a ordem obrigatória foi respeitada.
 >
-> | # | O que | Onde se faz | Se pular |
-> |---|---|---|---|
-> | 1 | **Deploy da edge function `qa-cadastro-publico`** (leva 19 — tira as duas chaves do formulário público) | chat do Lovable | a função continua gravando em colunas que o passo 2 apaga → **todo cadastro público quebra** |
-> | 2 | **Migration `20260821110000`** — a residência dos 5 anos sai do formulário público | SQL Editor | as colunas e os gatilhos do formulário público continuam de pé |
-> | 3 | **Migration `20260821130000`** — o critério vira a categoria CAC do serviço | SQL Editor | a régua continua na lista de ids errada, com o serviço 31 fantasma dentro |
+> Conferido no banco, consulta a consulta:
 >
-> **A ordem 1 → 2 é obrigatória.** O 3 pode ir antes ou depois dos outros dois.
+> | O que | Resultado |
+> |---|---|
+> | trava de estado dentro do motor de reaproveitamento | presente |
+> | certidões territoriais com o estado carimbado | 36 de 36 |
+> | tipos aceitos no cofre | 223 |
+> | gatilhos da regra vivos | os 5; o destrutivo da 1ª versão não existe |
+> | colunas e gatilhos do formulário público | removidos |
+> | pergunta no catálogo | 32, 33, 44, 50 — todos SINARM CAC |
+> | serviços fora da regra com a pergunta | 0 |
+> | a régua por serviço | 31, 59, 60 = false; os CAC = true |
+> | blocos de estado anterior órfãos | 0 vazios, 0 com documento |
 >
-> Já aplicado e conferido: `070000`, `080000`, `090000`, `100000`, `120000`.
+> Nada da leva está pendente. O que resta neste arquivo são **decisões**, não
+> desenvolvimento.
 
 ---
 
