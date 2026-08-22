@@ -2900,11 +2900,19 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                   const ordenadas = ORDEM_CATEGORIAS
                     .map((k) => grupos.get(k))
                     .filter((g): g is NonNullable<typeof g> => !!g);
+                  // Cada grupo nasce RECOLHIDO: com todos abertos, o checklist
+                  // virava uma rolagem sem fim e a equipe perdia a visão do que
+                  // faltava. O cabeçalho mostra quantos itens há dentro e abre
+                  // por toque. `<details>` é o mesmo recurso já usado em
+                  // "ETAPAS CONCLUÍDAS" — abre/fecha sem estado no React.
                   return ordenadas.map(({ meta, docs: dlist }) => {
                     const Icon = meta.icon;
                     return (
-                      <div key={meta.key} className="rounded-xl border-2 overflow-hidden mb-4" style={{ borderColor: `${meta.color}55`, background: `${meta.color}08` }}>
-                        <div className="px-4 py-3 flex items-center gap-2.5 border-b" style={{ borderColor: `${meta.color}33`, background: `${meta.color}12` }}>
+                      <details key={meta.key} className="group rounded-xl border-2 overflow-hidden mb-4" style={{ borderColor: `${meta.color}55`, background: `${meta.color}08` }}>
+                        <summary
+                          className="cursor-pointer list-none [&::-webkit-details-marker]:hidden px-4 py-3 flex items-center gap-2.5 border-b"
+                          style={{ borderColor: `${meta.color}33`, background: `${meta.color}12` }}
+                        >
                           <Icon className="h-4 w-4 shrink-0" style={{ color: meta.color }} />
                           <div className="min-w-0 flex-1">
                             <div className="text-[12px] uppercase tracking-[0.14em] font-bold" style={{ color: meta.color }}>
@@ -2915,11 +2923,18 @@ export function ProcessoDetalheDrawer({ processoId, equipeMode = false, onClose,
                               {meta.descricao}
                             </div>
                           </div>
-                        </div>
+                          {/* Seta é o único indicador: gira 90° quando o grupo
+                              abre. Sem palavra ao lado — em tela estreita o
+                              rótulo empurrava o título do grupo. */}
+                          <ChevronRight
+                            className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90"
+                            style={{ color: meta.color }}
+                          />
+                        </summary>
                         <div className="p-3 space-y-3 bg-white">
                           {dlist.map(renderDoc)}
                         </div>
-                      </div>
+                      </details>
                     );
                   });
                 };
