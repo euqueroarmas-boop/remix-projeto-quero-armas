@@ -43,17 +43,19 @@
 -- não exigia — por isso ficou de fora. Agora passa a exigir, mas aquele INSERT
 -- já rodou e não roda de novo. Por isso ela é copiada aqui, explicitamente.
 --
--- ─── O QUE **NÃO** ENTRA (proposta, não entrega) ─────────────────────────────
+-- ─── E MAIS TRÊS, POR DECISÃO DO TITULAR EM 22/08 ────────────────────────────
 --
--- O grupo "antecedentes" do 50 tem três linhas que NÃO são certidões e ficaram
--- de fora, porque o pedido foi sobre certidões:
+-- O grupo "antecedentes" do 50 tem três linhas que não são certidões. Elas
+-- foram propostas à parte e o titular mandou incluir: "são exigências básicas
+-- do processo".
 --
---   • declaracao_homonimia                        (declaração, não obrigatória)
---   • pergunta_responde_inquerito_criminal        (pergunta)
---   • declaracao_sem_inquerito_processo_criminal  (declaração)
---
--- O SQL para levar as três também está no rodapé deste arquivo, pronto. Basta
--- pedir.
+--   • pergunta_responde_inquerito_criminal — item 05 do dossiê deferido;
+--   • declaracao_sem_inquerito_processo_criminal — a declaração que a resposta
+--     "não" destrava. A condição `exige_quando` viaja dentro de
+--     `regra_validacao`, junto na cópia: quem responde "sim" não é cobrado dela;
+--   • declaracao_homonimia — não obrigatória. Sem ela, quando a certidão
+--     estadual do caçador voltar apontando processo de alguém com nome igual ao
+--     dele, a equipe não tem onde pendurar a declaração.
 --
 -- ─── ALCANCE ─────────────────────────────────────────────────────────────────
 --
@@ -79,6 +81,7 @@ DECLARE
   v_certidoes  integer;
   v_criadas    integer := 0;
   v_pergunta   integer := 0;
+  v_item05     integer := 0;
 BEGIN
   -- ── Trava 1: o destino existe e é CAC ──────────────────────────────────────
   IF NOT EXISTS (
@@ -183,8 +186,38 @@ BEGIN
   $sql$, v_cols, v_cols_sd);
   GET DIAGNOSTICS v_pergunta = ROW_COUNT;
 
-  RAISE NOTICE 'Servico 51: % certidao(oes) copiada(s) do 50 e % pergunta(s) de residencia. (0 e 0 na segunda vez — ja estava tudo la.)',
-    v_criadas, v_pergunta;
+  -- ── 3) As três do item 05 e a homonímia ───────────────────────────────────
+  -- Não são certidões; entram por decisão do titular em 22/08. A condição da
+  -- declaração ("só quem respondeu NÃO") mora em regra_validacao->exige_quando
+  -- e vem junto na cópia — não precisa ser reescrita aqui.
+  EXECUTE format($sql$
+    INSERT INTO public.qa_servicos_documentos (servico_id, grupo_id, %1$s)
+    SELECT 51,
+           CASE
+             WHEN sd.grupo_id IS NULL THEN NULL
+             WHEN g.servico_id IS NULL THEN sd.grupo_id
+             ELSE (SELECT g2.id FROM public.qa_checklist_grupos g2
+                    WHERE g2.slug = g.slug AND g2.servico_id = 51 LIMIT 1)
+           END,
+           %2$s
+      FROM public.qa_servicos_documentos sd
+      LEFT JOIN public.qa_checklist_grupos g ON g.id = sd.grupo_id
+     WHERE sd.servico_id = 50
+       AND sd.ativo
+       AND sd.tipo_documento IN ('pergunta_responde_inquerito_criminal',
+                                 'declaracao_sem_inquerito_processo_criminal',
+                                 'declaracao_homonimia')
+       AND NOT EXISTS (
+         SELECT 1 FROM public.qa_servicos_documentos alvo
+          WHERE alvo.servico_id = 51
+            AND alvo.tipo_documento = sd.tipo_documento
+            AND alvo.condicao_profissional IS NOT DISTINCT FROM sd.condicao_profissional
+       )
+  $sql$, v_cols, v_cols_sd);
+  GET DIAGNOSTICS v_item05 = ROW_COUNT;
+
+  RAISE NOTICE 'Servico 51: % certidao(oes), % pergunta(s) de residencia e % linha(s) do item 05/homonimia. (Tudo 0 na segunda vez — ja estava la.)',
+    v_criadas, v_pergunta, v_item05;
 END
 $copia$;
 
@@ -198,14 +231,17 @@ BEGIN
     INTO v_faltando
     FROM public.qa_servicos_documentos sd
    WHERE sd.servico_id = 50 AND sd.ativo
-     AND sd.tipo_documento LIKE 'antecedentes%'
+     AND (sd.tipo_documento LIKE 'antecedentes%'
+          OR sd.tipo_documento IN ('pergunta_responde_inquerito_criminal',
+                                   'declaracao_sem_inquerito_processo_criminal',
+                                   'declaracao_homonimia'))
      AND NOT EXISTS (
        SELECT 1 FROM public.qa_servicos_documentos alvo
         WHERE alvo.servico_id = 51 AND alvo.ativo
           AND alvo.tipo_documento = sd.tipo_documento
      );
   IF v_faltando IS NOT NULL THEN
-    RAISE EXCEPTION 'ABORTADO: o 51 ficou sem estas certidoes do 50: %', v_faltando;
+    RAISE EXCEPTION 'ABORTADO: o 51 ficou sem estas exigencias do 50: %', v_faltando;
   END IF;
 END
 $confere$;
@@ -254,7 +290,22 @@ COMMIT;
 --  WHERE tipo_documento = 'pergunta_residencia_5_anos'
 --  ORDER BY servico_id;
 --
--- E) Nenhum processo foi tocado. Esperado: nenhuma linha (o 51 não tem
+-- E) As três do item 05 e a homonímia chegaram, com a condição intacta.
+--    Esperado: 3 linhas; a declaração com exige_quando
+--    {"responde_inquerito_criminal": "nao"} e a pergunta com as duas opções.
+--
+-- SELECT tipo_documento, obrigatorio,
+--        regra_validacao->'exige_quando'  AS exige_quando,
+--        regra_validacao->>'chave'        AS chave,
+--        jsonb_array_length(regra_validacao->'opcoes') AS opcoes
+--   FROM public.qa_servicos_documentos
+--  WHERE servico_id = 51 AND ativo
+--    AND tipo_documento IN ('pergunta_responde_inquerito_criminal',
+--                           'declaracao_sem_inquerito_processo_criminal',
+--                           'declaracao_homonimia')
+--  ORDER BY tipo_documento;
+--
+-- F) Nenhum processo foi tocado. Esperado: nenhuma linha (o 51 não tem
 --    processo).
 --
 -- SELECT p.id, p.status, count(pd.id) AS exigencias
@@ -262,42 +313,4 @@ COMMIT;
 --   LEFT JOIN public.qa_processo_documentos pd ON pd.processo_id = p.id
 --  WHERE p.servico_id = 51
 --  GROUP BY p.id, p.status;
--- =============================================================================
-
-
--- =============================================================================
--- PROPOSTA — NÃO FAZ PARTE DA MIGRATION ACIMA. SÓ RODE SE QUISER.
--- -----------------------------------------------------------------------------
--- As três linhas do grupo "antecedentes" do 50 que não são certidões e por isso
--- ficaram de fora do pedido:
---
---   • declaracao_homonimia — sem ela, quando a certidão estadual do caçador
---     voltar apontando processo de alguém com nome igual ao dele, a equipe não
---     tem onde pendurar a declaração;
---   • pergunta_responde_inquerito_criminal + declaracao_sem_inquerito_processo_criminal
---     — é o item 05 do dossiê deferido; o 50 pede, o 51 não pediria.
---
--- BEGIN;
--- INSERT INTO public.qa_servicos_documentos (
---   servico_id, tipo_documento, nome_documento, etapa, ordem, obrigatorio,
---   obrigatorio_etapa02, ativo, emissor, escopo, formato_aceito,
---   condicao_profissional, condicao_modalidade, validade_dias, condicao_uf,
---   orgao_emissor, instrucoes, observacoes_cliente, regra_validacao
--- )
--- SELECT 51, sd.tipo_documento, sd.nome_documento, sd.etapa, sd.ordem, sd.obrigatorio,
---        sd.obrigatorio_etapa02, sd.ativo, sd.emissor, sd.escopo, sd.formato_aceito,
---        sd.condicao_profissional, sd.condicao_modalidade, sd.validade_dias, sd.condicao_uf,
---        sd.orgao_emissor, sd.instrucoes, sd.observacoes_cliente, sd.regra_validacao
---   FROM public.qa_servicos_documentos sd
---  WHERE sd.servico_id = 50 AND sd.ativo
---    AND sd.tipo_documento IN ('declaracao_homonimia',
---                              'pergunta_responde_inquerito_criminal',
---                              'declaracao_sem_inquerito_processo_criminal')
---    AND NOT EXISTS (
---      SELECT 1 FROM public.qa_servicos_documentos alvo
---       WHERE alvo.servico_id = 51
---         AND alvo.tipo_documento = sd.tipo_documento
---         AND alvo.condicao_profissional IS NOT DISTINCT FROM sd.condicao_profissional
---    );
--- COMMIT;
 -- =============================================================================

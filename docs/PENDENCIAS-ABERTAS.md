@@ -1051,16 +1051,19 @@ anteriores e a frase fica impossível de cumprir. A `20260821130000` só semeou
 essa pergunta para quem **já** exigia a certidão estadual — o 51 não exigia, e
 aquele INSERT não roda de novo.
 
-Ficaram de fora, como **proposta** no rodapé do arquivo: `declaracao_homonimia`,
-`pergunta_responde_inquerito_criminal` e
-`declaracao_sem_inquerito_processo_criminal` — são declarações e pergunta, não
-certidões, e o pedido foi sobre certidões.
+Três linhas do grupo "antecedentes" que **não** são certidões foram propostas à
+parte e o titular mandou incluir no mesmo SQL — "são exigências básicas do
+processo": `pergunta_responde_inquerito_criminal`,
+`declaracao_sem_inquerito_processo_criminal` e `declaracao_homonimia`. A
+condição da declaração ("só quem respondeu NÃO") mora em
+`regra_validacao->exige_quando` e viaja junto na cópia, sem ser reescrita.
 
 Alcance: só o catálogo do 51. Nenhuma função compartilhada, nenhum tipo de
 documento novo, a trava do cofre intocada, e o 51 não tem processo nenhum —
 ninguém é cobrado retroativamente.
 
 Provado em PostgreSQL 16 local: as oito certidões presentes nos dois serviços;
+as três do item 05 com `exige_quando`, chave e opções intactas;
 `condicao_uf`, prazos, instruções e biblioteca copiados; certidão inativa do 50
 não copiada; nada além das certidões e da pergunta copiado; `grupo_id` global
 preservado e `grupo_id` que pertencia ao 50 remapeado para o grupo de mesmo
