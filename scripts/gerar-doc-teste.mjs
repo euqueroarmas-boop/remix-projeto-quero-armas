@@ -81,6 +81,7 @@ export const GRUPOS = {
   cac: "Vida de CAC — filiação, competição, acervo, habitualidade (itens 02, 03)",
   declaracoes: "Declarações e imóvel de terceiro (itens 05, 08)",
   residencia: "Comprovante de residência (item 08)",
+  endereco5anos: "Endereço dos últimos 5 anos — um comprovante por ano",
   ocupacao: "Ocupação lícita — as ramificações (item 09)",
   taxa: "GRU e comprovante de pagamento",
   final: "Saída do processo — a AC deferida e o pedido da loja",
@@ -925,6 +926,38 @@ export const MODELOS = {
     ],
   },
 };
+
+// ── ENDEREÇO DOS ÚLTIMOS 5 ANOS ─────────────────────────────────────────────
+// Ramo à parte do checklist: quem semeia é a rotina qa_seed_endereco_5_anos,
+// não a migration do serviço 50. Cada ano tem SEU PRÓPRIO slot
+// (comprovante_endereco_ano_<AAAA>), e é a data do documento que decide em
+// qual slot ele entra — por isso cada amostra precisa de datas coerentes com
+// o ano, senão o teste não exercita a regra, exercita o acaso.
+for (const ano of [2022, 2023, 2024, 2025, 2026]) {
+  MODELOS[`comprovante_endereco_ano_${ano}`] = {
+    grupo: "endereco5anos",
+    titulo: `ENDERECO 5 ANOS — comprovante do ano ${ano}`,
+    slot: `comprovante_endereco_ano_${ano}`,
+    linhas: [
+      "CONCESSIONARIA FICTICIA DE ENERGIA S.A.",
+      "CONTA DE ENERGIA ELETRICA",
+      "",
+      `Cliente: ${T.nome}`,
+      `CPF: ${T.cpf}`,
+      "Numero da instalacao: 0000000000",
+      "",
+      `Endereco: ${T.endereco}`,
+      `Bairro: ${T.bairro}`,
+      `Cidade: ${T.cidade} - ${T.uf}`,
+      `CEP: ${T.cep}`,
+      "",
+      `Mes de referencia: 06/${ano}`,
+      `Data de emissao: 20/06/${ano}`,
+      `Vencimento: 10/07/${ano}`,
+      "Valor total: R$ 180,00",
+    ],
+  };
+}
 
 // ============================================================================
 // PDF
