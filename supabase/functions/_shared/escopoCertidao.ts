@@ -81,6 +81,15 @@ function cabecalhoDeclaraCivel(textoAchatado: string): boolean {
 export function detectarEscopoCertidao(texto: string): EscopoCertidao {
   const t = achatar(texto);
   if (!t) return "indefinido";
+  const cabecalho = t.slice(0, 600);
+  const civelNoCabecalho = MARCADORES_CIVEIS.some((re) => re.test(cabecalho));
+  const criminalNoCabecalho = MARCADORES_CRIMINAIS.some((re) => re.test(cabecalho));
+  // CERTIDÃO COMBINADA (22/08/2026). Vários portais — TRF3 à frente — emitem
+  // um único PDF "Certidão de Distribuição Cível, Criminal e Eleitoral". Ela
+  // CUMPRE a exigência criminal, mas caía como cível só porque a palavra
+  // "cível" vinha antes no título, e o cliente era mandado emitir de novo
+  // exatamente o documento que já tinha na mão.
+  if (civelNoCabecalho && criminalNoCabecalho) return "criminal";
   const civel = MARCADORES_CIVEIS.some((re) => re.test(t));
   if (civel && cabecalhoDeclaraCivel(t)) return "civel";
   const criminal = MARCADORES_CRIMINAIS.some((re) => re.test(t));
