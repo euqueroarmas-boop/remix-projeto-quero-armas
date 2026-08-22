@@ -1,3 +1,23 @@
+# PENDÊNCIAS ABERTAS — Quero Armas
+
+> ## ⚠️ PARA APLICAR — estado em 22/08/2026, 00:30 BRT
+>
+> A leva das certidões dos 5 anos está escrita, testada e no `main`, mas **três
+> passos ainda não foram executados em produção**. Um deles tem ordem
+> obrigatória.
+>
+> | # | O que | Onde se faz | Se pular |
+> |---|---|---|---|
+> | 1 | **Deploy da edge function `qa-cadastro-publico`** (leva 19 — tira as duas chaves do formulário público) | chat do Lovable | a função continua gravando em colunas que o passo 2 apaga → **todo cadastro público quebra** |
+> | 2 | **Migration `20260821110000`** — a residência dos 5 anos sai do formulário público | SQL Editor | as colunas e os gatilhos do formulário público continuam de pé |
+> | 3 | **Migration `20260821130000`** — o critério vira a categoria CAC do serviço | SQL Editor | a régua continua na lista de ids errada, com o serviço 31 fantasma dentro |
+>
+> **A ordem 1 → 2 é obrigatória.** O 3 pode ir antes ou depois dos outros dois.
+>
+> Já aplicado e conferido: `070000`, `080000`, `090000`, `100000`, `120000`.
+
+---
+
 # Pendências abertas — auditoria do fluxo de posse/autorização
 
 Índice único do que ficou em aberto. Atualizado em 21/08/2026, 18:40 BRT.
@@ -943,6 +963,16 @@ entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
 | **Serviço 31 não existe** no catálogo, mas tem documentos de catálogo órfãos apontando para ele | a pergunta dos 5 anos saiu de lá; o resto dos órfãos continua |
 | **A migration `20260618050000` nunca chegou ao banco.** A lista viva de `qa_seed_endereco_5_anos` é `(31, 44)` — os serviços **50 e 51** não recebem os cinco comprovantes de endereço por ano desde junho, só o atual | intocado |
 | **O serviço 51 (Autorização de Compra Caçador) não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | intocado — por isso ele não entrou na regra dos 5 anos |
+
+### Decisões e correções que esperam VOCÊ (não são bugs, são escolhas)
+
+| # | Assunto | O que se sabe | Por que não mexi |
+|---|---|---|---|
+| 1 | **Serviço 31 não existe** no catálogo, mas deixou documentos de catálogo órfãos apontando para esse id | a pergunta dos 5 anos já saiu de lá pela `130000`; os outros documentos órfãos continuam | limpar catálogo órfão é faxina de escopo próprio, não foi pedido |
+| 2 | **A migration `20260618050000` nunca chegou ao banco.** A lista viva de `qa_seed_endereco_5_anos` é `(31, 44)` — os serviços **50 e 51** pedem só o comprovante de endereço ATUAL desde junho, não os cinco anos | conferido na consulta do dia 21/08 | é função COMPARTILHADA e anterior a mim; mudar altera o checklist de processos vivos |
+| 3 | **Serviço 51 (Autorização de Compra Caçador) não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | por isso ele não entrou na regra dos 5 anos, mesmo sendo CAC | é buraco no catálogo do 51; corrigir acrescenta exigência a processos vivos |
+| 4 | **Serviço 59 (CRAF e GT / Posse) está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
+| 5 | **O cliente que JÁ é cliente não tem tela para listar os estados** onde morou. Ele responde sim/não no checklist do portal; a lista de estados só existe no admin, para a equipe | componente pronto e reutilizável: `EnderecosAnterioresLista` | falta decidir se o cliente declara sozinho ou se a equipe lança sempre |
 
 ### Ainda aberto
 
