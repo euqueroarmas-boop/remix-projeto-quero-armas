@@ -978,8 +978,8 @@ entram, 34 e 45 se excluem sozinhos, 44 e 50 continuam, 31/59/60 saem.
 |---|---|---|---|
 | 1 | **Serviço 31 não existe** no catálogo, mas deixou documentos de catálogo órfãos apontando para esse id | a pergunta dos 5 anos já saiu de lá pela `130000`; os outros documentos órfãos continuam | limpar catálogo órfão é faxina de escopo próprio, não foi pedido |
 | 2 | ~~**A migration `20260618050000` nunca chegou ao banco** — 50 e 51 sem os cinco anos~~ | **RESOLVIDA em 22/08** pela `20260822020000`: lista vira `(44, 50, 51)` e o ano corrente não é semeado onde o catálogo já pede o comprovante atual | — |
-| 3 | **Serviço 51 (Autorização de Compra Caçador) não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | por isso ele não entrou na regra dos 5 anos, mesmo sendo CAC | é buraco no catálogo do 51; corrigir acrescenta exigência a processos vivos |
-| 4 | **Serviço 59 (CRAF e GT / Posse) está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
+| 3 | **Serviço 51 — Autorização de Compra Caçador (SINARM CAC) — não pede certidão estadual de antecedentes**, sendo o gêmeo do 50, que pede | por isso ele não entrou na regra dos 5 anos, mesmo sendo CAC | é buraco no catálogo do 51; corrigir acrescenta exigência a processos vivos |
+| 4 | **Serviço 59 — CRAF e GT / Posse (Polícia Federal) — está com checklist VAZIO** — qualquer processo dele nasce sem exigência nenhuma | achado de 21/08, antes desta leva | depende de você dizer o que aquele serviço deve pedir |
 | 5 | **O cliente que JÁ é cliente não tem tela para listar os estados** onde morou. Ele responde sim/não no checklist do portal; a lista de estados só existe no admin, para a equipe | componente pronto e reutilizável: `EnderecosAnterioresLista` | falta decidir se o cliente declara sozinho ou se a equipe lança sempre |
 
 ### 22/08/2026 — o catálogo órfão do serviço 31 foi apagado
@@ -1034,5 +1034,5 @@ backfill; reexecução não cria nada; e aborto se a lista viva não for a esper
   ainda não tem tela própria — hoje a equipe lança em
   `qa_cliente_enderecos_anteriores`. Componente pronto e reutilizável:
   `src/components/quero-armas/EnderecosAnterioresLista.tsx`.
-- **Serviço 59 (CRAF/GT) segue com checklist vazio** — decisão do titular,
+- **Serviço 59 — CRAF e GT / Posse (Polícia Federal) — segue com checklist vazio** — decisão do titular,
   aberta desde 21/08.

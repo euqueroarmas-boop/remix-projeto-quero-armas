@@ -95,3 +95,36 @@ padrão da resposta é o comando do Lovable, que é onde eu trabalho.
 
 Registrar a leva em `docs/DEPLOY-FUNCOES-PENDENTES.md` NÃO substitui mostrar o
 comando na resposta. O arquivo é o registro; o comando na tela é o que eu uso.
+
+## Serviço: SEMPRE número + nome do catálogo — CANÔNICO
+
+Nunca escrever "serviço 50" e parar aí. O titular não decora número. Toda
+menção a um serviço, em qualquer resposta, tabela, aviso ou comentário de
+migration, vem como **número + nome do catálogo**:
+
+> serviço **50 — Autorização de Compra Atirador (CAC)**
+
+Vale para tabela de pendências, conferência de SQL, mensagem de commit e
+qualquer texto que eu produza. Se eu não souber o nome, eu busco em
+`qa_servicos_catalogo` ANTES de responder — não escrevo o número solto.
+
+### Nomes confirmados no catálogo vivo (21/08/2026)
+
+| id | nome | categoria |
+|---|---|---|
+| 44 | Concessão de CR — Atirador Esportivo | SINARM CAC |
+| 50 | Autorização de Compra Atirador | SINARM CAC |
+| 51 | Autorização de Compra Caçador | SINARM CAC |
+| 59 | CRAF e GT / Posse | POLÍCIA FEDERAL |
+| 60 | Autorização de Compra / Posse | POLÍCIA FEDERAL |
+| 31 | *(não existe — catálogo órfão da Posse civil antiga, apagado em 22/08)* | — |
+
+Faltam confirmar os nomes de **32, 33, 34 e 45** (também SINARM CAC). Consulta
+para completar a tabela:
+
+```sql
+SELECT servico_id, nome, categoria
+  FROM public.qa_servicos_catalogo
+ WHERE ativo
+ ORDER BY servico_id;
+```
