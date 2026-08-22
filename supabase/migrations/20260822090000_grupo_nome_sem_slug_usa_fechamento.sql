@@ -32,6 +32,3 @@ AS $function$
     ELSE initcap(replace(btrim(p_slug), '_', ' '))
   END;
 $function$;
-
--- Conferência: deve devolver FECHAMENTO nas duas colunas.
-SELECT public.qa_grupo_nome(NULL) AS nulo, public.qa_grupo_nome('outros') AS outros;
